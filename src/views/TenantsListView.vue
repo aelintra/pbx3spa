@@ -46,7 +46,9 @@ onMounted(async () => {
       </thead>
       <tbody>
         <tr v-for="t in tenants" :key="t.pkey">
-          <td>{{ t.pkey }}</td>
+          <td>
+            <router-link :to="{ name: 'tenant-detail', params: { pkey: t.pkey } }" class="cell-link">{{ t.pkey }}</router-link>
+          </td>
           <td>{{ t.description ?? '—' }}</td>
         </tr>
       </tbody>
@@ -82,5 +84,12 @@ onMounted(async () => {
 }
 .table tbody tr:hover {
   background: #f8fafc;
+}
+.cell-link {
+  color: #2563eb;
+  text-decoration: none;
+}
+.cell-link:hover {
+  text-decoration: underline;
 }
 </style>
