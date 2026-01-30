@@ -1,0 +1,127 @@
+<!DOCTYPE html >
+
+<html lang="en">
+<head>
+    <title>SARK PBX</title>
+    <meta name="copyright" content="Copyright 2018 Aelintra Telecom Limited"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="/sark-common/Sark_favicon.png">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.9/css/all.css" integrity="sha384-5SOiIsAziJl6AWe0HWRKTXlfcSHKmYV4RBF18PPJ173Kzn7jzMyFuTtk8JA7QQG1" crossorigin="anonymous">
+    <!-- ... other SARK assets (DataTables, jQuery, etc.) ... -->
+</head>
+<body>
+    <!-- Top: white bar with logo -->
+    <div class="w3-top">
+        <div class="w3-bar w3-white">
+            <img src="..." alt="SARK UCS" style="max-height: 4em;">
+        </div>
+        <!-- Black nav bar: Home, Commit, +Add, Logout, and DROPDOWNS -->
+        <div class="w3-bar w3-black">
+            <a href="..." class="w3-button">Home</a>
+            <a href="..." class="w3-button">Logout</a>
+            <button form="..." type="submit" name="commit">Commit</button>
+            <button type="submit" form="..." name="new">+Add</button>
+            <!-- Endpoints dropdown -->
+            <div class="w3-dropdown-hover">
+                <button class="w3-button w3-text-light-blue">Endpoints</button>
+                <div class="w3-dropdown-content w3-bar-block w3-card-4">
+                    <a class="w3-block w3-button" href=".../sarkextension/main.php">Extensions</a>
+                    <a class="w3-block w3-button" href=".../sarkddi/main.php">Route(Inbound)</a>
+                    <a class="w3-block w3-button" href=".../sarkroute/main.php">Route(Outbound)</a>
+                    <a class="w3-block w3-button" href=".../sarktrunk/main.php">Trunks</a>
+                </div>
+            </div>
+            <!-- PBX dropdown -->
+            <div class="w3-dropdown-hover">
+                <button class="w3-button w3-text-light-blue">PBX</button>
+                <div class="w3-dropdown-content w3-bar-block w3-card-4">
+                    <a href=".../sarkagent/main.php">Agents</a>
+                    <a href=".../sarkcos/main.php">Class of Service</a>
+                    <a href=".../sarkconference/main.php">Conferences</a>
+                    <a href=".../sarksplash/main.php">Dashboard</a>
+                    <a href=".../sarkgreeting/main.php">Greetings</a>
+                    <a href=".../sarkivr/main.php">IVR</a>
+                    <a href=".../sarkcluster/main.php">Multi-Tenant</a>
+                    <a href=".../sarkqueue/main.php">Queues</a>
+                    <a href=".../sarkreport/main.php">Reports</a>
+                    <a href=".../sarkcallgroup/main.php">Ring Groups</a>
+                    <a href=".../sarkholiday/main.php">Timers(Holidays)</a>
+                    <a href=".../sarktimer/main.php">Timers(Recurring)</a>
+                </div>
+            </div>
+            <!-- Settings dropdown -->
+            <div class="w3-dropdown-hover">
+                <button class="w3-button w3-text-light-blue">Settings</button>
+                <div class="w3-dropdown-content w3-bar-block w3-card-4">
+                    <a href=".../sarkbackup/main.php">Backup/Restore</a>
+                    <a href=".../sarkglobal/main.php">Globals</a>
+                    <a href=".../sarklog/main.php">Logs</a>
+                    <a href=".../sarkuser/main.php">Users</a>
+                    <!-- ... Asterisk Edit, Certificates, Console, Custom Apps, Directory, etc. -->
+                </div>
+            </div>
+            <!-- Net dropdown -->
+            <div class="w3-dropdown-hover">
+                <button class="w3-button w3-text-light-blue">Net</button>
+                <div class="w3-dropdown-content w3-bar-block w3-card-4">
+                    <a href=".../sarknetwork/main.php">IP Settings</a>
+                    <a href=".../sarkedsw/main.php">IPV4 Firewall</a>
+                    <a href=".../sarkedsw6/main.php">IPV6 Firewall</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="height:6.5em">&nbsp;</div>
+    <!-- Mobile menu (hamburger) -->
+    <div id="srkMobileMenu" class="w3-hide w3-hide-large">
+        <!-- Same links grouped under Endpoints, PBX, Settings, Net -->
+    </div>
+    <!-- Page title -->
+    <h3 class="w3-container w3-padding w3-text-blue-grey w3-light-gray" style="margin:0;">Extensions</h3>
+    <!-- Main content: centered column -->
+    <div class="w3-row-padding w3-light-gray" style="min-height:50em;">
+        <div class="w3-col m1 l1">&nbsp;</div>
+        <div class="w3-col m10 l10">
+            <form id="sarkextensionForm" action="..." method="post">
+                <table class="w3-table w3-card-4 w3-text-gray w3-striped w3-hoverable w3-tiny" id="extensionstable" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th class="w3-deep-orange w3-text-white">Ext</th>
+                            <th class="w3-deep-orange w3-text-white cluster">Tenant</th>
+                            <th class="w3-deep-orange w3-text-white">User</th>
+                            <th class="w3-deep-orange w3-text-white">Device</th>
+                            <th class="w3-deep-orange w3-text-white">MAC</th>
+                            <th class="w3-deep-orange w3-text-white">IP</th>
+                            <th class="w3-deep-orange w3-text-white">trns</th>
+                            <th class="w3-deep-orange w3-text-white">State</th>
+                            <th class="w3-deep-orange w3-text-white">Active?</th>
+                            <th class="w3-deep-orange w3-text-white editcol">Edit</th>
+                            <th class="w3-deep-orange w3-text-white delcol">Del</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="44100">
+                            <td class="read_only">44100</td>
+                            <td>aelintra</td>
+                            <td title="Ext44100">Ext44100.</td>
+                            <td title="General SIP">General SIP</td>
+                            <td>N/A</td>
+                            <td title="IP address">Unknown</td>
+                            <td>udp</td>
+                            <td class="icons" title="Device State">Unknown</td>
+                            <td>YES</td>
+                            <td class="icons editcol"><a href="...?edit=yes&pkey=44100"><img src=".../edit.png" alt="Edit" title="Click to Edit"></a></td>
+                            <td><a href="...?delete=yes&pkey=44100"><img src=".../delete.png" alt="Delete" onclick="return confirmOK('Delete? - Confirm?')"></a></td>
+                        </tr>
+                        <!-- ... more rows ... -->
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+    <footer class="w3-bar w3-tiny w3-black" style="height:20em">
+        <p class="w3-right w3-margin">&copy; Aelintra Telecom. All rights reserved.</p>
+    </footer>
+</body>
+</html>
