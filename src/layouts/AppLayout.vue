@@ -1,10 +1,22 @@
 <script setup>
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getApiClient } from '@/api/client'
 
 const router = useRouter()
 const auth = useAuthStore()
+
+onMounted(async () => {
+  if (auth.isLoggedIn && !auth.user) {
+    try {
+      const user = await getApiClient().get('auth/whoami')
+      auth.setUser(user)
+    } catch {
+      // token may be expired; leave user null
+    }
+  }
+})
 
 async function logout() {
   try {
@@ -31,7 +43,7 @@ async function logout() {
       <header class="topbar">
         <h1 class="logo">PBX3 Admin</h1>
         <div class="topbar-right">
-          <span v-if="auth.user" class="user">{{ auth.user.name || auth.user.email }}</span>
+          <span v-if="auth.user" class="user">Logged in as {{ auth.user.name || auth.user.email }}</span>
           <button type="button" class="logout-btn" @click="logout">Logout</button>
         </div>
       </header>
