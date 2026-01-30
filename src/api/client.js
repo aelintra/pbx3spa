@@ -3,6 +3,17 @@
  * provides get/post/put/delete with Accept: application/json and Authorization: Bearer <token>.
  */
 
+import { useAuthStore } from '@/stores/auth'
+
+/**
+ * Returns an API client configured with the auth store's baseUrl and token.
+ * Use this for all API calls after login; credentials come from the store.
+ */
+export function getApiClient() {
+  const store = useAuthStore()
+  return createApiClient(store.baseUrl, store.token)
+}
+
 /**
  * @param {string} baseUrl - API base URL (e.g. https://192.168.1.205:44300/api)
  * @param {string} token - Bearer token

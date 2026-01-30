@@ -62,7 +62,17 @@ To stop the server: **Ctrl+C** in the terminal.
 
 ---
 
-## 6. Other useful commands (from pbx3-frontend)
+## 6. Dev proxy (self-signed API certs)
+
+If the PBX3 API uses a **self-signed certificate**, the browser blocks direct requests with `ERR_CERT_AUTHORITY_INVALID`. The Vite dev server **proxies** `/api` to your instance so the browser only talks to localhost (no cert error).
+
+- **Restart** the dev server after changing the proxy target.
+- Use **base URL** `http://localhost:5173/api` (same origin as the app) when logging in or setting credentials. Requests to `/api/*` are forwarded to the real API.
+- **Proxy target** defaults to `https://192.168.1.205:44300`. To use another instance, set **VITE_API_PROXY_TARGET** in `.env.development` (e.g. `VITE_API_PROXY_TARGET=https://other-host:44300`).
+
+---
+
+## 7. Other useful commands (from pbx3-frontend)
 
 | Command | Purpose |
 |--------|--------|
@@ -72,7 +82,7 @@ To stop the server: **Ctrl+C** in the terminal.
 
 ---
 
-## 7. Summary
+## 8. Summary
 
 1. Install **Node.js** (and npm) on macOS if needed.
 2. Open the project in **Cursor**; terminal at **pbx3-frontend**.
