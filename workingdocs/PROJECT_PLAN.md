@@ -165,6 +165,12 @@ Each new step gets a row: Deliverable, Test, Sign-off, Commit.
 
 ---
 
+## Verify later
+
+- **Extension create (mailbox):** The UI “Create extension” flow uses **POST /extensions/mailbox**. Verify whether this endpoint is still used in practice; it may no longer be the preferred way to create extensions. If the API has changed, update the frontend to use the correct create endpoint(s).
+
+---
+
 ## How to use this plan
 
 1. Start with **Step 1**. Do only that step; test; sign off; commit.

@@ -6,6 +6,7 @@ import TenantsListView from '../views/TenantsListView.vue'
 import TenantDetailView from '../views/TenantDetailView.vue'
 import TenantCreateView from '../views/TenantCreateView.vue'
 import ExtensionsListView from '../views/ExtensionsListView.vue'
+import ExtensionCreateView from '../views/ExtensionCreateView.vue'
 import ExtensionDetailView from '../views/ExtensionDetailView.vue'
 import TrunksListView from '../views/TrunksListView.vue'
 import TrunkDetailView from '../views/TrunkDetailView.vue'
@@ -29,6 +30,7 @@ const router = createRouter({
         { path: 'tenants/new', name: 'tenant-create', component: TenantCreateView },
         { path: 'tenants/:pkey', name: 'tenant-detail', component: TenantDetailView },
         { path: 'extensions', name: 'extensions', component: ExtensionsListView },
+        { path: 'extensions/new', name: 'extension-create', component: ExtensionCreateView },
         { path: 'extensions/:pkey', name: 'extension-detail', component: ExtensionDetailView },
         { path: 'trunks', name: 'trunks', component: TrunksListView },
         { path: 'trunks/:pkey', name: 'trunk-detail', component: TrunkDetailView },

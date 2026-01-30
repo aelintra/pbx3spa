@@ -33,6 +33,9 @@ onMounted(async () => {
 <template>
   <div>
     <h1>Extensions</h1>
+    <p class="actions">
+      <router-link :to="{ name: 'extension-create' }" class="btn-primary">Add extension</router-link>
+    </p>
 
     <p v-if="loading" class="loading">Loading extensions from API…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
@@ -93,5 +96,21 @@ onMounted(async () => {
 }
 .cell-link:hover {
   text-decoration: underline;
+}
+.actions {
+  margin: 0.5rem 0 0 0;
+}
+.btn-primary {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #fff;
+  background: #2563eb;
+  border-radius: 0.375rem;
+  text-decoration: none;
+}
+.btn-primary:hover {
+  background: #1d4ed8;
 }
 </style>
