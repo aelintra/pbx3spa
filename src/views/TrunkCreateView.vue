@@ -2,8 +2,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
+const toast = useToastStore()
 const pkey = ref('')
 const carrier = ref('GeneralSIP')
 const cluster = ref('default')
@@ -30,6 +32,7 @@ async function onSubmit(e) {
       username: username.value.trim(),
       host: host.value.trim()
     })
+    toast.show(`Trunk ${trunk.pkey} created`)
     router.push({ name: 'trunk-detail', params: { pkey: trunk.pkey } })
   } catch (err) {
     const errors = fieldErrors(err)

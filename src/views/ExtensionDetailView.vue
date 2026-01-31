@@ -77,7 +77,7 @@ function tenantPkeyDisplay(clusterValue) {
 
 /** Other fields for Advanced section (exclude identity/transport/runtime) */
 const ADVANCED_EXCLUDE = new Set([
-  'pkey', 'shortuid', 'cluster', 'tenant_pkey', 'active', 'device', 'devicemodel', 'location', 'desc', 'description',
+  'id', 'pkey', 'shortuid', 'cluster', 'tenant_pkey', 'active', 'device', 'devicemodel', 'location', 'desc', 'description',
   'transport', 'technology', 'macaddr'
 ])
 const otherFields = computed(() => {
@@ -142,6 +142,7 @@ const identityFields = computed(() => {
   return [
     { label: 'Ext', value: ext.pkey ?? '—' },
     { label: 'SIP Identity', value: ext.shortuid ?? '—' },
+    { label: 'KSUID', value: ext.id ?? '—' },
     { label: 'Tenant', value: tenantPkeyDisplay(ext.cluster) },
     { label: 'User', value: ext.desc ?? ext.description ?? '—' },
     { label: 'Device', value: ext.device ?? '—' },

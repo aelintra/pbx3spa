@@ -32,6 +32,22 @@ Reusable structure for admin resource panels (Extensions, Trunks, Queues, Agents
 
 ---
 
+## 2.2 List view: template blocks
+
+Split the list template into **named blocks** so structure is consistent and layout is predictable. Use semantic wrappers and conditional sections:
+
+- **Root:** `<div class="list-view">` — flex column with `gap: 1rem` so blocks are visually separated.
+- **Header block:** `<header class="list-header">` — contains the title `<h1>{Resource}</h1>` and the toolbar `<p class="toolbar">` (add-btn + optional filter input). Always visible.
+- **States block:** `<section class="list-states">` — shown **only when** `loading || error || deleteError || items.length === 0`. Contains: loading message (`<p class="loading">`), or error (`<p class="error">`), or deleteError, or empty message (`<div class="empty">No {resource}. (API returned an empty list.)</div>`). Use `v-if="loading || error || deleteError || items.length === 0"` on this section.
+- **Body block:** `<section class="list-body">` — shown **only when** there is data (`v-else` after list-states). Contains: either “No items match the filter” (`<p class="empty">`) when filter is active and filtered list is empty, or the **table** (`<table class="table">`).
+- **Modal:** `<Teleport to="body">` for the delete confirmation modal (unchanged).
+
+**CSS (scoped):** `.list-view` (e.g. `display: flex; flex-direction: column; gap: 1rem`), `.list-header`, `.list-states`, `.list-body` (e.g. `margin: 0`). Use `margin-top: 0` on `.loading`, `.error`, `.empty`, `.table` so spacing comes from the gap between sections.
+
+Apply this block structure to every list view (Extensions, Tenants, Trunks, Queues, etc.) so panels look and behave the same.
+
+---
+
 ## 2.1 List row: Edit link and Delete with confirmation modal
 
 - **Edit link:** For each row that can be edited, add an **Edit** column. The link goes **directly to the detail view in edit mode** so the user does not have to open the item then click Edit. Use: `<router-link :to="{ name: '{resource}-detail', params: { pkey: item.pkey }, query: { edit: '1' } }" class="cell-link">Edit</router-link>`. The detail view must support `query.edit`: after loading the item, if `route.query.edit` is set, call `startEdit()` so the user lands in edit mode.
@@ -62,13 +78,30 @@ Reusable structure for admin resource panels (Extensions, Trunks, Queues, Agents
 - **Title:** `<h1>{Resource}: {{ pkey }}</h1>`.
 - **Edit-from-list:** When the user arrives via the list **Edit** link (see §2.1), the URL includes `query.edit` (e.g. `?edit=1`). After loading the item, if `route.query.edit` is set, call `startEdit()` so the user lands in edit mode without clicking Edit.
 - **States:** Loading; error; else content.
-- **Content (when not editing):**
-  - **Toolbar:** `<p class="toolbar">` with `<button class="edit-btn" @click="startEdit">Edit</button>` and `<button class="delete-btn" @click="doDelete">…</button>`. Show delete error below if any.
-  - **Read-only block:** Key identity first (e.g. pkey), then other fields in a sensible order. Use `<dl class="detail-list">` with `<dt>`/`<dd>` pairs, or grouped sections. Prefer **ordered, labelled fields** over a raw alphabetical dump so the same pattern works across panels.
+- **Content (when not editing):** Wrap all content (toolbar, form when editing, read-only sections when not) in `<div class="detail-content">`. **Toolbar:** `<p class="toolbar">` with Edit and Delete buttons. Show delete error below if any. **Read-only content** must use the **detail content blocks** (see §4.1).
 - **Edit mode:** `<form class="edit-form" @submit="saveEdit">` with fields for all editable API attributes; save error; `<div class="edit-actions">` with Submit and Cancel. Cancel clears edit state and optionally refetches. On save success, refetch and exit edit mode.
-- **Delete:** Confirm dialog; on success redirect to list. Show `deleteError` if delete fails.
+- **Delete:** Confirm dialog (modal); on success redirect to list. Show `deleteError` if delete fails.
 
 **CSS classes (scoped):** `.back`, `.back-btn`, `.toolbar`, `.edit-btn`, `.delete-btn`, `.detail-list`, `.detail-list dt`, `.detail-list dd`, `.edit-form`, `.edit-input`, `.edit-actions`, `.error`, `.secondary`.
+
+---
+
+## 4.1 Detail view: content blocks (Identity, second section, Advanced)
+
+When **not editing**, the read-only content must be split into **named blocks** so every detail panel has the same structure. Use this pattern for Extensions, Tenants, Trunks, Queues, Agents, Routes, IVRs, Inbound routes, etc.
+
+1. **Identity block:** `<section class="detail-section">` with `<h2 class="detail-heading">Identity</h2>` and a `<dl class="detail-list">` of identity fields. Define an `identityFields` computed (array of `{ label, value }`) with the resource’s core identity: e.g. pkey/name, shortuid/Local UID, description, and any primary identifiers. Examples: Extension = Ext, SIP Identity, Tenant, User, Device, …; Tenant = name, Local UID, description.
+
+2. **Second section:** `<section class="detail-section">` with a heading that fits the resource and a `<dl class="detail-list">`. Content is resource-specific:
+   - **Transport** — for resources that have location/transport (e.g. Extensions: Location, Transport).
+   - **Settings** or **Limits** — for resources that have config like CLID, timeouts, limits (e.g. Tenants: CLID, Abstime, ChanMax, Timer status).
+   - Use a `settingsFields` or `transportFields` (or similar) computed for this section.
+
+3. **Advanced block (reveal):** `<section class="detail-section">` with a **reveal button** and a list of all other API fields. Use a ref `advancedOpen` (boolean). Button: `<button type="button" class="collapse-trigger" :aria-expanded="advancedOpen" @click="advancedOpen = !advancedOpen">` with text `{{ advancedOpen ? '▼' : '▶' }} Advanced`. Below it: `<dl v-show="advancedOpen" class="detail-list detail-list-other">` with `<template v-for="[key, value] in otherFields">` — `otherFields` is a computed that returns all API keys **not** in Identity or the second section (e.g. exclude identity keys and transport/settings keys), sorted. This keeps the main view scannable and puts the rest in a single expandable block.
+
+4. **Optional per-resource section:** If the resource has a sub-resource (e.g. Extensions have **Runtime**), add an extra `<section class="detail-section">` with its own heading and content between the second section and Advanced.
+
+**CSS classes (scoped):** `.detail-content` (e.g. `max-width: 36rem`), `.detail-section` (e.g. `margin-top: 1.5rem`; first-of-type `margin-top: 1rem`), `.detail-heading` (e.g. `font-size: 1rem; font-weight: 600; margin: 0 0 0.5rem 0`), `.detail-list-other` (e.g. `margin-top: 0.5rem`), `.collapse-trigger` (block button, full width, padding, border-bottom, cursor pointer, text-align left; hover style). Copy from Extensions or Tenants detail view when upgrading other panels.
 
 ---
 
@@ -89,7 +122,7 @@ Internally, tenants are **clusters** (cluster table); data rows often store a cl
 - **Detail / forms:** Label the field **“Tenant”**; show or edit the tenant pkey (API still sends/receives `cluster` as pkey or as id/shortuid depending on the backend).
 - **How to resolve:**  
   - **Preferred:** API resolves cluster id/shortuid → tenant pkey and returns a **`tenant_pkey`** (or `cluster_pkey`) field on each item (e.g. Extensions index). Frontend displays `item.tenant_pkey ?? item.cluster`.  
-  - **Fallback:** Frontend fetches `GET tenants`, builds a map (cluster id/shortuid/pkey → tenant pkey), and resolves for display. Use when the API does not yet expose `tenant_pkey`.
+  - **Fallback:** Frontend fetches `GET tenants`, builds a map (cluster id/shortuid/pkey → tenant pkey), and resolves for display. Use when the API does not yet expose `tenant_pkey`. **The map must include tenant id, shortuid, and pkey → tenant pkey** (e.g. for each tenant: `map.set(id, pkey)`, `map.set(shortuid, pkey)`, `map.set(pkey, pkey)`). Then when the API returns `item.cluster` as tenant id, shortuid, or pkey, the column shows **tenant pkey** (never shortuid or id) and the link to tenant detail uses that pkey.
 - **Sort/filter:** When sorting or filtering by tenant, use the **resolved pkey** (so “Tenant” column sort/filter is by tenant name, not by id/shortuid).
 
 Apply this to every data panel that has a cluster/tenant column (Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound routes, etc.).
@@ -134,10 +167,10 @@ There is **no explicit min-width** in code for list tables. Layout uses: sidebar
 When adding a new resource panel (or refactoring an existing one):
 
 1. Add the three routes and three view files following the names above.
-2. Implement List: toolbar + add-btn, table, loading/error/empty. **Per §2.1:** add an **Edit** column (link to detail with `query: { edit: '1' }`) for rows that can be edited; add a **Delete** column with a **confirmation modal** (not browser confirm) for rows that can be deleted.
+2. Implement List: **Per §2.2** use the **list template blocks** (root `list-view`, `list-header`, `list-states`, `list-body`). Toolbar + add-btn, table, loading/error/empty. **Per §2.1:** add an **Edit** column (link to detail with `query: { edit: '1' }`) for rows that can be edited; add a **Delete** column with a **confirmation modal** (not browser confirm) for rows that can be deleted.
 3. Implement Create: back, form, actions, success → detail.
-4. Implement Detail: back, toolbar (Edit / Delete), read-only block with ordered fields, edit form with all editable API fields, delete with confirm. **Per §4:** when `route.query.edit` is set after load, call `startEdit()` so list Edit links land in edit mode.
-5. Reuse the CSS class names from this doc so styling stays consistent (copy from an existing panel, e.g. Trunks or Extensions, then adjust for fields).
+4. Implement Detail: back, toolbar (Edit / Delete), **Per §4.1** use the **detail content blocks** (Identity, second section e.g. Transport or Settings, Advanced reveal). Edit form with all editable API fields, delete with confirm. **Per §4:** when `route.query.edit` is set after load, call `startEdit()` so list Edit links land in edit mode.
+5. Reuse the CSS class names from this doc so styling stays consistent (copy from an existing panel, e.g. Extensions or Tenants, then adjust for fields).
 6. **Tenant column:** If the resource has a cluster/tenant, show **Tenant** (tenant pkey) per §5.1 — API returns `tenant_pkey` or frontend resolves from GET tenants.
 7. **Success toasts:** After successful save or delete, call `useToastStore().show(message)` per §5.2 so the user gets positive confirmation.
 
@@ -145,4 +178,4 @@ When adding a new resource panel (or refactoring an existing one):
 
 ## 8. Reference implementation
 
-**Extensions** (after buildout) is the reference: list with toolbar/add-btn and optional filter; create with back/form/actions; detail with ordered fields, full edit form, and optional runtime section. Trunks and Queues already follow the same structure; minor naming (e.g. `btn-primary` → `add-btn`) can be aligned when touching those files.
+**Extensions** and **Tenants** are the reference implementations. **List:** Use list template blocks (§2.2): `list-view`, `list-header`, `list-states`, `list-body`; toolbar/add-btn and optional filter; sortable columns; Edit/Delete icons with confirmation modal. **Detail:** Use detail content blocks (§4.1): Identity section, second section (Transport for Extensions, Settings for Tenants), Advanced reveal; full edit form; delete with confirmation modal. When upgrading other panels (Trunks, Queues, Agents, Routes, IVRs, Inbound routes), apply §2.2 and §4.1 so list and detail match this structure.

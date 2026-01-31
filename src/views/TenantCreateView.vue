@@ -2,8 +2,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
+const toast = useToastStore()
 const pkey = ref('')
 const description = ref('')
 const error = ref('')
@@ -24,6 +26,7 @@ async function onSubmit(e) {
       pkey: pkey.value.trim(),
       description: description.value.trim()
     })
+    toast.show(`Tenant ${tenant.pkey} created`)
     router.push({ name: 'tenant-detail', params: { pkey: tenant.pkey } })
   } catch (err) {
     const errors = fieldErrors(err)

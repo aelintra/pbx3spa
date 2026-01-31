@@ -26,11 +26,12 @@ function normalizeList(response) {
   return []
 }
 
-/** Map cluster id (or pkey) → tenant pkey for display */
+/** Map cluster id, shortuid, or pkey → tenant pkey for display (always show pkey, not shortuid) */
 const clusterToTenantPkey = computed(() => {
   const map = new Map()
   for (const t of tenants.value) {
     if (t.id != null) map.set(String(t.id), t.pkey ?? t.id)
+    if (t.shortuid != null) map.set(String(t.shortuid), t.pkey ?? t.shortuid)
     if (t.pkey != null) map.set(String(t.pkey), t.pkey)
   }
   return map
@@ -155,24 +156,29 @@ onMounted(loadExtensions)
 </script>
 
 <template>
-  <div>
-    <h1>Extensions</h1>
-    <p class="toolbar">
-      <router-link :to="{ name: 'extension-create' }" class="add-btn">Add extension</router-link>
-      <input
-        v-model="filterText"
-        type="search"
-        class="filter-input"
-        placeholder="Filter by pkey, tenant, or description"
-        aria-label="Filter extensions"
-      />
-    </p>
+  <div class="list-view">
+    <header class="list-header">
+      <h1>Extensions</h1>
+      <p class="toolbar">
+        <router-link :to="{ name: 'extension-create' }" class="add-btn">Add extension</router-link>
+        <input
+          v-model="filterText"
+          type="search"
+          class="filter-input"
+          placeholder="Filter by pkey, tenant, or description"
+          aria-label="Filter extensions"
+        />
+      </p>
+    </header>
 
-    <p v-if="loading" class="loading">Loading extensions from API…</p>
-    <p v-else-if="error" class="error">{{ error }}</p>
-    <p v-if="deleteError" class="error">{{ deleteError }}</p>
-    <div v-else-if="extensions.length === 0" class="empty">No extensions. (API returned an empty list.)</div>
-    <template v-else>
+    <section v-if="loading || error || deleteError || extensions.length === 0" class="list-states">
+      <p v-if="loading" class="loading">Loading extensions from API…</p>
+      <p v-else-if="error" class="error">{{ error }}</p>
+      <p v-if="deleteError" class="error">{{ deleteError }}</p>
+      <div v-else-if="extensions.length === 0" class="empty">No extensions. (API returned an empty list.)</div>
+    </section>
+
+    <section v-else class="list-body">
       <p v-if="filterText && filteredExtensions.length === 0" class="empty">No extensions match the filter.</p>
       <table v-else class="table">
         <thead>
@@ -245,7 +251,7 @@ onMounted(loadExtensions)
           </tr>
         </tbody>
       </table>
-    </template>
+    </section>
 
     <Teleport to="body">
       <div v-if="confirmDeletePkey" class="modal-backdrop" @click.self="cancelConfirmDelete">
@@ -267,16 +273,30 @@ onMounted(loadExtensions)
 </template>
 
 <style scoped>
+.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.list-header {
+  margin: 0;
+}
+.list-states {
+  margin: 0;
+}
+.list-body {
+  margin: 0;
+}
 .loading,
 .error,
 .empty {
-  margin-top: 1rem;
+  margin-top: 0;
 }
 .error {
   color: #dc2626;
 }
 .table {
-  margin-top: 1rem;
+  margin-top: 0;
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9375rem;
