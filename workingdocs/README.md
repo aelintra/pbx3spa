@@ -14,6 +14,7 @@ This folder is **for the AI (Cursor agent)** to record progress and build a memo
 | **STACK_CHOICE.md** | Vue vs Svelte/React/Alpine for “easiest to grasp” from HTML/JS/CSS; recommendation: Vue 3 + Vue Router + Pinia + Vite. |
 | **DEPLOYMENT_BASICS.md** | How SPA apps are stored and served in production: what you deploy (static files), where they live (server vs S3+CloudFront vs Netlify/Vercel), publish/manage mechanism. |
 | **SYSTEM_CONTEXT.md** | Short memory: PBX3 in one paragraph, what we’re building, key references. |
+| **PANEL_PATTERN.md** | Reusable List / Create / Detail pattern for resource panels (Extensions, Trunks, Queues, etc.); routes, views, CSS classes, conventions. |
 | **README.md** | This file. |
 
 ## Context in one sentence

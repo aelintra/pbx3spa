@@ -72,12 +72,13 @@ function goBack() {
         required
       />
 
-      <label for="desc">desc (optional)</label>
+      <label for="desc">description (optional)</label>
       <input
         id="desc"
         v-model="desc"
         type="text"
         placeholder="Short description"
+        autocomplete="off"
       />
 
       <p v-if="error" class="error">{{ error }}</p>

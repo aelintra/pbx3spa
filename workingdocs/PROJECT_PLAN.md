@@ -12,6 +12,10 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **Later (API-dependent):** Admin user management panel (admins only; API needs stronger user/privilege support first). Help messages — API to expose tt_help_core (sqlite_message.sql data) for display in admin panels; then frontend consumes.
 
+**To-do (Extensions):** Allow changing extension number (pkey). In SARK pkey was immutable; frontend already has an editable Ext field and redirect-on-save — API needs to support pkey update (e.g. add to updateable columns or dedicated rename flow) before enabling this behaviour.
+
+**To-do (Phone images):** API hosts the phone image library; SPA consumes URLs. API: store images on disk (or storage), sync from upstream (script/cron), expose e.g. `GET /api/phone-images/{filename}` or device-model → image URL; frontend uses those URLs in `<img>` (no library bundled in SPA).
+
 **Next chat:** Read **workingdocs/PROJECT_PLAN.md**, **workingdocs/SYSTEM_CONTEXT.md**, and **workingdocs/README.md**. Pick up from here; next steps could be e.g. push pending commits, revisit Backups, or start API work for user management or tt_help_core before adding frontend for either.
 
 ---
