@@ -1,21 +1,60 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
+const toast = useToastStore()
 const pkey = ref('')
-const carrier = ref('DiD')
 const cluster = ref('default')
 const trunkname = ref('')
+const tenants = ref([])
 const error = ref('')
 const loading = ref(false)
+
+function normalizeList(response) {
+  if (Array.isArray(response)) return response
+  if (response && typeof response === 'object') {
+    if (Array.isArray(response.data)) return response.data
+    if (Array.isArray(response.tenants)) return response.tenants
+    if (Object.keys(response).every((k) => /^\d+$/.test(k))) return Object.values(response)
+  }
+  return []
+}
+
+const tenantOptions = computed(() => {
+  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
+  return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
+})
+
+const tenantOptionsForSelect = computed(() => {
+  const list = tenantOptions.value
+  const cur = cluster.value
+  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  return list
+})
 
 function fieldErrors(err) {
   if (!err?.data || typeof err.data !== 'object') return null
   const entries = Object.entries(err.data).filter(([, v]) => Array.isArray(v) && v.length)
   return entries.length ? Object.fromEntries(entries) : null
 }
+
+async function loadTenants() {
+  try {
+    const response = await getApiClient().get('tenants')
+    tenants.value = normalizeList(response)
+    if (tenants.value.length && !cluster.value) {
+      const first = tenants.value.find((t) => t.pkey)?.pkey
+      if (first) cluster.value = first
+    }
+  } catch {
+    tenants.value = []
+  }
+}
+
+onMounted(loadTenants)
 
 async function onSubmit(e) {
   e.preventDefault()
@@ -24,10 +63,10 @@ async function onSubmit(e) {
   try {
     const inboundRoute = await getApiClient().post('inboundroutes', {
       pkey: pkey.value.trim(),
-      carrier: carrier.value,
       cluster: cluster.value.trim(),
       trunkname: trunkname.value.trim()
     })
+    toast.show(`Inbound route ${inboundRoute.pkey} created`)
     router.push({ name: 'inbound-route-detail', params: { pkey: inboundRoute.pkey } })
   } catch (err) {
     const errors = fieldErrors(err)
@@ -55,7 +94,7 @@ function goBack() {
     <h1>Create inbound route</h1>
 
     <form class="form" @submit="onSubmit">
-      <label for="pkey">pkey</label>
+      <label for="pkey">DiD/CLiD</label>
       <input
         id="pkey"
         v-model="pkey"
@@ -65,22 +104,12 @@ function goBack() {
         autocomplete="off"
       />
 
-      <label for="carrier">carrier</label>
-      <select id="carrier" v-model="carrier" required>
-        <option value="DiD">DiD</option>
-        <option value="CLID">CLID</option>
+      <label for="cluster">Tenant</label>
+      <select id="cluster" v-model="cluster" required>
+        <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>
       </select>
 
-      <label for="cluster">cluster</label>
-      <input
-        id="cluster"
-        v-model="cluster"
-        type="text"
-        placeholder="e.g. default"
-        required
-      />
-
-      <label for="trunkname">trunkname</label>
+      <label for="trunkname">Name</label>
       <input
         id="trunkname"
         v-model="trunkname"

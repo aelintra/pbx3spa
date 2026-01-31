@@ -126,6 +126,12 @@ Apply this to every detail edit form that has a boolean or a small fixed set of 
 
 ## 5. Shared conventions
 
+- **API code location:** The backend API lives in **pbx3api** (sibling directory to pbx3-frontend in the workspace). When adding or refactoring panels, **always check the API** so list columns, detail fields, and edit forms match what the API returns and accepts.
+  - **Controllers:** `pbx3api/app/Http/Controllers/` — e.g. `InboundRouteController.php` defines `$updateableColumns` (PUT body) and request handling.
+  - **Models:** `pbx3api/app/Models/` — e.g. `InboundRoute.php` defines table, guarded/hidden columns.
+  - **API docs:** `pbx3api/docs/general.md` — request/response bodies per resource (GET/POST/PUT/DELETE).
+  - **Routes:** `pbx3api/routes/api.php` — endpoint paths and controller methods.
+  Use the controller’s updateable columns and the docs to ensure the detail edit form includes every API-updateable field (and that list/detail read-only blocks show the same fields).
 - **API client:** `getApiClient()` from `@/api/client`; all requests use it (base URL and token from auth store).
 - **List normalization:** Handle various API list shapes (array, `response.data`, `response.{resource}`, numeric keys) in a small `normalizeList(response)` so the view always gets an array.
 - **Detail fetch:** `GET {resource}/{pkey}` with `encodeURIComponent(pkey)`; refetch on route param change (`watch(pkey, fetchItem)`).
