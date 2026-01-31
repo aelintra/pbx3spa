@@ -152,7 +152,7 @@ onMounted(loadRoutes)
     <header class="list-header">
       <h1>Routes (ring groups)</h1>
       <p class="toolbar">
-        <router-link :to="{ name: 'route-create' }" class="add-btn">Add route</router-link>
+        <router-link :to="{ name: 'route-create' }" class="add-btn">Create</router-link>
         <input
           v-model="filterText"
           type="search"

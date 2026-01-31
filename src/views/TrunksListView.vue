@@ -158,7 +158,7 @@ onMounted(loadTrunks)
     <header class="list-header">
       <h1>Trunks</h1>
       <p class="toolbar">
-        <router-link :to="{ name: 'trunk-create' }" class="add-btn">Add trunk</router-link>
+        <router-link :to="{ name: 'trunk-create' }" class="add-btn">Create</router-link>
         <input
           v-model="filterText"
           type="search"

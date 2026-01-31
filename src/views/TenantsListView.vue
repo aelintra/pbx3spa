@@ -139,7 +139,7 @@ onMounted(loadTenants)
     <header class="list-header">
       <h1>Tenants</h1>
       <p class="toolbar">
-        <router-link :to="{ name: 'tenant-create' }" class="add-btn">Add tenant</router-link>
+        <router-link :to="{ name: 'tenant-create' }" class="add-btn">Create</router-link>
         <input
           v-model="filterText"
           type="search"

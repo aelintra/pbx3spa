@@ -160,7 +160,7 @@ onMounted(loadExtensions)
     <header class="list-header">
       <h1>Extensions</h1>
       <p class="toolbar">
-        <router-link :to="{ name: 'extension-create' }" class="add-btn">Add extension</router-link>
+        <router-link :to="{ name: 'extension-create' }" class="add-btn">Create</router-link>
         <input
           v-model="filterText"
           type="search"

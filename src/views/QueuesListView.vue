@@ -34,7 +34,7 @@ onMounted(async () => {
   <div>
     <h1>Queues</h1>
     <p class="toolbar">
-      <router-link :to="{ name: 'queue-create' }" class="add-btn">Add queue</router-link>
+      <router-link :to="{ name: 'queue-create' }" class="add-btn">Create</router-link>
     </p>
 
     <p v-if="loading" class="loading">Loading queues from API…</p>

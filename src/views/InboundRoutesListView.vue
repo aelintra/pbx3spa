@@ -153,7 +153,7 @@ onMounted(loadInboundRoutes)
     <header class="list-header">
       <h1>Inbound routes</h1>
       <p class="toolbar">
-        <router-link :to="{ name: 'inbound-route-create' }" class="add-btn">Add inbound route</router-link>
+        <router-link :to="{ name: 'inbound-route-create' }" class="add-btn">Create</router-link>
         <input
           v-model="filterText"
           type="search"

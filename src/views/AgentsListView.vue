@@ -34,7 +34,7 @@ onMounted(async () => {
   <div>
     <h1>Agents</h1>
     <p class="toolbar">
-      <router-link :to="{ name: 'agent-create' }" class="add-btn">Add agent</router-link>
+      <router-link :to="{ name: 'agent-create' }" class="add-btn">Create</router-link>
     </p>
 
     <p v-if="loading" class="loading">Loading agents…</p>

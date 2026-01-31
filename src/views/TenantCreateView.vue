@@ -308,7 +308,7 @@ function goBack() {
 
       <div class="actions">
         <button type="submit" :disabled="loading">
-          {{ loading ? 'Creating…' : 'Create tenant' }}
+          {{ loading ? 'Creating…' : 'Create' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
       </div>

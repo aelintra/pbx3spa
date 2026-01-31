@@ -34,7 +34,7 @@ onMounted(async () => {
   <div>
     <h1>IVRs</h1>
     <p class="toolbar">
-      <router-link :to="{ name: 'ivr-create' }" class="add-btn">Add IVR</router-link>
+      <router-link :to="{ name: 'ivr-create' }" class="add-btn">Create</router-link>
     </p>
 
     <p v-if="loading" class="loading">Loading IVRs…</p>
