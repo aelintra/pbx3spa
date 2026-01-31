@@ -13,14 +13,14 @@ Reusable structure for admin resource panels (Extensions, Trunks, Queues, Agents
 | `/{resource}/:pkey` | `{resource}-detail` | `{Resource}DetailView.vue` | Single item: read-only + Edit/Delete. |
 
 - **Resource** = plural noun (extensions, trunks, queues, …). **pkey** = human-facing key (extension number, trunk name, etc.); used in URL for detail.
-- List has an “Add …” button linking to `/{resource}/new`. Detail has a “← {Resource}” back button to list.
+- List has a **Create** button linking to `/{resource}/new`. Detail has a "← {Resource}" back button to list.
 
 ---
 
 ## 2. List view
 
 - **Title:** `<h1>{Resource}</h1>` (e.g. “Extensions”, “Trunks”).
-- **Toolbar:** One row with primary action: `<router-link :to="{ name: '{resource}-create' }" class="add-btn">Add {resource}</router-link>`. Wrap in `<p class="toolbar">`.
+- **Toolbar:** One row with primary action: `<router-link :to="{ name: '{resource}-create' }" class="add-btn">Create</router-link>`. Wrap in `<p class="toolbar">`.
 - **States:** Loading message; error message (single line); empty message (“No {resource}. (API returned an empty list.)”); else **table**.
 - **Table:** `<table class="table">`. Header row with column headers; body: one `<tr>` per item, first column usually a `<router-link>` to detail (`{ name: '{resource}-detail', params: { pkey: item.pkey } }`), class `cell-link`. Columns = key fields (e.g. pkey, **Tenant** (cluster pkey — see §5.1), technology, active).
 - **Sortable columns:** Give users a clear visual cue that columns are sortable (“don’t make me think”). Use class `th-sortable` on sortable `<th>` elements and: (1) show a **neutral sort icon** (e.g. ⇅) in every sortable header via CSS `::before`, so at a glance all sortable columns are obvious; (2) when a column is the active sort, show ↑ or ↓ (e.g. via `::after` and `.sort-asc` / `.sort-desc`); (3) add `title="Click to sort"` on sortable headers for hover. Non-sortable columns (e.g. Edit, Delete) use `.th-actions` with no icon.
@@ -238,3 +238,5 @@ When adding a new resource panel (or refactoring an existing one):
 ## 8. Reference implementation
 
 **Extensions** and **Tenants** are the reference implementations. **List:** Use list template blocks (§2.2): `list-view`, `list-header`, `list-states`, `list-body`; toolbar/add-btn and optional filter; sortable columns; Edit/Delete icons with confirmation modal. **Detail:** Use detail content blocks (§4.1): Identity section, second section (Transport for Extensions, Settings for Tenants), Advanced reveal; full edit form; delete with confirmation modal. When upgrading other panels (Trunks, Queues, Agents, Routes, IVRs, Inbound routes), apply §2.2 and §4.1 so list and detail match this structure.
+
+**Create panel status:** List toolbar and create-form submit button are standardized to **Create** / **Creating…** everywhere. Create forms fully aligned with §3 (SQL defaults, Identity/Settings/Advanced, segmented pills): **Tenant**, **Inbound route**. Still to align: **Extension**, **Trunk**, **Route**, **Queue**, **Agent**, **IVR** — see PROJECT_PLAN.md § Current state → To-do (create panels).

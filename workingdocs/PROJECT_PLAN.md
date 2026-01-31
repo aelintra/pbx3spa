@@ -6,9 +6,9 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 ## Current state (for the next chat)
 
-**Last session:** Extensions panel UX complete: toasts, delete confirmation modal, sortable-column affordance (⇅), tenant column clickable → tenant-detail, Edit/Delete as icons (pencil/trash) with tooltips. Pattern doc (PANEL_PATTERN.md) and AI-REVIEW-OF-UX.md updated. All committed: frontend branch **extensions-buildout**, API branch **newpanels** (extension delete resilient to missing Cos tables; ValidateClusterAccess/routes typo fix; docs + test/ added).
+**Last session:** UI standardization: list panels use a single **Create** button (no “Add {object}”); create-form submit buttons use **Create** / **Creating…** (no “Create {object}”). All create views updated (Extension, Trunk, Route, Queue, Agent, IVR, Tenant, Inbound route). Branch **extensions-buildout** was merged into **main** (fast-forward); **extensions-buildout** deleted locally. User was to run `git push origin main` and `git push origin --delete extensions-buildout` from their machine (credentials required). Work is on **main**.
 
-**Done:** Steps 1–17 plus Steps 18+ (Tenants, Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound routes — full CRUD where applicable; Trunk/Queue/Extension detail + edit/delete; Backups page implemented but **parked**). Default after login is **Home** (dashboard): PBX status via `GET syscommands/pbxrunstate` + Refresh, and actions Commit / Start / Stop / Reboot with confirmations. Auth: login, sessionStorage persist, route guard, whoami in layout.
+**Done:** Steps 1–17 plus Steps 18+ (Tenants, Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound routes — full CRUD where applicable; list/detail/create refactored per PANEL_PATTERN.md: list blocks, detail Identity/Settings/Advanced, edit-from-list, delete confirmation modal, toasts). Create-button wording standardized: list toolbar = “Create”, create form submit = “Create” / “Creating…”. Default after login is **Home** (dashboard): PBX status via `GET syscommands/pbxrunstate` + Refresh, and actions Commit / Start / Stop / Reboot with confirmations. Auth: login, sessionStorage persist, route guard, whoami in layout.
 
 **Parked:** Backups — review after first CRUD set; behaviour may depend on PBX3 internals.
 
@@ -24,7 +24,9 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **Review later (UX – inline edit):** Consider inline edit for list rows *after* the system runs nicely on the current list → detail/edit pattern. The old system had inline edit in some areas; on bigger rows it looked clunky and took extra real estate on busy screens. Revisit only when the main pattern is stable and we want to optimise for high-frequency small edits.
 
-**Next chat:** Read **workingdocs/PROJECT_PLAN.md**, **workingdocs/SYSTEM_CONTEXT.md**, and **workingdocs/README.md**. Pick up from here; next steps could be e.g. push pending commits, revisit Backups, or start API work for user management or tt_help_core before adding frontend for either.
+**To-do (create panels):** Standardize remaining create panels per PANEL_PATTERN.md §3: **Extension**, **Trunk**, **Route**, **Queue**, **Agent**, **IVR**. For each: (a) preset create-form fields from DB SQL DEFAULTs and model `$attributes`; (b) group fields into Identity, Settings (or Transport), and optional Advanced; (c) use segmented pills for boolean and short fixed-choice fields instead of `<select>`. Tenant and Inbound route create are already done; use them as reference.
+
+**Next chat:** Read **workingdocs/PROJECT_PLAN.md** (§ Current state), **workingdocs/SYSTEM_CONTEXT.md**, and **workingdocs/README.md**. Pick up from here; next steps could be e.g. create-panel standardization (see to-do above), push/pull if needed, revisit Backups, or API work for user management or tt_help_core.
 
 ---
 
