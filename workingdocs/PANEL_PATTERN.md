@@ -88,6 +88,8 @@ Apply this block structure to every list view (Extensions, Tenants, Trunks, Queu
 
 ## 4.1 Detail view: content blocks (Identity, second section, Advanced)
 
+**Displayed field list derived from the API.** The fields shown in the detail view (read-only blocks) and in the edit form must be **derived from the API**: the same fields the API returns for the resource should appear in the detail view and edit form, grouped into Identity, second section (e.g. Settings or Transport), and Advanced. Do not hard-code an arbitrary subset; if the API returns a field, show it (read-only if immutable, editable if the API allows update). The list view columns and detail Identity/Settings should align with the API shape for that resource.
+
 When **not editing**, the read-only content must be split into **named blocks** so every detail panel has the same structure. Use this pattern for Extensions, Tenants, Trunks, Queues, Agents, Routes, IVRs, Inbound routes, etc.
 
 1. **Identity block:** `<section class="detail-section">` with `<h2 class="detail-heading">Identity</h2>` and a `<dl class="detail-list">` of identity fields. Define an `identityFields` computed (array of `{ label, value }`) with the resource’s core identity: e.g. pkey/name, shortuid/Local UID, description, and any primary identifiers. Examples: Extension = Ext, SIP Identity, Tenant, User, Device, …; Tenant = name, Local UID, description.
@@ -102,6 +104,23 @@ When **not editing**, the read-only content must be split into **named blocks** 
 4. **Optional per-resource section:** If the resource has a sub-resource (e.g. Extensions have **Runtime**), add an extra `<section class="detail-section">` with its own heading and content between the second section and Advanced.
 
 **CSS classes (scoped):** `.detail-content` (e.g. `max-width: 36rem`), `.detail-section` (e.g. `margin-top: 1.5rem`; first-of-type `margin-top: 1rem`), `.detail-heading` (e.g. `font-size: 1rem; font-weight: 600; margin: 0 0 0.5rem 0`), `.detail-list-other` (e.g. `margin-top: 0.5rem`), `.collapse-trigger` (block button, full width, padding, border-bottom, cursor pointer, text-align left; hover style). Copy from Extensions or Tenants detail view when upgrading other panels.
+
+---
+
+## 4.2 Edit form: boolean and short choice lists (segmented pill)
+
+For **boolean** (e.g. Active? YES/NO) and **short choice lists** (e.g. Location: local/remote; Transport: udp/tcp/tls/wss) in the detail **edit form**, do **not** use a `<select>` dropdown. Use a **segmented pill** (radio group styled as a single control) so the pattern is consistent and scannable.
+
+- **Label:** Use `class="edit-label-block"` on the label so it displays as a block above the control (e.g. `<label class="edit-label-block">Active?</label>`).
+- **Control:** Wrap the options in `<div class="switch-toggle switch-ios">`. Use **radio inputs** (not select): one `<input type="radio">` per option with a visible `<label for="...">` that shows the option text. The radios are visually hidden; the labels look like segments. Example (Active? YES/NO):
+  - `<label class="edit-label-block">Active?</label>`
+  - `<div class="switch-toggle switch-ios">`
+  - `<input id="edit-active-yes" type="radio" value="YES" v-model="editActive" />` + `<label for="edit-active-yes">YES</label>`
+  - `<input id="edit-active-no" type="radio" value="NO" v-model="editActive" />` + `<label for="edit-active-no">NO</label>`
+  - `</div>`
+- **CSS (scoped):** `.edit-label-block` (display: block; margin-bottom: 0.25rem). `.switch-toggle.switch-ios`: flex container, background #e2e8f0, border-radius 0.5rem, padding 0.25rem. Hide the radio inputs (position: absolute; opacity: 0; width: 0; height: 0). Style the labels as segments: flex: 1, padding, text-align center, cursor pointer; default color #64748b; hover #334155; **checked** (input:checked + label): background white, color #0f172a, subtle box-shadow. Copy from ExtensionDetailView when adding to other panels.
+
+Apply this to every detail edit form that has a boolean or a small fixed set of choices (e.g. Active?, Location, Transport). Use `<select>` only for long or dynamic lists (e.g. Tenant from API list).
 
 ---
 
@@ -125,6 +144,8 @@ Internally, tenants are **clusters** (cluster table); data rows often store a cl
   - **Fallback:** Frontend fetches `GET tenants`, builds a map (cluster id/shortuid/pkey → tenant pkey), and resolves for display. Use when the API does not yet expose `tenant_pkey`. **The map must include tenant id, shortuid, and pkey → tenant pkey** (e.g. for each tenant: `map.set(id, pkey)`, `map.set(shortuid, pkey)`, `map.set(pkey, pkey)`). Then when the API returns `item.cluster` as tenant id, shortuid, or pkey, the column shows **tenant pkey** (never shortuid or id) and the link to tenant detail uses that pkey.
 - **List and detail both:** Use the same resolution (and the same full map: id, shortuid, pkey) in **both** the list view and the detail view for that resource. It is easy to add the map only in the list and forget the detail view; if the detail view also displays Tenant (e.g. Trunk detail, Extension detail), it must build and use the same map so the Tenant field shows pkey there too.
 - **Sort/filter:** When sorting or filtering by tenant, use the **resolved pkey** (so “Tenant” column sort/filter is by tenant name, not by id/shortuid).
+
+- **Detail edit form — Tenant dropdown:** When the detail view has an **edit form** and the resource has a cluster/tenant field, use a **dropdown** (`<select>`), not a text input, so the user picks from existing tenants. (You already fetch `GET tenants` for the resolution map.) Build **tenantOptions** = sorted list of tenant pkeys from the fetched list (e.g. `tenants.value.map(t => t.pkey).filter(Boolean)`, dedupe, sort). Build **tenantOptionsForSelect** = tenantOptions, but if the current edit value (e.g. `editCluster`) is not in the list (e.g. API returned a tenant not in the fetched list), prepend it so the dropdown can show and submit it. Use `<label for="edit-tenant">Tenant</label>` and `<select id="edit-tenant" v-model="editCluster" class="edit-input" required>` with `<option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>`. Apply to every panel that edits cluster/tenant (Extensions, Trunks, Routes, etc.).
 
 Apply this to every data panel that has a cluster/tenant column (Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound routes, etc.).
 
@@ -195,7 +216,7 @@ When adding a new resource panel (or refactoring an existing one):
 1. Add the three routes and three view files following the names above.
 2. Implement List: **Per §2.2** use the **list template blocks** (root `list-view`, `list-header`, `list-states`, `list-body`). Toolbar + add-btn, table, loading/error/empty. **Per §2.1:** add an **Edit** column (link to detail with `query: { edit: '1' }`) for rows that can be edited; add a **Delete** column with a **confirmation modal** (not browser confirm) for rows that can be deleted.
 3. Implement Create: back, form, actions, success → detail.
-4. Implement Detail: back, toolbar (Edit / Delete), **Per §4.1** use the **detail content blocks** (Identity, second section e.g. Transport or Settings, Advanced reveal). Edit form with all editable API fields, delete with confirm. **Per §4:** when `route.query.edit` is set after load, call `startEdit()` so list Edit links land in edit mode.
+4. Implement Detail: back, toolbar (Edit / Delete), **Per §4.1** use the **detail content blocks** (Identity, second section e.g. Transport or Settings, Advanced reveal). Edit form with all editable API fields; **Per §4.2** use **segmented pill** (switch-toggle switch-ios + radio) for boolean and short choice lists (e.g. Active?), not `<select>`. Delete with confirm. **Per §4:** when `route.query.edit` is set after load, call `startEdit()` so list Edit links land in edit mode.
 5. Reuse the CSS class names from this doc so styling stays consistent (copy from an existing panel, e.g. Extensions or Tenants, then adjust for fields).
 6. **Tenant column:** If the resource has a cluster/tenant, show **Tenant** (tenant pkey) per §5.1 — API returns `tenant_pkey` or frontend resolves from GET tenants. **Use the same resolution in both list and detail:** build the map (id, shortuid, pkey → tenant pkey) and use it in the list view and in the detail view so the Tenant field always shows pkey everywhere.
 7. **Success toasts:** After successful save or delete, call `useToastStore().show(message)` per §5.2 so the user gets positive confirmation.

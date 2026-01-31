@@ -12,6 +12,10 @@ const loading = ref(true)
 const error = ref('')
 const editing = ref(false)
 const editDescription = ref('')
+const editClusterclid = ref('')
+const editAbstimeout = ref('')
+const editChanmax = ref('')
+const editMasteroclo = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -29,6 +33,10 @@ async function fetchTenant() {
   try {
     tenant.value = await getApiClient().get(`tenants/${encodeURIComponent(pkey.value)}`)
     editDescription.value = tenant.value?.description ?? ''
+    editClusterclid.value = tenant.value?.clusterclid ?? ''
+    editAbstimeout.value = tenant.value?.abstimeout ?? ''
+    editChanmax.value = tenant.value?.chanmax ?? ''
+    editMasteroclo.value = (tenant.value?.masteroclo != null && tenant.value?.masteroclo !== '') ? tenant.value.masteroclo : 'AUTO'
     if (route.query.edit) startEdit()
   } catch (err) {
     error.value = err.data?.message || err.message || 'Failed to load tenant'
@@ -47,6 +55,10 @@ function goBack() {
 
 function startEdit() {
   editDescription.value = tenant.value?.description ?? ''
+  editClusterclid.value = tenant.value?.clusterclid ?? ''
+  editAbstimeout.value = tenant.value?.abstimeout ?? ''
+  editChanmax.value = tenant.value?.chanmax ?? ''
+  editMasteroclo.value = (tenant.value?.masteroclo != null && tenant.value?.masteroclo !== '') ? tenant.value.masteroclo : 'AUTO'
   saveError.value = ''
   editing.value = true
 }
@@ -62,13 +74,25 @@ async function saveEdit(e) {
   saving.value = true
   try {
     await getApiClient().put(`tenants/${encodeURIComponent(pkey.value)}`, {
-      description: editDescription.value.trim()
+      description: editDescription.value.trim() || undefined,
+      clusterclid: editClusterclid.value.trim() || undefined,
+      abstimeout: editAbstimeout.value.trim() || undefined,
+      chanmax: editChanmax.value.trim() || undefined,
+      masteroclo: editMasteroclo.value.trim() || undefined
     })
     await fetchTenant()
     editing.value = false
     toast.show(`Tenant ${pkey.value} saved`)
   } catch (err) {
-    const msg = err.data?.description?.[0] ?? err.data?.message ?? err.data?.Error ?? err.message
+    const msg =
+      err.data?.description?.[0] ??
+      err.data?.clusterclid?.[0] ??
+      err.data?.abstimeout?.[0] ??
+      err.data?.chanmax?.[0] ??
+      err.data?.masteroclo?.[0] ??
+      err.data?.message ??
+      err.data?.Error ??
+      err.message
     saveError.value = msg || 'Failed to update tenant'
   } finally {
     saving.value = false
@@ -166,6 +190,13 @@ const otherFields = computed(() => {
         </p>
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
         <form v-else-if="editing" class="edit-form" @submit="saveEdit">
+          <h2 class="detail-heading">Identity</h2>
+          <label>name</label>
+          <p class="detail-readonly value-immutable" title="Immutable">{{ tenant.pkey ?? '—' }}</p>
+          <label>Local UID</label>
+          <p class="detail-readonly value-immutable" title="Immutable">{{ tenant.shortuid ?? '—' }}</p>
+          <label>KSUID</label>
+          <p class="detail-readonly value-immutable" title="Immutable">{{ tenant.id ?? '—' }}</p>
           <label for="edit-description">description</label>
           <input
             id="edit-description"
@@ -173,6 +204,15 @@ const otherFields = computed(() => {
             type="text"
             class="edit-input"
           />
+          <h2 class="detail-heading">Settings</h2>
+          <label for="edit-clusterclid">CLID</label>
+          <input id="edit-clusterclid" v-model="editClusterclid" type="text" class="edit-input" />
+          <label for="edit-abstimeout">Abstime</label>
+          <input id="edit-abstimeout" v-model="editAbstimeout" type="text" class="edit-input" />
+          <label for="edit-chanmax">ChanMax</label>
+          <input id="edit-chanmax" v-model="editChanmax" type="text" class="edit-input" />
+          <label for="edit-masteroclo">Timer status</label>
+          <input id="edit-masteroclo" v-model="editMasteroclo" type="text" class="edit-input" placeholder="e.g. AUTO" />
           <p v-if="saveError" class="error">{{ saveError }}</p>
           <div class="edit-actions">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
@@ -270,6 +310,11 @@ const otherFields = computed(() => {
 }
 .detail-list dd {
   margin: 0;
+}
+.detail-readonly {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9375rem;
+  color: #64748b;
 }
 .value-immutable {
   color: #64748b;

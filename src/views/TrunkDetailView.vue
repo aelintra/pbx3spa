@@ -52,6 +52,18 @@ function tenantPkeyDisplay(clusterValue) {
   return clusterToTenantPkey.value.get(s) ?? trunk.value?.tenant_pkey ?? s
 }
 
+const tenantOptions = computed(() => {
+  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
+  return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
+})
+
+const tenantOptionsForSelect = computed(() => {
+  const list = tenantOptions.value
+  const cur = editCluster.value
+  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  return list
+})
+
 async function fetchTenants() {
   try {
     const response = await getApiClient().get('tenants')
@@ -214,15 +226,27 @@ const otherFields = computed(() => {
         </p>
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
         <form v-else-if="editing" class="edit-form" @submit="saveEdit">
+          <h2 class="detail-heading">Identity</h2>
+          <label>name</label>
+          <p class="detail-readonly value-immutable" title="Immutable">{{ trunk.pkey ?? '—' }}</p>
+          <label>Local UID</label>
+          <p class="detail-readonly value-immutable" title="Immutable">{{ trunk.shortuid ?? '—' }}</p>
+          <label>KSUID</label>
+          <p class="detail-readonly value-immutable" title="Immutable">{{ trunk.id ?? '—' }}</p>
           <label for="edit-description">description</label>
           <input id="edit-description" v-model="editDescription" type="text" class="edit-input" />
-          <label for="edit-active">active</label>
-          <select id="edit-active" v-model="editActive" class="edit-input">
-            <option value="YES">YES</option>
-            <option value="NO">NO</option>
+          <h2 class="detail-heading">Settings</h2>
+          <label for="edit-tenant">Tenant</label>
+          <select id="edit-tenant" v-model="editCluster" class="edit-input" required>
+            <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>
           </select>
-          <label for="edit-cluster">Tenant (cluster)</label>
-          <input id="edit-cluster" v-model="editCluster" type="text" class="edit-input" required />
+          <label class="edit-label-block">Active?</label>
+          <div class="switch-toggle switch-ios">
+            <input id="edit-active-yes" type="radio" value="YES" v-model="editActive" />
+            <label for="edit-active-yes">YES</label>
+            <input id="edit-active-no" type="radio" value="NO" v-model="editActive" />
+            <label for="edit-active-no">NO</label>
+          </div>
           <label for="edit-host">host</label>
           <input id="edit-host" v-model="editHost" type="text" class="edit-input" required />
           <p v-if="saveError" class="error">{{ saveError }}</p>
@@ -408,6 +432,50 @@ const otherFields = computed(() => {
 .edit-form label {
   font-size: 0.875rem;
   font-weight: 500;
+}
+.detail-readonly {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9375rem;
+  color: #64748b;
+}
+.edit-label-block {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.switch-toggle.switch-ios {
+  display: flex;
+  flex-wrap: wrap;
+  background: #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  gap: 0;
+}
+.switch-toggle.switch-ios input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch-toggle.switch-ios label {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 0.375rem;
+  transition: background-color 0.15s, color 0.15s;
+  color: #64748b;
+}
+.switch-toggle.switch-ios label:hover {
+  color: #334155;
+}
+.switch-toggle.switch-ios input:checked + label {
+  background: white;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 .edit-input {
   padding: 0.5rem 0.75rem;

@@ -2,10 +2,13 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToastStore()
 const routeData = ref(null)
+const tenants = ref([])
 const loading = ref(true)
 const error = ref('')
 const editing = ref(false)
@@ -16,8 +19,58 @@ const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
 const deleting = ref(false)
+const confirmDeleteOpen = ref(false)
+const advancedOpen = ref(false)
 
 const pkey = computed(() => route.params.pkey)
+
+function normalizeList(response) {
+  if (Array.isArray(response)) return response
+  if (response && typeof response === 'object') {
+    if (Array.isArray(response.data)) return response.data
+    if (Array.isArray(response.tenants)) return response.tenants
+    if (Object.keys(response).every((k) => /^\d+$/.test(k))) return Object.values(response)
+  }
+  return []
+}
+
+/** Map cluster id, shortuid, or pkey → tenant pkey for display (always show pkey, not shortuid). */
+const clusterToTenantPkey = computed(() => {
+  const map = new Map()
+  for (const t of tenants.value) {
+    if (t.id != null) map.set(String(t.id), t.pkey ?? t.id)
+    if (t.shortuid != null) map.set(String(t.shortuid), t.pkey ?? t.shortuid)
+    if (t.pkey != null) map.set(String(t.pkey), t.pkey)
+  }
+  return map
+})
+
+function tenantPkeyDisplay(clusterValue) {
+  if (clusterValue == null || clusterValue === '') return '—'
+  const s = String(clusterValue)
+  return clusterToTenantPkey.value.get(s) ?? routeData.value?.tenant_pkey ?? s
+}
+
+const tenantOptions = computed(() => {
+  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
+  return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
+})
+
+const tenantOptionsForSelect = computed(() => {
+  const list = tenantOptions.value
+  const cur = editCluster.value
+  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  return list
+})
+
+async function fetchTenants() {
+  try {
+    const response = await getApiClient().get('tenants')
+    tenants.value = normalizeList(response)
+  } catch {
+    tenants.value = []
+  }
+}
 
 async function fetchRoute() {
   if (!pkey.value) return
@@ -25,9 +78,11 @@ async function fetchRoute() {
   error.value = ''
   try {
     routeData.value = await getApiClient().get(`routes/${encodeURIComponent(pkey.value)}`)
-    editCluster.value = routeData.value?.cluster ?? 'default'
-    editDesc.value = routeData.value?.desc ?? ''
+    const tenantPkey = routeData.value?.tenant_pkey ?? tenantPkeyDisplay(routeData.value?.cluster)
+    editCluster.value = tenantPkey ?? 'default'
+    editDesc.value = routeData.value?.desc ?? routeData.value?.description ?? ''
     editActive.value = routeData.value?.active ?? 'YES'
+    if (route.query.edit) startEdit()
   } catch (err) {
     error.value = err.data?.message || err.message || 'Failed to load route'
     routeData.value = null
@@ -36,7 +91,9 @@ async function fetchRoute() {
   }
 }
 
-onMounted(fetchRoute)
+onMounted(() => {
+  fetchTenants().then(() => fetchRoute())
+})
 watch(pkey, fetchRoute)
 
 function goBack() {
@@ -44,8 +101,8 @@ function goBack() {
 }
 
 function startEdit() {
-  editCluster.value = routeData.value?.cluster ?? 'default'
-  editDesc.value = routeData.value?.desc ?? ''
+  editCluster.value = routeData.value?.tenant_pkey ?? tenantPkeyDisplay(routeData.value?.cluster) ?? 'default'
+  editDesc.value = routeData.value?.desc ?? routeData.value?.description ?? ''
   editActive.value = routeData.value?.active ?? 'YES'
   saveError.value = ''
   editing.value = true
@@ -68,6 +125,7 @@ async function saveEdit(e) {
     })
     await fetchRoute()
     editing.value = false
+    toast.show(`Route ${pkey.value} saved`)
   } catch (err) {
     const msg =
       err.data?.cluster?.[0] ??
@@ -81,25 +139,59 @@ async function saveEdit(e) {
   }
 }
 
-async function doDelete() {
-  if (!confirm(`Delete route "${pkey.value}"? This cannot be undone.`)) return
+function askConfirmDelete() {
+  deleteError.value = ''
+  confirmDeleteOpen.value = true
+}
+
+function cancelConfirmDelete() {
+  confirmDeleteOpen.value = false
+}
+
+async function confirmAndDelete() {
   deleteError.value = ''
   deleting.value = true
   try {
     await getApiClient().delete(`routes/${encodeURIComponent(pkey.value)}`)
+    toast.show(`Route ${pkey.value} deleted`)
     router.push({ name: 'routes' })
   } catch (err) {
     deleteError.value = err.data?.message ?? err.message ?? 'Failed to delete route'
   } finally {
     deleting.value = false
+    confirmDeleteOpen.value = false
   }
 }
 
-const detailFields = computed(() => {
+/** Identity section: immutable fields grouped first, then editable. */
+const identityFields = computed(() => {
+  if (!routeData.value) return []
+  const r = routeData.value
+  return [
+    { label: 'name', value: r.pkey ?? '—', immutable: true },
+    { label: 'Local UID', value: r.shortuid ?? '—', immutable: true },
+    { label: 'KSUID', value: r.id ?? '—', immutable: true },
+    { label: 'description', value: r.desc ?? r.description ?? '—', immutable: false }
+  ]
+})
+
+/** Settings section: Tenant, Active? */
+const settingsFields = computed(() => {
+  if (!routeData.value) return []
+  const r = routeData.value
+  return [
+    { label: 'Tenant', value: tenantPkeyDisplay(r.cluster) },
+    { label: 'Active?', value: r.active ?? '—' }
+  ]
+})
+
+const ADVANCED_EXCLUDE = new Set([
+  'id', 'pkey', 'shortuid', 'desc', 'description', 'cluster', 'tenant_pkey', 'active'
+])
+const otherFields = computed(() => {
   if (!routeData.value || typeof routeData.value !== 'object') return []
-  const skip = new Set(['pkey'])
   return Object.entries(routeData.value)
-    .filter(([k]) => !skip.has(k))
+    .filter(([k]) => !ADVANCED_EXCLUDE.has(k))
     .sort(([a], [b]) => a.localeCompare(b))
 })
 </script>
@@ -114,43 +206,97 @@ const detailFields = computed(() => {
     <p v-if="loading" class="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
     <template v-else-if="routeData">
-      <p v-if="!editing" class="toolbar">
-        <button type="button" class="edit-btn" @click="startEdit">Edit</button>
-        <button
-          type="button"
-          class="delete-btn"
-          :disabled="deleting"
-          @click="doDelete"
-        >
-          {{ deleting ? 'Deleting…' : 'Delete route' }}
-        </button>
-      </p>
-      <p v-if="deleteError" class="error">{{ deleteError }}</p>
-      <form v-else-if="editing" class="edit-form" @submit="saveEdit">
-        <label for="edit-cluster">cluster</label>
-        <input id="edit-cluster" v-model="editCluster" type="text" class="edit-input" required />
-        <label for="edit-desc">desc (optional)</label>
-        <input id="edit-desc" v-model="editDesc" type="text" class="edit-input" />
-        <label for="edit-active">active</label>
-        <select id="edit-active" v-model="editActive" class="edit-input">
-          <option value="YES">YES</option>
-          <option value="NO">NO</option>
-        </select>
-        <p v-if="saveError" class="error">{{ saveError }}</p>
-        <div class="edit-actions">
-          <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
-          <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
-        </div>
-      </form>
-      <dl class="detail-list">
-        <dt>pkey</dt>
-        <dd>{{ routeData.pkey }}</dd>
-        <template v-for="[key, value] in detailFields" :key="key">
-          <dt>{{ key }}</dt>
-          <dd>{{ value == null ? '—' : String(value) }}</dd>
+      <div class="detail-content">
+        <p v-if="!editing" class="toolbar">
+          <button type="button" class="edit-btn" @click="startEdit">Edit</button>
+          <button
+            type="button"
+            class="delete-btn"
+            :disabled="deleting"
+            @click="askConfirmDelete"
+          >
+            {{ deleting ? 'Deleting…' : 'Delete route' }}
+          </button>
+        </p>
+        <p v-if="deleteError" class="error">{{ deleteError }}</p>
+        <form v-else-if="editing" class="edit-form" @submit="saveEdit">
+          <h2 class="detail-heading">Identity</h2>
+          <label>name</label>
+          <p class="detail-readonly value-immutable" title="Immutable">{{ routeData.pkey ?? '—' }}</p>
+          <label>Local UID</label>
+          <p class="detail-readonly value-immutable" title="Immutable">{{ routeData.shortuid ?? '—' }}</p>
+          <label>KSUID</label>
+          <p class="detail-readonly value-immutable" title="Immutable">{{ routeData.id ?? '—' }}</p>
+          <label for="edit-desc">description</label>
+          <input id="edit-desc" v-model="editDesc" type="text" class="edit-input" />
+          <h2 class="detail-heading">Settings</h2>
+          <label for="edit-tenant">Tenant</label>
+          <select id="edit-tenant" v-model="editCluster" class="edit-input" required>
+            <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>
+          </select>
+          <label class="edit-label-block">Active?</label>
+          <div class="switch-toggle switch-ios">
+            <input id="edit-active-yes" type="radio" value="YES" v-model="editActive" />
+            <label for="edit-active-yes">YES</label>
+            <input id="edit-active-no" type="radio" value="NO" v-model="editActive" />
+            <label for="edit-active-no">NO</label>
+          </div>
+          <p v-if="saveError" class="error">{{ saveError }}</p>
+          <div class="edit-actions">
+            <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+            <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
+          </div>
+        </form>
+        <template v-if="!editing">
+          <section class="detail-section">
+            <h2 class="detail-heading">Identity</h2>
+            <dl class="detail-list">
+              <template v-for="f in identityFields" :key="f.label">
+                <dt>{{ f.label }}</dt>
+                <dd :class="{ 'value-immutable': f.immutable }" :title="f.immutable ? 'Immutable' : undefined">{{ f.value }}</dd>
+              </template>
+            </dl>
+          </section>
+          <section class="detail-section">
+            <h2 class="detail-heading">Settings</h2>
+            <dl class="detail-list">
+              <template v-for="f in settingsFields" :key="f.label">
+                <dt>{{ f.label }}</dt>
+                <dd>{{ f.value }}</dd>
+              </template>
+            </dl>
+          </section>
+          <section class="detail-section">
+            <button type="button" class="collapse-trigger" :aria-expanded="advancedOpen" @click="advancedOpen = !advancedOpen">
+              {{ advancedOpen ? '▼' : '▶' }} Advanced
+            </button>
+            <dl v-show="advancedOpen" class="detail-list detail-list-other">
+              <template v-for="[key, value] in otherFields" :key="key">
+                <dt>{{ key }}</dt>
+                <dd>{{ value == null ? '—' : String(value) }}</dd>
+              </template>
+            </dl>
+          </section>
         </template>
-      </dl>
+      </div>
     </template>
+
+    <Teleport to="body">
+      <div v-if="confirmDeleteOpen" class="modal-backdrop" @click.self="cancelConfirmDelete">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+          <h2 id="modal-delete-title" class="modal-title">Delete route?</h2>
+          <p class="modal-body">
+            Route <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.
+          </p>
+          <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-cancel" @click="cancelConfirmDelete">Cancel</button>
+            <button type="button" class="modal-btn modal-btn-delete" :disabled="deleting" @click="confirmAndDelete">
+              {{ deleting ? 'Deleting…' : 'Delete' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -178,6 +324,9 @@ const detailFields = computed(() => {
 .error {
   color: #dc2626;
 }
+.detail-content {
+  max-width: 36rem;
+}
 .detail-list {
   margin-top: 1rem;
   display: grid;
@@ -192,6 +341,52 @@ const detailFields = computed(() => {
 }
 .detail-list dd {
   margin: 0;
+}
+.detail-readonly {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9375rem;
+  color: #64748b;
+}
+.value-immutable {
+  color: #64748b;
+  background: #f8fafc;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+.detail-list dd.value-immutable {
+  padding: 0.125rem 0.25rem;
+  margin: 0;
+}
+.detail-section {
+  margin-top: 1.5rem;
+}
+.detail-section:first-of-type {
+  margin-top: 1rem;
+}
+.detail-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 0.5rem 0;
+}
+.detail-list-other {
+  margin-top: 0.5rem;
+}
+.collapse-trigger {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #334155;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer;
+  text-align: left;
+}
+.collapse-trigger:hover {
+  color: #0f172a;
 }
 .toolbar {
   margin: 0 0 0.75rem 0;
@@ -235,6 +430,45 @@ const detailFields = computed(() => {
   font-size: 0.875rem;
   font-weight: 500;
 }
+.edit-label-block {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.switch-toggle.switch-ios {
+  display: flex;
+  flex-wrap: wrap;
+  background: #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  gap: 0;
+}
+.switch-toggle.switch-ios input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch-toggle.switch-ios label {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 0.375rem;
+  transition: background-color 0.15s, color 0.15s;
+  color: #64748b;
+}
+.switch-toggle.switch-ios label:hover {
+  color: #334155;
+}
+.switch-toggle.switch-ios input:checked + label {
+  background: white;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
 .edit-input {
   padding: 0.5rem 0.75rem;
   border: 1px solid #e2e8f0;
@@ -272,5 +506,70 @@ const detailFields = computed(() => {
 }
 .edit-actions button.secondary:hover {
   background: #f1f5f9;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+.modal {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 1.5rem;
+  max-width: 24rem;
+  width: 100%;
+}
+.modal-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+.modal-body {
+  margin: 0 0 1.25rem 0;
+  font-size: 0.9375rem;
+  color: #475569;
+  line-height: 1.5;
+}
+.modal-body strong {
+  color: #0f172a;
+}
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+.modal-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  border: none;
+}
+.modal-btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+.modal-btn-cancel:hover {
+  background: #e2e8f0;
+}
+.modal-btn-delete {
+  background: #dc2626;
+  color: white;
+}
+.modal-btn-delete:hover:not(:disabled) {
+  background: #b91c1c;
+}
+.modal-btn-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 </style>

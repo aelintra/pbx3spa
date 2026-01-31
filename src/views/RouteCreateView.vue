@@ -2,8 +2,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
+const toast = useToastStore()
 const pkey = ref('')
 const cluster = ref('default')
 const error = ref('')
@@ -20,11 +22,12 @@ async function onSubmit(e) {
   error.value = ''
   loading.value = true
   try {
-    const route = await getApiClient().post('routes', {
+    const created = await getApiClient().post('routes', {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim()
     })
-    router.push({ name: 'route-detail', params: { pkey: route.pkey } })
+    toast.show(`Route ${created.pkey} created`)
+    router.push({ name: 'route-detail', params: { pkey: created.pkey } })
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
@@ -61,7 +64,7 @@ function goBack() {
         autocomplete="off"
       />
 
-      <label for="cluster">cluster</label>
+      <label for="cluster">Tenant</label>
       <input
         id="cluster"
         v-model="cluster"
