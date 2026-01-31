@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDI Add – Logic Flow</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'neutral' });</script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 0 auto; padding: 1rem; }
+    h1 { font-size: 1.25rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; color: #333; }
+    .mermaid { margin: 1rem 0; min-height: 200px; }
+    .mermaid svg { max-width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>DDI Add – Logic Flow (for SPA replacement)</h1>
+  <p>Flowchart of logic paths through the “add new DDI/CLID” code.</p>
+
+  <h2>1. High-level flow (entry → outcome)</h2>
+  <div class="mermaid">
+flowchart TD
+    Start([User on DDI list]) --> ClickNew[Click New]
+    ClickNew --> RouteNew{GET/POST new?}
+    RouteNew -->|Yes| ShowNew[showNew: render form]
+    RouteNew -->|No| OtherRoutes[Other showForm branches...]
+    ShowNew --> FormDisplay[Display: cluster, chooserDiD + conditional fields]
+    FormDisplay --> UserFills[User selects DiD or CLID, fills fields, Submit]
+    UserFills --> Submit{POST save or endsave?}
+    Submit -->|No| FormDisplay
+    Submit -->|Yes| SaveNew[saveNew]
+    SaveNew --> SwitchCarrier[Switch on carrier]
+    SwitchCarrier --> TypeHandler[saveDiD or saveCLI]
+    TypeHandler --> ValidOK{Validation OK?}
+    ValidOK -->|No| SetInvalid[invalidForm, showNew]
+    ValidOK -->|Yes| Smartlink[Optional smartlink logic]
+    Smartlink --> Loop[Loop span times: createTuple lineio]
+    Loop --> Done[showMain list]
+    SetInvalid --> BackToNew[showNew with errors]
+  </div>
+
+  <h2>2. showForm() routing (add-related branches only)</h2>
+  <div class="mermaid">
+flowchart TD
+    ShowForm([showForm entry]) --> A{POST new or GET new?}
+    A -->|Yes| ShowNew[showNew return]
+    A -->|No| B{POST save or endsave?}
+    B -->|Yes| SaveNew[saveNew]
+    SaveNew --> Invalid{invalidForm?}
+    Invalid -->|Yes| ShowNew2[showNew return]
+    Invalid -->|No| FallThrough[fall through to showMain]
+    B -->|No| C[Other actions...]
+  </div>
+
+  <h2>3. saveNew() – switch and loop</h2>
+  <div class="mermaid">
+flowchart TD
+    SaveNew([saveNew]) --> Switch([Switch POST carrier])
+    Switch --> P{carrier?}
+    P -->|DiD| SaveDiD[saveDiD]
+    P -->|CLID| SaveCLI[saveCLI]
+    P -->|default| Return[return]
+    SaveDiD --> ValidD{Valid?}
+    SaveCLI --> ValidC{Valid?}
+    ValidD -->|No| Invalid[invalidForm]
+    ValidC -->|No| Invalid
+    ValidD -->|Yes| TupleD[tuple + span]
+    ValidC -->|Yes| TupleC[tuple, span=1]
+    TupleD --> Smartlink{smartlink?}
+    TupleC --> Loop
+    Smartlink -->|Yes| ExtLookup[extkey, ipphone lookup]
+    Smartlink -->|No| Loop
+    ExtLookup --> Loop[for i=0 to span-1: createTuple lineio]
+    Loop --> Inc[pkey++ str_pad]
+    Inc --> Loop
+  </div>
+
+  <h2>4. saveDiD – validation and tuple</h2>
+  <div class="mermaid">
+flowchart TD
+    SaveDiD([saveDiD]) --> Val[didnumber required]
+    Val --> Check[No _ and / together]
+    Check --> Parse[Split didnumber by /]
+    Parse --> Pkey[pkey = first part]
+    Parse --> Span{second part?}
+    Span -->|Yes| SpanNum[span = number, max 100]
+    Span -->|No| Span1[span = 1]
+    SpanNum --> Tuple[cluster, trunkname, carrier=DiD]
+    Span1 --> Tuple
+    Tuple --> ValidOK{ValidateForm?}
+    ValidOK -->|No| Invalid[invalidForm]
+  </div>
+
+  <h2>5. saveCLI – validation and tuple</h2>
+  <div class="mermaid">
+flowchart TD
+    SaveCLI([saveCLI]) --> Val[clinumber req, trunkname req]
+    Val --> ValidOK{ValidateForm?}
+    ValidOK -->|No| Invalid[invalidForm]
+    ValidOK -->|Yes| Tuple[pkey=clinumber, cluster, trunkname, carrier=CLID]
+  </div>
+
+  <h2>6. Client-side – type → visible fields</h2>
+  <div class="mermaid">
+flowchart TD
+    Load([Page load]) --> Hide[Hide: trunkname, didnumber, clinumber, smartlink, endsave]
+    Change([chooserDiD change]) --> Disable[Disable chooser, grey]
+    Disable --> ShowEnd[Show endsave]
+    ShowEnd --> SetCarrier[Set hidden carrier]
+    SetCarrier --> Type{Type?}
+    Type -->|DiD| DiD[Show trunkname, didnumber, smartlink]
+    Type -->|CLID| CLID[Show trunkname, clinumber]
+  </div>
+
+  <h2>7. Full create path (simplified)</h2>
+  <div class="mermaid">
+flowchart TD
+    subgraph Entry
+        A([New]) --> B[showNew: form]
+        B --> C[User: type + fields + Submit]
+    end
+    subgraph Submit
+        C --> D[saveNew]
+        D --> E{Switch carrier}
+    end
+    subgraph Handlers
+        E -->|DiD| F[saveDiD: parse didnumber, span]
+        E -->|CLID| G[saveCLI: pkey=clinumber]
+    end
+    subgraph Create
+        F --> H{invalidForm?}
+        G --> H
+        H -->|Yes| B
+        H -->|No| I[Optional smartlink]
+        I --> J[Loop span: createTuple lineio]
+        J --> K([showMain list])
+    end
+  </div>
+</body>
+</html>

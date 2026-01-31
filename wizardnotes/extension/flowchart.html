@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extension Add – Logic Flow</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+  </script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 0 auto; padding: 1rem; }
+    h1 { font-size: 1.25rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; color: #333; }
+    .mermaid { margin: 1rem 0; min-height: 200px; }
+    .mermaid svg { max-width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>Extension Add – Logic Flow (for SPA replacement)</h1>
+  <p>Flowchart of all logic paths through the “add new extension” code.</p>
+
+  <h2>1. High-level flow (entry → outcome)</h2>
+  <div class="mermaid">
+flowchart TD
+    Start([User on Extension list]) --> ClickNew[Click New]
+    ClickNew --> RouteNew{GET/POST new?}
+    RouteNew -->|Yes| ShowNew[showNew: render form]
+    RouteNew -->|No| OtherRoutes[Other showForm branches...]
+
+    ShowNew --> FormDisplay[Display: extchooser + conditional fields]
+    FormDisplay --> UserFills[User selects type, fills fields, Submit]
+
+    UserFills --> Submit{POST save or endsave?}
+    Submit -->|No| FormDisplay
+    Submit -->|Yes| SaveNew[saveNew]
+
+    SaveNew --> Validate[Load globals, validate form, build tuple]
+    Validate --> ValidOK{Validation OK?}
+    ValidOK -->|No| SetInvalid[invalidForm = true, error_hash]
+    ValidOK -->|Yes| SwitchType[Switch on extchooser]
+
+    SetInvalid --> BackToNew[showNew with errors]
+    BackToNew --> FormDisplay
+
+    SwitchType --> Branch[Type-specific branch]
+    Branch --> AddExt[addNewExtension once or loop]
+    AddExt --> AddOK{addNewExtension OK?}
+    AddOK -->|No| SetInvalid
+    AddOK -->|Yes| ShowEdit[showEdit for new ext]
+
+    ShowEdit([User sees edit screen])
+  </div>
+
+  <h2>2. showForm() routing (add-related branches only)</h2>
+  <div class="mermaid">
+flowchart TD
+    ShowForm([showForm entry]) --> A{POST new or GET new?}
+    A -->|Yes| ShowNew[showNew return]
+    A -->|No| B{POST save or endsave?}
+    B -->|Yes| SaveNew[saveNew]
+    SaveNew --> Invalid{invalidForm?}
+    Invalid -->|Yes| ShowNew2[showNew return]
+    Invalid -->|No| ShowEdit[showEdit return]
+    B -->|No| C[Other actions...]
+  </div>
+
+  <h2>3. showNew() – form build</h2>
+  <div class="mermaid">
+flowchart TD
+    ShowNew([showNew]) --> GetNext[getNextFreeExt]
+    GetNext --> Adopt{GET new + adopt context?}
+    Adopt -->|Yes| AdoptOpts[extchooser: Provisioned, Unprovisioned]
+    Adopt -->|No| VXT{globals.VXT?}
+    VXT -->|Yes| FullOpts[extchooser: + VXT batch, MAILBOX, etc.]
+    VXT -->|No| NoVxtOpts[extchooser: no VXT batch]
+
+    FullOpts --> Render
+    NoVxtOpts --> Render
+    AdoptOpts --> Render
+
+    Render[Render form] --> DivChooser[divchooser: extension type]
+    DivChooser --> Divs[Conditional divs: macaddr, rule, blksize, macblock, calleridname, device, devicevxt, cluster]
+    Divs --> Buttons[Cancel, Save/End save]
+  </div>
+
+  <h2>4. saveNew() – validation and tuple build</h2>
+  <div class="mermaid">
+flowchart TD
+    SaveNew([saveNew]) --> LoadGlobals[Load globals: EXTLEN, NATDEFAULT, VCL, FQDNPROV, etc.]
+    LoadGlobals --> FormVal[FormValidator: pkey req+num]
+    FormVal --> ProvMac{extchooser = Provisioned?}
+    ProvMac -->|Yes| MacVal[Add macaddr req + regexp]
+    ProvMac -->|No| Validate
+    MacVal --> Validate[ValidateForm]
+
+    Validate --> ValOK{Valid?}
+    ValOK -->|No| MergeErr[error_hash += GetErrors, return]
+    ValOK -->|Yes| TuplePkey[tuple.pkey = POST pkey]
+
+    TuplePkey --> ExtLen{strlen pkey = EXTLEN?}
+    ExtLen -->|No| ErrKey[error KEY, invalidForm, return]
+    ExtLen -->|Yes| TupleRest[desc, location, cluster, provisionwith from POST/globals]
+    TupleRest --> LoadCOS[Load COS for createCos later]
+    LoadCOS --> Switch[Switch extchooser]
+  </div>
+
+  <h2>5. saveNew() – switch on extension type (main branches)</h2>
+  <div class="mermaid">
+flowchart TD
+    Switch([Switch extchooser]) --> P{Type?}
+
+    P -->|Provisioned| Prov[Provisioned branch]
+    P -->|Unprovisioned| Unprov[device=General SIP, addNewExtension]
+    P -->|WebRTC| Webrtc[device=WebRTC, addNewExtension]
+    P -->|Provisioned batch| ProvBatch[Provisioned batch branch]
+    P -->|Unprovisioned batch| UnprovBatch[Unprovisioned batch branch]
+    P -->|WebRTC batch| WebrtcBatch[WebRTC batch branch]
+    P -->|VXT batch| VxtBatch[VXT batch branch]
+    P -->|MAILBOX| Mailbox[device=MAILBOX, addNewExtension]
+    P -->|default| Done[no-op]
+
+    Prov --> MacSet[macaddr from POST]
+    MacSet --> Vendor[getVendorFromMac]
+    Vendor --> VendorOK{vendor found?}
+    VendorOK -->|No| ErrMac[Invalid/unsupported MAC, return]
+    VendorOK -->|Yes| Dup[checkThisMacForDups]
+    Dup --> DupYes{duplicate?}
+    DupYes -->|Yes| ErrDup[MAC exists, return]
+    DupYes -->|No| AddOne[addNewExtension]
+  </div>
+
+  <h2>6. Provisioned batch branch (detail)</h2>
+  <div class="mermaid">
+flowchart TD
+    ProvBatch([Provisioned batch]) --> Split[txtmacblock split by whitespace]
+    Split --> Empty{macArray empty?}
+    Empty -->|Yes| ErrEmpty[No MAC list, return]
+    Empty -->|No| DupLoop[For each MAC: checkThisMacForDups]
+    DupLoop --> HeadRoom[checkHeadRoom count, pkey]
+    HeadRoom --> Invalid{invalidForm?}
+    Invalid -->|Yes| Return[return -1]
+    Invalid -->|No| Loop[For each MAC]
+    Loop --> V[getVendorFromMac]
+    V --> VOK{vendor?}
+    VOK -->|No| ErrV[Vendor lookup failed, return]
+    VOK -->|Yes| TupleMac[tuple device, macaddr, desc]
+    TupleMac --> Add[addNewExtension]
+    Add --> PkeyInc[pkey++]
+    PkeyInc --> Loop
+  </div>
+
+  <h2>7. Unprovisioned / WebRTC / VXT batch (common pattern)</h2>
+  <div class="mermaid">
+flowchart TD
+    Batch([Unprovisioned / WebRTC / VXT batch]) --> HeadRoom[checkHeadRoom blksize, pkey]
+    HeadRoom --> NoRoom{invalidForm?}
+    NoRoom -->|Yes| Return[return]
+    NoRoom -->|No| SetDevice[tuple.device = General SIP / WebRTC / vxtdevice]
+    SetDevice --> While[while blksize > 0]
+    While --> Desc[tuple.desc = Ext + pkey]
+    Desc --> Add[addNewExtension]
+    Add --> Inc[pkey++, blksize--]
+    Inc --> While
+  </div>
+
+  <h2>8. addNewExtension(tuple) – single-extension create</h2>
+  <div class="mermaid">
+flowchart TD
+    AddExt([addNewExtension]) --> LoadDev[Load device row by tuple.device]
+    LoadDev --> ProvInit[provision = blank or include device]
+    ProvInit --> Tech[technology, WebRTC transport wss, blf include, Cisco XML if needed]
+    Tech --> Passwd[passwd = ret_password, dvrvmail = pkey]
+    Passwd --> Adjust[adjustAstProvSettings tuple]
+    Adjust --> Insert[createTuple ipphone]
+    Insert --> InsertOK{ret = OK?}
+    InsertOK -->|No| SetInvalid[invalidForm, error_hash DB, return -1]
+    InsertOK -->|Yes| CreateCOS[createCos]
+    CreateCOS --> WebRTC{device = WebRTC?}
+    WebRTC -->|Yes| PjsipWrtc[createPjsipWebrtcInstance]
+    WebRTC -->|No| PjsipPhone[createPjsipPhoneInstance]
+    PjsipWrtc --> Done[return OK]
+    PjsipPhone --> Done
+  </div>
+
+  <h2>9. Client-side (current JS) – type → visible fields</h2>
+  <div class="mermaid">
+flowchart TD
+    Load([Page load]) --> Hide[Hide: macaddr, rule, password, calleridname, device, macblock, devicevxt, blksize, save, endsave]
+    Hide --> ShowChooser[Show only divchooser]
+
+    Change([extchooser change]) --> HideChooser[Hide divchooser, show save/endsave]
+    HideChooser --> Rule[Show divrule for all types]
+    Rule --> Type{Type?}
+
+    Type -->|Provisioned| Prov[Show divmacaddr, divcalleridname]
+    Type -->|Provisioned batch| ProvB[Show divmacblock]
+    Type -->|Unprovisioned / WebRTC / MAILBOX| Single[Show divcalleridname]
+    Type -->|Unprovisioned batch / WebRTC batch| Blk[Show divblksize]
+    Type -->|VXT batch| Vxt[Show divdevicevxt, divblksize]
+  </div>
+
+  <h2>10. Full create path (simplified)</h2>
+  <div class="mermaid">
+flowchart TD
+    subgraph Entry
+        A([New]) --> B[showNew: form]
+        B --> C[User: type + fields + Submit]
+    end
+
+    subgraph Submit
+        C --> D[saveNew]
+        D --> E{Validate}
+        E -->|Fail| B
+        E -->|OK| F[Build tuple]
+        F --> G{extchooser}
+    end
+
+    subgraph Single["Single extension"]
+        G -->|Provisioned| H[MAC → vendor → addNewExtension]
+        G -->|Unprovisioned| I[General SIP → addNewExtension]
+        G -->|WebRTC| J[WebRTC → addNewExtension]
+        G -->|MAILBOX| K[MAILBOX → addNewExtension]
+    end
+
+    subgraph Batch["Batch"]
+        G -->|Prov batch| L[MAC list → foreach addNewExtension]
+        G -->|Unprov/WebRTC/VXT batch| M[blksize loop → addNewExtension]
+    end
+
+    subgraph AddOne["addNewExtension"]
+        H --> N[device → provision → adjust → insert ipphone]
+        I --> N
+        J --> N
+        K --> N
+        L --> N
+        M --> N
+        N --> O{DB OK?}
+        O -->|No| B
+        O -->|Yes| P[createCos, createPjsip*]
+        P --> Q([showEdit])
+    end
+  </div>
+</body>
+</html>
