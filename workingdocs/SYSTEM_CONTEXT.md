@@ -19,7 +19,19 @@ Other files in that folder (e.g. sqlite_device.sql, sqlite_create_legacy.sql, sq
 
 ---
 
-## What we’re building
+## Data table keys (id, pkey, shortuid)
+
+Most PBX3 data tables (e.g. cluster/tenant, extension/ipphone, trunk/lineio) use **three keys**:
+
+- **id** — A regular **KSUID** (K-sortable unique identifier).
+- **pkey** — **Human-friendly key**; it may or may not be unique except **within a particular cluster (tenant)**. This is what users and the admin UI typically see and use (e.g. extension number 1001, trunk name).
+- **shortuid** — A randomly generated **8-character key**; **always unique within an instance**. It is used to **uniquely define SIP users** in Asterisk. This allows, for example, two tenants each to have an extension number **1001**: the user/customer always sees "1001", but underneath each has a different shortuid so SIP treats them as distinct endpoints.
+
+So: **pkey** = what humans see (and may repeat per tenant); **shortuid** = what the system uses for uniqueness (e.g. SIP identity) within the instance.
+
+---
+
+## What we're building
 
 **pbx3-frontend** = admin UI to manage PBX3 instances: connect to an instance (API base URL), authenticate (login → Bearer token), then perform CRUD on data (tenants, extensions, trunks, queues, IVRs, firewall rules, etc.) and run operational commands (backups, snapshots, syscommands, firewall restart, live state). See **pbx3api/docs/routes-data-vs-operational.md** for data vs operational split.
 
@@ -27,7 +39,7 @@ Other files in that folder (e.g. sqlite_device.sql, sqlite_create_legacy.sql, sq
 
 ## Users (API / DB)
 
-pbx3api **users** table (SQLite): `id`, `cluster`, `name`, `email`, `email_verified_at`, `password`, `role`, `remember_token`, `created_at`, `updated_at`. Sample: `id=1`, `cluster=default`, `name=admin`, `email=admin@pbx3.com`, `role=isAdmin`. **whoami** and login responses can expose `name`, `email`, `role` for “Logged in as X” and admin-only UI. Sanctum tokens live in **personal_access_tokens**.
+pbx3api **users** table (SQLite): `id`, `cluster`, `name`, `email`, `email_verified_at`, `password`, `role`, `remember_token`, `created_at`, `updated_at`. Sample: `id=1`, `cluster=default`, `name=admin`, `email=admin@pbx3.com`, `role=isAdmin`. **whoami** and login responses can expose `name`, `email`, `role` for "Logged in as X" and admin-only UI. Sanctum tokens live in **personal_access_tokens**.
 
 ---
 
