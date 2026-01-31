@@ -2,9 +2,11 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToastStore()
 const extension = ref(null)
 const tenants = ref([])
 const runtime = ref(null)
@@ -110,6 +112,7 @@ async function fetchExtension() {
     editLocation.value = extension.value?.location ?? 'local'
     editTransport.value = extension.value?.transport ?? 'udp'
     await fetchRuntime()
+    if (route.query.edit) startEdit()
   } catch (err) {
     error.value = err.data?.message || err.message || 'Failed to load extension'
     extension.value = null
@@ -198,6 +201,7 @@ async function saveEdit(e) {
       active: editActive.value,
       transport: editTransport.value
     })
+    toast.show(`Extension ${newPkey} saved`)
     editing.value = false
     if (newPkey !== pkey.value) {
       router.push({ name: 'extension-detail', params: { pkey: newPkey } })
@@ -245,6 +249,7 @@ async function saveRuntime(e) {
     })
     await fetchRuntime()
     editingRuntime.value = false
+    toast.show('Runtime settings saved')
   } catch (err) {
     runtimeSaveError.value = err.data?.message ?? err.message ?? 'Failed to update runtime'
   } finally {
@@ -294,34 +299,38 @@ async function doDelete() {
           <h2 class="detail-heading">Identity</h2>
           <label>SIP Identity</label>
           <p class="detail-readonly">{{ extension.shortuid ?? '—' }}</p>
-          <label for="edit-pkey">Ext (extension number)</label>
-          <input id="edit-pkey" v-model="editPkey" type="text" class="edit-input" required />
           <label for="edit-tenant">Tenant</label>
           <select id="edit-tenant" v-model="editCluster" class="edit-input" required>
             <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>
           </select>
           <label for="edit-desc">User (extension name)</label>
           <input id="edit-desc" v-model="editDesc" type="text" class="edit-input" placeholder="e.g. John Doe" maxlength="255" />
-          <label for="edit-active">Active?</label>
-          <select id="edit-active" v-model="editActive" class="edit-input">
-            <option value="YES">YES</option>
-            <option value="NO">NO</option>
-          </select>
-          <label>Device model</label>
-          <p class="detail-readonly">{{ extension.devicemodel ?? '—' }}</p>
+          <label class="edit-label-block">Active?</label>
+          <div class="switch-toggle switch-ios">
+            <input id="edit-active-yes" type="radio" value="YES" v-model="editActive" />
+            <label for="edit-active-yes">YES</label>
+            <input id="edit-active-no" type="radio" value="NO" v-model="editActive" />
+            <label for="edit-active-no">NO</label>
+          </div>
           <h2 class="detail-heading">Transport</h2>
-          <label for="edit-location">Location</label>
-          <select id="edit-location" v-model="editLocation" class="edit-input">
-            <option value="local">local</option>
-            <option value="remote">remote</option>
-          </select>
-          <label for="edit-transport">Transport</label>
-          <select id="edit-transport" v-model="editTransport" class="edit-input">
-            <option value="udp">udp</option>
-            <option value="tcp">tcp</option>
-            <option value="tls">tls</option>
-            <option value="wss">wss</option>
-          </select>
+          <label class="edit-label-block">Location</label>
+          <div class="switch-toggle switch-ios">
+            <input id="edit-location-local" type="radio" value="local" v-model="editLocation" />
+            <label for="edit-location-local">local</label>
+            <input id="edit-location-remote" type="radio" value="remote" v-model="editLocation" />
+            <label for="edit-location-remote">remote</label>
+          </div>
+          <label class="edit-label-block">Transport protocol</label>
+          <div class="switch-toggle switch-ios">
+            <input id="edit-transport-udp" type="radio" value="udp" v-model="editTransport" />
+            <label for="edit-transport-udp">udp</label>
+            <input id="edit-transport-tcp" type="radio" value="tcp" v-model="editTransport" />
+            <label for="edit-transport-tcp">tcp</label>
+            <input id="edit-transport-tls" type="radio" value="tls" v-model="editTransport" />
+            <label for="edit-transport-tls">tls</label>
+            <input id="edit-transport-wss" type="radio" value="wss" v-model="editTransport" />
+            <label for="edit-transport-wss">wss</label>
+          </div>
           <p v-if="saveError" class="error">{{ saveError }}</p>
           <div class="edit-actions">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
@@ -508,6 +517,46 @@ async function doDelete() {
 .edit-form label {
   font-size: 0.875rem;
   font-weight: 500;
+}
+.edit-label-block {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+/* Segmented pill (binary and limited choice) */
+.switch-toggle.switch-ios {
+  display: flex;
+  flex-wrap: wrap;
+  background: #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  gap: 0;
+}
+.switch-toggle.switch-ios input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch-toggle.switch-ios label {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 0.375rem;
+  transition: background-color 0.15s, color 0.15s;
+  color: #64748b;
+}
+.switch-toggle.switch-ios label:hover {
+  color: #334155;
+}
+.switch-toggle.switch-ios input:checked + label {
+  background: white;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 .edit-input {
   padding: 0.5rem 0.75rem;
