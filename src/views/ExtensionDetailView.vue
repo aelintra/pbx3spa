@@ -111,7 +111,6 @@ async function fetchExtension() {
     editActive.value = extension.value?.active ?? 'YES'
     editLocation.value = extension.value?.location ?? 'local'
     editTransport.value = extension.value?.transport ?? 'udp'
-    await fetchRuntime()
     if (route.query.edit) startEdit()
   } catch (err) {
     error.value = err.data?.message || err.message || 'Failed to load extension'
@@ -360,6 +359,7 @@ async function doDelete() {
           <section class="detail-section">
             <h2 class="detail-heading">Runtime</h2>
             <p v-if="runtimeError" class="error">{{ runtimeError }}</p>
+            <p v-else-if="!runtime" class="muted">Runtime params appear after Asterisk config is regenerated.</p>
             <template v-else-if="runtime">
               <p v-if="!editingRuntime" class="toolbar">
                 <button type="button" class="edit-btn" @click="startEditRuntime">Edit runtime</button>
@@ -430,6 +430,11 @@ async function doDelete() {
 }
 .error {
   color: #dc2626;
+}
+.muted {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0;
 }
 .detail-list {
   margin-top: 1rem;
