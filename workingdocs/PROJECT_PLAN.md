@@ -30,6 +30,8 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **Complex create flows (planning):** For resources where the old system used a **type chooser** and conditional fields (DDI/Inbound routes, Extensions, Trunks, IVRs), we decided: **one create view per resource + type chooser + conditional fields + one polymorphic create API per resource**. See **workingdocs/COMPLEX_CREATE_PLAN.md** for approach, current state (Trunk frontend + API), trunk-first plan (Phase 1 frontend, Phase 2 API fix, later full five types), and wizardnotes references. Trunk is first because it is the simplest type-chooser create (one row, API already supports GeneralSIP and GeneralIAX2). API bug: TrunkController::save line 118 sets `technology = peername` for IAX2; should be `technology = 'IAX2'`.
 
+**Scope note:** Legacy dump/restore routines (pbx3 tree: dumper.php, dumpInstances.php, etc.) convert SARK → PBX3 and work on old and new DB versions. Ignore them for day-to-day work; focus on pbx3api, pbx3-frontend, and db_sql schemas. See **SYSTEM_CONTEXT.md** § "Scope: legacy dump/restore".
+
 **Next chat:** Read **workingdocs/PROJECT_PLAN.md** (§ Current state), **workingdocs/COMPLEX_CREATE_PLAN.md** (trunk-first plan), **workingdocs/SYSTEM_CONTEXT.md**, and **workingdocs/README.md**. Proceed with trunk create type-chooser (Phase 1 in COMPLEX_CREATE_PLAN), or push/pull, revisit Backups, or API work for user management or tt_help_core.
 
 ---
@@ -196,8 +198,8 @@ Each new step gets a row: Deliverable, Test, Sign-off, Commit.
 ### Steps 18+ (completed)
 
 - Tenant delete (DELETE); Trunk and Queue detail views; Trunk CRUD; Queue CRUD.
-- Extension CRUD (create via POST extensions/mailbox, edit, delete).
-- Agents, Routes (ring groups), IVRs, Inbound routes: full CRUD (list, detail, create, edit, delete).
+- Extension CRUD (create via POST extensions — single endpoint; SIP/WebRTC/Mailbox, edit, delete).
+- Agents, Queues (call queues + ring groups; Queues panel creates/maintains queue endpoints used in route dropdowns — see SYSTEM_CONTEXT.md “Route panels and queue endpoints”), IVRs, Inbound routes (DDI), Outbound routes (Trunk): full CRUD (list, detail, create, edit, delete).
 - Backups page (list, create new, download, delete) — **parked** (see Parked section); review after first CRUD set.
 - **Landing dashboard:** Default route after login is now **Home** (dashboard). Shows PBX status (GET syscommands/pbxrunstate) with Refresh, and actions: Commit config, Start PBX, Stop PBX, Reboot instance (GET syscommands/{command}), with confirmations. This position will hold the main landing screen and can be extended with more controls later.
 
@@ -205,7 +207,7 @@ Each new step gets a row: Deliverable, Test, Sign-off, Commit.
 
 ## Verify later
 
-- **Extension create (mailbox):** The UI “Create extension” flow uses **POST /extensions/mailbox**. Verify whether this endpoint is still used in practice; it may no longer be the preferred way to create extensions. If the API has changed, update the frontend to use the correct create endpoint(s).
+- **Extension create:** Resolved. The UI “Create extension” flow uses **POST /extensions** (single endpoint) with protocol (SIP | WebRTC | Mailbox), pkey, cluster, desc, optional macaddr. Old routes (extensions/mailbox, provisioned, vxt, unprovisioned, webrtc) have been removed from the API as redundant.
 
 ---
 
