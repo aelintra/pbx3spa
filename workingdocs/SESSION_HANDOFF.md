@@ -37,6 +37,8 @@ For each: (a) preset create-form fields from DB SQL DEFAULTs and model `$attribu
 
 ### Other to-dos (from PROJECT_PLAN § Current state)
 
+- **pbx3api – Middleware on remote:** Investigate why `ValidateClusterAccess.php` doesn’t appear on remote after pull (newpanels in use, file tracked); may be from old Sanctum experiment or deploy path.
+
 - **Extensions:** Allow changing extension number (pkey) — needs API support first.
 - **Phone images:** API hosts library; SPA consumes URLs.
 - **Tenants – Timer status / masteroclo:** API null handling; prefer API fix (e.g. model accessor or DB default).

@@ -22,6 +22,8 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **To-do (Field mutability):** Immutable-field treatment (lowlight in list/detail/edit) is currently hard-coded per resource in the frontend (e.g. Extensions: pkey, shortuid, id, macaddr, device, devicemodel). Prefer moving mutability to the API later (e.g. per-resource schema or field metadata like `read_only` / `immutable`) so the frontend can derive which fields to lowlight without per-panel lists in code.
 
+**To-do (pbx3api – Middleware on remote):** Investigate why `app/Http/Middleware/ValidateClusterAccess.php` does not appear on the remote test instance after pull even though newpanels is the branch in use and the file is tracked in git. User suspects it may be from an old Sanctum experiment or a deployment/build path that doesn’t include it.
+
 **Review later (UX – inline edit):** Consider inline edit for list rows *after* the system runs nicely on the current list → detail/edit pattern. The old system had inline edit in some areas; on bigger rows it looked clunky and took extra real estate on busy screens. Revisit only when the main pattern is stable and we want to optimise for high-frequency small edits.
 
 **To-do (create panels):** Standardize remaining create panels per PANEL_PATTERN.md §3: **Extension**, **Trunk**, **Route**, **Queue**, **Agent**, **IVR**. For each: (a) preset create-form fields from DB SQL DEFAULTs and model `$attributes`; (b) group fields into Identity, Settings (or Transport), and optional Advanced; (c) use segmented pills for boolean and short fixed-choice fields instead of `<select>`. Tenant and Inbound route create are already done; use them as reference.
