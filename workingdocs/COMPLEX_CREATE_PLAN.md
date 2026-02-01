@@ -34,7 +34,9 @@ So we can ship a type-chooser trunk create quickly on the current API, then exte
 
 - **Trunk create** — Done (type chooser, id/shortuid, tenant schema, API working).
 - **IVR** — Deferred for now. UX is complex (many options/keys, alert/option/tag grid); leave until later.
-- **Extension** — Simplified in PBX3 vs SARK: **no on-board phone provisioning**; provisioning is a separate service. Extension create is straightforward: choose **protocol** (SIP or WebRTC). Use **sensible defaults** for transport: **SIP → UDP**, **WebRTC → TLS** (implied). No need to expose transport on create; defaults are enough.
+- **Extension** — Simplified in PBX3 vs SARK: **no on-board phone provisioning**; provisioning is a separate service. Extension create is straightforward: choose **protocol** (SIP or WebRTC). Use **sensible defaults** for transport: **SIP → UDP**, **WebRTC → TLS** (implied). No need to expose transport on create; defaults are enough. **Mailbox** defaults to the extension number (pkey); no mailbox field on create (covers >99% of use cases); administrator can adjust after creation if needed.
+- **Extension create — minimum fields:** Extension number (pkey), Name (desc), Tenant (cluster), MAC address (optional). **Tenant** must be a **dropdown** populated with all tenant (cluster) pkeys (e.g. from GET tenants). Protocol chooser (SIP / WebRTC) plus these fields is the minimum create form.
+- **Extension bulk create (later):** Optional future feature: input multiple MAC addresses or a number range and create many extensions in one transaction. Valuable for initial site setup (exists in the old system) but rarely used in practice; defer until after single-extension create is done.
 - **Revised order:** DDI (Inbound routes) next, then Extension (now straightforward), IVR later when we tackle its UX.
 
 ---
