@@ -12,7 +12,7 @@
 
 - **Phase 1.1** ✅ `src/utils/listResponse.js` exists with `normalizeList`. TenantsListView, IvrsListView, IvrCreateView, IvrDetailView use it. Other list/create/detail views still have local `normalizeList` (see handoff doc for list).
 - **Phase 1.2** ✅ `src/components/DeleteConfirmModal.vue` exists. All list and detail views that have delete use it; inline modal markup/CSS removed.
-- **Phase 1.3** ⬜ Optional `fieldErrors(err)` not done.
+- **Phase 1.3** ✅ `src/utils/formErrors.js` with `fieldErrors`, `firstErrorMessage`; Tenant and IVR Create/Detail use it.
 - **Phase 2.1** ✅ `src/constants/tenantAdvanced.js` added; TenantCreateView and TenantDetailView refactored to use it.
 - **Phase 2.2** ✅ `src/constants/ivrDestinations.js` added; IvrCreateView and IvrDetailView refactored to use it.
 - **Step 7** ✅ Quick fixes: TenantsListView toolbar `justify-content: space-between`; TenantCreateView duplicate `.advanced-fields` CSS removed.

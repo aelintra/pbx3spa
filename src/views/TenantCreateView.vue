@@ -11,6 +11,7 @@ import {
   buildInitialFormAdvanced,
   parseNum
 } from '@/constants/tenantAdvanced'
+import { fieldErrors } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
@@ -31,12 +32,6 @@ const pkeyInput = ref(null)
 const pkeyValidation = useFormValidation(pkey, validateTenantPkey)
 
 const formAdvanced = reactive(buildInitialFormAdvanced())
-
-function fieldErrors(err) {
-  if (!err?.data || typeof err.data !== 'object') return null
-  const entries = Object.entries(err.data).filter(([, v]) => Array.isArray(v) && v.length)
-  return entries.length ? Object.fromEntries(entries) : null
-}
 
 async function onSubmit(e) {
   e.preventDefault()
@@ -172,7 +167,7 @@ onMounted(() => {
       </div>
 
       <h2 class="detail-heading">Advanced</h2>
-      <div class="form-fields advanced-fields">
+      <div class="form-fields">
         <template v-for="f in ADVANCED_FIELDS" :key="f.key">
             <FormToggle
               v-if="f.type === 'boolean'"

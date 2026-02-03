@@ -12,6 +12,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import { normalizeList } from '@/utils/listResponse'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import { OPTION_ENTRIES, buildIvrPayload } from '@/constants/ivrDestinations'
+import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 
 const route = useRoute()
 const router = useRouter()
@@ -254,9 +255,8 @@ async function saveEdit(e) {
     editing.value = false
     toast.show(`IVR ${pkey.value} saved`)
   } catch (err) {
-    const errors = err?.data
-    if (errors && typeof errors === 'object') {
-      // Map server errors to field-level errors
+    const errors = fieldErrors(err)
+    if (errors) {
       if (errors.cluster) {
         clusterValidation.touched.value = true
         clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
@@ -265,16 +265,10 @@ async function saveEdit(e) {
         greetnumValidation.touched.value = true
         greetnumValidation.error.value = Array.isArray(errors.greetnum) ? errors.greetnum[0] : errors.greetnum
       }
-      
-      const first = Object.values(errors).flat().find((m) => typeof m === 'string') ?? null
-      saveError.value = first ?? err.data?.message ?? err.message ?? 'Failed to update IVR'
-      
-      // Focus first error field
       await nextTick()
       focusFirstError(validations, (id) => document.getElementById(id))
-    } else {
-      saveError.value = err.data?.message ?? err.message ?? 'Failed to update IVR'
     }
+    saveError.value = firstErrorMessage(err, 'Failed to update IVR')
   } finally {
     saving.value = false
   }

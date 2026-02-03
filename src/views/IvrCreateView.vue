@@ -10,6 +10,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import { normalizeList } from '@/utils/listResponse'
 import { OPTION_ENTRIES, buildIvrPayload } from '@/constants/ivrDestinations'
+import { fieldErrors } from '@/utils/formErrors'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -147,12 +148,6 @@ watch(cluster, () => {
     clusterValidation.validate()
   }
 })
-
-function fieldErrors(err) {
-  if (!err?.data || typeof err.data !== 'object') return null
-  const entries = Object.entries(err.data).filter(([, v]) => Array.isArray(v) && v.length)
-  return entries.length ? Object.fromEntries(entries) : null
-}
 
 async function onSubmit(e) {
   e.preventDefault()

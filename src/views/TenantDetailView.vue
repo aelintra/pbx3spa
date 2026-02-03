@@ -9,6 +9,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import { ADVANCED_KEYS, ADVANCED_FIELDS, buildAdvancedPayload } from '@/constants/tenantAdvanced'
+import { firstErrorMessage } from '@/utils/formErrors'
 
 const route = useRoute()
 const router = useRouter()
@@ -96,16 +97,7 @@ async function saveEdit(e) {
     await fetchTenant()
     toast.show(`Tenant ${pkey.value} saved`)
   } catch (err) {
-    const msg =
-      err.data?.description?.[0] ??
-      err.data?.clusterclid?.[0] ??
-      err.data?.abstimeout?.[0] ??
-      err.data?.chanmax?.[0] ??
-      err.data?.masteroclo?.[0] ??
-      err.data?.message ??
-      err.data?.Error ??
-      err.message
-    saveError.value = msg || 'Failed to update tenant'
+    saveError.value = firstErrorMessage(err, 'Failed to update tenant')
   } finally {
     saving.value = false
   }

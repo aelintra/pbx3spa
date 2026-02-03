@@ -32,7 +32,7 @@ The plan is in **`workingdocs/PANEL_REFACTOR_STRATEGY.md`**. Summary:
 |------|--------|--------|
 | **1.1** `normalizeList` in `src/utils/listResponse.js` | ✅ Exists | **Not all views use it yet** — see Panel conversion status below. |
 | **1.2** `DeleteConfirmModal` in `src/components/DeleteConfirmModal.vue` | ✅ Done | All list/detail views that have delete now use it; inline modal/CSS removed. |
-| **1.3** (Optional) `fieldErrors(err)` in e.g. `formErrors.js` | ⬜ Not done | For mapping API validation errors in Create/Edit. |
+| **1.3** (Optional) `fieldErrors(err)` in e.g. `formErrors.js` | ✅ Done | `src/utils/formErrors.js` exports `fieldErrors`, `firstErrorMessage`; Tenant and IVR Create/Detail use it. Other Create views still have local `fieldErrors` — migrate when touching. |
 
 ### Phase 2: Resource-specific shared config
 
@@ -97,6 +97,7 @@ RoutesListView, InboundRoutesListView, TrunksListView, ExtensionsListView, Route
 | `src/components/DeleteConfirmModal.vue` | Shared delete confirmation modal; use in list and detail views. |
 | `src/constants/tenantAdvanced.js` | Tenant advanced fields: ADVANCED_KEYS, ADVANCED_FIELDS, CLUSTER_CREATE_DEFAULTS, buildAdvancedPayload, buildInitialFormAdvanced, parseNum. |
 | `src/constants/ivrDestinations.js` | IVR keystroke options: OPTION_ENTRIES, buildIvrPayload. |
+| `src/utils/formErrors.js` | Shared `fieldErrors(err)`, `firstErrorMessage(err, fallback)` for API validation errors. |
 | `src/components/forms/` | FormField, FormSelect, FormToggle, FormReadonly — use these for all form fields. |
 | `src/composables/useFormValidation.js` | Validation composable; use with validators from `src/utils/validation.js`. |
 
