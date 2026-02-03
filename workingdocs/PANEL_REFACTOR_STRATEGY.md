@@ -4,6 +4,19 @@
 
 **Approach:** Extract shared pieces **first**, then use them everywhere. New or refactored panels import shared utilities and components instead of pasting the same code.
 
+**For a new agent / session:** See **`workingdocs/AGENT_HANDOFF_TECHNICAL_DEBT.md`** for current status, panel conversion state, and recommended next steps.
+
+---
+
+## Current status (as of 2026-02-03)
+
+- **Phase 1.1** ✅ `src/utils/listResponse.js` exists with `normalizeList`. TenantsListView, IvrsListView, IvrCreateView, IvrDetailView use it. Other list/create/detail views still have local `normalizeList` (see handoff doc for list).
+- **Phase 1.2** ✅ `src/components/DeleteConfirmModal.vue` exists. All list and detail views that have delete use it; inline modal markup/CSS removed.
+- **Phase 1.3** ⬜ Optional `fieldErrors(err)` not done.
+- **Phase 2.1** ✅ `src/constants/tenantAdvanced.js` added; TenantCreateView and TenantDetailView refactored to use it.
+- **Phase 2.2** ⬜ Next: Add `ivrDestinations.js`, refactor IVR Create/Detail.
+- **Step 7** ⬜ Quick fixes: Tenant list toolbar, Tenant Create duplicate `.advanced-fields` CSS.
+
 ---
 
 ## Phase 1: App-wide shared pieces (do once)
@@ -120,16 +133,16 @@ When you add a new resource or refactor a panel to the latest pattern, use this 
 
 ## Suggested order of work
 
-| Step | Action | Outcome |
-|------|--------|---------|
-| 1 | Add `src/utils/listResponse.js` with `normalizeList` | One place for list normalization |
-| 2 | Add `src/components/DeleteConfirmModal.vue` | One delete modal component |
-| 3 | Refactor TenantsListView + TenantDetailView to use both | Tenant uses shared pieces |
-| 4 | Refactor IvrsListView + IvrCreateView + IvrDetailView to use both | IVR uses shared pieces |
-| 5 | Add `src/constants/tenantAdvanced.js`, refactor Tenant Create/Detail to use it | No duplicate advanced config for Tenant |
-| 6 | Add `src/constants/ivrDestinations.js`, refactor IVR Create/Detail to use it | No duplicate optionEntries/ivrPayload |
-| 7 | Quick fixes: Tenant list toolbar, Tenant Create duplicate `.advanced-fields` CSS | Consistency and clean CSS |
-| 8 | Apply pattern to next resource (e.g. Extensions) **using** shared list + modal + any new resource-specific module | New panels stay debt-free |
+| Step | Action | Outcome | Status |
+|------|--------|---------|--------|
+| 1 | Add `src/utils/listResponse.js` with `normalizeList` | One place for list normalization | ✅ Done |
+| 2 | Add `src/components/DeleteConfirmModal.vue` | One delete modal component | ✅ Done |
+| 3 | Refactor TenantsListView + TenantDetailView to use both | Tenant uses shared pieces | ✅ Done |
+| 4 | Refactor IvrsListView + IvrCreateView + IvrDetailView to use both | IVR uses shared pieces | ✅ Done |
+| 5 | Add `src/constants/tenantAdvanced.js`, refactor Tenant Create/Detail to use it | No duplicate advanced config for Tenant | ✅ Done |
+| 6 | Add `src/constants/ivrDestinations.js`, refactor IVR Create/Detail to use it | No duplicate optionEntries/ivrPayload | ⬜ Next |
+| 7 | Quick fixes: Tenant list toolbar, Tenant Create duplicate `.advanced-fields` CSS | Consistency and clean CSS | ⬜ |
+| 8 | Apply pattern to next resource (e.g. Extensions) **using** shared list + modal + any new resource-specific module | New panels stay debt-free | ⬜ Repeat for each resource |
 
 After step 8, repeat for each remaining resource: use shared list + modal from the start; add a small shared config only when that resource has Create+Detail duplication.
 

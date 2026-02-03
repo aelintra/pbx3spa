@@ -1,0 +1,126 @@
+# Agent Handoff: Technical Debt & Panel Pattern Conversion
+
+**Purpose:** Let a new agent (or new session) pick up and continue technical debt reduction and panel conversion without redoing work or losing context.
+
+**Repo:** All work below is in **`pbx3-frontend`**. This is its own git repo (root is `pbx3-frontend/`, not the parent `pbx3-master/`).
+
+**Last updated:** 2026-02-03
+
+---
+
+## 1. What is the “pattern”?
+
+The target pattern for every CRUD resource is documented in:
+
+- **`workingdocs/PANEL_PATTERN.md`** — Full panel design pattern: three panels per resource (List, Create, Edit), file/route/API naming, form components (FormField, FormSelect, FormToggle, FormReadonly), validation (useFormValidation), layout (CSS Grid, one row per field), Edit panel must have Save + Cancel + Delete at bottom, DeleteConfirmModal for delete, shared normalizeList for list responses, etc. **Read this first** when converting or adding a panel.
+
+Key rules:
+
+- **List:** Name column is **not** a link; only the Edit action links to detail. Toolbar: Create (left), filter (right), `justify-content: space-between`. Use shared `normalizeList` and `<DeleteConfirmModal>`.
+- **Create:** Uses form components and shared `normalizeList` for any list fetch (e.g. tenants). Cancel returns to list.
+- **Edit:** Heading "Edit {Resource} {Object name}". Save, Cancel, and **Delete** in `.edit-actions` at bottom. Delete button red filled (`action-delete`). Use `<DeleteConfirmModal>`.
+
+---
+
+## 2. Technical debt plan (where we are)
+
+The plan is in **`workingdocs/PANEL_REFACTOR_STRATEGY.md`**. Summary:
+
+### Phase 1: App-wide shared pieces
+
+| Item | Status | Notes |
+|------|--------|--------|
+| **1.1** `normalizeList` in `src/utils/listResponse.js` | ✅ Exists | **Not all views use it yet** — see Panel conversion status below. |
+| **1.2** `DeleteConfirmModal` in `src/components/DeleteConfirmModal.vue` | ✅ Done | All list/detail views that have delete now use it; inline modal/CSS removed. |
+| **1.3** (Optional) `fieldErrors(err)` in e.g. `formErrors.js` | ⬜ Not done | For mapping API validation errors in Create/Edit. |
+
+### Phase 2: Resource-specific shared config
+
+| Item | Status | Notes |
+|------|--------|--------|
+| **2.1** Tenant advanced fields → `src/constants/tenantAdvanced.js` | ✅ Done | ADVANCED_KEYS, ADVANCED_FIELDS, CLUSTER_CREATE_DEFAULTS, buildAdvancedPayload, buildInitialFormAdvanced, parseNum; TenantCreateView + TenantDetailView refactored to use it. |
+| **2.2** IVR destinations/keystrokes → `src/constants/ivrDestinations.js` | ⬜ **Next** | Extract OPTION_ENTRIES, buildIvrPayload; use in IvrCreateView + IvrDetailView. |
+| **2.3** Other resources | As needed | Add shared module only when Create and Detail duplicate a large block. |
+
+### Phase 3 & 4
+
+- **Phase 3:** Refactor panels to use shared pieces (ongoing; see panel status below).
+- **Phase 4:** Checklist in the strategy doc — use it when adding or refactoring any panel so debt doesn’t return.
+
+### Suggested order (from strategy doc)
+
+- Steps **1–5:** Done (listResponse, DeleteConfirmModal, tenantAdvanced.js; Tenant Create/Detail refactored).
+- **Step 6:** Add `ivrDestinations.js`, refactor IVR Create/Detail.
+- **Step 7:** Quick fixes — Tenant list toolbar `justify-content: space-between`, remove duplicate `.advanced-fields` CSS in TenantCreateView.
+- **Step 8:** Apply pattern to next resource (e.g. Extensions) using shared list + modal; repeat for remaining resources.
+
+---
+
+## 3. Panel conversion status
+
+**Reference implementations (already on pattern):**
+
+- **List:** `src/views/IvrsListView.vue`, `src/views/TenantsListView.vue`
+- **Create:** `src/views/IvrCreateView.vue`, `src/views/TenantCreateView.vue`
+- **Edit:** `src/views/IvrDetailView.vue`, `src/views/TenantDetailView.vue`
+
+### Shared `normalizeList` (from `@/utils/listResponse.js`)
+
+**Using shared:** TenantsListView, IvrsListView, IvrCreateView, IvrDetailView.
+
+**Still using local `normalizeList` (candidate for migration):**  
+RoutesListView, InboundRoutesListView, TrunksListView, ExtensionsListView, RouteDetailView, InboundRouteDetailView, TrunkDetailView, ExtensionDetailView, ExtensionCreateView, InboundRouteCreateView, AgentsListView, QueuesListView, BackupsListView.
+
+→ Migrating these: add `import { normalizeList } from '@/utils/listResponse'`, remove the local `function normalizeList(...)` in the file, and call `normalizeList(response)` or `normalizeList(response, 'resourceKey')` as needed (see `listResponse.js` for signature).
+
+### DeleteConfirmModal
+
+**Using shared:** All list and detail views that have delete: TenantsListView, TenantDetailView, IvrsListView, IvrDetailView, RoutesListView, RouteDetailView, InboundRoutesListView, InboundRouteDetailView, TrunksListView, TrunkDetailView, ExtensionsListView. (Agent/Queue/Backup list views were not in the refactor batch; if they have delete, they may still have inline modal — check and convert if so.)
+
+### Full pattern (list + create + edit)
+
+- **Tenant:** List/Create/Edit refactored; **tenantAdvanced.js** in use — no duplicate advanced config. **IVR:** List/Create/Edit refactored for shared list/modal/form components; still has duplicate optionEntries/ivrPayload (Step 6 will fix).
+- **Routes, InboundRoutes, Trunks, Extensions:** List and Detail use DeleteConfirmModal; list views still have local normalizeList. Create views not yet fully audited against pattern (form components, normalizeList, etc.).
+- **Agents, Queues:** List views exist; may have local normalizeList and inline delete modal. Create/Detail may need full pattern pass.
+- **Backups:** List only; local normalizeList.
+
+---
+
+## 4. Key files and docs
+
+| Document / file | Purpose |
+|-----------------|--------|
+| `workingdocs/PANEL_PATTERN.md` | **Canonical panel pattern** — layout, components, validation, Edit buttons, naming. |
+| `workingdocs/PANEL_REFACTOR_STRATEGY.md` | **Technical debt plan** — Phases 1–4, suggested order, checklist. |
+| `workingdocs/TECHNICAL_DEBT_TENANT_PANELS.md` | Tenant-specific debt (advanced fields duplication, toolbar, CSS, etc.). |
+| `workingdocs/TECHNICAL_DEBT_ANALYSIS.md` | Broader technical debt notes. |
+| `src/utils/listResponse.js` | Shared `normalizeList(response, resourceKey?)`. |
+| `src/components/DeleteConfirmModal.vue` | Shared delete confirmation modal; use in list and detail views. |
+| `src/constants/tenantAdvanced.js` | Tenant advanced fields: ADVANCED_KEYS, ADVANCED_FIELDS, CLUSTER_CREATE_DEFAULTS, buildAdvancedPayload, buildInitialFormAdvanced, parseNum. |
+| `src/components/forms/` | FormField, FormSelect, FormToggle, FormReadonly — use these for all form fields. |
+| `src/composables/useFormValidation.js` | Validation composable; use with validators from `src/utils/validation.js`. |
+
+---
+
+## 5. Recommended next steps for a new agent
+
+1. **Read** `workingdocs/PANEL_PATTERN.md` (sections on List/Create/Edit and the checklist).
+2. **Read** `workingdocs/PANEL_REFACTOR_STRATEGY.md` (Phases 1–2 and suggested order).
+3. **Do Step 6:** Add `src/constants/ivrDestinations.js` with OPTION_ENTRIES and buildIvrPayload. Refactor IvrCreateView and IvrDetailView to use it.
+4. **Do Step 7:** TenantsListView toolbar add `justify-content: space-between`; TenantCreateView remove duplicate `.advanced-fields` CSS (if any remains).
+5. **Optional:** Migrate remaining list/create/detail views to use shared `normalizeList` from `listResponse.js` (remove local function, add import).
+6. **When touching any panel:** Use the Phase 4 checklist in the strategy doc so the same debt doesn’t come back.
+
+---
+
+## 6. Conventions and gotchas
+
+- **Repo:** Work only in `pbx3-frontend`; run `git status` / `git add` / `git commit` from `pbx3-frontend/`.
+- **Edit panels:** Every Edit panel must have **three** buttons at bottom: Save, Cancel, Delete (pattern doc is explicit). Delete opens DeleteConfirmModal; label "Delete" / "Deleting…", red style.
+- **List view:** Primary key/name column is plain text, **not** a link; only the Edit action (icon/button) links to the Edit panel.
+- **Validation:** Refs must be declared **before** `useFormValidation(...)` in script setup.
+- **normalizeList:** Current signature in `listResponse.js` is `normalizeList(response, resourceKey)` where `resourceKey` is optional (e.g. `'tenants'`, `'ivrs'`). Handles array, `{ data: [] }`, `{ [resourceKey]: [] }`, numeric-keyed object.
+
+---
+
+*This handoff is intended to give a new agent everything needed to continue technical debt reduction and panel conversion without re-reading the full conversation history.*

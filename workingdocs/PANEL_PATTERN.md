@@ -10,6 +10,8 @@
 - Do NOT use the old table-based approach for form fields.
 - Always declare refs BEFORE validation composables.
 - Use CSS Grid layout (not tables) for form fields.
+- **Use shared list normalization:** Import `normalizeList` from `@/utils/listResponse.js` for any list fetch (list views, and Create/Edit views that load lists e.g. tenants). Do **not** define a local `normalizeList` in the view.
+- **Use shared delete modal:** Use the `<DeleteConfirmModal>` component from `@/components/DeleteConfirmModal.vue` for delete confirmation in list and detail views. Do **not** copy inline Teleport + modal markup and modal CSS into the view.
 
 ---
 
@@ -95,6 +97,8 @@ Use these for every field that fits (text, number, select, boolean/toggle, reado
 ### Component Files
 
 - **Form Components**: `src/components/forms/FormField.vue`, `FormSelect.vue`, `FormToggle.vue`, `FormReadonly.vue`
+- **DeleteConfirmModal**: `src/components/DeleteConfirmModal.vue` — use for delete confirmation in list and detail views (do not copy inline modal markup).
+- **List normalization**: `src/utils/listResponse.js` — export `normalizeList`; use for all list fetches (do not define local normalizeList).
 - **Validation Composable**: `src/composables/useFormValidation.js`
 - **Validation Rules**: `src/utils/validation.js`
 
@@ -316,126 +320,27 @@ watch(cluster, () => {
 
 ### Delete Confirmation Modal Pattern
 
-**List View**: Use Teleport for modal overlay.
+**Use the shared component.** Import and use `<DeleteConfirmModal>` from `@/components/DeleteConfirmModal.vue`. Do **not** copy inline Teleport + modal markup or modal CSS into the view.
+
+**List View** — use one modal instance; pass the item being confirmed (e.g. `confirmDeletePkey`):
 
 ```vue
-<Teleport to="body">
-  <div v-if="confirmDeletePkey" class="modal-backdrop" @click.self="cancelConfirmDelete">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
-      <h2 id="modal-delete-title" class="modal-title">Delete {Resource}?</h2>
-      <p class="modal-body">
-        {Resource} <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be undone.
-      </p>
-      <div class="modal-actions">
-        <button type="button" class="modal-btn modal-btn-cancel" @click="cancelConfirmDelete">Cancel</button>
-        <button type="button" class="modal-btn modal-btn-delete" :disabled="deletingPkey === confirmDeletePkey" @click="confirmAndDelete(confirmDeletePkey)">
-          {{ deletingPkey === confirmDeletePkey ? 'Deleting…' : 'Delete' }}
-        </button>
-      </div>
-    </div>
-  </div>
-</Teleport>
+<DeleteConfirmModal
+  :show="!!confirmDeletePkey"
+  :title="`Delete ${resourceLabel}?`"
+  :body-text="confirmDeletePkey ? `${resourceLabel} ${confirmDeletePkey} will be permanently deleted. This cannot be undone.` : ''"
+  confirm-label="Delete"
+  cancel-label="Cancel"
+  loading-label="Deleting…"
+  :loading="deletingPkey === confirmDeletePkey"
+  @confirm="confirmDeletePkey && confirmAndDelete(confirmDeletePkey)"
+  @cancel="cancelConfirmDelete"
+/>
 ```
 
-**Script**:
-```javascript
-const confirmDeletePkey = ref(null)
-const deletingPkey = ref(null)
-const deleteError = ref('')
+**Detail/Edit View** — use one modal for the current resource; pass `pkey` (or display name) in body text.
 
-function askConfirmDelete(pkey) {
-  confirmDeletePkey.value = pkey
-  deleteError.value = ''
-}
-
-function cancelConfirmDelete() {
-  confirmDeletePkey.value = null
-}
-
-async function confirmAndDelete(pkey) {
-  if (confirmDeletePkey.value !== pkey) return
-  deleteError.value = ''
-  deletingPkey.value = pkey
-  try {
-    await getApiClient().delete(`{resources}/${encodeURIComponent(pkey)}`)
-    await loadResources()  // Reload list
-    toast.show(`{Resource} ${pkey} deleted`)
-  } catch (err) {
-    deleteError.value = err.data?.message ?? err.message ?? 'Failed to delete {resource}'
-  } finally {
-    confirmDeletePkey.value = null
-    deletingPkey.value = null
-  }
-}
-```
-
-**CSS**:
-```css
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-.modal {
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  padding: 1.5rem;
-  max-width: 24rem;
-  width: 100%;
-}
-.modal-title {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-.modal-body {
-  margin: 0 0 1.25rem 0;
-  font-size: 0.9375rem;
-  color: #475569;
-  line-height: 1.5;
-}
-.modal-body strong {
-  color: #0f172a;
-}
-.modal-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-}
-.modal-btn {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  border: none;
-}
-.modal-btn-cancel {
-  background: #f1f5f9;
-  color: #475569;
-}
-.modal-btn-cancel:hover {
-  background: #e2e8f0;
-}
-.modal-btn-delete {
-  background: #dc2626;
-  color: white;
-}
-.modal-btn-delete:hover:not(:disabled) {
-  background: #b91c1c;
-}
-.modal-btn-delete:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-```
+**Script** (same pattern for list or detail): keep `confirmDeletePkey` / `confirmDeleteOpen`, `deletingPkey` / `deleting`, `deleteError`, and the `askConfirmDelete`, `cancelConfirmDelete`, `confirmAndDelete` functions. The shared component handles backdrop, dialog, and button styling; no modal CSS in the view.
 
 ### Sorting Pattern (List View)
 
@@ -581,35 +486,19 @@ const greetingOptions = computed(() => {
 
 ### Normalize List Response Pattern
 
-**Purpose**: Handle various API response formats consistently.
+**Use the shared util.** Import `normalizeList` from `@/utils/listResponse.js`. Do **not** define a local `normalizeList` in the view.
 
-```javascript
-function normalizeList(response) {
-  // Direct array
-  if (Array.isArray(response)) return response
-  
-  // Wrapped in object
-  if (response && typeof response === 'object') {
-    // Wrapped in 'data'
-    if (Array.isArray(response.data)) return response.data
-    
-    // Wrapped in resource name (e.g., { ivrs: [...] })
-    if (Array.isArray(response.{resources})) return response.{resources}
-    
-    // Numeric keys object (e.g., { 0: {...}, 1: {...} })
-    if (Object.keys(response).every((k) => /^\d+$/.test(k))) {
-      return Object.values(response)
-    }
-  }
-  
-  return []
-}
-```
+**Signature** (in `listResponse.js`): `normalizeList(response, options?)` where `options` may include `{ resourceKey: 'tenants' }` (or `'ivrs'`, `'extensions'`, etc.) when the API wraps the list in a resource key.
 
 **Usage**:
 ```javascript
+import { normalizeList } from '@/utils/listResponse'
+
+// List view or any list fetch
 const response = await getApiClient().get('resources')
 resources.value = normalizeList(response)
+// If API returns { tenants: [...] }:
+tenants.value = normalizeList(response, { resourceKey: 'tenants' })
 ```
 
 ### Handling Empty/Null Values
@@ -752,8 +641,8 @@ function syncEditFromResource() {
     </table>
   </section>
 
-  <!-- Delete confirmation modal -->
-  <Teleport to="body">...</Teleport>
+  <!-- Delete confirmation: use shared DeleteConfirmModal -->
+  <DeleteConfirmModal ... />
 </div>
 ```
 
@@ -1421,12 +1310,14 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { normalizeList } from '@/utils/listResponse'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateIvrPkey, validateTenant, validateGreetnum } from '@/utils/validation'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'  // Edit view only
+import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'  // List and Edit views that have delete
 ```
 
 ### Standard Refs
@@ -1473,16 +1364,7 @@ function onKeydown(e) {
   }
 }
 
-// Normalize API responses (for list views)
-function normalizeList(response) {
-  if (Array.isArray(response)) return response
-  if (response && typeof response === 'object') {
-    if (Array.isArray(response.data)) return response.data
-    if (Array.isArray(response.{resource}s)) return response.{resource}s
-    if (Object.keys(response).every((k) => /^\d+$/.test(k))) return Object.values(response)
-  }
-  return []
-}
+// Use shared normalizeList from @/utils/listResponse (import at top); no local normalizeList
 
 // Sync form fields from loaded resource (Edit view)
 function syncEditFromResource() {
@@ -1654,9 +1536,11 @@ watch(editCluster, () => {
 
 When applying this pattern to existing panels:
 
-- [ ] Update list view header (Create button + Filter layout)
+- [ ] **Use shared `normalizeList`:** Import from `@/utils/listResponse.js`; remove any local `normalizeList` function from the view.
+- [ ] **Use shared `DeleteConfirmModal`:** Import and use `<DeleteConfirmModal>` from `@/components/DeleteConfirmModal.vue`; remove inline Teleport + modal markup and modal CSS.
+- [ ] Update list view header (Create button + Filter layout, toolbar `justify-content: space-between`)
 - [ ] Update list view columns (add resource-specific columns)
-- [ ] Remove pkey link from list (navigation via edit icon only)
+- [ ] Remove pkey link from list (name column plain text; navigation via edit icon only)
 - [ ] Update create view structure (Identity → Settings using form components)
 - [ ] Update edit view heading format ("Edit {Resource} {name}")
 - [ ] Ensure edit view has all three buttons: Save, Cancel, and Delete (in `.edit-actions`)
@@ -1946,6 +1830,8 @@ onMounted(async () => {
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { normalizeList } from '@/utils/listResponse'
+import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const toast = useToastStore()
 const resources = ref([])
@@ -1959,16 +1845,7 @@ const filterText = ref('')
 const sortKey = ref('pkey')
 const sortOrder = ref('asc')
 
-function normalizeList(response) {
-  if (Array.isArray(response)) return response
-  if (response && typeof response === 'object') {
-    if (Array.isArray(response.data)) return response.data
-    if (Array.isArray(response.{resources})) return response.{resources}
-    if (Object.keys(response).every((k) => /^\d+$/.test(k))) return Object.values(response)
-  }
-  return []
-}
-
+// Import normalizeList from '@/utils/listResponse' (do not define locally)
 // Tenant resolution for display
 const tenantShortuidToPkey = computed(() => {
   const map = {}
@@ -2154,22 +2031,18 @@ onMounted(loadResources)
       </table>
     </section>
 
-    <Teleport to="body">
-      <div v-if="confirmDeletePkey" class="modal-backdrop" @click.self="cancelConfirmDelete">
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
-          <h2 id="modal-delete-title" class="modal-title">Delete {Resource}?</h2>
-          <p class="modal-body">
-            {Resource} <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be undone.
-          </p>
-          <div class="modal-actions">
-            <button type="button" class="modal-btn modal-btn-cancel" @click="cancelConfirmDelete">Cancel</button>
-            <button type="button" class="modal-btn modal-btn-delete" :disabled="deletingPkey === confirmDeletePkey" @click="confirmAndDelete(confirmDeletePkey)">
-              {{ deletingPkey === confirmDeletePkey ? 'Deleting…' : 'Delete' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- Use shared DeleteConfirmModal; do not copy inline Teleport/modal markup -->
+    <DeleteConfirmModal
+      :show="!!confirmDeletePkey"
+      :title="`Delete ${resourceLabel}?`"
+      :body-text="confirmDeletePkey ? `${resourceLabel} ${confirmDeletePkey} will be permanently deleted. This cannot be undone.` : ''"
+      confirm-label="Delete"
+      cancel-label="Cancel"
+      loading-label="Deleting…"
+      :loading="deletingPkey === confirmDeletePkey"
+      @confirm="confirmDeletePkey && confirmAndDelete(confirmDeletePkey)"
+      @cancel="cancelConfirmDelete"
+    />
   </div>
 </template>
 ```
@@ -2240,11 +2113,11 @@ const tenantOptionsForSelect = computed(() => {
   return list
 })
 
-// Load data
+// Load data (normalizeList from @/utils/listResponse)
 async function loadTenants() {
   try {
     const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response)
+    tenants.value = normalizeList(response, { resourceKey: 'tenants' })
   } catch {
     tenants.value = []
   }
@@ -2462,22 +2335,18 @@ onMounted(() => {
       </div>
     </template>
 
-    <Teleport to="body">
-      <div v-if="confirmDeleteOpen" class="modal-backdrop" @click.self="cancelConfirmDelete">
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
-          <h2 id="modal-delete-title" class="modal-title">Delete {Resource}?</h2>
-          <p class="modal-body">
-            {Resource} <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.
-          </p>
-          <div class="modal-actions">
-            <button type="button" class="modal-btn modal-btn-cancel" @click="cancelConfirmDelete">Cancel</button>
-            <button type="button" class="modal-btn modal-btn-delete" :disabled="deleting" @click="confirmAndDelete">
-              {{ deleting ? 'Deleting…' : 'Delete' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- Use shared DeleteConfirmModal; do not copy inline Teleport/modal markup -->
+    <DeleteConfirmModal
+      :show="confirmDeleteOpen"
+      :title="`Delete ${resourceLabel}?`"
+      :body-text="`${resourceLabel} ${pkey} will be permanently deleted. This cannot be undone.`"
+      confirm-label="Delete"
+      cancel-label="Cancel"
+      loading-label="Deleting…"
+      :loading="deleting"
+      @confirm="confirmAndDelete"
+      @cancel="cancelConfirmDelete"
+    />
   </div>
 </template>
 ```
@@ -2591,16 +2460,25 @@ body.description = editDescription.value.trim() || null
 
 ### 8. Normalize List Response
 
-**❌ WRONG**: Assuming API always returns array
+**❌ WRONG**: Assuming API always returns array, or defining a local `normalizeList`
 ```javascript
 resources.value = await getApiClient().get('resources')  // May be wrapped!
+// OR copying normalizeList into the view
+function normalizeList(response) { ... }
 ```
 
-**✅ CORRECT**: Always normalize response
+**✅ CORRECT**: Import shared util and use it
 ```javascript
+import { normalizeList } from '@/utils/listResponse'
 const response = await getApiClient().get('resources')
 resources.value = normalizeList(response)
 ```
+
+### 9. Delete Confirmation Modal
+
+**❌ WRONG**: Copying Teleport + modal markup and modal CSS into the view.
+
+**✅ CORRECT**: Use the shared `<DeleteConfirmModal>` from `@/components/DeleteConfirmModal.vue`; pass `show`, `title`, `body-text`, `loading`, and handle `@confirm` / `@cancel`.
 
 ---
 
@@ -2610,6 +2488,8 @@ See these files for complete working examples:
 - `src/views/IvrCreateView.vue` - Create view pattern
 - `src/views/IvrDetailView.vue` - Edit view pattern  
 - `src/views/IvrsListView.vue` - List view pattern
+- `src/utils/listResponse.js` - Shared `normalizeList` (use this; do not copy into views)
+- `src/components/DeleteConfirmModal.vue` - Shared delete confirmation modal (use this; do not copy inline modal)
 - `src/components/forms/FormField.vue` - Form field component
 - `src/components/forms/FormSelect.vue` - Form select component
 - `src/components/forms/FormToggle.vue` - Form toggle component

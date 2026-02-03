@@ -1,6 +1,6 @@
 # workingdocs
 
-This folder is **for the AI (Cursor agent)** to record progress and build a memory of the pbx3-frontend system. When you start a new chat, read the files here to get up to speed. **Start with PROJECT_PLAN.md § "Current state (for the next chat)"** and **SESSION_HANDOFF.md** to see what's done, what's left, and what's planned next. **pbx3/full_schema.sql** is the schema yardstick for API models/controllers.
+This folder is **for the AI (Cursor agent)** to record progress and build a memory of the pbx3-frontend system. When you start a new chat, read the files here to get up to speed. **Start with PROJECT_PLAN.md § "Current state (for the next chat)"** and **SESSION_HANDOFF.md** to see what's done, what's left, and what's planned next. **For technical debt reduction and panel pattern conversion**, start with **AGENT_HANDOFF_TECHNICAL_DEBT.md** and **PANEL_REFACTOR_STRATEGY.md**. **pbx3/full_schema.sql** is the schema yardstick for API models/controllers.
 
 ## Contents
 
@@ -15,9 +15,20 @@ This folder is **for the AI (Cursor agent)** to record progress and build a memo
 | **DEPLOYMENT_BASICS.md** | How SPA apps are stored and served in production: what you deploy (static files), where they live (server vs S3+CloudFront vs Netlify/Vercel), publish/manage mechanism. |
 | **SYSTEM_CONTEXT.md** | Short memory: PBX3 in one paragraph, what we're building, key references. |
 | **PANEL_PATTERN.md** | Reusable List / Create / Detail pattern for resource panels (Extensions, Trunks, Queues, etc.); routes, views, CSS classes, conventions. |
+| **PANEL_REFACTOR_STRATEGY.md** | Technical debt plan: Phase 1–4, shared normalizeList/DeleteConfirmModal, resource-specific config; suggested order; checklist. |
+| **AGENT_HANDOFF_TECHNICAL_DEBT.md** | Handoff for new agent: current status, which panels use shared pieces, next steps, key files. Use when continuing debt reduction or panel conversion. |
 | **BOOLEAN_STANDARDISATION.md** | Plan and fixer to standardise boolean columns to YES/NO; create migration in pbx3api when ready (none in repo yet). |
 | **SESSION_HANDOFF.md** | Where we left off: done, left to do, references. |
 | **README.md** | This file. |
+
+## Folder structure
+
+| Path | Role |
+|------|------|
+| **pbx3-master** | Wrapper; root that contains the three repos below. |
+| **pbx3** | System backend (Asterisk, SQLite, config generation, etc.). |
+| **pbx3api** | Backend API; what the frontend calls. |
+| **pbx3-frontend** | Vue SPA admin UI; current work is here (own git repo, root is `pbx3-frontend/`). |
 
 ## Context in one sentence
 
