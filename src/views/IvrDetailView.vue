@@ -13,6 +13,9 @@ const loading = ref(true)
 const error = ref('')
 const editing = ref(false)
 const editCluster = ref('default')
+const editActive = ref('YES')
+const editCname = ref('')
+const editName = ref('')
 const editDescription = ref('')
 const editGreetnum = ref('')
 const editListenforext = ref('NO')
@@ -144,6 +147,9 @@ function syncEditFromIvr() {
   if (!ivr.value) return
   const r = ivr.value
   editCluster.value = r.cluster ?? 'default'
+  editActive.value = r.active ?? 'YES'
+  editCname.value = r.cname ?? ''
+  editName.value = r.name ?? ''
   editDescription.value = r.description ?? ''
   editGreetnum.value = r.greetnum != null ? String(r.greetnum) : ''
   editListenforext.value = r.listenforext ?? 'NO'
@@ -232,9 +238,14 @@ async function saveEdit(e) {
   try {
     const body = {
       cluster: editCluster.value.trim(),
+      active: editActive.value,
       ...ivrPayload(options.value, tags.value, alerts.value, editTimeout.value),
       listenforext: editListenforext.value
     }
+    if (editCname.value.trim()) body.cname = editCname.value.trim()
+    else body.cname = null
+    if (editName.value.trim()) body.name = editName.value.trim()
+    else body.name = null
     if (editDescription.value.trim()) body.description = editDescription.value.trim()
     if (editGreetnum.value !== '' && editGreetnum.value != null) body.greetnum = parseInt(editGreetnum.value, 10)
     await getApiClient().put(`ivrs/${encodeURIComponent(pkey.value)}`, body)
@@ -276,21 +287,26 @@ async function confirmAndDelete() {
   }
 }
 
-/** Identity: pkey (immutable), description. */
+/** Identity: pkey, shortuid, id (immutable), name, cname, description — same pattern as Trunk/Tenant/InboundRoute detail */
 const identityFields = computed(() => {
   if (!ivr.value) return []
   const r = ivr.value
   return [
     { label: 'IVR Name', value: r.pkey ?? '—', immutable: true },
+    { label: 'Local UID', value: r.shortuid ?? '—', immutable: true },
+    { label: 'KSUID', value: r.id ?? '—', immutable: true },
+    { label: 'Name', value: r.name ?? '—', immutable: false },
+    { label: 'Display name', value: r.cname ?? '—', immutable: false },
     { label: 'Description', value: r.description ?? '—', immutable: false }
   ]
 })
 
-/** Settings: tenant, greeting, listenforext, timeout, and key options (shown in table in read view). */
+/** Settings: active, tenant, greeting, listenforext, timeout, and key options (shown in table in read view). */
 const settingsFields = computed(() => {
   if (!ivr.value) return []
   const r = ivr.value
   return [
+    { label: 'Active?', value: r.active ?? '—' },
     { label: 'Tenant', value: r.cluster ?? '—' },
     { label: 'Greeting number', value: r.greetnum != null ? String(r.greetnum) : '—' },
     { label: 'Listen for extension dial?', value: r.listenforext ?? '—' },
@@ -299,7 +315,7 @@ const settingsFields = computed(() => {
 })
 
 const ADVANCED_EXCLUDE = new Set([
-  'pkey', 'description', 'cluster', 'greetnum', 'listenforext', 'timeout',
+  'pkey', 'id', 'shortuid', 'active', 'cname', 'name', 'description', 'cluster', 'greetnum', 'listenforext', 'timeout',
   'option0', 'option1', 'option2', 'option3', 'option4', 'option5',
   'option6', 'option7', 'option8', 'option9', 'option10', 'option11',
   'tag0', 'tag1', 'tag2', 'tag3', 'tag4', 'tag5', 'tag6', 'tag7', 'tag8', 'tag9', 'tag10', 'tag11',
@@ -343,10 +359,25 @@ const otherFields = computed(() => {
           <h2 class="detail-heading">Identity</h2>
           <label>IVR Name</label>
           <p class="detail-readonly value-immutable" title="Immutable">{{ ivr.pkey ?? '—' }}</p>
+          <label>Local UID</label>
+          <p class="detail-readonly value-immutable" title="Immutable">{{ ivr.shortuid ?? '—' }}</p>
+          <label>KSUID</label>
+          <p class="detail-readonly value-immutable" title="Immutable">{{ ivr.id ?? '—' }}</p>
           <label for="edit-description">Description (optional)</label>
           <input id="edit-description" v-model="editDescription" type="text" class="edit-input" placeholder="Freeform description" />
+          <label for="edit-cname">Display name (optional)</label>
+          <input id="edit-cname" v-model="editCname" type="text" class="edit-input" placeholder="Common name / label" />
+          <label for="edit-name">Name (optional)</label>
+          <input id="edit-name" v-model="editName" type="text" class="edit-input" placeholder="Legacy name field" />
 
           <h2 class="detail-heading">Settings</h2>
+          <label class="edit-label-block">Active?</label>
+          <div class="switch-toggle switch-ios" role="group" aria-label="Active">
+            <input id="edit-active-yes" v-model="editActive" type="radio" value="YES" />
+            <label for="edit-active-yes">YES</label>
+            <input id="edit-active-no" v-model="editActive" type="radio" value="NO" />
+            <label for="edit-active-no">NO</label>
+          </div>
           <label for="edit-cluster">Tenant</label>
           <select id="edit-cluster" v-model="editCluster" class="edit-input" required :disabled="destinationsLoading">
             <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>

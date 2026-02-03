@@ -8,6 +8,9 @@ const router = useRouter()
 const toast = useToastStore()
 const pkey = ref('')
 const cluster = ref('default')
+const active = ref('YES')
+const cname = ref('')
+const name = ref('')
 const description = ref('')
 const tenants = ref([])
 const tenantsLoading = ref(true)
@@ -180,9 +183,12 @@ async function onSubmit(e) {
     const body = {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
+      active: active.value,
       ...ivrPayload(options.value, tags.value, alerts.value, timeout.value),
       listenforext: listenforext.value
     }
+    if (cname.value.trim()) body.cname = cname.value.trim()
+    if (name.value.trim()) body.name = name.value.trim()
     if (description.value.trim()) body.description = description.value.trim()
     if (greetnum.value !== '' && greetnum.value != null) body.greetnum = parseInt(greetnum.value, 10)
     const ivr = await getApiClient().post('ivrs', body)
@@ -263,6 +269,39 @@ onMounted(async () => {
         </template>
       </select>
       <p class="form-hint">The tenant this IVR belongs to. Tenants provide multi-tenant support.</p>
+
+      <div class="listenforext-row">
+        <label class="form-label">Active?</label>
+        <div class="switch-toggle switch-ios" role="group" aria-label="Active">
+          <input id="active-yes" v-model="active" type="radio" value="YES" />
+          <label for="active-yes">YES</label>
+          <input id="active-no" v-model="active" type="radio" value="NO" />
+          <label for="active-no">NO</label>
+        </div>
+      </div>
+      <p class="form-hint">If NO, the IVR will not be offered as a destination and callers cannot reach it.</p>
+
+      <label for="cname" class="form-label">Display name (optional)</label>
+      <input
+        id="cname"
+        v-model="cname"
+        type="text"
+        class="form-input"
+        placeholder="Common name / label"
+        autocomplete="off"
+      />
+      <p class="form-hint">Optional label for this IVR.</p>
+
+      <label for="name" class="form-label">Name (optional)</label>
+      <input
+        id="name"
+        v-model="name"
+        type="text"
+        class="form-input"
+        placeholder="Legacy name field"
+        autocomplete="off"
+      />
+      <p class="form-hint">Legacy name field; prefer Display name (cname) for new IVRs.</p>
 
       <label for="description" class="form-label">Description (optional)</label>
       <input

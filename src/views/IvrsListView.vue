@@ -24,15 +24,22 @@ function normalizeList(response) {
   return []
 }
 
+/** Local UID (shortuid) for display — same as Trunk/Tenant/InboundRoute list */
+function localUidDisplay(ivr) {
+  const v = ivr.shortuid
+  return v == null || v === '' ? '—' : String(v)
+}
+
 const filteredIvrs = computed(() => {
   const list = ivrs.value
   const q = (filterText.value || '').trim().toLowerCase()
   if (!q) return list
   return list.filter((ivr) => {
     const pkey = (ivr.pkey ?? '').toString().toLowerCase()
+    const shortuid = (ivr.shortuid ?? '').toString().toLowerCase()
     const cluster = (ivr.cluster ?? '').toString().toLowerCase()
     const desc = (ivr.description ?? '').toString().toLowerCase()
-    return pkey.includes(q) || cluster.includes(q) || desc.includes(q)
+    return pkey.includes(q) || shortuid.includes(q) || cluster.includes(q) || desc.includes(q)
   })
 })
 
@@ -121,7 +128,7 @@ onMounted(loadIvrs)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, tenant, or description"
+          placeholder="Filter by name, Local UID, tenant, or description"
           aria-label="Filter IVRs"
         />
       </p>
@@ -140,6 +147,7 @@ onMounted(loadIvrs)
         <thead>
           <tr>
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">name</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">description</th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
@@ -151,6 +159,7 @@ onMounted(loadIvrs)
             <td>
               <router-link :to="{ name: 'ivr-detail', params: { pkey: ivr.pkey } }" class="cell-link">{{ ivr.pkey }}</router-link>
             </td>
+            <td class="cell-immutable" title="Immutable">{{ localUidDisplay(ivr) }}</td>
             <td>{{ ivr.cluster ?? '—' }}</td>
             <td>{{ ivr.description ?? '—' }}</td>
             <td>
@@ -294,6 +303,10 @@ onMounted(loadIvrs)
   }
 }
 .table tbody tr:hover {
+  background: #f8fafc;
+}
+.cell-immutable {
+  color: #64748b;
   background: #f8fafc;
 }
 .cell-link {

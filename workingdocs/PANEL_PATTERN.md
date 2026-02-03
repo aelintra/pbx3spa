@@ -215,6 +215,29 @@ Apply this treatment consistently across list/detail/edit so immutable values ar
 
 ---
 
+## 5.5 KSUID and shortuid (Local UID) — same treatment everywhere
+
+For resources whose table has `id` (27-char KSUID) and `shortuid` (8-char Local UID), use the **same** approach in every such panel (Tenant, Trunk, Inbound route, IVR, etc.) so behaviour and UI are consistent.
+
+**API (pbx3api):**
+
+- **Create:** Populate `id` and `shortuid` on insert (see §3: use `generate_ksuid()` and `generate_shortuid()` from Helper.php before `$model->save()`).
+- **Serialization:** Do **not** hide `id` or `shortuid` in the model’s `$hidden`; the list and detail views need them. Do **not** use `$appends` for these; they are normal DB columns.
+
+**List view:**
+
+- Add **one** column: **Local UID** (label "Local UID"), after the name/pkey column. Use a `localUidDisplay(item)` helper that returns `item.shortuid` or `'—'` when missing. Apply `.cell-immutable` and `title="Immutable"` to the cell. Include `shortuid` in filter and sort.
+- **Do not** add a separate KSUID column in the list; only Local UID is shown in the table (same as Tenant, Trunk, Inbound route).
+
+**Detail view:**
+
+- **Identity:** Include both **Local UID** and **KSUID** in `identityFields`: `{ label: 'Local UID', value: r.shortuid ?? '—', immutable: true }` and `{ label: 'KSUID', value: r.id ?? '—', immutable: true }`. Show them in the read-only Identity `<dl>` and in the **edit form** as read-only: `<label>Local UID</label>` + `<p class="detail-readonly value-immutable">{{ resource.shortuid ?? '—' }}</p>`, and the same for KSUID with `resource.id ?? '—'`. No extra helper; use direct `?? '—'` like Trunk/Tenant/InboundRoute detail.
+- Exclude `id` and `shortuid` from the Advanced block (add them to the exclude set for `otherFields`) so they are not repeated.
+
+**Reference:** Trunk, Tenant, InboundRoute list and detail views implement this; IVR and any other resource with id/shortuid should match.
+
+---
+
 ## 6. Optional per-resource extras
 
 - **Runtime or live state:** If the API has a separate endpoint (e.g. `GET extensions/{id}/runtime`), add a small section or tab on the detail view: fetch on load, display read-only; optional edit form for `PUT .../runtime` fields.
@@ -233,7 +256,8 @@ When adding a new resource panel (or refactoring an existing one):
 4. Implement Detail: back, toolbar (Edit / Delete), **Per §4.1** use the **detail content blocks** (Identity, second section e.g. Transport or Settings, Advanced reveal). Edit form with all editable API fields; **Per §4.2** use **segmented pill** (switch-toggle switch-ios + radio) for boolean and short choice lists (e.g. Active?), not `<select>`. Delete with confirm. **Per §4:** when `route.query.edit` is set after load, call `startEdit()` so list Edit links land in edit mode.
 5. Reuse the CSS class names from this doc so styling stays consistent (copy from an existing panel, e.g. Extensions or Tenants, then adjust for fields).
 6. **Tenant column:** If the resource has a cluster/tenant, show **Tenant** (tenant pkey) per §5.1 — API returns `tenant_pkey` or frontend resolves from GET tenants. **Use the same resolution in both list and detail:** build the map (id, shortuid, pkey → tenant pkey) and use it in the list view and in the detail view so the Tenant field always shows pkey everywhere.
-7. **Success toasts:** After successful save or delete, call `useToastStore().show(message)` per §5.2 so the user gets positive confirmation.
+7. **KSUID/shortuid:** If the resource table has `id` and `shortuid`, follow **§5.5** so list (Local UID column only), detail (Identity + edit form), and API (visible, no $appends) match Tenant/Trunk/InboundRoute.
+8. **Success toasts:** After successful save or delete, call `useToastStore().show(message)` per §5.2 so the user gets positive confirmation.
 
 ---
 
