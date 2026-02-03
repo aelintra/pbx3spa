@@ -51,6 +51,17 @@ export function validateRoutePkey(value) {
 }
 
 /**
+ * Validate Trunk name (pkey) for create
+ * Required, non-empty
+ */
+export function validateTrunkPkey(value) {
+  if (!value || !value.trim()) {
+    return 'Trunk name is required'
+  }
+  return null
+}
+
+/**
  * Validate Route dialplan
  * Required; route will not work without it (e.g. _XXXXXX)
  */

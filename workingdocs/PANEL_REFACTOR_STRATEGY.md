@@ -18,6 +18,7 @@
 - **Step 7** ✅ Quick fixes: TenantsListView toolbar `justify-content: space-between`; TenantCreateView duplicate `.advanced-fields` CSS removed.
 - **Step 8 (Routes)** ✅ Routes panels: RoutesListView, RouteCreateView, RouteDetailView refactored to full pattern (shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage).
 - **Step 8 (Inbound Routes)** ✅ InboundRoutesListView, InboundRouteCreateView, InboundRouteDetailView refactored to full pattern (shared normalizeList, form components, always-edit Detail, Save/Cancel/Delete, firstErrorMessage, validateInboundRoutePkey/validateInboundCarrier).
+- **Step 8 (Trunks)** ✅ TrunksListView, TrunkCreateView, TrunkDetailView refactored to full pattern (shared normalizeList, form components, always-edit Detail, Save/Cancel/Delete, firstErrorMessage, validateTrunkPkey/validateTenant).
 
 ---
 
@@ -125,9 +126,11 @@ When you add a new resource or refactor a panel to the latest pattern, use this 
 - [ ] Heading: "Edit {Panel name} {Object name}".
 - [ ] Same shared config as Create for this resource (if any): import from same module; no duplicate optionEntries / ADVANCED_FIELDS / etc.
 - [ ] If API returns field-level errors, map them to validation state and use **focusFirstError** (like IVR Detail), instead of only a generic message.
+- [ ] Fields that are "set at create only" (e.g. transport): show as **FormReadonly** in Identity with low-light (`readonly-identity`); do **not** include in PUT body.
 
 **General**
 
+- [ ] **Field parity:** Cross-reference with the API (controller `updateableColumns` / request rules; optionally schema). Ensure **every** accepted field is in the UI: editable (Create/Edit) or FormReadonly in Identity (and omitted from PUT if read-only on edit). No omissions.
 - [ ] No duplicate modal CSS in the view.
 - [ ] No duplicate “normalize list” or “build payload” logic between Create and Detail for the same resource.
 

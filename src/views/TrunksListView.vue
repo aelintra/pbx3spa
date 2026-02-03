@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { normalizeList } from '@/utils/listResponse'
+import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const toast = useToastStore()
@@ -15,18 +17,6 @@ const confirmDeletePkey = ref(null)
 const filterText = ref('')
 const sortKey = ref('pkey')
 const sortOrder = ref('asc') // 'asc' | 'desc'
-
-// --- Normalize list response (array or wrapped) ---
-function normalizeList(response) {
-  if (Array.isArray(response)) return response
-  if (response && typeof response === 'object') {
-    if (Array.isArray(response.data)) return response.data
-    if (Array.isArray(response.trunks)) return response.trunks
-    if (Array.isArray(response.tenants)) return response.tenants
-    if (Object.keys(response).every((k) => /^\d+$/.test(k))) return Object.values(response)
-  }
-  return []
-}
 
 // --- Map cluster id, shortuid, or pkey → tenant pkey for display (always show pkey, not shortuid) ---
 const clusterToTenantPkey = computed(() => {
@@ -116,10 +106,10 @@ async function loadTrunks() {
       getApiClient().get('trunks'),
       getApiClient().get('tenants')
     ])
-    trunks.value = normalizeList(trunkResponse)
-    tenants.value = normalizeList(tenantResponse)
+    trunks.value = normalizeList(trunkResponse, 'trunks')
+    tenants.value = normalizeList(tenantResponse, 'tenants')
   } catch (err) {
-    error.value = err.data?.message || err.message || 'Failed to load trunks'
+    error.value = firstErrorMessage(err, 'Failed to load trunks')
   } finally {
     loading.value = false
   }
@@ -144,7 +134,7 @@ async function confirmAndDeleteTrunk(pkey) {
     await loadTrunks()
     toast.show(`Trunk ${pkey} deleted`)
   } catch (err) {
-    deleteError.value = err.data?.message || err.message || 'Failed to delete trunk'
+    deleteError.value = firstErrorMessage(err, 'Failed to delete trunk')
   } finally {
     confirmDeletePkey.value = null
     deletingPkey.value = null
@@ -206,23 +196,14 @@ onMounted(loadTrunks)
         </thead>
         <tbody>
           <tr v-for="tr in sortedTrunks" :key="tr.pkey">
-            <td>
-              <router-link :to="{ name: 'trunk-detail', params: { pkey: tr.pkey } }" class="cell-link">{{ tr.pkey }}</router-link>
-            </td>
+            <td>{{ tr.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(tr) }}</td>
-            <td>
-              <router-link
-                v-if="tenantPkeyDisplay(tr) !== '—'"
-                :to="{ name: 'tenant-detail', params: { pkey: tenantPkeyDisplay(tr) } }"
-                class="cell-link"
-              >{{ tenantPkeyDisplay(tr) }}</router-link>
-              <span v-else>—</span>
-            </td>
+            <td>{{ tenantPkeyDisplay(tr) }}</td>
             <td>{{ tr.description ?? '—' }}</td>
             <td>{{ tr.active ?? '—' }}</td>
             <td>{{ tr.host ?? '—' }}</td>
             <td>
-              <router-link :to="{ name: 'trunk-detail', params: { pkey: tr.pkey }, query: { edit: '1' } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
+              <router-link :to="{ name: 'trunk-detail', params: { pkey: tr.pkey } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
               </router-link>
             </td>
@@ -390,6 +371,7 @@ onMounted(loadTrunks)
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
 }
 .add-btn {

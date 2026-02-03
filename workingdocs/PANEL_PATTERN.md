@@ -6,7 +6,7 @@
 
 **Important**: 
 - **You must use the reusable form components** for all form fields: `FormField`, `FormSelect`, `FormToggle`, `FormReadonly` (from `src/components/forms/`). Do not use raw `<label>` + `<input>` / `<select>` for fields that these components can represent. Use them so that layout, accessibility, and behaviour stay consistent across panels.
-- **Editable fields must match the API:** Create and Edit panels must expose an editable form field for **every** field that the API accepts on create (POST) or update (PUT). Do not omit API-editable fields from the UI. Check the backend controller’s create/update validation (e.g. `updateableColumns` or request rules) and ensure each accepted field has a corresponding FormField, FormSelect, or FormToggle. Immutable fields (e.g. primary key, id, shortuid) use FormReadonly on Edit only.
+- **Editable fields must match the API:** Create and Edit panels must expose **every** field the API accepts. Do not omit fields. Before building or refactoring a panel, **cross-reference with the API**: list all fields from the backend controller’s create/update validation (e.g. `updateableColumns` in PHP, or request rules) and optionally the resource’s schema (e.g. `full_schema.sql`). For each field, add a corresponding FormField, FormSelect, or FormToggle (editable), or FormReadonly (read-only on Edit). See **API field parity (editable fields)** and **Field parity checklist** below.
 - This pattern also uses the `useFormValidation` composable where validation is needed.
 - Do NOT use the old table-based approach for form fields.
 - Always declare refs BEFORE validation composables.
@@ -69,12 +69,24 @@ The list panel main heading is typically the resource name plural (e.g. **"Tenan
 
 ### API field parity (editable fields)
 
-- **Every editable field in the API object must have a form control** in the Create and Edit panels. When adding or refactoring a panel:
-  1. Identify all fields the API accepts on create (POST body) and update (PUT body)—e.g. from the backend controller’s validation rules or `updateableColumns`.
-  2. For each such field, add a corresponding FormField, FormSelect, or FormToggle (or FormReadonly for immutable fields on Edit only).
-  3. Ensure Create and Edit send and receive the same set of editable fields; Create may omit fields that have sensible server defaults, but if the API accepts them, the UI should allow setting them so Create and Edit stay in sync.
-- Do not leave API-editable fields out of the UI. Omissions lead to incomplete editing and inconsistent behaviour between Create and Edit.
+- **Every field the API accepts must have a form control** in the Create and/or Edit panels. Do not omit fields.
+- **Field parity checklist (mandatory when adding or refactoring a panel):**
+  1. **List all API-accepted fields** from the backend: controller’s `updateableColumns` (or equivalent) and/or FormRequest validation rules for create (POST) and update (PUT). Optionally cross-check with the resource’s database schema (e.g. `full_schema.sql`) to catch columns that exist but might be missing from the controller’s list.
+  2. **For each field**, decide:
+     - **Editable on Create:** FormField / FormSelect / FormToggle; include in POST body.
+     - **Editable on Edit:** FormField / FormSelect / FormToggle; include in PUT body.
+     - **Set at create only (read-only on Edit):** On Create, include in POST body. On Edit, show with **FormReadonly** in the Identity section (with other non-updateable fields) and **do not** include in the PUT body. Style with low-light (e.g. class `readonly-identity`).
+     - **Immutable (never editable):** e.g. pkey, id, shortuid. On Edit only: FormReadonly in Identity section with low-light styling.
+  3. **Verify:** No field in the API list is missing from the UI; no extra field is sent on PUT that the API does not accept (or that the product explicitly keeps read-only on edit).
 - **Required fields that affect behaviour:** If a field is required for the resource to work (e.g. a dialplan pattern without which the route will not function), mark it **required** in the UI, add a validator in `src/utils/validation.js`, and validate on Create (and block save on Edit if empty). Use the **placeholder** and **hint** to show an example value (e.g. `_XXXXXX` for dialplan). Do not label such fields as optional.
+
+### Fields set at create only (read-only on Edit)
+
+Some fields are updateable in the API but should **not** be changeable after create (e.g. transport on Trunks). For those:
+
+- **Create panel:** Expose the field (FormField/FormSelect/FormToggle) and include it in the POST body.
+- **Edit panel:** Show the value as **FormReadonly** in the **Identity** section, below the other non-updateable fields (e.g. Name, Local UID, KSUID). Use the same low-light styling as other identity readonly fields (e.g. class `readonly-identity` on the FormReadonly component). **Do not** include the field in the PUT (save) payload.
+- **Styling:** Apply a muted colour to label and value (e.g. `#94a3b8`) and a light background (e.g. `#f1f5f9`) so it is visually grouped with Name, Local UID, KSUID. Example: `TrunkDetailView.vue` (Transport).
 
 ### Form layout: one row per field (same as IVR)
 
@@ -988,13 +1000,14 @@ function syncEditFromResource() {
 
 ### Field Order (Identity Section - Edit)
 
-1. Primary identifier (readonly, immutable)
-2. Local UID (readonly, immutable)
-3. KSUID (readonly, immutable)
-4. Tenant (editable dropdown)
-5. Description (optional, editable)
-6. Display name / Common name (optional, editable)
-7. Legacy/Deprecated fields (optional, editable)
+1. Primary identifier (readonly, immutable) — use class `readonly-identity` for low-light
+2. Local UID (readonly, immutable) — `readonly-identity`
+3. KSUID (readonly, immutable) — `readonly-identity`
+4. Any other read-only-in-edit fields (e.g. Transport) — `readonly-identity`; do not include in save payload
+5. Tenant (editable dropdown)
+6. Description (optional, editable)
+7. Display name / Common name (optional, editable)
+8. Legacy/Deprecated fields (optional, editable)
 
 ### Field Order (Settings Section - Edit)
 
@@ -1563,6 +1576,7 @@ watch(editCluster, () => {
 
 When applying this pattern to existing panels:
 
+- [ ] **Field parity:** Cross-reference with the API (controller `updateableColumns` / request rules; optionally schema). List every accepted field and ensure each is either editable (Create/Edit) or FormReadonly in Identity (and not in PUT body if read-only on edit). Do not omit API fields.
 - [ ] **Use shared `normalizeList`:** Import from `@/utils/listResponse.js`; remove any local `normalizeList` function from the view.
 - [ ] **Use shared `DeleteConfirmModal`:** Import and use `<DeleteConfirmModal>` from `@/components/DeleteConfirmModal.vue`; remove inline Teleport + modal markup and modal CSS.
 - [ ] Update list view header (Create button + Filter layout, toolbar `justify-content: space-between`)
@@ -1573,7 +1587,7 @@ When applying this pattern to existing panels:
 - [ ] Ensure edit view has all three buttons: Save, Cancel, and Delete (in `.edit-actions`)
 - [ ] Remove read-only view from edit (always open in edit mode)
 - [ ] Replace manual fields with FormField/FormSelect/FormToggle components
-- [ ] Use FormReadonly for immutable fields in edit view
+- [ ] Use FormReadonly for immutable and "set-at-create-only" fields in edit view (Identity section, low-light `readonly-identity`)
 - [ ] Replace manual validation with useFormValidation composable
 - [ ] Add validation rules to `@/utils/validation.js`
 - [ ] Import form components and validation composable
