@@ -268,6 +268,7 @@ async function saveRuntime(e) {
             <FormReadonly id="edit-identity-pkey" label="Ext" :value="extension.pkey ?? '—'" class="readonly-identity" />
             <FormReadonly id="edit-identity-shortuid" label="SIP Identity" :value="extension.shortuid ?? '—'" class="readonly-identity" />
             <FormReadonly id="edit-identity-id" label="KSUID" :value="extension.id ?? '—'" class="readonly-identity" />
+            <FormReadonly id="edit-identity-macaddr" label="MAC address" :value="extension.macaddr?.trim() || 'Unknown'" class="readonly-identity" />
             <FormReadonly id="edit-identity-device" label="Device" :value="extension.device ?? '—'" class="readonly-identity" />
             <FormSelect
               id="edit-cluster"
