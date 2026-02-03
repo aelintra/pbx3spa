@@ -41,7 +41,6 @@ const saving = ref(false)
 const deleteError = ref('')
 const deleting = ref(false)
 const confirmDeleteOpen = ref(false)
-const advancedOpen = ref(false)
 
 const pkey = computed(() => route.params.pkey)
 
@@ -287,11 +286,12 @@ async function confirmAndDelete() {
   }
 }
 
-/** Identity: pkey, shortuid, id (immutable), name, cname, description — same pattern as Trunk/Tenant/InboundRoute detail */
+/** Identity: tenant (top), pkey, shortuid, id (immutable), name, cname, description */
 const identityFields = computed(() => {
   if (!ivr.value) return []
   const r = ivr.value
   return [
+    { label: 'Tenant', value: r.cluster ?? '—', immutable: false },
     { label: 'IVR Name', value: r.pkey ?? '—', immutable: true },
     { label: 'Local UID', value: r.shortuid ?? '—', immutable: true },
     { label: 'KSUID', value: r.id ?? '—', immutable: true },
@@ -301,31 +301,16 @@ const identityFields = computed(() => {
   ]
 })
 
-/** Settings: active, tenant, greeting, listenforext, timeout, and key options (shown in table in read view). */
+/** Settings: active, greeting, listenforext, timeout, and key options (shown in table in read view). */
 const settingsFields = computed(() => {
   if (!ivr.value) return []
   const r = ivr.value
   return [
     { label: 'Active?', value: r.active ?? '—' },
-    { label: 'Tenant', value: r.cluster ?? '—' },
     { label: 'Greeting number', value: r.greetnum != null ? String(r.greetnum) : '—' },
     { label: 'Listen for extension dial?', value: r.listenforext ?? '—' },
     { label: 'Action on IVR timeout', value: r.timeout ?? '—' }
   ]
-})
-
-const ADVANCED_EXCLUDE = new Set([
-  'pkey', 'id', 'shortuid', 'active', 'cname', 'name', 'description', 'cluster', 'greetnum', 'listenforext', 'timeout',
-  'option0', 'option1', 'option2', 'option3', 'option4', 'option5',
-  'option6', 'option7', 'option8', 'option9', 'option10', 'option11',
-  'tag0', 'tag1', 'tag2', 'tag3', 'tag4', 'tag5', 'tag6', 'tag7', 'tag8', 'tag9', 'tag10', 'tag11',
-  'alert0', 'alert1', 'alert2', 'alert3', 'alert4', 'alert5', 'alert6', 'alert7', 'alert8', 'alert9', 'alert10', 'alert11'
-])
-const otherFields = computed(() => {
-  if (!ivr.value || typeof ivr.value !== 'object') return []
-  return Object.entries(ivr.value)
-    .filter(([k]) => !ADVANCED_EXCLUDE.has(k))
-    .sort(([a], [b]) => a.localeCompare(b))
 })
 </script>
 
@@ -357,58 +342,100 @@ const otherFields = computed(() => {
           <p v-if="saveError" id="ivr-edit-error" class="error" role="alert">{{ saveError }}</p>
 
           <h2 class="detail-heading">Identity</h2>
-          <label>IVR Name</label>
-          <p class="detail-readonly value-immutable" title="Immutable">{{ ivr.pkey ?? '—' }}</p>
-          <label>Local UID</label>
-          <p class="detail-readonly value-immutable" title="Immutable">{{ ivr.shortuid ?? '—' }}</p>
-          <label>KSUID</label>
-          <p class="detail-readonly value-immutable" title="Immutable">{{ ivr.id ?? '—' }}</p>
-          <label for="edit-description">Description (optional)</label>
-          <input id="edit-description" v-model="editDescription" type="text" class="edit-input" placeholder="Freeform description" />
-          <label for="edit-cname">Display name (optional)</label>
-          <input id="edit-cname" v-model="editCname" type="text" class="edit-input" placeholder="Common name / label" />
-          <label for="edit-name">Name (optional)</label>
-          <input id="edit-name" v-model="editName" type="text" class="edit-input" placeholder="Legacy name field" />
+          <table class="detail-fields-table edit-form-fields-table" aria-label="Identity">
+            <tbody>
+              <tr>
+                <th class="detail-field-label" scope="row"><label for="edit-cluster">Tenant</label></th>
+                <td class="detail-field-value">
+                  <select id="edit-cluster" v-model="editCluster" class="edit-input" required :disabled="destinationsLoading">
+                    <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <th class="detail-field-label" scope="row"><label for="edit-identity-pkey">IVR Name</label></th>
+                <td class="detail-field-value"><p id="edit-identity-pkey" class="detail-readonly value-immutable" title="Immutable">{{ ivr.pkey ?? '—' }}</p></td>
+              </tr>
+              <tr>
+                <th class="detail-field-label" scope="row"><label for="edit-identity-shortuid">Local UID</label></th>
+                <td class="detail-field-value"><p id="edit-identity-shortuid" class="detail-readonly value-immutable" title="Immutable">{{ ivr.shortuid ?? '—' }}</p></td>
+              </tr>
+              <tr>
+                <th class="detail-field-label" scope="row"><label for="edit-identity-id">KSUID</label></th>
+                <td class="detail-field-value"><p id="edit-identity-id" class="detail-readonly value-immutable" title="Immutable">{{ ivr.id ?? '—' }}</p></td>
+              </tr>
+              <tr>
+                <th class="detail-field-label" scope="row"><label for="edit-description">Description (optional)</label></th>
+                <td class="detail-field-value"><input id="edit-description" v-model="editDescription" type="text" class="edit-input" placeholder="Freeform description" /></td>
+              </tr>
+              <tr>
+                <th class="detail-field-label" scope="row"><label for="edit-cname">Display name (optional)</label></th>
+                <td class="detail-field-value"><input id="edit-cname" v-model="editCname" type="text" class="edit-input" placeholder="Common name / label" /></td>
+              </tr>
+              <tr>
+                <th class="detail-field-label" scope="row"><label for="edit-name">Name (optional)</label></th>
+                <td class="detail-field-value"><input id="edit-name" v-model="editName" type="text" class="edit-input" placeholder="Legacy name field" /></td>
+              </tr>
+            </tbody>
+          </table>
 
           <h2 class="detail-heading">Settings</h2>
-          <label class="edit-label-block">Active?</label>
-          <div class="switch-toggle switch-ios" role="group" aria-label="Active">
-            <input id="edit-active-yes" v-model="editActive" type="radio" value="YES" />
-            <label for="edit-active-yes">YES</label>
-            <input id="edit-active-no" v-model="editActive" type="radio" value="NO" />
-            <label for="edit-active-no">NO</label>
-          </div>
-          <label for="edit-cluster">Tenant</label>
-          <select id="edit-cluster" v-model="editCluster" class="edit-input" required :disabled="destinationsLoading">
-            <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>
-          </select>
-          <label for="edit-greetnum">Greeting Number</label>
-          <select id="edit-greetnum" v-model="editGreetnum" class="edit-input" :disabled="greetingsLoading">
-            <option value="">—</option>
-            <option v-for="n in greetingOptions" :key="n" :value="String(n)">{{ n }}</option>
-          </select>
-          <label class="edit-label-block">Listen for extension dial?</label>
-          <div class="switch-toggle switch-ios" role="group" aria-label="Listen for extension dial">
-            <input id="edit-listenforext-yes" v-model="editListenforext" type="radio" value="YES" />
-            <label for="edit-listenforext-yes">YES</label>
-            <input id="edit-listenforext-no" v-model="editListenforext" type="radio" value="NO" />
-            <label for="edit-listenforext-no">NO</label>
-          </div>
+          <table class="detail-fields-table edit-form-fields-table" aria-label="Settings">
+            <tbody>
+              <tr>
+                <th class="detail-field-label" scope="row">Active?</th>
+                <td class="detail-field-value">
+                  <label class="toggle-pill-ios" aria-label="Active">
+                    <input
+                      type="checkbox"
+                      :checked="editActive === 'YES'"
+                      @change="editActive = $event.target.checked ? 'YES' : 'NO'"
+                    />
+                    <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
+                  </label>
+                </td>
+              </tr>
+              <tr>
+                <th class="detail-field-label" scope="row"><label for="edit-greetnum">Greeting Number</label></th>
+                <td class="detail-field-value">
+                  <select id="edit-greetnum" v-model="editGreetnum" class="edit-input" :disabled="greetingsLoading">
+                    <option value="">—</option>
+                    <option v-for="n in greetingOptions" :key="n" :value="String(n)">{{ n }}</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <th class="detail-field-label" scope="row">Listen for extension dial?</th>
+                <td class="detail-field-value">
+                  <label class="toggle-pill-ios" aria-label="Listen for extension dial">
+                    <input
+                      type="checkbox"
+                      :checked="editListenforext === 'YES'"
+                      @change="editListenforext = $event.target.checked ? 'YES' : 'NO'"
+                    />
+                    <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
+                  </label>
+                </td>
+              </tr>
+              <tr>
+                <th class="detail-field-label" scope="row"><label for="edit-timeout">Action on IVR Timeout</label></th>
+                <td class="detail-field-value">
+                  <select id="edit-timeout" v-model="editTimeout" class="edit-input timeout-select">
+                    <option value="operator">Operator</option>
+                    <option value="None">None</option>
+                    <template v-for="(pkeys, group) in destinationGroups" :key="group">
+                      <optgroup v-if="pkeys.length" :label="group">
+                        <option v-for="p in pkeys" :key="p" :value="p">{{ p }}</option>
+                      </optgroup>
+                    </template>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
           <section class="destinations-section" aria-labelledby="ivr-edit-destinations-heading">
             <h2 id="ivr-edit-destinations-heading" class="destinations-heading">Keystroke options</h2>
-            <div class="timeout-row">
-              <label for="edit-timeout" class="form-label">Action on IVR Timeout</label>
-              <select id="edit-timeout" v-model="editTimeout" class="edit-input timeout-select">
-                <option value="operator">Operator</option>
-                <option value="None">None</option>
-                <template v-for="(pkeys, group) in destinationGroups" :key="group">
-                  <optgroup v-if="pkeys.length" :label="group">
-                    <option v-for="p in pkeys" :key="p" :value="p">{{ p }}</option>
-                  </optgroup>
-                </template>
-              </select>
-            </div>
             <div class="destinations-table">
               <div class="destinations-row destinations-header">
                 <span class="dest-cell dest-key">Key</span>
@@ -461,21 +488,25 @@ const otherFields = computed(() => {
         <template v-if="!editing">
           <section class="detail-section">
             <h2 class="detail-heading">Identity</h2>
-            <dl class="detail-list">
-              <template v-for="f in identityFields" :key="f.label">
-                <dt>{{ f.label }}</dt>
-                <dd :class="{ 'value-immutable': f.immutable }" :title="f.immutable ? 'Immutable' : undefined">{{ f.value }}</dd>
-              </template>
-            </dl>
+            <table class="detail-fields-table" aria-label="Identity">
+              <tbody>
+                <tr v-for="f in identityFields" :key="f.label">
+                  <th class="detail-field-label" scope="row">{{ f.label }}</th>
+                  <td class="detail-field-value" :class="{ 'value-immutable': f.immutable }" :title="f.immutable ? 'Immutable' : undefined">{{ f.value }}</td>
+                </tr>
+              </tbody>
+            </table>
           </section>
           <section class="detail-section">
             <h2 class="detail-heading">Settings</h2>
-            <dl class="detail-list">
-              <template v-for="f in settingsFields" :key="f.label">
-                <dt>{{ f.label }}</dt>
-                <dd>{{ f.value }}</dd>
-              </template>
-            </dl>
+            <table class="detail-fields-table" aria-label="Settings">
+              <tbody>
+                <tr v-for="f in settingsFields" :key="f.label">
+                  <th class="detail-field-label" scope="row">{{ f.label }}</th>
+                  <td class="detail-field-value">{{ f.value }}</td>
+                </tr>
+              </tbody>
+            </table>
             <h3 class="detail-subheading">Keystroke options</h3>
             <div class="readonly-destinations-table">
               <div class="destinations-row destinations-header">
@@ -493,17 +524,6 @@ const otherFields = computed(() => {
                 </div>
               </template>
             </div>
-          </section>
-          <section class="detail-section">
-            <button type="button" class="collapse-trigger" :aria-expanded="advancedOpen" @click="advancedOpen = !advancedOpen">
-              {{ advancedOpen ? '▼' : '▶' }} Advanced
-            </button>
-            <dl v-show="advancedOpen" class="detail-list detail-list-other">
-              <template v-for="[key, value] in otherFields" :key="key">
-                <dt>{{ key }}</dt>
-                <dd>{{ value == null ? '—' : String(value) }}</dd>
-              </template>
-            </dl>
           </section>
         </template>
       </div>
@@ -574,21 +594,38 @@ const otherFields = computed(() => {
   font-size: 0.9375rem;
   font-weight: 600;
   color: #475569;
-  margin: 1rem 0 0.5rem 0;
+  margin: 1rem 0 1rem 0;
 }
-.detail-list {
+.detail-fields-table {
   margin-top: 0.5rem;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.25rem 2rem;
+  width: 100%;
+  border-collapse: collapse;
   font-size: 0.9375rem;
+  display: table;
 }
-.detail-list dt {
+.detail-fields-table tbody {
+  display: table-row-group;
+}
+.detail-fields-table tbody tr {
+  display: table-row;
+}
+.detail-field-label {
   font-weight: 500;
   color: #475569;
+  text-align: left;
+  padding: 0.375rem 1rem 0.375rem 0;
+  vertical-align: top;
+  width: 1%;
+  white-space: nowrap;
 }
-.detail-list dd {
+.detail-field-value {
   margin: 0;
+  padding: 0.375rem 0;
+  vertical-align: top;
+}
+.detail-fields-table .detail-field-value.value-immutable {
+  color: #64748b;
+  background: transparent;
 }
 .detail-readonly {
   margin: 0 0 0.5rem 0;
@@ -601,24 +638,12 @@ const otherFields = computed(() => {
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
 }
-.detail-list-other {
-  margin-top: 0.5rem;
+.edit-form-fields-table .detail-field-value .detail-readonly {
+  margin: 0;
 }
-.collapse-trigger {
-  display: block;
-  width: 100%;
-  padding: 0.5rem 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #334155;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #e2e8f0;
-  cursor: pointer;
-  text-align: left;
-}
-.collapse-trigger:hover {
-  color: #0f172a;
+.edit-form-fields-table .detail-field-value .edit-input,
+.edit-form-fields-table .detail-field-value .toggle-pill-ios {
+  margin: 0;
 }
 .toolbar {
   margin: 0 0 0.75rem 0;
@@ -676,60 +701,60 @@ const otherFields = computed(() => {
   color: #64748b;
   margin: 0.25rem 0 0 0;
 }
-.switch-toggle.switch-ios {
-  display: flex;
-  flex-wrap: wrap;
-  background: #e2e8f0;
-  border-radius: 0.5rem;
-  padding: 0.25rem;
-  gap: 0;
+/* iOS-style sliding pill toggle (on/off) */
+.toggle-pill-ios {
+  display: inline-block;
+  cursor: pointer;
+  user-select: none;
+  vertical-align: middle;
 }
-.switch-toggle.switch-ios input {
+.toggle-pill-ios input {
   position: absolute;
   opacity: 0;
   width: 0;
   height: 0;
+  pointer-events: none;
 }
-.switch-toggle.switch-ios label {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-align: center;
-  cursor: pointer;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s, color 0.15s;
-  color: #64748b;
+.toggle-pill-track {
+  display: block;
+  width: 51px;
+  height: 31px;
+  border-radius: 31px;
+  background: #e2e8f0;
+  position: relative;
+  transition: background-color 0.2s ease;
 }
-.switch-toggle.switch-ios label:hover {
-  color: #334155;
+.toggle-pill-thumb {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
 }
-.switch-toggle.switch-ios input:checked + label {
-  background: white;
-  color: #0f172a;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+.toggle-pill-ios input:checked + .toggle-pill-track {
+  background: #34c759;
+}
+.toggle-pill-ios input:checked + .toggle-pill-track .toggle-pill-thumb {
+  transform: translateX(20px);
+}
+.toggle-pill-ios input:focus-visible + .toggle-pill-track {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 .destinations-section {
   margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
 }
 .destinations-heading {
   font-size: 1rem;
   font-weight: 600;
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 1rem 0;
   color: #0f172a;
-}
-.timeout-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-.timeout-row .form-label {
-  min-width: 12rem;
 }
 .timeout-select {
   min-width: 0;
@@ -752,7 +777,6 @@ const otherFields = computed(() => {
   font-weight: 600;
   color: #475569;
   padding-bottom: 0.25rem;
-  border-bottom: 1px solid #e2e8f0;
 }
 .destinations-row-none {
   opacity: 0.7;
@@ -763,6 +787,9 @@ const otherFields = computed(() => {
 }
 .readonly-destinations-table .dest-cell {
   font-size: 0.9375rem;
+}
+.readonly-destinations-table {
+  margin-bottom: 1.5rem;
 }
 .dest-cell {
   min-width: 0;

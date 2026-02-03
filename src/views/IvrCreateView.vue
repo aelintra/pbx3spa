@@ -272,14 +272,16 @@ onMounted(async () => {
 
       <div class="listenforext-row">
         <label class="form-label">Active?</label>
-        <div class="switch-toggle switch-ios" role="group" aria-label="Active">
-          <input id="active-yes" v-model="active" type="radio" value="YES" />
-          <label for="active-yes">YES</label>
-          <input id="active-no" v-model="active" type="radio" value="NO" />
-          <label for="active-no">NO</label>
-        </div>
+        <label class="toggle-pill-ios" aria-label="Active">
+          <input
+            type="checkbox"
+            :checked="active === 'YES'"
+            @change="active = $event.target.checked ? 'YES' : 'NO'"
+          />
+          <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
+        </label>
       </div>
-      <p class="form-hint">If NO, the IVR will not be offered as a destination and callers cannot reach it.</p>
+      <p class="form-hint">If off, the IVR will not be offered as a destination and callers cannot reach it.</p>
 
       <label for="cname" class="form-label">Display name (optional)</label>
       <input
@@ -329,26 +331,16 @@ onMounted(async () => {
 
       <div class="listenforext-row">
         <label class="form-label">Listen for extension dial?</label>
-        <div class="switch-toggle switch-ios" role="group" aria-label="Listen for extension dial">
+        <label class="toggle-pill-ios" aria-label="Listen for extension dial">
           <input
-            id="listenforext-yes"
-            v-model="listenforext"
-            type="radio"
-            value="YES"
-            aria-label="Listen for extension dial: Yes"
+            type="checkbox"
+            :checked="listenforext === 'YES'"
+            @change="listenforext = $event.target.checked ? 'YES' : 'NO'"
           />
-          <label for="listenforext-yes">YES</label>
-          <input
-            id="listenforext-no"
-            v-model="listenforext"
-            type="radio"
-            value="NO"
-            aria-label="Listen for extension dial: No"
-          />
-          <label for="listenforext-no">NO</label>
-        </div>
+          <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
+        </label>
       </div>
-      <p class="form-hint">If YES, the IVR listens for an extension number as well as key presses. This can slow response; you can use a separate sub-IVR for extension entry (e.g. “press star to enter extension”).</p>
+      <p class="form-hint">If on, the IVR listens for an extension number as well as key presses. This can slow response; you can use a separate sub-IVR for extension entry (e.g. “press star to enter extension”).</p>
 
       <section class="destinations-section" aria-labelledby="ivr-destinations-heading">
         <h2 id="ivr-destinations-heading" class="destinations-heading">Keystroke options</h2>
@@ -472,40 +464,49 @@ onMounted(async () => {
   margin: 0;
   min-width: 12rem;
 }
-.switch-toggle.switch-ios {
-  display: flex;
-  flex-wrap: wrap;
-  background: #e2e8f0;
-  border-radius: 0.5rem;
-  padding: 0.25rem;
-  gap: 0;
+/* iOS-style sliding pill toggle (on/off) */
+.toggle-pill-ios {
+  display: inline-block;
+  cursor: pointer;
+  user-select: none;
+  vertical-align: middle;
 }
-.switch-toggle.switch-ios input {
+.toggle-pill-ios input {
   position: absolute;
   opacity: 0;
   width: 0;
   height: 0;
+  pointer-events: none;
 }
-.switch-toggle.switch-ios label {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-align: center;
-  cursor: pointer;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s, color 0.15s;
-  color: #64748b;
+.toggle-pill-track {
+  display: block;
+  width: 51px;
+  height: 31px;
+  border-radius: 31px;
+  background: #e2e8f0;
+  position: relative;
+  transition: background-color 0.2s ease;
 }
-.switch-toggle.switch-ios label:hover {
-  color: #334155;
+.toggle-pill-thumb {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
 }
-.switch-toggle.switch-ios input:checked + label {
-  background: white;
-  color: #0f172a;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+.toggle-pill-ios input:checked + .toggle-pill-track {
+  background: #34c759;
+}
+.toggle-pill-ios input:checked + .toggle-pill-track .toggle-pill-thumb {
+  transform: translateX(20px);
+}
+.toggle-pill-ios input:focus-visible + .toggle-pill-track {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 .destinations-table {
   display: flex;
