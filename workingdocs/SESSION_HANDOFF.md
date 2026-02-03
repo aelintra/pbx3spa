@@ -17,17 +17,17 @@
 - **Inbound route create (pbx3api):** Destinations API uses `$request->all()` in `move_request_to_model` (Helper.php) so JSON POST body is read; pkey set from request; Asterisk extension validation for pkey (digits, _XZN.! pattern, s/i/t); reject single "0"; validation message for invalid extension.
 - **Inbound route detail (pbx3-frontend):** Open/Close route are **destination dropdowns** (None, Operator, Queues/Extensions/IVRs/CustomApps) loaded from `GET /destinations?cluster=<tenant>`; MOH value **NO** mapped to **OFF** so the pill slider shows the correct selection.
 - **Schema yardstick:** **pbx3/full_schema.sql** is the single source of truth for table columns. API models and controllers were aligned to it (inroutes, trunks, route, queue, appl, dateseg; removed faxdetect, lcl, monitor, routeable, carrier→technology, desc→description where schema has description, etc.). ipphone keeps **desc** (SIP username; Asterisk generator uses it); TODO rename to sip_username later.
-- **Boolean standardisation (documented only):** **BOOLEAN_STANDARDISATION.md** and pbx3api migration `2025_01_31_000000_normalise_boolean_columns_to_yes_no.php` add a plan and a one-off fixer to migrate existing DBs to YES/NO. No app code changed yet; run migration only when ready.
+- **Boolean standardisation (documented only):** **BOOLEAN_STANDARDISATION.md** describes the plan and fixer logic to migrate existing DBs to YES/NO. No migration file is in the repo (removed to avoid unplanned runs); create it when ready per the doc.
 
 ---
 
 ## Left to do
 
-### Complex create flows (type-chooser creates)
+### Complex create flows (create exercise)
 
 **Approach:** One create view per resource + type chooser + conditional fields + one polymorphic create API per resource. See **workingdocs/COMPLEX_CREATE_PLAN.md**.
 
-**Next:** Trunk create type-chooser (Phase 1: type chooser “SIP trunk” | “IAX2 trunk”, conditional fields, pills for regthistrunk; Phase 2: API bug fix). Then DDI, then Extension. IVR is simple (no chooser); can standardize in parallel.
+**Status (create exercise):** Tenant, Extension, Trunk, Inbound route create done; IVR create still to do (minimal form today). Finish IVR create per §3 (tenant dropdown, description, defaults). 
 
 ### Create-panel standardization (PANEL_PATTERN §3 + §8)
 
@@ -51,6 +51,12 @@ For each: (a) preset create-form fields from DB SQL DEFAULTs and model `$attribu
 - **Tenants – Timer status / masteroclo:** API null handling; prefer API fix (e.g. model accessor or DB default).
 - **Field mutability:** Prefer API-driven immutable metadata so frontend can derive lowlight without per-panel lists.
 - **Review later (UX):** Inline edit for list rows — revisit when main pattern is stable.
+
+### Panel pattern audit (for when we come back)
+
+**Fully implement pattern (read: Identity + Settings/Transport + Advanced; edit: all API-updateable fields):** Trunk, Inbound route only.
+
+**Do not fully implement:** Tenant (edit: 5 of 50+ fields), Extension (edit: 6 of 16), Route (edit: 3 of 9), Agent (no read structure + edit: 3 of 7), Queue (no read structure + edit: 2 of 5), IVR (no read structure + edit: 2 of many). See full audit in chat history; standardize these panels later.
 
 ### Parked / later
 

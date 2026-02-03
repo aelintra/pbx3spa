@@ -44,7 +44,7 @@ Rationale: YES/NO is already the majority in the schema (`active`, `swoclip`, et
 
 ## Fixer routine (migrate existing database)
 
-A one-off migration normalises existing data so that all boolean-like TEXT columns use only YES or NO.
+A one-off migration normalises existing data so that all boolean-like TEXT columns use only YES or NO. **No migration file is in the repo yet** — it was removed to avoid an unplanned `php artisan migrate` running before we're ready. When we're ready, create a new migration in pbx3api using the logic below.
 
 **Mapping rules:**
 
@@ -53,11 +53,7 @@ A one-off migration normalises existing data so that all boolean-like TEXT colum
 - Values that are already `YES` or `NO` are left unchanged.
 - Any other value is left as-is (or optionally forced to NO and logged).
 
-**Where the fixer runs:**
-
-- **Laravel migration** in pbx3api: `database/migrations/xxxx_normalise_boolean_columns.php`.  
-  Run once per environment with `php artisan migrate`.  
-  The migration only updates tables/columns that exist in the connected DB (tenant/instance schema).
+**When ready:** Add a Laravel migration in pbx3api `database/migrations/` that loops over the tables/columns below, checks `Schema::hasTable` / `Schema::hasColumn`, and runs an UPDATE with the mapping (e.g. `CASE WHEN UPPER(TRIM(...)) IN ('ON','1','TRUE','YES') THEN 'YES' WHEN ... IN ('OFF','0','FALSE','NO') THEN 'NO' ELSE col END`). Run once per environment with `php artisan migrate` after backup.
 
 **Tables and columns to fix (TEXT booleans):**
 
@@ -79,7 +75,7 @@ The migration script uses a list of `(table, column)` and runs an UPDATE with th
 ## TODO
 
 - [ ] Audit full_schema.sql and list every boolean-like column (TEXT and INTEGER).
-- [ ] Implement fixer migration in pbx3api (see migration file).
+- [ ] When ready: add a new migration in pbx3api using the Fixer routine above (no migration file is in the repo yet).
 - [ ] Change API validators and model defaults to YES/NO only.
 - [ ] Change frontend to use YES/NO; remove NO→OFF mapping.
 - [ ] Update schema defaults in full_schema.sql for new/updated tables.

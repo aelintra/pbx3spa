@@ -15,7 +15,7 @@ This folder is **for the AI (Cursor agent)** to record progress and build a memo
 | **DEPLOYMENT_BASICS.md** | How SPA apps are stored and served in production: what you deploy (static files), where they live (server vs S3+CloudFront vs Netlify/Vercel), publish/manage mechanism. |
 | **SYSTEM_CONTEXT.md** | Short memory: PBX3 in one paragraph, what we're building, key references. |
 | **PANEL_PATTERN.md** | Reusable List / Create / Detail pattern for resource panels (Extensions, Trunks, Queues, etc.); routes, views, CSS classes, conventions. |
-| **BOOLEAN_STANDARDISATION.md** | Plan and fixer to standardise boolean columns to YES/NO; migration in pbx3api (run when ready). |
+| **BOOLEAN_STANDARDISATION.md** | Plan and fixer to standardise boolean columns to YES/NO; create migration in pbx3api when ready (none in repo yet). |
 | **SESSION_HANDOFF.md** | Where we left off: done, left to do, references. |
 | **README.md** | This file. |
 

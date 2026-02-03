@@ -16,6 +16,23 @@ const editDescription = ref('')
 const editActive = ref('YES')
 const editCluster = ref('default')
 const editHost = ref('')
+const editUsername = ref('')
+const editPeername = ref('')
+const editTrunkname = ref('')
+const editPassword = ref('')
+const editMoh = ref('OFF')
+const editCallprogress = ref('OFF')
+const editSwoclip = ref('YES')
+const editAlertinfo = ref('')
+const editCallerid = ref('')
+const editInprefix = ref('')
+const editMatch = ref('')
+const editRegister = ref('')
+const editTag = ref('')
+const editDevicerec = ref('')
+const editDisa = ref('')
+const editDisapass = ref('')
+const editTransform = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -84,6 +101,23 @@ async function fetchTrunk() {
     const tenantPkey = trunk.value?.tenant_pkey ?? tenantPkeyDisplay(trunk.value?.cluster)
     editCluster.value = tenantPkey ?? 'default'
     editHost.value = trunk.value?.host ?? ''
+    editUsername.value = trunk.value?.username ?? ''
+    editPeername.value = trunk.value?.peername ?? ''
+    editTrunkname.value = trunk.value?.trunkname ?? ''
+    editPassword.value = '' // never re-fill password
+    editMoh.value = trunk.value?.moh ?? 'OFF'
+    editCallprogress.value = trunk.value?.callprogress ?? 'OFF'
+    editSwoclip.value = trunk.value?.swoclip ?? 'YES'
+    editAlertinfo.value = trunk.value?.alertinfo ?? ''
+    editCallerid.value = trunk.value?.callerid ?? ''
+    editInprefix.value = trunk.value?.inprefix ?? ''
+    editMatch.value = trunk.value?.match ?? ''
+    editRegister.value = trunk.value?.register ?? ''
+    editTag.value = trunk.value?.tag ?? ''
+    editDevicerec.value = trunk.value?.devicerec ?? ''
+    editDisa.value = trunk.value?.disa ?? ''
+    editDisapass.value = trunk.value?.disapass ?? ''
+    editTransform.value = trunk.value?.transform ?? ''
     if (route.query.edit) startEdit()
   } catch (err) {
     error.value = err.data?.message || err.message || 'Failed to load trunk'
@@ -107,6 +141,22 @@ function startEdit() {
   editActive.value = trunk.value?.active ?? 'YES'
   editCluster.value = trunk.value?.tenant_pkey ?? tenantPkeyDisplay(trunk.value?.cluster) ?? 'default'
   editHost.value = trunk.value?.host ?? ''
+  editUsername.value = trunk.value?.username ?? ''
+  editPeername.value = trunk.value?.peername ?? ''
+  editTrunkname.value = trunk.value?.trunkname ?? ''
+  editMoh.value = trunk.value?.moh ?? 'OFF'
+  editCallprogress.value = trunk.value?.callprogress ?? 'OFF'
+  editSwoclip.value = trunk.value?.swoclip ?? 'YES'
+  editAlertinfo.value = trunk.value?.alertinfo ?? ''
+  editCallerid.value = trunk.value?.callerid ?? ''
+  editInprefix.value = trunk.value?.inprefix ?? ''
+  editMatch.value = trunk.value?.match ?? ''
+  editRegister.value = trunk.value?.register ?? ''
+  editTag.value = trunk.value?.tag ?? ''
+  editDevicerec.value = trunk.value?.devicerec ?? ''
+  editDisa.value = trunk.value?.disa ?? ''
+  editDisapass.value = trunk.value?.disapass ?? ''
+  editTransform.value = trunk.value?.transform ?? ''
   saveError.value = ''
   editing.value = true
 }
@@ -121,23 +171,38 @@ async function saveEdit(e) {
   saveError.value = ''
   saving.value = true
   try {
-    await getApiClient().put(`trunks/${encodeURIComponent(pkey.value)}`, {
+    const body = {
       description: editDescription.value.trim() || undefined,
       active: editActive.value,
       cluster: editCluster.value.trim(),
-      host: editHost.value.trim()
-    })
+      host: editHost.value.trim(),
+      username: editUsername.value.trim() || undefined,
+      peername: editPeername.value.trim() || undefined,
+      trunkname: editTrunkname.value.trim() || undefined,
+      moh: editMoh.value,
+      callprogress: editCallprogress.value,
+      swoclip: editSwoclip.value,
+      alertinfo: editAlertinfo.value.trim() || undefined,
+      callerid: editCallerid.value.trim() || undefined,
+      inprefix: editInprefix.value.trim() || undefined,
+      match: editMatch.value.trim() || undefined,
+      register: editRegister.value.trim() || undefined,
+      tag: editTag.value.trim() || undefined,
+      devicerec: editDevicerec.value.trim() || undefined,
+      disa: editDisa.value.trim() || undefined,
+      disapass: editDisapass.value.trim() || undefined,
+      transform: editTransform.value.trim() || undefined
+    }
+    if (editPassword.value.trim()) body.password = editPassword.value.trim()
+    await getApiClient().put(`trunks/${encodeURIComponent(pkey.value)}`, body)
     await fetchTrunk()
     editing.value = false
     toast.show(`Trunk ${pkey.value} saved`)
   } catch (err) {
-    const msg =
-      err.data?.description?.[0] ??
-      err.data?.active?.[0] ??
-      err.data?.cluster?.[0] ??
-      err.data?.host?.[0] ??
-      err.data?.message ??
-      err.message
+    const data = err?.data
+const msg =
+        (data && typeof data === 'object' && Object.values(data).flat().find(Boolean)) ||
+        (data?.message ?? err.message)
     saveError.value = msg || 'Failed to update trunk'
   } finally {
     saving.value = false
@@ -180,19 +245,29 @@ const identityFields = computed(() => {
   ]
 })
 
-/** Settings section: Tenant, active, host */
+/** Settings section: transport/connection and main config */
 const settingsFields = computed(() => {
   if (!trunk.value) return []
   const t = trunk.value
   return [
     { label: 'Tenant', value: tenantPkeyDisplay(t.cluster) },
     { label: 'Active?', value: t.active ?? '—' },
-    { label: 'host', value: t.host ?? '—' }
+    { label: 'host', value: t.host ?? '—' },
+    { label: 'username', value: t.username ?? '—' },
+    { label: 'peername', value: t.peername ?? '—' },
+    { label: 'trunkname', value: t.trunkname ?? '—' },
+    { label: 'password', value: t.password ? '••••••' : '—' },
+    { label: 'moh', value: t.moh ?? '—' },
+    { label: 'callprogress', value: t.callprogress ?? '—' },
+    { label: 'swoclip', value: t.swoclip ?? '—' },
+    { label: 'technology', value: t.technology ?? '—' },
+    { label: 'transport', value: t.transport ?? '—' }
   ]
 })
 
 const ADVANCED_EXCLUDE = new Set([
-  'id', 'pkey', 'shortuid', 'description', 'cluster', 'tenant_pkey', 'active', 'host'
+  'id', 'pkey', 'shortuid', 'description', 'cluster', 'tenant_pkey', 'active', 'host',
+  'username', 'peername', 'trunkname', 'password', 'moh', 'callprogress', 'swoclip', 'technology', 'transport'
 ])
 const otherFields = computed(() => {
   if (!trunk.value || typeof trunk.value !== 'object') return []
@@ -249,6 +324,56 @@ const otherFields = computed(() => {
           </div>
           <label for="edit-host">host</label>
           <input id="edit-host" v-model="editHost" type="text" class="edit-input" required />
+          <label for="edit-username">username</label>
+          <input id="edit-username" v-model="editUsername" type="text" class="edit-input" autocomplete="off" />
+          <label for="edit-peername">peername</label>
+          <input id="edit-peername" v-model="editPeername" type="text" class="edit-input" autocomplete="off" />
+          <label for="edit-trunkname">trunkname</label>
+          <input id="edit-trunkname" v-model="editTrunkname" type="text" class="edit-input" autocomplete="off" />
+          <label for="edit-password">password</label>
+          <input id="edit-password" v-model="editPassword" type="password" class="edit-input" placeholder="Leave blank to keep current" autocomplete="new-password" />
+          <label class="edit-label-block">moh</label>
+          <div class="switch-toggle switch-ios">
+            <input id="edit-moh-on" type="radio" value="ON" v-model="editMoh" />
+            <label for="edit-moh-on">ON</label>
+            <input id="edit-moh-off" type="radio" value="OFF" v-model="editMoh" />
+            <label for="edit-moh-off">OFF</label>
+          </div>
+          <label class="edit-label-block">callprogress</label>
+          <div class="switch-toggle switch-ios">
+            <input id="edit-callprogress-on" type="radio" value="ON" v-model="editCallprogress" />
+            <label for="edit-callprogress-on">ON</label>
+            <input id="edit-callprogress-off" type="radio" value="OFF" v-model="editCallprogress" />
+            <label for="edit-callprogress-off">OFF</label>
+          </div>
+          <label class="edit-label-block">swoclip</label>
+          <div class="switch-toggle switch-ios">
+            <input id="edit-swoclip-yes" type="radio" value="YES" v-model="editSwoclip" />
+            <label for="edit-swoclip-yes">YES</label>
+            <input id="edit-swoclip-no" type="radio" value="NO" v-model="editSwoclip" />
+            <label for="edit-swoclip-no">NO</label>
+          </div>
+          <h2 class="detail-heading">Advanced</h2>
+          <label for="edit-alertinfo">alertinfo</label>
+          <input id="edit-alertinfo" v-model="editAlertinfo" type="text" class="edit-input" autocomplete="off" />
+          <label for="edit-callerid">callerid</label>
+          <input id="edit-callerid" v-model="editCallerid" type="text" class="edit-input" autocomplete="off" />
+          <label for="edit-inprefix">inprefix</label>
+          <input id="edit-inprefix" v-model="editInprefix" type="text" class="edit-input" autocomplete="off" />
+          <label for="edit-match">match</label>
+          <input id="edit-match" v-model="editMatch" type="text" class="edit-input" autocomplete="off" />
+          <label for="edit-register">register</label>
+          <input id="edit-register" v-model="editRegister" type="text" class="edit-input" autocomplete="off" />
+          <label for="edit-tag">tag</label>
+          <input id="edit-tag" v-model="editTag" type="text" class="edit-input" autocomplete="off" />
+          <label for="edit-devicerec">devicerec</label>
+          <input id="edit-devicerec" v-model="editDevicerec" type="text" class="edit-input" placeholder="None, OTR, OTRR, Inbound.Outbound, Both" autocomplete="off" />
+          <label for="edit-disa">disa</label>
+          <input id="edit-disa" v-model="editDisa" type="text" class="edit-input" placeholder="DISA, CALLBACK" autocomplete="off" />
+          <label for="edit-disapass">disapass</label>
+          <input id="edit-disapass" v-model="editDisapass" type="text" class="edit-input" autocomplete="off" />
+          <label for="edit-transform">transform</label>
+          <input id="edit-transform" v-model="editTransform" type="text" class="edit-input" autocomplete="off" />
           <p v-if="saveError" class="error">{{ saveError }}</p>
           <div class="edit-actions">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
