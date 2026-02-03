@@ -59,16 +59,16 @@ The plan is in **`workingdocs/PANEL_REFACTOR_STRATEGY.md`**. Summary:
 
 **Reference implementations (already on pattern):**
 
-- **List:** `src/views/IvrsListView.vue`, `src/views/TenantsListView.vue`, `src/views/RoutesListView.vue`, `src/views/InboundRoutesListView.vue`
-- **Create:** `src/views/IvrCreateView.vue`, `src/views/TenantCreateView.vue`, `src/views/RouteCreateView.vue`, `src/views/InboundRouteCreateView.vue`
-- **Edit:** `src/views/IvrDetailView.vue`, `src/views/TenantDetailView.vue`, `src/views/RouteDetailView.vue`, `src/views/InboundRouteDetailView.vue`
+- **List:** `src/views/IvrsListView.vue`, `src/views/TenantsListView.vue`, `src/views/RoutesListView.vue`, `src/views/InboundRoutesListView.vue`, `src/views/TrunksListView.vue`
+- **Create:** `src/views/IvrCreateView.vue`, `src/views/TenantCreateView.vue`, `src/views/RouteCreateView.vue`, `src/views/InboundRouteCreateView.vue`, `src/views/TrunkCreateView.vue`
+- **Edit:** `src/views/IvrDetailView.vue`, `src/views/TenantDetailView.vue`, `src/views/RouteDetailView.vue`, `src/views/InboundRouteDetailView.vue`, `src/views/TrunkDetailView.vue`
 
 ### Shared `normalizeList` (from `@/utils/listResponse.js`)
 
-**Using shared:** TenantsListView, IvrsListView, IvrCreateView, IvrDetailView, RoutesListView, RouteCreateView, RouteDetailView, InboundRoutesListView, InboundRouteCreateView, InboundRouteDetailView.
+**Using shared:** TenantsListView, IvrsListView, IvrCreateView, IvrDetailView, RoutesListView, RouteCreateView, RouteDetailView, InboundRoutesListView, InboundRouteCreateView, InboundRouteDetailView, TrunksListView, TrunkCreateView, TrunkDetailView.
 
 **Still using local `normalizeList` (candidate for migration):**  
-TrunksListView, ExtensionsListView, TrunkDetailView, ExtensionDetailView, ExtensionCreateView, AgentsListView, QueuesListView, BackupsListView.
+ExtensionsListView, ExtensionDetailView, ExtensionCreateView, AgentsListView, QueuesListView, BackupsListView.
 
 → Migrating these: add `import { normalizeList } from '@/utils/listResponse'`, remove the local `function normalizeList(...)` in the file, and call `normalizeList(response)` or `normalizeList(response, 'resourceKey')` as needed (see `listResponse.js` for signature).
 
@@ -81,7 +81,8 @@ TrunksListView, ExtensionsListView, TrunkDetailView, ExtensionDetailView, Extens
 - **Tenant:** List/Create/Edit refactored; **tenantAdvanced.js** in use — no duplicate advanced config. **IVR:** List/Create/Edit refactored; **ivrDestinations.js** in use — no duplicate optionEntries/ivrPayload.
 - **Routes:** List/Create/Edit refactored; use shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage.
 - **Inbound Routes:** List/Create/Edit refactored; shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; always-edit Detail; validation (validateInboundRoutePkey, validateInboundCarrier).
-- **Trunks, Extensions:** List and Detail use DeleteConfirmModal; list views still have local normalizeList. Create views not yet fully audited against pattern (form components, normalizeList, etc.).
+- **Trunks:** List/Create/Edit refactored; shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; always-edit Detail; validation (validateTrunkPkey, validateTenant).
+- **Extensions:** List and Detail use DeleteConfirmModal; list view still has local normalizeList. Create view not yet fully audited against pattern (form components, normalizeList, etc.).
 - **Agents, Queues:** List views exist; may have local normalizeList and inline delete modal. Create/Detail may need full pattern pass.
 - **Backups:** List only; local normalizeList.
 
