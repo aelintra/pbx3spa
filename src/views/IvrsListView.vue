@@ -5,6 +5,7 @@ import { useToastStore } from '@/stores/toast'
 
 const toast = useToastStore()
 const ivrs = ref([])
+const tenants = ref([])
 const loading = ref(true)
 const error = ref('')
 const deleteError = ref('')
@@ -19,15 +20,33 @@ function normalizeList(response) {
   if (response && typeof response === 'object') {
     if (Array.isArray(response.data)) return response.data
     if (Array.isArray(response.ivrs)) return response.ivrs
+    if (Array.isArray(response.tenants)) return response.tenants
     if (Object.keys(response).every((k) => /^\d+$/.test(k))) return Object.values(response)
   }
   return []
 }
 
+/** Map tenant shortuid -> pkey so we can show pkey in the Tenant column when IVR.cluster is shortuid. */
+const tenantShortuidToPkey = computed(() => {
+  const map = {}
+  for (const t of tenants.value) {
+    if (t.shortuid) map[String(t.shortuid)] = t.pkey
+    if (t.pkey) map[String(t.pkey)] = t.pkey
+  }
+  return map
+})
+
 /** Local UID (shortuid) for display — same as Trunk/Tenant/InboundRoute list */
 function localUidDisplay(ivr) {
   const v = ivr.shortuid
   return v == null || v === '' ? '—' : String(v)
+}
+
+/** Tenant column: show tenant pkey (resolve shortuid -> pkey when API returns shortuid in cluster). */
+function tenantDisplay(ivr) {
+  const c = ivr.cluster
+  if (c == null || c === '') return '—'
+  return tenantShortuidToPkey.value[String(c)] ?? c
 }
 
 const filteredIvrs = computed(() => {
@@ -81,8 +100,12 @@ async function loadIvrs() {
   loading.value = true
   error.value = ''
   try {
-    const response = await getApiClient().get('ivrs')
-    ivrs.value = normalizeList(response)
+    const [tenantsRes, ivrsRes] = await Promise.all([
+      getApiClient().get('tenants'),
+      getApiClient().get('ivrs')
+    ])
+    tenants.value = normalizeList(tenantsRes)
+    ivrs.value = normalizeList(ivrsRes)
   } catch (err) {
     error.value = err.data?.message || err.message || 'Failed to load IVRs'
   } finally {
@@ -128,7 +151,7 @@ onMounted(loadIvrs)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, Local UID, tenant, or description"
+          placeholder="Filter by IVR Direct Dial, Local UID, tenant, or description"
           aria-label="Filter IVRs"
         />
       </p>
@@ -146,24 +169,26 @@ onMounted(loadIvrs)
       <table v-else class="table">
         <thead>
           <tr>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">name</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">IVR Direct Dial</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">description</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('greetnum')" @click="setSort('greetnum')">Greeting number</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('timeout')" @click="setSort('timeout')">Timeout</th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
             <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="ivr in sortedIvrs" :key="ivr.pkey">
-            <td>
-              <router-link :to="{ name: 'ivr-detail', params: { pkey: ivr.pkey } }" class="cell-link">{{ ivr.pkey }}</router-link>
-            </td>
+            <td>{{ ivr.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(ivr) }}</td>
-            <td>{{ ivr.cluster ?? '—' }}</td>
+            <td>{{ tenantDisplay(ivr) }}</td>
             <td>{{ ivr.description ?? '—' }}</td>
+            <td>{{ ivr.greetnum != null ? String(ivr.greetnum) : '—' }}</td>
+            <td>{{ ivr.timeout ?? '—' }}</td>
             <td>
-              <router-link :to="{ name: 'ivr-detail', params: { pkey: ivr.pkey }, query: { edit: '1' } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
+              <router-link :to="{ name: 'ivr-detail', params: { pkey: ivr.pkey } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
               </router-link>
             </td>
@@ -211,6 +236,9 @@ onMounted(loadIvrs)
   gap: 1rem;
 }
 .list-header {
+  margin: 0;
+}
+.list-header h1 {
   margin: 0;
 }
 .list-states {
@@ -400,6 +428,7 @@ onMounted(loadIvrs)
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
 }
 .add-btn {

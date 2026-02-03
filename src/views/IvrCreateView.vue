@@ -240,130 +240,163 @@ onMounted(async () => {
     <form class="form" @submit="onSubmit" @keydown="onKeydown">
       <p v-if="error" id="ivr-create-error" class="error" role="alert">{{ error }}</p>
 
-      <label for="pkey" class="form-label">IVR Name</label>
-      <input
-        id="pkey"
-        ref="pkeyInput"
-        v-model="pkey"
-        type="text"
-        class="form-input"
-        placeholder="e.g. main-ivr"
-        required
-        autocomplete="off"
-      />
-      <p class="form-hint">Unique ID for this IVR.</p>
+      <h2 class="detail-heading">Identity</h2>
+      <table class="detail-fields-table edit-form-fields-table" aria-label="Identity">
+        <tbody>
+          <tr>
+            <th class="detail-field-label" scope="row"><label for="pkey">IVR Direct Dial</label></th>
+            <td class="detail-field-value">
+              <input
+                id="pkey"
+                ref="pkeyInput"
+                v-model="pkey"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]{3,5}"
+                class="edit-input"
+                placeholder="e.g. 1234"
+                required
+                autocomplete="off"
+              />
+              <p class="form-hint">Numeric ID (3-5 digits) for this IVR.</p>
+            </td>
+          </tr>
+          <tr>
+            <th class="detail-field-label" scope="row"><label for="cluster">Tenant</label></th>
+            <td class="detail-field-value">
+              <select
+                id="cluster"
+                v-model="cluster"
+                class="edit-input"
+                required
+                aria-label="Tenant"
+                :disabled="tenantsLoading"
+                :aria-busy="tenantsLoading"
+              >
+                <option v-if="tenantsLoading" value="">Loading…</option>
+                <template v-else>
+                  <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>
+                </template>
+              </select>
+              <p class="form-hint">The tenant this IVR belongs to. Tenants provide multi-tenant support.</p>
+            </td>
+          </tr>
+          <tr>
+            <th class="detail-field-label" scope="row"><label for="description">Description (optional)</label></th>
+            <td class="detail-field-value">
+              <input
+                id="description"
+                v-model="description"
+                type="text"
+                class="edit-input"
+                placeholder="Freeform description"
+                autocomplete="off"
+              />
+              <p class="form-hint">Shown in the IVR list.</p>
+            </td>
+          </tr>
+          <tr>
+            <th class="detail-field-label" scope="row"><label for="cname">Display name (optional)</label></th>
+            <td class="detail-field-value">
+              <input
+                id="cname"
+                v-model="cname"
+                type="text"
+                class="edit-input"
+                placeholder="Common name / label"
+                autocomplete="off"
+              />
+              <p class="form-hint">Optional label for this IVR.</p>
+            </td>
+          </tr>
+          <tr>
+            <th class="detail-field-label" scope="row"><label for="name">Name (optional)</label></th>
+            <td class="detail-field-value">
+              <input
+                id="name"
+                v-model="name"
+                type="text"
+                class="edit-input"
+                placeholder="Legacy name field"
+                autocomplete="off"
+              />
+              <p class="form-hint">Legacy name field; prefer Display name (cname) for new IVRs.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-      <label for="cluster" class="form-label">Tenant</label>
-      <select
-        id="cluster"
-        v-model="cluster"
-        class="form-input"
-        required
-        aria-label="Tenant"
-        :disabled="tenantsLoading"
-        :aria-busy="tenantsLoading"
-      >
-        <option v-if="tenantsLoading" value="">Loading…</option>
-        <template v-else>
-          <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>
-        </template>
-      </select>
-      <p class="form-hint">The tenant this IVR belongs to. Tenants provide multi-tenant support.</p>
-
-      <div class="listenforext-row">
-        <label class="form-label">Active?</label>
-        <label class="toggle-pill-ios" aria-label="Active">
-          <input
-            type="checkbox"
-            :checked="active === 'YES'"
-            @change="active = $event.target.checked ? 'YES' : 'NO'"
-          />
-          <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
-        </label>
-      </div>
-      <p class="form-hint">If off, the IVR will not be offered as a destination and callers cannot reach it.</p>
-
-      <label for="cname" class="form-label">Display name (optional)</label>
-      <input
-        id="cname"
-        v-model="cname"
-        type="text"
-        class="form-input"
-        placeholder="Common name / label"
-        autocomplete="off"
-      />
-      <p class="form-hint">Optional label for this IVR.</p>
-
-      <label for="name" class="form-label">Name (optional)</label>
-      <input
-        id="name"
-        v-model="name"
-        type="text"
-        class="form-input"
-        placeholder="Legacy name field"
-        autocomplete="off"
-      />
-      <p class="form-hint">Legacy name field; prefer Display name (cname) for new IVRs.</p>
-
-      <label for="description" class="form-label">Description (optional)</label>
-      <input
-        id="description"
-        v-model="description"
-        type="text"
-        class="form-input"
-        placeholder="Freeform description"
-        autocomplete="off"
-      />
-      <p class="form-hint">Shown in the IVR list.</p>
-
-      <label for="greetnum" class="form-label">Greeting Number</label>
-      <select
-        id="greetnum"
-        v-model="greetnum"
-        class="form-input"
-        aria-label="Greeting number to play when IVR is activated"
-        :disabled="greetingsLoading"
-      >
-        <option value="">—</option>
-        <option v-for="n in greetingOptions" :key="n" :value="String(n)">{{ n }}</option>
-      </select>
-      <p class="form-hint">Greeting played when the IVR is activated. Greetings are created in the Greetings section.</p>
-
-      <div class="listenforext-row">
-        <label class="form-label">Listen for extension dial?</label>
-        <label class="toggle-pill-ios" aria-label="Listen for extension dial">
-          <input
-            type="checkbox"
-            :checked="listenforext === 'YES'"
-            @change="listenforext = $event.target.checked ? 'YES' : 'NO'"
-          />
-          <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
-        </label>
-      </div>
-      <p class="form-hint">If on, the IVR listens for an extension number as well as key presses. This can slow response; you can use a separate sub-IVR for extension entry (e.g. “press star to enter extension”).</p>
+      <h2 class="detail-heading">Settings</h2>
+      <table class="detail-fields-table edit-form-fields-table" aria-label="Settings">
+        <tbody>
+          <tr>
+            <th class="detail-field-label" scope="row">Active?</th>
+            <td class="detail-field-value">
+              <label class="toggle-pill-ios" aria-label="Active">
+                <input
+                  type="checkbox"
+                  :checked="active === 'YES'"
+                  @change="active = $event.target.checked ? 'YES' : 'NO'"
+                />
+                <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
+              </label>
+              <p class="form-hint">If off, the IVR will not be offered as a destination and callers cannot reach it.</p>
+            </td>
+          </tr>
+          <tr>
+            <th class="detail-field-label" scope="row"><label for="greetnum">Greeting Number</label></th>
+            <td class="detail-field-value">
+              <select
+                id="greetnum"
+                v-model="greetnum"
+                class="edit-input"
+                aria-label="Greeting number to play when IVR is activated"
+                :disabled="greetingsLoading"
+              >
+                <option value="">—</option>
+                <option v-for="n in greetingOptions" :key="n" :value="String(n)">{{ n }}</option>
+              </select>
+              <p class="form-hint">Greeting played when the IVR is activated. Greetings are created in the Greetings section.</p>
+            </td>
+          </tr>
+          <tr>
+            <th class="detail-field-label" scope="row">Listen for extension dial?</th>
+            <td class="detail-field-value">
+              <label class="toggle-pill-ios" aria-label="Listen for extension dial">
+                <input
+                  type="checkbox"
+                  :checked="listenforext === 'YES'"
+                  @change="listenforext = $event.target.checked ? 'YES' : 'NO'"
+                />
+                <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
+              </label>
+              <p class="form-hint">If on, the IVR listens for an extension number as well as key presses. This can slow response; you can use a separate sub-IVR for extension entry (e.g. "press star to enter extension").</p>
+            </td>
+          </tr>
+          <tr>
+            <th class="detail-field-label" scope="row"><label for="dest-timeout">Action on IVR Timeout</label></th>
+            <td class="detail-field-value">
+              <select
+                id="dest-timeout"
+                v-model="timeout"
+                class="edit-input timeout-select"
+                aria-label="Destination on timeout"
+              >
+                <option value="operator">Operator</option>
+                <option value="None">None</option>
+                <template v-for="(pkeys, group) in destinationGroups" :key="group">
+                  <optgroup v-if="pkeys.length" :label="group">
+                    <option v-for="p in pkeys" :key="p" :value="p">{{ p }}</option>
+                  </optgroup>
+                </template>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
       <section class="destinations-section" aria-labelledby="ivr-destinations-heading">
         <h2 id="ivr-destinations-heading" class="destinations-heading">Keystroke options</h2>
-        <p class="form-hint destinations-hint">Action on KeyPress = destination. Tag = aid to the operator (e.g. "US West Telesales"). Alert = alertinfo string for distinctive ring (e.g. &lt;http://127.0.0.1/Bellcore-drX&gt;).</p>
-
-        <div class="timeout-row">
-          <label for="dest-timeout" class="form-label">Action on IVR Timeout</label>
-          <select
-            id="dest-timeout"
-            v-model="timeout"
-            class="form-input timeout-select"
-            aria-label="Destination on timeout"
-          >
-            <option value="operator">Operator</option>
-            <option value="None">None</option>
-            <template v-for="(pkeys, group) in destinationGroups" :key="group">
-              <optgroup v-if="pkeys.length" :label="group">
-                <option v-for="p in pkeys" :key="p" :value="p">{{ p }}</option>
-              </optgroup>
-            </template>
-          </select>
-        </div>
-
         <div class="destinations-table">
           <div class="destinations-row destinations-header">
             <span class="dest-cell dest-key">Key</span>
@@ -377,7 +410,7 @@ onMounted(async () => {
               <select
                 :id="'dest-' + item.key"
                 v-model="options[item.key]"
-                class="form-input dest-cell dest-action"
+                class="edit-input dest-cell dest-action"
                 :aria-label="'Destination for key ' + item.label"
               >
                 <option value="None">None</option>
@@ -392,7 +425,7 @@ onMounted(async () => {
                 :id="'tag-' + item.key"
                 v-model="tags[item.tagKey]"
                 type="text"
-                class="form-input dest-cell dest-tag"
+                class="edit-input dest-cell dest-tag"
                 placeholder="e.g. US West Telesales"
                 :aria-label="'Tag for key ' + item.label"
                 autocomplete="off"
@@ -401,7 +434,7 @@ onMounted(async () => {
                 :id="'alert-' + item.key"
                 v-model="alerts[item.alertKey]"
                 type="text"
-                class="form-input dest-cell dest-alert"
+                class="edit-input dest-cell dest-alert"
                 placeholder="e.g. &lt;http://127.0.0.1/Bellcore-drX&gt;"
                 :aria-label="'Alert for key ' + item.label"
                 autocomplete="off"
@@ -426,43 +459,74 @@ onMounted(async () => {
 .create-view {
   max-width: 52rem;
 }
-.destinations-section {
-  margin-top: 0.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
-}
-.destinations-heading {
+.detail-heading {
   font-size: 1rem;
   font-weight: 600;
-  margin: 0 0 0.25rem 0;
-  color: #0f172a;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
 }
-.destinations-hint {
-  margin-bottom: 0.75rem;
+.detail-heading:first-of-type {
+  margin-top: 0;
 }
-.timeout-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+.detail-fields-table {
+  margin-top: 0.5rem;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  display: table;
 }
-.timeout-row .form-label {
+.detail-fields-table tbody {
+  display: table-row-group;
+}
+.detail-fields-table tbody tr {
+  display: table-row;
+}
+.detail-field-label {
+  font-weight: 500;
+  color: #475569;
+  text-align: left;
+  padding: 0.375rem 1rem 0.375rem 0;
+  vertical-align: top;
+  width: 1%;
+  white-space: nowrap;
+}
+.detail-field-value {
   margin: 0;
-  min-width: 12rem;
+  padding: 0.375rem 0;
+  vertical-align: top;
+}
+.edit-form-fields-table .detail-field-value .form-hint {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+.edit-input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+.edit-input:focus {
+  outline: none;
+  border-color: #3b82f6;
 }
 .timeout-select {
   min-width: 0;
   max-width: 20rem;
 }
-.listenforext-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+.destinations-section {
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding-top: 1rem;
 }
-.listenforext-row .form-label {
-  margin: 0;
-  min-width: 12rem;
+.destinations-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: #0f172a;
+}
+.destinations-hint {
+  margin-bottom: 0.75rem;
 }
 /* iOS-style sliding pill toggle (on/off) */
 .toggle-pill-ios {
@@ -524,12 +588,11 @@ onMounted(async () => {
   font-weight: 600;
   color: #475569;
   padding-bottom: 0.25rem;
-  border-bottom: 1px solid #e2e8f0;
 }
 .destinations-row-none {
   opacity: 0.7;
 }
-.destinations-row-none .form-input,
+.destinations-row-none .edit-input,
 .destinations-row-none .dest-key {
   color: #64748b;
 }

@@ -69,9 +69,19 @@ function normalizeList(response) {
   return []
 }
 
+/** Tenant list for dropdown: use pkey for both value and display (API may return shortuid in cluster). */
 const tenantOptions = computed(() => {
   const list = tenants.value.map((t) => t.pkey).filter(Boolean)
   return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
+})
+
+/** Map tenant shortuid -> pkey so we can resolve IVR.cluster (if shortuid) to pkey for the dropdown. */
+const tenantShortuidToPkey = computed(() => {
+  const map = {}
+  for (const t of tenants.value) {
+    if (t.shortuid) map[String(t.shortuid)] = t.pkey
+  }
+  return map
 })
 
 const tenantOptionsForSelect = computed(() => {
@@ -145,7 +155,9 @@ async function loadGreetings() {
 function syncEditFromIvr() {
   if (!ivr.value) return
   const r = ivr.value
-  editCluster.value = r.cluster ?? 'default'
+  const clusterRaw = r.cluster ?? 'default'
+  // IVR cluster may be stored as shortuid; resolve to pkey so dropdown displays pkey
+  editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
   editActive.value = r.active ?? 'YES'
   editCname.value = r.cname ?? ''
   editName.value = r.name ?? ''
@@ -167,11 +179,9 @@ async function fetchIvr() {
   try {
     ivr.value = await getApiClient().get(`ivrs/${encodeURIComponent(pkey.value)}`)
     syncEditFromIvr()
-    if (route.query.edit) {
-      editing.value = true
-      saveError.value = ''
-      if (editCluster.value) loadDestinations()
-    }
+    editing.value = true
+    saveError.value = ''
+    if (editCluster.value) loadDestinations()
   } catch (err) {
     error.value = err.data?.message || err.message || 'Failed to load IVR'
     ivr.value = null
@@ -186,6 +196,12 @@ onMounted(() => {
   fetchIvr()
 })
 watch(pkey, fetchIvr)
+watch(tenants, () => {
+  if (ivr.value && editCluster.value) {
+    const resolved = tenantShortuidToPkey.value[editCluster.value]
+    if (resolved) editCluster.value = resolved
+  }
+}, { deep: true })
 watch(editCluster, () => {
   if (editing.value) loadDestinations()
 })
@@ -197,23 +213,14 @@ function goBack() {
   router.push({ name: 'ivrs' })
 }
 
-function startEdit() {
-  syncEditFromIvr()
-  saveError.value = ''
-  editing.value = true
-  if (editCluster.value) loadDestinations()
-}
-
 function cancelEdit() {
-  editing.value = false
-  saveError.value = ''
+  goBack()
 }
 
 function onKeydown(e) {
   if (e.key === 'Escape') {
     e.preventDefault()
-    if (editing.value) cancelEdit()
-    else goBack()
+    goBack()
   }
 }
 
@@ -286,32 +293,6 @@ async function confirmAndDelete() {
   }
 }
 
-/** Identity: tenant (top), pkey, shortuid, id (immutable), name, cname, description */
-const identityFields = computed(() => {
-  if (!ivr.value) return []
-  const r = ivr.value
-  return [
-    { label: 'Tenant', value: r.cluster ?? '—', immutable: false },
-    { label: 'IVR Name', value: r.pkey ?? '—', immutable: true },
-    { label: 'Local UID', value: r.shortuid ?? '—', immutable: true },
-    { label: 'KSUID', value: r.id ?? '—', immutable: true },
-    { label: 'Name', value: r.name ?? '—', immutable: false },
-    { label: 'Display name', value: r.cname ?? '—', immutable: false },
-    { label: 'Description', value: r.description ?? '—', immutable: false }
-  ]
-})
-
-/** Settings: active, greeting, listenforext, timeout, and key options (shown in table in read view). */
-const settingsFields = computed(() => {
-  if (!ivr.value) return []
-  const r = ivr.value
-  return [
-    { label: 'Active?', value: r.active ?? '—' },
-    { label: 'Greeting number', value: r.greetnum != null ? String(r.greetnum) : '—' },
-    { label: 'Listen for extension dial?', value: r.listenforext ?? '—' },
-    { label: 'Action on IVR timeout', value: r.timeout ?? '—' }
-  ]
-})
 </script>
 
 <template>
@@ -319,41 +300,22 @@ const settingsFields = computed(() => {
     <p class="back">
       <button type="button" class="back-btn" @click="goBack">← IVRs</button>
     </p>
-    <h1>IVR: {{ pkey }}</h1>
+    <h1>Edit IVR {{ ivr?.cname?.trim() ? ivr.cname.trim() : pkey }}</h1>
 
     <p v-if="loading" class="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
     <template v-else-if="ivr">
       <div class="detail-content">
-        <p v-if="!editing" class="toolbar">
-          <button type="button" class="edit-btn" @click="startEdit">Edit</button>
-          <button
-            type="button"
-            class="delete-btn"
-            :disabled="deleting"
-            @click="askConfirmDelete"
-          >
-            {{ deleting ? 'Deleting…' : 'Delete IVR' }}
-          </button>
-        </p>
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
 
-        <form v-else-if="editing" class="edit-form" @submit="saveEdit">
+        <form class="edit-form" @submit="saveEdit">
           <p v-if="saveError" id="ivr-edit-error" class="error" role="alert">{{ saveError }}</p>
 
           <h2 class="detail-heading">Identity</h2>
           <table class="detail-fields-table edit-form-fields-table" aria-label="Identity">
             <tbody>
               <tr>
-                <th class="detail-field-label" scope="row"><label for="edit-cluster">Tenant</label></th>
-                <td class="detail-field-value">
-                  <select id="edit-cluster" v-model="editCluster" class="edit-input" required :disabled="destinationsLoading">
-                    <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>
-                  </select>
-                </td>
-              </tr>
-              <tr>
-                <th class="detail-field-label" scope="row"><label for="edit-identity-pkey">IVR Name</label></th>
+                <th class="detail-field-label" scope="row"><label for="edit-identity-pkey">IVR Direct Dial</label></th>
                 <td class="detail-field-value"><p id="edit-identity-pkey" class="detail-readonly value-immutable" title="Immutable">{{ ivr.pkey ?? '—' }}</p></td>
               </tr>
               <tr>
@@ -363,6 +325,14 @@ const settingsFields = computed(() => {
               <tr>
                 <th class="detail-field-label" scope="row"><label for="edit-identity-id">KSUID</label></th>
                 <td class="detail-field-value"><p id="edit-identity-id" class="detail-readonly value-immutable" title="Immutable">{{ ivr.id ?? '—' }}</p></td>
+              </tr>
+              <tr>
+                <th class="detail-field-label" scope="row"><label for="edit-cluster">Tenant</label></th>
+                <td class="detail-field-value">
+                  <select id="edit-cluster" v-model="editCluster" class="edit-input" required :disabled="destinationsLoading">
+                    <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>
+                  </select>
+                </td>
               </tr>
               <tr>
                 <th class="detail-field-label" scope="row"><label for="edit-description">Description (optional)</label></th>
@@ -484,48 +454,6 @@ const settingsFields = computed(() => {
             <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
           </div>
         </form>
-
-        <template v-if="!editing">
-          <section class="detail-section">
-            <h2 class="detail-heading">Identity</h2>
-            <table class="detail-fields-table" aria-label="Identity">
-              <tbody>
-                <tr v-for="f in identityFields" :key="f.label">
-                  <th class="detail-field-label" scope="row">{{ f.label }}</th>
-                  <td class="detail-field-value" :class="{ 'value-immutable': f.immutable }" :title="f.immutable ? 'Immutable' : undefined">{{ f.value }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </section>
-          <section class="detail-section">
-            <h2 class="detail-heading">Settings</h2>
-            <table class="detail-fields-table" aria-label="Settings">
-              <tbody>
-                <tr v-for="f in settingsFields" :key="f.label">
-                  <th class="detail-field-label" scope="row">{{ f.label }}</th>
-                  <td class="detail-field-value">{{ f.value }}</td>
-                </tr>
-              </tbody>
-            </table>
-            <h3 class="detail-subheading">Keystroke options</h3>
-            <div class="readonly-destinations-table">
-              <div class="destinations-row destinations-header">
-                <span class="dest-cell dest-key">Key</span>
-                <span class="dest-cell dest-action">Action</span>
-                <span class="dest-cell dest-tag">Tag</span>
-                <span class="dest-cell dest-alert">Alert</span>
-              </div>
-              <template v-for="item in optionEntries" :key="item.key">
-                <div class="destinations-row" :class="{ 'destinations-row-none': (ivr[item.key] ?? 'None') === 'None' }">
-                  <span class="dest-cell dest-key">{{ item.label }}</span>
-                  <span class="dest-cell dest-action">{{ ivr[item.key] ?? 'None' }}</span>
-                  <span class="dest-cell dest-tag">{{ ivr[item.tagKey] ?? '—' }}</span>
-                  <span class="dest-cell dest-alert">{{ ivr[item.alertKey] ?? '—' }}</span>
-                </div>
-              </template>
-            </div>
-          </section>
-        </template>
       </div>
     </template>
 
@@ -589,6 +517,9 @@ const settingsFields = computed(() => {
   font-weight: 600;
   color: #334155;
   margin: 0 0 0.5rem 0;
+}
+.detail-heading:first-of-type {
+  margin-top: 1.5rem;
 }
 .detail-subheading {
   font-size: 0.9375rem;
