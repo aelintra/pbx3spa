@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { normalizeList } from '@/utils/listResponse'
+import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const toast = useToastStore()
 const tenants = ref([])
@@ -13,17 +15,6 @@ const confirmDeletePkey = ref(null)
 const filterText = ref('')
 const sortKey = ref('pkey')
 const sortOrder = ref('asc') // 'asc' | 'desc'
-
-// --- Normalize list response (array or wrapped) ---
-function normalizeList(response) {
-  if (Array.isArray(response)) return response
-  if (response && typeof response === 'object') {
-    if (Array.isArray(response.data)) return response.data
-    if (Array.isArray(response.tenants)) return response.tenants
-    if (Object.keys(response).every((k) => /^\d+$/.test(k))) return Object.values(response)
-  }
-  return []
-}
 
 // --- Display helpers ---
 /** Local UID (shortuid) for display */
@@ -96,7 +87,7 @@ async function loadTenants() {
   error.value = ''
   try {
     const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response)
+    tenants.value = normalizeList(response, 'tenants')
   } catch (err) {
     error.value = err.data?.message || err.message || 'Failed to load tenants'
   } finally {
@@ -189,9 +180,7 @@ onMounted(loadTenants)
         </thead>
         <tbody>
           <tr v-for="t in sortedTenants" :key="t.pkey">
-            <td>
-              <router-link :to="{ name: 'tenant-detail', params: { pkey: t.pkey } }" class="cell-link">{{ t.pkey }}</router-link>
-            </td>
+            <td>{{ t.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(t) }}</td>
             <td>{{ t.description ?? '—' }}</td>
             <td>{{ t.clusterclid != null && t.clusterclid !== '' ? t.clusterclid : '—' }}</td>
@@ -199,7 +188,7 @@ onMounted(loadTenants)
             <td>{{ t.chanmax != null && t.chanmax !== '' ? t.chanmax : '—' }}</td>
             <td>{{ timerStatusDisplay(t) }}</td>
             <td>
-              <router-link :to="{ name: 'tenant-detail', params: { pkey: t.pkey }, query: { edit: '1' } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
+              <router-link :to="{ name: 'tenant-detail', params: { pkey: t.pkey } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
               </router-link>
             </td>
@@ -223,22 +212,17 @@ onMounted(loadTenants)
       </table>
     </section>
 
-    <Teleport to="body">
-      <div v-if="confirmDeletePkey" class="modal-backdrop" @click.self="cancelConfirmDelete">
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
-          <h2 id="modal-delete-title" class="modal-title">Delete tenant?</h2>
-          <p class="modal-body">
-            Tenant <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be undone.
-          </p>
-          <div class="modal-actions">
-            <button type="button" class="modal-btn modal-btn-cancel" @click="cancelConfirmDelete">Cancel</button>
-            <button type="button" class="modal-btn modal-btn-delete" :disabled="deletingPkey === confirmDeletePkey" @click="confirmAndDeleteTenant(confirmDeletePkey)">
-              {{ deletingPkey === confirmDeletePkey ? 'Deleting…' : 'Delete' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <DeleteConfirmModal
+      :show="!!confirmDeletePkey"
+      title="Delete tenant?"
+      :loading="deletingPkey === confirmDeletePkey"
+      @confirm="confirmAndDeleteTenant(confirmDeletePkey)"
+      @cancel="cancelConfirmDelete"
+    >
+      <template #body>
+        <p>Tenant <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+      </template>
+    </DeleteConfirmModal>
   </div>
 </template>
 
@@ -249,6 +233,9 @@ onMounted(loadTenants)
   gap: 1rem;
 }
 .list-header {
+  margin: 0;
+}
+.list-header h1 {
   margin: 0;
 }
 .list-states {
@@ -375,71 +362,6 @@ onMounted(loadTenants)
   cursor: not-allowed;
 }
 
-/* Delete confirmation modal */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-.modal {
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  padding: 1.5rem;
-  max-width: 24rem;
-  width: 100%;
-}
-.modal-title {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-.modal-body {
-  margin: 0 0 1.25rem 0;
-  font-size: 0.9375rem;
-  color: #475569;
-  line-height: 1.5;
-}
-.modal-body strong {
-  color: #0f172a;
-}
-.modal-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-}
-.modal-btn {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  border: none;
-}
-.modal-btn-cancel {
-  background: #f1f5f9;
-  color: #475569;
-}
-.modal-btn-cancel:hover {
-  background: #e2e8f0;
-}
-.modal-btn-delete {
-  background: #dc2626;
-  color: white;
-}
-.modal-btn-delete:hover:not(:disabled) {
-  background: #b91c1c;
-}
-.modal-btn-delete:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
 .toolbar {
   margin: 0.75rem 0 0 0;
   display: flex;

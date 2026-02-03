@@ -1,8 +1,13 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
+import { validateTenantPkey } from '@/utils/validation'
+import FormField from '@/components/forms/FormField.vue'
+import FormSelect from '@/components/forms/FormSelect.vue'
+import FormToggle from '@/components/forms/FormToggle.vue'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -14,7 +19,10 @@ const chanmax = ref('30')
 const masteroclo = ref('AUTO')
 const error = ref('')
 const loading = ref(false)
-const advancedOpen = ref(false)
+const pkeyInput = ref(null)
+
+// Field-level validation (refs declared before composable)
+const pkeyValidation = useFormValidation(pkey, validateTenantPkey)
 
 // Defaults from database create SQL: pbx3/pbx3-1/opt/pbx3/db/db_sql/sqlite_create_tenant.sql (cluster table)
 // and pbx3api app/Models/Tenant.php $attributes. Preset create form so users see DB defaults.
@@ -80,12 +88,16 @@ const ADVANCED_KEYS = [
   'recmaxage', 'recmaxsize', 'recused', 'ringdelay', 'routeoverride', 'spy_pass', 'sysop', 'syspass',
   'usemohcustom', 'vmail_age', 'voice_instr', 'voip_max'
 ]
+// Store boolean as 'YES'/'NO' so we can use FormSelect (one row per field)
 const formAdvanced = reactive(
-  Object.fromEntries(ADVANCED_KEYS.map((k) => [k, CLUSTER_CREATE_DEFAULTS[k] ?? '']))
+  Object.fromEntries(ADVANCED_KEYS.map((k) => {
+    const def = CLUSTER_CREATE_DEFAULTS[k]
+    if (def === true || def === false) return [k, def ? 'YES' : 'NO']
+    return [k, def != null ? def : '']
+  }))
 )
 
 // Field config for Advanced: label and type (text, number, select, pill, boolean).
-// pill = short fixed-choice list rendered as segmented pill (switch-toggle switch-ios).
 const ADVANCED_FIELDS = [
   { key: 'allow_hash_xfer', label: 'Allow hash xfer', type: 'pill', options: ['enabled', 'disabled'] },
   { key: 'callrecord1', label: 'Call record 1', type: 'pill', options: ['None', 'In', 'Out', 'Both'] },
@@ -155,8 +167,8 @@ function buildAdvancedPayload() {
     const v = formAdvanced[f.key]
     if (f.type === 'boolean') {
       if (v === true || v === false) out[f.key] = v
-      if (v === 'true') out[f.key] = true
-      if (v === 'false') out[f.key] = false
+      if (v === 'YES') out[f.key] = true
+      if (v === 'NO') out[f.key] = false
     } else if (f.type === 'number') {
       const n = parseNum(v)
       if (n !== undefined) out[f.key] = n
@@ -171,6 +183,19 @@ function buildAdvancedPayload() {
 async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
+
+  const validations = [
+    { ...pkeyValidation, fieldId: 'pkey' }
+  ]
+  if (!validateAll(validations)) {
+    await nextTick()
+    focusFirstError(validations, (id) => {
+      if (id === 'pkey' && pkeyInput.value) return pkeyInput.value
+      return document.getElementById(id)
+    })
+    return
+  }
+
   loading.value = true
   try {
     const body = {
@@ -182,7 +207,6 @@ async function onSubmit(e) {
       ...(masteroclo.value.trim() && { masteroclo: masteroclo.value.trim() }),
       ...buildAdvancedPayload()
     }
-    // Omit undefined/empty so API doesn't receive them for optional
     const cleaned = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined && v !== ''))
     const tenant = await getApiClient().post('tenants', cleaned)
     toast.show(`Tenant ${tenant.pkey} created`)
@@ -190,8 +214,17 @@ async function onSubmit(e) {
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
+      if (errors.pkey) {
+        pkeyValidation.touched.value = true
+        pkeyValidation.error.value = Array.isArray(errors.pkey) ? errors.pkey[0] : errors.pkey
+      }
       const first = Object.values(errors).flat()[0]
       error.value = first || err.message
+      await nextTick()
+      focusFirstError(validations, (id) => {
+        if (id === 'pkey' && pkeyInput.value) return pkeyInput.value
+        return document.getElementById(id)
+      })
     } else {
       error.value = err.data?.Error || err.data?.message || err.message || 'Failed to create tenant'
     }
@@ -203,108 +236,121 @@ async function onSubmit(e) {
 function goBack() {
   router.push({ name: 'tenants' })
 }
+
+function onKeydown(e) {
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    goBack()
+  }
+}
+
+onMounted(() => {
+  nextTick().then(() => pkeyInput.value?.focus())
+})
 </script>
 
 <template>
-  <div>
-    <p class="back">
-      <button type="button" class="back-btn" @click="goBack">← Tenants</button>
-    </p>
+  <div class="create-view">
     <h1>Create tenant</h1>
 
-    <form class="form create-form" @submit="onSubmit">
-      <h2 class="detail-heading">Identity</h2>
-      <label for="pkey">name</label>
-      <input
-        id="pkey"
-        v-model="pkey"
-        type="text"
-        placeholder="e.g. mycluster"
-        required
-        autocomplete="off"
-        class="edit-input"
-      />
-      <label for="description">description</label>
-      <input
-        id="description"
-        v-model="description"
-        type="text"
-        placeholder="Short description"
-        required
-        class="edit-input"
-      />
+    <form class="form create-form" @submit="onSubmit" @keydown="onKeydown">
+      <p v-if="error" id="tenant-create-error" class="error" role="alert">{{ error }}</p>
 
-      <h2 class="detail-heading">Settings</h2>
-      <label for="clusterclid">CLID</label>
-      <input id="clusterclid" v-model="clusterclid" type="number" class="edit-input" placeholder="integer" />
-      <label for="abstimeout">Abstime</label>
-      <input id="abstimeout" v-model="abstimeout" type="number" class="edit-input" placeholder="integer" />
-      <label for="chanmax">ChanMax</label>
-      <input id="chanmax" v-model="chanmax" type="number" class="edit-input" placeholder="integer" />
-      <label class="edit-label-block">Timer status</label>
-      <div class="switch-toggle switch-ios">
-        <input id="masteroclo-auto" type="radio" value="AUTO" v-model="masteroclo" />
-        <label for="masteroclo-auto">AUTO</label>
-        <input id="masteroclo-closed" type="radio" value="CLOSED" v-model="masteroclo" />
-        <label for="masteroclo-closed">CLOSED</label>
+      <h2 class="detail-heading">Identity</h2>
+      <div class="form-fields">
+        <FormField
+          id="pkey"
+          ref="pkeyInput"
+          v-model="pkey"
+          label="Name"
+          type="text"
+          placeholder="e.g. mycluster"
+          :error="pkeyValidation.error.value"
+          :touched="pkeyValidation.touched.value"
+          :required="true"
+          hint="Unique tenant identifier."
+          @blur="pkeyValidation.onBlur"
+        />
+        <FormField
+          id="description"
+          v-model="description"
+          label="Description"
+          type="text"
+          placeholder="Short description"
+          :required="true"
+        />
       </div>
 
-      <section class="detail-section create-advanced">
-        <button type="button" class="collapse-trigger" :aria-expanded="advancedOpen" @click="advancedOpen = !advancedOpen">
-          {{ advancedOpen ? '▼' : '▶' }} Advanced
-        </button>
-        <div v-show="advancedOpen" class="advanced-fields">
-          <template v-for="f in ADVANCED_FIELDS" :key="f.key">
-            <template v-if="f.type === 'boolean'">
-              <label class="edit-label-block">{{ f.label }}</label>
-              <div class="switch-toggle switch-ios">
-                <input :id="`adv-${f.key}-true`" type="radio" :value="true" v-model="formAdvanced[f.key]" />
-                <label :for="`adv-${f.key}-true`">YES</label>
-                <input :id="`adv-${f.key}-false`" type="radio" :value="false" v-model="formAdvanced[f.key]" />
-                <label :for="`adv-${f.key}-false`">NO</label>
-              </div>
-            </template>
-            <template v-else-if="f.type === 'pill'">
-              <label class="edit-label-block">{{ f.label }}</label>
-              <div class="switch-toggle switch-ios">
-                <template v-for="opt in f.options" :key="opt">
-                  <input :id="`adv-${f.key}-${opt}`" type="radio" :value="opt" v-model="formAdvanced[f.key]" />
-                  <label :for="`adv-${f.key}-${opt}`">{{ opt }}</label>
-                </template>
-              </div>
-            </template>
-            <template v-else-if="f.type === 'select'">
-              <label :for="`adv-${f.key}`">{{ f.label }}</label>
-              <select :id="`adv-${f.key}`" v-model="formAdvanced[f.key]" class="edit-input">
-                <option value="">—</option>
-                <option v-for="opt in f.options" :key="opt" :value="opt">{{ opt }}</option>
-              </select>
-            </template>
-            <template v-else-if="f.type === 'number'">
-              <label :for="`adv-${f.key}`">{{ f.label }}</label>
-              <input
-                :id="`adv-${f.key}`"
-                v-model="formAdvanced[f.key]"
-                type="number"
-                class="edit-input"
-                :placeholder="f.placeholder || 'number'"
-              />
-            </template>
-            <template v-else>
-              <label :for="`adv-${f.key}`">{{ f.label }}</label>
-              <input
-                :id="`adv-${f.key}`"
-                v-model="formAdvanced[f.key]"
-                type="text"
-                class="edit-input"
-                :placeholder="f.placeholder || ''"
-              />
-            </template>
-          </template>
-        </div>
-      </section>
+      <h2 class="detail-heading">Settings</h2>
+      <div class="form-fields">
+        <FormField
+          id="clusterclid"
+          v-model="clusterclid"
+          label="CLID"
+          type="number"
+          placeholder="integer"
+        />
+        <FormField
+          id="abstimeout"
+          v-model="abstimeout"
+          label="Abstime"
+          type="number"
+          placeholder="integer"
+        />
+        <FormField
+          id="chanmax"
+          v-model="chanmax"
+          label="ChanMax"
+          type="number"
+          placeholder="integer"
+        />
+        <FormSelect
+          id="masteroclo"
+          v-model="masteroclo"
+          label="Timer status"
+          :options="['AUTO', 'CLOSED']"
+          empty-text=""
+        />
+      </div>
 
-      <p v-if="error" class="error">{{ error }}</p>
+      <h2 class="detail-heading">Advanced</h2>
+      <div class="form-fields advanced-fields">
+        <template v-for="f in ADVANCED_FIELDS" :key="f.key">
+            <FormToggle
+              v-if="f.type === 'boolean'"
+              :id="`adv-${f.key}`"
+              v-model="formAdvanced[f.key]"
+              :label="f.label"
+              yes-value="YES"
+              no-value="NO"
+            />
+            <FormSelect
+              v-else-if="f.type === 'pill'"
+              :id="`adv-${f.key}`"
+              v-model="formAdvanced[f.key]"
+              :label="f.label"
+              :options="f.options"
+              :required="false"
+              empty-text=""
+            />
+            <FormField
+              v-else-if="f.type === 'number'"
+              :id="`adv-${f.key}`"
+              v-model="formAdvanced[f.key]"
+              :label="f.label"
+              type="number"
+              :placeholder="f.placeholder || 'number'"
+            />
+            <FormField
+              v-else
+              :id="`adv-${f.key}`"
+              v-model="formAdvanced[f.key]"
+              :label="f.label"
+              type="text"
+              :placeholder="f.placeholder || ''"
+            />
+        </template>
+      </div>
 
       <div class="actions">
         <button type="submit" :disabled="loading">
@@ -317,25 +363,11 @@ function goBack() {
 </template>
 
 <style scoped>
-.back {
-  margin-bottom: 1rem;
-}
-.back-btn {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  color: #64748b;
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-.back-btn:hover {
-  color: #0f172a;
-  background: #f1f5f9;
+.create-view {
+  max-width: 52rem;
 }
 .form {
   margin-top: 1rem;
-  max-width: 36rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -344,87 +376,19 @@ function goBack() {
   font-size: 1rem;
   font-weight: 600;
   color: #334155;
-  margin: 1.25rem 0 0.5rem 0;
+  margin: 1.5rem 0 0.5rem 0;
 }
 .create-form .detail-heading:first-of-type {
-  margin-top: 0.5rem;
+  margin-top: 0;
 }
-.form label {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-.edit-label-block {
-  display: block;
-  margin-bottom: 0.25rem;
-}
-.edit-input {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-}
-.edit-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-}
-.switch-toggle.switch-ios {
-  display: flex;
-  flex-wrap: wrap;
-  background: #e2e8f0;
-  border-radius: 0.5rem;
-  padding: 0.25rem;
-  gap: 0;
-}
-.switch-toggle.switch-ios input {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-.switch-toggle.switch-ios label {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-align: center;
-  cursor: pointer;
-  border-radius: 0.375rem;
-  color: #64748b;
-}
-.switch-toggle.switch-ios label:hover {
-  color: #334155;
-}
-.switch-toggle.switch-ios input:checked + label {
-  background: white;
-  color: #0f172a;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-.detail-section.create-advanced {
-  margin-top: 1.5rem;
-}
-.collapse-trigger {
-  display: block;
-  width: 100%;
-  padding: 0.5rem 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #334155;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #e2e8f0;
-  cursor: pointer;
-  text-align: left;
-}
-.collapse-trigger:hover {
-  color: #0f172a;
-}
-.advanced-fields {
+.form-fields {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+  gap: 0;
+  margin-top: 0.5rem;
+}
+.advanced-fields {
+  margin-top: 0.5rem;
 }
 .error {
   color: #dc2626;

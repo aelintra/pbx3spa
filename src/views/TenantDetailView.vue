@@ -1,8 +1,13 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import FormField from '@/components/forms/FormField.vue'
+import FormSelect from '@/components/forms/FormSelect.vue'
+import FormToggle from '@/components/forms/FormToggle.vue'
+import FormReadonly from '@/components/forms/FormReadonly.vue'
+import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -10,21 +15,108 @@ const toast = useToastStore()
 const tenant = ref(null)
 const loading = ref(true)
 const error = ref('')
-const editing = ref(false)
 const editDescription = ref('')
 const editClusterclid = ref('')
 const editAbstimeout = ref('')
 const editChanmax = ref('')
-const editMasteroclo = ref('')
+const editMasteroclo = ref('AUTO')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
 const deleting = ref(false)
 const confirmDeleteOpen = ref(false)
-const advancedOpen = ref(false)
 
 const pkey = computed(() => route.params.pkey)
 const isDefault = computed(() => tenant.value?.pkey === 'default')
+
+// Advanced fields: same config as TenantCreateView (editable on Edit)
+const ADVANCED_KEYS = [
+  'allow_hash_xfer', 'callrecord1', 'cfwdextern_rule', 'cfwd_progress', 'cfwd_answer',
+  'countrycode', 'dynamicfeatures', 'emergency', 'int_ring_delay', 'ivr_key_wait', 'ivr_digit_wait',
+  'language', 'ldapbase', 'ldaphost', 'ldapou', 'ldapuser', 'ldappass', 'ldaptls',
+  'localarea', 'localdplan', 'lterm', 'leasedhdtime', 'max_in', 'monitor_out', 'operator',
+  'pickupgroup', 'play_beep', 'play_busy', 'play_congested', 'play_transfer',
+  'rec_age', 'rec_final_dest', 'rec_file_dlim', 'rec_grace', 'rec_limit', 'rec_mount',
+  'recmaxage', 'recmaxsize', 'recused', 'ringdelay', 'routeoverride', 'spy_pass', 'sysop', 'syspass',
+  'usemohcustom', 'vmail_age', 'voice_instr', 'voip_max'
+]
+const ADVANCED_FIELDS = [
+  { key: 'allow_hash_xfer', label: 'Allow hash xfer', type: 'pill', options: ['enabled', 'disabled'] },
+  { key: 'callrecord1', label: 'Call record 1', type: 'pill', options: ['None', 'In', 'Out', 'Both'] },
+  { key: 'cfwdextern_rule', label: 'CFWD extern rule', type: 'pill', options: ['YES', 'NO'] },
+  { key: 'cfwd_progress', label: 'CFWD progress', type: 'pill', options: ['enabled', 'disabled'] },
+  { key: 'cfwd_answer', label: 'CFWD answer', type: 'pill', options: ['enabled', 'disabled'] },
+  { key: 'countrycode', label: 'Country code', type: 'number' },
+  { key: 'dynamicfeatures', label: 'Dynamic features', type: 'text' },
+  { key: 'emergency', label: 'Emergency', type: 'number' },
+  { key: 'int_ring_delay', label: 'Int ring delay', type: 'number' },
+  { key: 'ivr_key_wait', label: 'IVR key wait', type: 'number' },
+  { key: 'ivr_digit_wait', label: 'IVR digit wait', type: 'number' },
+  { key: 'language', label: 'Language', type: 'text' },
+  { key: 'ldapbase', label: 'LDAP base', type: 'text' },
+  { key: 'ldaphost', label: 'LDAP host', type: 'text' },
+  { key: 'ldapou', label: 'LDAP OU', type: 'text' },
+  { key: 'ldapuser', label: 'LDAP user', type: 'text' },
+  { key: 'ldappass', label: 'LDAP pass', type: 'text' },
+  { key: 'ldaptls', label: 'LDAP TLS', type: 'pill', options: ['on', 'off'] },
+  { key: 'localarea', label: 'Local area', type: 'number' },
+  { key: 'localdplan', label: 'Local dplan', type: 'text', placeholder: 'e.g. _X.' },
+  { key: 'lterm', label: 'Lterm', type: 'boolean' },
+  { key: 'leasedhdtime', label: 'Leased HD time', type: 'number' },
+  { key: 'max_in', label: 'Max in', type: 'number' },
+  { key: 'monitor_out', label: 'Monitor out', type: 'text' },
+  { key: 'operator', label: 'Operator', type: 'number' },
+  { key: 'pickupgroup', label: 'Pickup group', type: 'text' },
+  { key: 'play_beep', label: 'Play beep', type: 'boolean' },
+  { key: 'play_busy', label: 'Play busy', type: 'boolean' },
+  { key: 'play_congested', label: 'Play congested', type: 'boolean' },
+  { key: 'play_transfer', label: 'Play transfer', type: 'boolean' },
+  { key: 'rec_age', label: 'Rec age', type: 'number' },
+  { key: 'rec_final_dest', label: 'Rec final dest', type: 'text' },
+  { key: 'rec_file_dlim', label: 'Rec file dlim', type: 'text' },
+  { key: 'rec_grace', label: 'Rec grace', type: 'number' },
+  { key: 'rec_limit', label: 'Rec limit', type: 'number' },
+  { key: 'rec_mount', label: 'Rec mount', type: 'number' },
+  { key: 'recmaxage', label: 'Rec max age', type: 'number' },
+  { key: 'recmaxsize', label: 'Rec max size', type: 'number' },
+  { key: 'recused', label: 'Rec used', type: 'number' },
+  { key: 'ringdelay', label: 'Ring delay', type: 'number' },
+  { key: 'routeoverride', label: 'Route override', type: 'number' },
+  { key: 'spy_pass', label: 'Spy pass', type: 'number' },
+  { key: 'sysop', label: 'Sysop', type: 'number' },
+  { key: 'syspass', label: 'Sys pass', type: 'number' },
+  { key: 'usemohcustom', label: 'Use MOH custom', type: 'number' },
+  { key: 'vmail_age', label: 'Vmail age', type: 'number' },
+  { key: 'voice_instr', label: 'Voice instr', type: 'boolean' },
+  { key: 'voip_max', label: 'VoIP max', type: 'number' }
+]
+const formAdvanced = reactive(
+  Object.fromEntries(ADVANCED_KEYS.map((k) => [k, '']))
+)
+
+function parseNum(v) {
+  if (v === '' || v == null) return undefined
+  const n = Number(v)
+  return isNaN(n) ? undefined : n
+}
+
+function buildAdvancedPayload() {
+  const out = {}
+  for (const f of ADVANCED_FIELDS) {
+    const v = formAdvanced[f.key]
+    if (f.type === 'boolean') {
+      if (v === 'YES') out[f.key] = true
+      if (v === 'NO') out[f.key] = false
+    } else if (f.type === 'number') {
+      const n = parseNum(v)
+      if (n !== undefined) out[f.key] = n
+    } else {
+      const s = typeof v === 'string' ? v.trim() : ''
+      if (s !== '') out[f.key] = s
+    }
+  }
+  return out
+}
 
 async function fetchTenant() {
   if (!pkey.value) return
@@ -32,17 +124,32 @@ async function fetchTenant() {
   error.value = ''
   try {
     tenant.value = await getApiClient().get(`tenants/${encodeURIComponent(pkey.value)}`)
-    editDescription.value = tenant.value?.description ?? ''
-    editClusterclid.value = tenant.value?.clusterclid ?? ''
-    editAbstimeout.value = tenant.value?.abstimeout ?? ''
-    editChanmax.value = tenant.value?.chanmax ?? ''
-    editMasteroclo.value = (tenant.value?.masteroclo != null && tenant.value?.masteroclo !== '') ? tenant.value.masteroclo : 'AUTO'
-    if (route.query.edit) startEdit()
+    syncEditFromTenant()
   } catch (err) {
     error.value = err.data?.message || err.message || 'Failed to load tenant'
     tenant.value = null
   } finally {
     loading.value = false
+  }
+}
+
+function syncEditFromTenant() {
+  if (!tenant.value) return
+  const t = tenant.value
+  editDescription.value = t.description ?? ''
+  editClusterclid.value = t.clusterclid != null && t.clusterclid !== '' ? String(t.clusterclid) : ''
+  editAbstimeout.value = t.abstimeout != null && t.abstimeout !== '' ? String(t.abstimeout) : ''
+  editChanmax.value = t.chanmax != null && t.chanmax !== '' ? String(t.chanmax) : ''
+  editMasteroclo.value = (t.masteroclo != null && t.masteroclo !== '') ? t.masteroclo : 'AUTO'
+  for (const k of ADVANCED_KEYS) {
+    const v = t[k]
+    if (v === true || v === false) {
+      formAdvanced[k] = v ? 'YES' : 'NO'
+    } else if (v != null && v !== '') {
+      formAdvanced[k] = String(v)
+    } else {
+      formAdvanced[k] = ''
+    }
   }
 }
 
@@ -53,19 +160,8 @@ function goBack() {
   router.push({ name: 'tenants' })
 }
 
-function startEdit() {
-  editDescription.value = tenant.value?.description ?? ''
-  editClusterclid.value = tenant.value?.clusterclid ?? ''
-  editAbstimeout.value = tenant.value?.abstimeout ?? ''
-  editChanmax.value = tenant.value?.chanmax ?? ''
-  editMasteroclo.value = (tenant.value?.masteroclo != null && tenant.value?.masteroclo !== '') ? tenant.value.masteroclo : 'AUTO'
-  saveError.value = ''
-  editing.value = true
-}
-
 function cancelEdit() {
-  editing.value = false
-  saveError.value = ''
+  goBack()
 }
 
 async function saveEdit(e) {
@@ -75,13 +171,13 @@ async function saveEdit(e) {
   try {
     await getApiClient().put(`tenants/${encodeURIComponent(pkey.value)}`, {
       description: editDescription.value.trim() || undefined,
-      clusterclid: editClusterclid.value.trim() || undefined,
-      abstimeout: editAbstimeout.value.trim() || undefined,
-      chanmax: editChanmax.value.trim() || undefined,
-      masteroclo: editMasteroclo.value.trim() || undefined
+      clusterclid: editClusterclid.value.trim() ? editClusterclid.value.trim() : undefined,
+      abstimeout: editAbstimeout.value.trim() ? editAbstimeout.value.trim() : undefined,
+      chanmax: editChanmax.value.trim() ? editChanmax.value.trim() : undefined,
+      masteroclo: editMasteroclo.value.trim() || undefined,
+      ...buildAdvancedPayload()
     })
     await fetchTenant()
-    editing.value = false
     toast.show(`Tenant ${pkey.value} saved`)
   } catch (err) {
     const msg =
@@ -128,166 +224,152 @@ async function confirmAndDelete() {
   }
 }
 
-/** Identity section: immutable fields grouped first, then editable. */
-const identityFields = computed(() => {
-  if (!tenant.value) return []
-  const t = tenant.value
-  return [
-    { label: 'name', value: t.pkey ?? '—', immutable: true },
-    { label: 'Local UID', value: t.shortuid ?? '—', immutable: true },
-    { label: 'KSUID', value: t.id ?? '—', immutable: true },
-    { label: 'description', value: t.description ?? '—', immutable: false }
-  ]
-})
-
-/** Settings section: CLID, Abstime, ChanMax, Timer status */
-const settingsFields = computed(() => {
-  if (!tenant.value) return []
-  const t = tenant.value
-  const timer = (t.masteroclo != null && t.masteroclo !== '') ? t.masteroclo : 'AUTO'
-  return [
-    { label: 'CLID', value: t.clusterclid != null && t.clusterclid !== '' ? t.clusterclid : '—' },
-    { label: 'Abstime', value: t.abstimeout != null && t.abstimeout !== '' ? t.abstimeout : '—' },
-    { label: 'ChanMax', value: t.chanmax != null && t.chanmax !== '' ? t.chanmax : '—' },
-    { label: 'Timer status', value: timer }
-  ]
-})
-
-/** Advanced: all other API fields */
-const ADVANCED_EXCLUDE = new Set([
-  'id', 'pkey', 'shortuid', 'description', 'clusterclid', 'abstimeout', 'chanmax', 'masteroclo'
-])
-const otherFields = computed(() => {
-  if (!tenant.value || typeof tenant.value !== 'object') return []
-  return Object.entries(tenant.value)
-    .filter(([k]) => !ADVANCED_EXCLUDE.has(k))
-    .sort(([a], [b]) => a.localeCompare(b))
-})
 </script>
 
 <template>
-  <div>
-    <p class="back">
-      <button type="button" class="back-btn" @click="goBack">← Tenants</button>
-    </p>
-    <h1>Tenant: {{ pkey }}</h1>
+  <div class="detail-view">
+    <h1>Edit Tenant {{ pkey }}</h1>
 
     <p v-if="loading" class="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
     <template v-else-if="tenant">
       <div class="detail-content">
-        <p v-if="!editing" class="toolbar">
-          <button type="button" class="edit-btn" @click="startEdit">Edit</button>
-          <button
-            v-if="!isDefault"
-            type="button"
-            class="delete-btn"
-            :disabled="deleting"
-            @click="askConfirmDelete"
-          >
-            {{ deleting ? 'Deleting…' : 'Delete tenant' }}
-          </button>
-        </p>
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
-        <form v-else-if="editing" class="edit-form" @submit="saveEdit">
+
+        <form class="edit-form" @submit="saveEdit">
+          <p v-if="saveError" id="tenant-edit-error" class="error" role="alert">{{ saveError }}</p>
+
           <h2 class="detail-heading">Identity</h2>
-          <label>name</label>
-          <p class="detail-readonly value-immutable" title="Immutable">{{ tenant.pkey ?? '—' }}</p>
-          <label>Local UID</label>
-          <p class="detail-readonly value-immutable" title="Immutable">{{ tenant.shortuid ?? '—' }}</p>
-          <label>KSUID</label>
-          <p class="detail-readonly value-immutable" title="Immutable">{{ tenant.id ?? '—' }}</p>
-          <label for="edit-description">description</label>
-          <input
-            id="edit-description"
-            v-model="editDescription"
-            type="text"
-            class="edit-input"
-          />
+          <div class="form-fields">
+            <FormReadonly
+              id="edit-identity-pkey"
+              label="Name"
+              :value="tenant.pkey ?? '—'"
+            />
+            <FormReadonly
+              id="edit-identity-shortuid"
+              label="Local UID"
+              :value="tenant.shortuid ?? '—'"
+            />
+            <FormReadonly
+              id="edit-identity-id"
+              label="KSUID"
+              :value="tenant.id ?? '—'"
+            />
+            <FormField
+              id="edit-description"
+              v-model="editDescription"
+              label="Description"
+              type="text"
+              placeholder="Short description"
+            />
+          </div>
+
           <h2 class="detail-heading">Settings</h2>
-          <label for="edit-clusterclid">CLID</label>
-          <input id="edit-clusterclid" v-model="editClusterclid" type="text" class="edit-input" />
-          <label for="edit-abstimeout">Abstime</label>
-          <input id="edit-abstimeout" v-model="editAbstimeout" type="text" class="edit-input" />
-          <label for="edit-chanmax">ChanMax</label>
-          <input id="edit-chanmax" v-model="editChanmax" type="text" class="edit-input" />
-          <label for="edit-masteroclo">Timer status</label>
-          <input id="edit-masteroclo" v-model="editMasteroclo" type="text" class="edit-input" placeholder="e.g. AUTO" />
-          <p v-if="saveError" class="error">{{ saveError }}</p>
+          <div class="form-fields">
+            <FormField
+              id="edit-clusterclid"
+              v-model="editClusterclid"
+              label="CLID"
+              type="text"
+              placeholder="integer"
+            />
+            <FormField
+              id="edit-abstimeout"
+              v-model="editAbstimeout"
+              label="Abstime"
+              type="text"
+              placeholder="integer"
+            />
+            <FormField
+              id="edit-chanmax"
+              v-model="editChanmax"
+              label="ChanMax"
+              type="text"
+              placeholder="integer"
+            />
+            <FormSelect
+              id="edit-masteroclo"
+              v-model="editMasteroclo"
+              label="Timer status"
+              :options="['AUTO', 'CLOSED']"
+              empty-text=""
+            />
+          </div>
+
+          <h2 class="detail-heading">Advanced</h2>
+          <div class="form-fields advanced-fields">
+            <template v-for="f in ADVANCED_FIELDS" :key="f.key">
+                <FormToggle
+                  v-if="f.type === 'boolean'"
+                  :id="`edit-adv-${f.key}`"
+                  v-model="formAdvanced[f.key]"
+                  :label="f.label"
+                  yes-value="YES"
+                  no-value="NO"
+                />
+                <FormSelect
+                  v-else-if="f.type === 'pill'"
+                  :id="`edit-adv-${f.key}`"
+                  v-model="formAdvanced[f.key]"
+                  :label="f.label"
+                  :options="f.options"
+                  :required="false"
+                  empty-text=""
+                />
+                <FormField
+                  v-else-if="f.type === 'number'"
+                  :id="`edit-adv-${f.key}`"
+                  v-model="formAdvanced[f.key]"
+                  :label="f.label"
+                  type="number"
+                  :placeholder="f.placeholder || 'number'"
+                />
+                <FormField
+                  v-else
+                  :id="`edit-adv-${f.key}`"
+                  v-model="formAdvanced[f.key]"
+                  :label="f.label"
+                  type="text"
+                  :placeholder="f.placeholder || ''"
+                />
+            </template>
+          </div>
+
           <div class="edit-actions">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
             <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
-          </div>
-        </form>
-        <template v-if="!editing">
-          <section class="detail-section">
-            <h2 class="detail-heading">Identity</h2>
-            <dl class="detail-list">
-              <template v-for="f in identityFields" :key="f.label">
-                <dt>{{ f.label }}</dt>
-                <dd :class="{ 'value-immutable': f.immutable }" :title="f.immutable ? 'Immutable' : undefined">{{ f.value }}</dd>
-              </template>
-            </dl>
-          </section>
-          <section class="detail-section">
-            <h2 class="detail-heading">Settings</h2>
-            <dl class="detail-list">
-              <template v-for="f in settingsFields" :key="f.label">
-                <dt>{{ f.label }}</dt>
-                <dd>{{ f.value }}</dd>
-              </template>
-            </dl>
-          </section>
-          <section class="detail-section">
-            <button type="button" class="collapse-trigger" :aria-expanded="advancedOpen" @click="advancedOpen = !advancedOpen">
-              {{ advancedOpen ? '▼' : '▶' }} Advanced
-            </button>
-            <dl v-show="advancedOpen" class="detail-list detail-list-other">
-              <template v-for="[key, value] in otherFields" :key="key">
-                <dt>{{ key }}</dt>
-                <dd>{{ value == null ? '—' : String(value) }}</dd>
-              </template>
-            </dl>
-          </section>
-        </template>
-      </div>
-    </template>
-
-    <Teleport to="body">
-      <div v-if="confirmDeleteOpen" class="modal-backdrop" @click.self="cancelConfirmDelete">
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
-          <h2 id="modal-delete-title" class="modal-title">Delete tenant?</h2>
-          <p class="modal-body">
-            Tenant <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.
-          </p>
-          <div class="modal-actions">
-            <button type="button" class="modal-btn modal-btn-cancel" @click="cancelConfirmDelete">Cancel</button>
-            <button type="button" class="modal-btn modal-btn-delete" :disabled="deleting" @click="confirmAndDelete">
+            <button
+              v-if="!isDefault"
+              type="button"
+              class="action-delete"
+              :disabled="deleting"
+              @click="askConfirmDelete"
+            >
               {{ deleting ? 'Deleting…' : 'Delete' }}
             </button>
           </div>
-        </div>
+        </form>
       </div>
-    </Teleport>
+    </template>
+
+    <DeleteConfirmModal
+      :show="confirmDeleteOpen"
+      title="Delete tenant?"
+      :loading="deleting"
+      @confirm="confirmAndDelete"
+      @cancel="cancelConfirmDelete"
+    >
+      <template #body>
+        <p>Tenant <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+      </template>
+    </DeleteConfirmModal>
   </div>
 </template>
 
 <style scoped>
-.back {
-  margin-bottom: 1rem;
-}
-.back-btn {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  color: #64748b;
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-.back-btn:hover {
-  color: #0f172a;
-  background: #f1f5f9;
+.detail-view {
+  max-width: 52rem;
 }
 .loading,
 .error {
@@ -296,122 +378,33 @@ const otherFields = computed(() => {
 .error {
   color: #dc2626;
 }
-.detail-list {
-  margin-top: 1rem;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.25rem 2rem;
-  font-size: 0.9375rem;
-  max-width: 36rem;
-}
-.detail-list dt {
-  font-weight: 500;
-  color: #475569;
-}
-.detail-list dd {
-  margin: 0;
-}
-.detail-readonly {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.9375rem;
-  color: #64748b;
-}
-.value-immutable {
-  color: #64748b;
-  background: #f8fafc;
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
-}
-.detail-list dd.value-immutable {
-  padding: 0.125rem 0.25rem;
-  margin: 0;
-}
 .detail-content {
-  max-width: 36rem;
-}
-.detail-section {
-  margin-top: 1.5rem;
-}
-.detail-section:first-of-type {
   margin-top: 1rem;
 }
 .detail-heading {
   font-size: 1rem;
   font-weight: 600;
   color: #334155;
-  margin: 0 0 0.5rem 0;
+  margin: 1.5rem 0 0.5rem 0;
 }
-.detail-list-other {
+.detail-heading:first-of-type {
+  margin-top: 0;
+}
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   margin-top: 0.5rem;
 }
-.collapse-trigger {
-  display: block;
-  width: 100%;
-  padding: 0.5rem 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #334155;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #e2e8f0;
-  cursor: pointer;
-  text-align: left;
-}
-.collapse-trigger:hover {
-  color: #0f172a;
-}
-.toolbar {
-  margin: 0 0 0.75rem 0;
-}
-.edit-btn {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  color: #2563eb;
-  background: transparent;
-  border: 1px solid #93c5fd;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-.edit-btn:hover {
-  background: #eff6ff;
-}
-.toolbar .delete-btn {
-  margin-left: 0.5rem;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  color: #dc2626;
-  background: transparent;
-  border: 1px solid #fca5a5;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-.toolbar .delete-btn:hover:not(:disabled) {
-  background: #fef2f2;
-}
-.toolbar .delete-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+.advanced-fields {
+  margin-top: 0.5rem;
 }
 .edit-form {
   margin-bottom: 1rem;
-  max-width: 24rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-.edit-form label {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-.edit-input {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-}
-.edit-input:focus {
-  outline: none;
-  border-color: #3b82f6;
+  gap: 0.75rem;
+  max-width: 52rem;
 }
 .edit-actions {
   display: flex;
@@ -441,68 +434,15 @@ const otherFields = computed(() => {
 .edit-actions button.secondary:hover {
   background: #f1f5f9;
 }
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-.modal {
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  padding: 1.5rem;
-  max-width: 24rem;
-  width: 100%;
-}
-.modal-title {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-.modal-body {
-  margin: 0 0 1.25rem 0;
-  font-size: 0.9375rem;
-  color: #475569;
-  line-height: 1.5;
-}
-.modal-body strong {
-  color: #0f172a;
-}
-.modal-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-}
-.modal-btn {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.375rem;
-  cursor: pointer;
+.edit-actions button.action-delete {
+  color: #fff;
+  background: #dc2626;
   border: none;
 }
-.modal-btn-cancel {
-  background: #f1f5f9;
-  color: #475569;
-}
-.modal-btn-cancel:hover {
-  background: #e2e8f0;
-}
-.modal-btn-delete {
-  background: #dc2626;
-  color: white;
-}
-.modal-btn-delete:hover:not(:disabled) {
+.edit-actions button.action-delete:hover:not(:disabled) {
   background: #b91c1c;
 }
-.modal-btn-delete:disabled {
+.edit-actions button.action-delete:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

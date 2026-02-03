@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -432,22 +433,17 @@ const otherFields = computed(() => {
       </div>
     </template>
 
-    <Teleport to="body">
-      <div v-if="confirmDeleteOpen" class="modal-backdrop" @click.self="cancelConfirmDelete">
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
-          <h2 id="modal-delete-title" class="modal-title">Delete inbound route?</h2>
-          <p class="modal-body">
-            Inbound route <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.
-          </p>
-          <div class="modal-actions">
-            <button type="button" class="modal-btn modal-btn-cancel" @click="cancelConfirmDelete">Cancel</button>
-            <button type="button" class="modal-btn modal-btn-delete" :disabled="deleting" @click="confirmAndDelete">
-              {{ deleting ? 'Deleting…' : 'Delete' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <DeleteConfirmModal
+      :show="confirmDeleteOpen"
+      title="Delete inbound route?"
+      :loading="deleting"
+      @confirm="confirmAndDelete"
+      @cancel="cancelConfirmDelete"
+    >
+      <template #body>
+        <p>Inbound route <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+      </template>
+    </DeleteConfirmModal>
   </div>
 </template>
 
@@ -657,70 +653,5 @@ const otherFields = computed(() => {
 }
 .edit-actions button.secondary:hover {
   background: #f1f5f9;
-}
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-.modal {
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  padding: 1.5rem;
-  max-width: 24rem;
-  width: 100%;
-}
-.modal-title {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-.modal-body {
-  margin: 0 0 1.25rem 0;
-  font-size: 0.9375rem;
-  color: #475569;
-  line-height: 1.5;
-}
-.modal-body strong {
-  color: #0f172a;
-}
-.modal-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-}
-.modal-btn {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  border: none;
-}
-.modal-btn-cancel {
-  background: #f1f5f9;
-  color: #475569;
-}
-.modal-btn-cancel:hover {
-  background: #e2e8f0;
-}
-.modal-btn-delete {
-  background: #dc2626;
-  color: white;
-}
-.modal-btn-delete:hover:not(:disabled) {
-  background: #b91c1c;
-}
-.modal-btn-delete:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
 }
 </style>

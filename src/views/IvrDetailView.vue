@@ -1,8 +1,16 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
+import { validateTenant, validateGreetnum } from '@/utils/validation'
+import FormField from '@/components/forms/FormField.vue'
+import FormSelect from '@/components/forms/FormSelect.vue'
+import FormToggle from '@/components/forms/FormToggle.vue'
+import FormReadonly from '@/components/forms/FormReadonly.vue'
+import { normalizeList } from '@/utils/listResponse'
+import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -44,6 +52,10 @@ const confirmDeleteOpen = ref(false)
 
 const pkey = computed(() => route.params.pkey)
 
+// Field-level validation using composable (must be after refs are declared)
+const clusterValidation = useFormValidation(editCluster, validateTenant)
+const greetnumValidation = useFormValidation(editGreetnum, validateGreetnum)
+
 const optionEntries = [
   { key: 'option0', tagKey: 'tag0', alertKey: 'alert0', label: '0' },
   { key: 'option1', tagKey: 'tag1', alertKey: 'alert1', label: '1' },
@@ -58,16 +70,6 @@ const optionEntries = [
   { key: 'option10', tagKey: 'tag10', alertKey: 'alert10', label: '*' },
   { key: 'option11', tagKey: 'tag11', alertKey: 'alert11', label: '#' }
 ]
-
-function normalizeList(response) {
-  if (Array.isArray(response)) return response
-  if (response && typeof response === 'object') {
-    if (Array.isArray(response.data)) return response.data
-    if (Array.isArray(response.tenants)) return response.tenants
-    if (Object.keys(response).every((k) => /^\d+$/.test(k))) return Object.values(response)
-  }
-  return []
-}
 
 /** Tenant list for dropdown: use pkey for both value and display (API may return shortuid in cluster). */
 const tenantOptions = computed(() => {
@@ -117,7 +119,7 @@ const greetingOptions = computed(() => {
 async function loadTenants() {
   try {
     const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response)
+    tenants.value = normalizeList(response, 'tenants')
   } catch {
     tenants.value = []
   }
@@ -170,6 +172,9 @@ function syncEditFromIvr() {
     tags.value[`tag${i}`] = r[`tag${i}`] ?? ''
     alerts.value[`alert${i}`] = r[`alert${i}`] ?? ''
   }
+  // Reset validation state when loading IVR data
+  clusterValidation.reset()
+  greetnumValidation.reset()
 }
 
 async function fetchIvr() {
@@ -204,6 +209,9 @@ watch(tenants, () => {
 }, { deep: true })
 watch(editCluster, () => {
   if (editing.value) loadDestinations()
+  if (clusterValidation.touched.value) {
+    clusterValidation.validate()
+  }
 })
 watch(editing, (isEditing) => {
   if (isEditing && editCluster.value) loadDestinations()
@@ -240,6 +248,20 @@ function ivrPayload(optionsObj, tagsObj, alertsObj, timeoutVal) {
 async function saveEdit(e) {
   e.preventDefault()
   saveError.value = ''
+  
+  // Validate all fields before submitting
+  const validations = [
+    { ...clusterValidation, fieldId: 'edit-cluster' },
+    { ...greetnumValidation, fieldId: 'edit-greetnum' }
+  ]
+  
+  if (!validateAll(validations)) {
+    // Focus first error field
+    await nextTick()
+    focusFirstError(validations, (id) => document.getElementById(id))
+    return
+  }
+  
   saving.value = true
   try {
     const body = {
@@ -260,10 +282,26 @@ async function saveEdit(e) {
     toast.show(`IVR ${pkey.value} saved`)
   } catch (err) {
     const errors = err?.data
-    const first = errors && typeof errors === 'object'
-      ? (Object.values(errors).flat().find((m) => typeof m === 'string')) ?? null
-      : null
-    saveError.value = first ?? err.data?.message ?? err.message ?? 'Failed to update IVR'
+    if (errors && typeof errors === 'object') {
+      // Map server errors to field-level errors
+      if (errors.cluster) {
+        clusterValidation.touched.value = true
+        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
+      }
+      if (errors.greetnum) {
+        greetnumValidation.touched.value = true
+        greetnumValidation.error.value = Array.isArray(errors.greetnum) ? errors.greetnum[0] : errors.greetnum
+      }
+      
+      const first = Object.values(errors).flat().find((m) => typeof m === 'string') ?? null
+      saveError.value = first ?? err.data?.message ?? err.message ?? 'Failed to update IVR'
+      
+      // Focus first error field
+      await nextTick()
+      focusFirstError(validations, (id) => document.getElementById(id))
+    } else {
+      saveError.value = err.data?.message ?? err.message ?? 'Failed to update IVR'
+    }
   } finally {
     saving.value = false
   }
@@ -277,6 +315,7 @@ function askConfirmDelete() {
 function cancelConfirmDelete() {
   confirmDeleteOpen.value = false
 }
+
 
 async function confirmAndDelete() {
   deleteError.value = ''
@@ -297,9 +336,6 @@ async function confirmAndDelete() {
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
-    <p class="back">
-      <button type="button" class="back-btn" @click="goBack">← IVRs</button>
-    </p>
     <h1>Edit IVR {{ ivr?.cname?.trim() ? ivr.cname.trim() : pkey }}</h1>
 
     <p v-if="loading" class="loading">Loading…</p>
@@ -312,97 +348,90 @@ async function confirmAndDelete() {
           <p v-if="saveError" id="ivr-edit-error" class="error" role="alert">{{ saveError }}</p>
 
           <h2 class="detail-heading">Identity</h2>
-          <table class="detail-fields-table edit-form-fields-table" aria-label="Identity">
-            <tbody>
-              <tr>
-                <th class="detail-field-label" scope="row"><label for="edit-identity-pkey">IVR Direct Dial</label></th>
-                <td class="detail-field-value"><p id="edit-identity-pkey" class="detail-readonly value-immutable" title="Immutable">{{ ivr.pkey ?? '—' }}</p></td>
-              </tr>
-              <tr>
-                <th class="detail-field-label" scope="row"><label for="edit-identity-shortuid">Local UID</label></th>
-                <td class="detail-field-value"><p id="edit-identity-shortuid" class="detail-readonly value-immutable" title="Immutable">{{ ivr.shortuid ?? '—' }}</p></td>
-              </tr>
-              <tr>
-                <th class="detail-field-label" scope="row"><label for="edit-identity-id">KSUID</label></th>
-                <td class="detail-field-value"><p id="edit-identity-id" class="detail-readonly value-immutable" title="Immutable">{{ ivr.id ?? '—' }}</p></td>
-              </tr>
-              <tr>
-                <th class="detail-field-label" scope="row"><label for="edit-cluster">Tenant</label></th>
-                <td class="detail-field-value">
-                  <select id="edit-cluster" v-model="editCluster" class="edit-input" required :disabled="destinationsLoading">
-                    <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>
-                  </select>
-                </td>
-              </tr>
-              <tr>
-                <th class="detail-field-label" scope="row"><label for="edit-description">Description (optional)</label></th>
-                <td class="detail-field-value"><input id="edit-description" v-model="editDescription" type="text" class="edit-input" placeholder="Freeform description" /></td>
-              </tr>
-              <tr>
-                <th class="detail-field-label" scope="row"><label for="edit-cname">Display name (optional)</label></th>
-                <td class="detail-field-value"><input id="edit-cname" v-model="editCname" type="text" class="edit-input" placeholder="Common name / label" /></td>
-              </tr>
-              <tr>
-                <th class="detail-field-label" scope="row"><label for="edit-name">Name (optional)</label></th>
-                <td class="detail-field-value"><input id="edit-name" v-model="editName" type="text" class="edit-input" placeholder="Legacy name field" /></td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="form-fields">
+            <FormReadonly
+              id="edit-identity-pkey"
+              label="IVR Direct Dial"
+              :value="ivr.pkey ?? '—'"
+            />
+            <FormReadonly
+              id="edit-identity-shortuid"
+              label="Local UID"
+              :value="ivr.shortuid ?? '—'"
+            />
+            <FormReadonly
+              id="edit-identity-id"
+              label="KSUID"
+              :value="ivr.id ?? '—'"
+            />
+            <FormSelect
+              id="edit-cluster"
+              v-model="editCluster"
+              label="Tenant"
+              :options="tenantOptionsForSelect"
+              :error="clusterValidation.error.value"
+              :touched="clusterValidation.touched.value"
+              :required="true"
+              :disabled="destinationsLoading"
+              hint="The tenant this IVR belongs to."
+              @blur="clusterValidation.onBlur"
+            />
+            <FormField
+              id="edit-description"
+              v-model="editDescription"
+              label="Description (optional)"
+              type="text"
+              placeholder="Freeform description"
+            />
+            <FormField
+              id="edit-cname"
+              v-model="editCname"
+              label="Display name (optional)"
+              type="text"
+              placeholder="Common name / label"
+            />
+            <FormField
+              id="edit-name"
+              v-model="editName"
+              label="Name (optional)"
+              type="text"
+              placeholder="Legacy name field"
+            />
+          </div>
 
           <h2 class="detail-heading">Settings</h2>
-          <table class="detail-fields-table edit-form-fields-table" aria-label="Settings">
-            <tbody>
-              <tr>
-                <th class="detail-field-label" scope="row">Active?</th>
-                <td class="detail-field-value">
-                  <label class="toggle-pill-ios" aria-label="Active">
-                    <input
-                      type="checkbox"
-                      :checked="editActive === 'YES'"
-                      @change="editActive = $event.target.checked ? 'YES' : 'NO'"
-                    />
-                    <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
-                  </label>
-                </td>
-              </tr>
-              <tr>
-                <th class="detail-field-label" scope="row"><label for="edit-greetnum">Greeting Number</label></th>
-                <td class="detail-field-value">
-                  <select id="edit-greetnum" v-model="editGreetnum" class="edit-input" :disabled="greetingsLoading">
-                    <option value="">—</option>
-                    <option v-for="n in greetingOptions" :key="n" :value="String(n)">{{ n }}</option>
-                  </select>
-                </td>
-              </tr>
-              <tr>
-                <th class="detail-field-label" scope="row">Listen for extension dial?</th>
-                <td class="detail-field-value">
-                  <label class="toggle-pill-ios" aria-label="Listen for extension dial">
-                    <input
-                      type="checkbox"
-                      :checked="editListenforext === 'YES'"
-                      @change="editListenforext = $event.target.checked ? 'YES' : 'NO'"
-                    />
-                    <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
-                  </label>
-                </td>
-              </tr>
-              <tr>
-                <th class="detail-field-label" scope="row"><label for="edit-timeout">Action on IVR Timeout</label></th>
-                <td class="detail-field-value">
-                  <select id="edit-timeout" v-model="editTimeout" class="edit-input timeout-select">
-                    <option value="operator">Operator</option>
-                    <option value="None">None</option>
-                    <template v-for="(pkeys, group) in destinationGroups" :key="group">
-                      <optgroup v-if="pkeys.length" :label="group">
-                        <option v-for="p in pkeys" :key="p" :value="p">{{ p }}</option>
-                      </optgroup>
-                    </template>
-                  </select>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="form-fields">
+            <FormToggle
+              id="edit-active"
+              v-model="editActive"
+              label="Active?"
+            />
+            <FormSelect
+              id="edit-greetnum"
+              v-model="editGreetnum"
+              label="Greeting Number"
+              :options="greetingOptions.map(n => String(n))"
+              :error="greetnumValidation.error.value"
+              :touched="greetnumValidation.touched.value"
+              :loading="greetingsLoading"
+              empty-text="—"
+              hint="Greeting played when the IVR is activated. Greetings are created in the Greetings section."
+              @blur="greetnumValidation.onBlur"
+            />
+            <FormToggle
+              id="edit-listenforext"
+              v-model="editListenforext"
+              label="Listen for extension dial?"
+            />
+            <FormSelect
+              id="edit-timeout"
+              v-model="editTimeout"
+              label="Action on IVR Timeout"
+              :options="['operator', 'None']"
+              :option-groups="destinationGroups"
+              aria-label="Destination on timeout"
+            />
+          </div>
 
           <section class="destinations-section" aria-labelledby="ivr-edit-destinations-heading">
             <h2 id="ivr-edit-destinations-heading" class="destinations-heading">Keystroke options</h2>
@@ -452,49 +481,31 @@ async function confirmAndDelete() {
           <div class="edit-actions">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
             <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
+            <button type="button" class="action-delete" :disabled="deleting" @click="askConfirmDelete">
+              {{ deleting ? 'Deleting…' : 'Delete' }}
+            </button>
           </div>
         </form>
       </div>
     </template>
 
-    <Teleport to="body">
-      <div v-if="confirmDeleteOpen" class="modal-backdrop" @click.self="cancelConfirmDelete">
-        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
-          <h2 id="modal-delete-title" class="modal-title">Delete IVR?</h2>
-          <p class="modal-body">
-            IVR <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.
-          </p>
-          <div class="modal-actions">
-            <button type="button" class="modal-btn modal-btn-cancel" @click="cancelConfirmDelete">Cancel</button>
-            <button type="button" class="modal-btn modal-btn-delete" :disabled="deleting" @click="confirmAndDelete">
-              {{ deleting ? 'Deleting…' : 'Delete' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <DeleteConfirmModal
+      :show="confirmDeleteOpen"
+      title="Delete IVR?"
+      :loading="deleting"
+      @confirm="confirmAndDelete"
+      @cancel="cancelConfirmDelete"
+    >
+      <template #body>
+        <p>IVR <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+      </template>
+    </DeleteConfirmModal>
   </div>
 </template>
 
 <style scoped>
 .detail-view {
   max-width: 52rem;
-}
-.back {
-  margin-bottom: 1rem;
-}
-.back-btn {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  color: #64748b;
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-.back-btn:hover {
-  color: #0f172a;
-  background: #f1f5f9;
 }
 .loading,
 .error {
@@ -504,77 +515,22 @@ async function confirmAndDelete() {
   color: #dc2626;
 }
 .detail-content {
-  margin-top: 0;
-}
-.detail-section {
-  margin-top: 1.5rem;
-}
-.detail-section:first-of-type {
   margin-top: 1rem;
 }
 .detail-heading {
   font-size: 1rem;
   font-weight: 600;
   color: #334155;
-  margin: 0 0 0.5rem 0;
+  margin: 1.5rem 0 0.5rem 0;
 }
 .detail-heading:first-of-type {
-  margin-top: 1.5rem;
+  margin-top: 0;
 }
-.detail-subheading {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #475569;
-  margin: 1rem 0 1rem 0;
-}
-.detail-fields-table {
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   margin-top: 0.5rem;
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9375rem;
-  display: table;
-}
-.detail-fields-table tbody {
-  display: table-row-group;
-}
-.detail-fields-table tbody tr {
-  display: table-row;
-}
-.detail-field-label {
-  font-weight: 500;
-  color: #475569;
-  text-align: left;
-  padding: 0.375rem 1rem 0.375rem 0;
-  vertical-align: top;
-  width: 1%;
-  white-space: nowrap;
-}
-.detail-field-value {
-  margin: 0;
-  padding: 0.375rem 0;
-  vertical-align: top;
-}
-.detail-fields-table .detail-field-value.value-immutable {
-  color: #64748b;
-  background: transparent;
-}
-.detail-readonly {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.9375rem;
-  color: #64748b;
-}
-.value-immutable {
-  color: #64748b;
-  background: #f8fafc;
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
-}
-.edit-form-fields-table .detail-field-value .detail-readonly {
-  margin: 0;
-}
-.edit-form-fields-table .detail-field-value .edit-input,
-.edit-form-fields-table .detail-field-value .toggle-pill-ios {
-  margin: 0;
 }
 .toolbar {
   margin: 0 0 0.75rem 0;
@@ -741,10 +697,39 @@ async function confirmAndDelete() {
   border: 1px solid #e2e8f0;
   border-radius: 0.375rem;
   font-size: 1rem;
+  transition: border-color 0.15s ease;
 }
 .edit-input:focus {
   outline: none;
   border-color: #3b82f6;
+}
+.input-error {
+  border-color: #dc2626;
+  border-width: 2px;
+}
+.input-error:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+.input-valid {
+  border-color: #16a34a;
+}
+.input-valid:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+}
+.field-error {
+  color: #dc2626;
+  font-size: 0.8125rem;
+  margin: 0.25rem 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.field-error::before {
+  content: "⚠";
+  font-size: 0.875rem;
+  flex-shrink: 0;
 }
 .edit-actions {
   display: flex;
@@ -774,68 +759,15 @@ async function confirmAndDelete() {
 .edit-actions button.secondary:hover {
   background: #f1f5f9;
 }
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-.modal {
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  padding: 1.5rem;
-  max-width: 24rem;
-  width: 100%;
-}
-.modal-title {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-.modal-body {
-  margin: 0 0 1.25rem 0;
-  font-size: 0.9375rem;
-  color: #475569;
-  line-height: 1.5;
-}
-.modal-body strong {
-  color: #0f172a;
-}
-.modal-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-}
-.modal-btn {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.375rem;
-  cursor: pointer;
+.edit-actions button.action-delete {
+  color: #fff;
+  background: #dc2626;
   border: none;
 }
-.modal-btn-cancel {
-  background: #f1f5f9;
-  color: #475569;
-}
-.modal-btn-cancel:hover {
-  background: #e2e8f0;
-}
-.modal-btn-delete {
-  background: #dc2626;
-  color: white;
-}
-.modal-btn-delete:hover:not(:disabled) {
+.edit-actions button.action-delete:hover:not(:disabled) {
   background: #b91c1c;
 }
-.modal-btn-delete:disabled {
+.edit-actions button.action-delete:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

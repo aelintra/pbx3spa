@@ -1,14 +1,693 @@
 # Standardized Panel Design Pattern
 
 **Last Updated**: 2026-02-02  
-**Based on**: IVR CRUD panels implementation  
-**Status**: Pattern established, ready for application to all panels
+**Based on**: IVR CRUD panels implementation (refactored with reusable components)  
+**Status**: Pattern established and documented, ready for application to all panels
+
+**Important**: 
+- **You must use the reusable form components** for all form fields: `FormField`, `FormSelect`, `FormToggle`, `FormReadonly` (from `src/components/forms/`). Do not use raw `<label>` + `<input>` / `<select>` for fields that these components can represent. Use them so that layout, accessibility, and behaviour stay consistent across panels.
+- This pattern also uses the `useFormValidation` composable where validation is needed.
+- Do NOT use the old table-based approach for form fields.
+- Always declare refs BEFORE validation composables.
+- Use CSS Grid layout (not tables) for form fields.
 
 ---
 
 ## Overview
 
 This document defines the standardized pattern for all CRUD panels in the application. The pattern was established through the IVR panel implementation and should be applied consistently across all resources (Tenants, Extensions, Trunks, Routes, Queues, Agents, InboundRoutes, etc.).
+
+**This is a complete guide** - follow it step-by-step to build a new panel from scratch.
+
+---
+
+## Panel structure (three panels only)
+
+Every resource has **exactly three panels**. Use the same structure as the IVR panels unless a resource explicitly overrides.
+
+### The three panels
+
+1. **Main list** (`{Resource}ListView.vue`) – Table (or list) of all items. Toolbar: Create button, filter. Rows: columns + Edit action + Delete action.
+2. **Create** (`{Resource}CreateView.vue`) – Single form to create one item. No top-level back link; use Cancel in the form to return to the list.
+3. **Edit** (`{Resource}DetailView.vue`) – Single form to view and edit one item (immutable fields with FormReadonly, editable with FormField/FormSelect/FormToggle). **All edit panels must have three buttons at the bottom of the form: Save, Cancel, and Delete.** Delete is placed alongside Save and Cancel in `.edit-actions`, not in a toolbar at the top. No separate "view" panel; no link from the list that goes to a different "item list" panel.
+
+There is **no fourth panel** (e.g. no "item list" or intermediate list). Navigation is: **List ↔ Create** and **List ↔ Edit** only.
+
+### Edit panel: heading
+
+The Edit panel main heading must be **"Edit {Panel name} {Object name}"**.
+
+- **Panel name**: The resource type in singular, with capitalisation matching the app (e.g. "IVR", "Tenant", "Extension").
+- **Object name**: A display name for the item if the API provides one (e.g. `cname` for IVR), otherwise the primary key (e.g. `pkey`). Examples: "Edit IVR 1234", "Edit IVR My Menu", "Edit Tenant default".
+
+Use a single `<h1>`; e.g. `Edit {Resource} {{ displayName || pkey }}` where `displayName` is the optional display field (e.g. `resource?.cname?.trim() ?? ''`).
+
+### Edit panel: Save, Cancel, and Delete buttons (all required)
+
+**All edit panels must include exactly three buttons** at the bottom of the form (in `.edit-actions`): **Save**, **Cancel**, and **Delete**. Do not omit the Delete button; if delete is not allowed for a specific item (e.g. the default tenant), disable the Delete button and show an error message when the user clicks it, or open the confirmation modal with a message that the item cannot be deleted.
+
+- **Placement**: All three buttons sit in the same row at the **bottom** of the form (inside `.edit-actions`). Do not put Delete in a toolbar at the top.
+- **Labels**: Save / "Saving…"; Cancel; Delete / "Deleting…". Use exactly **"Delete"** (not resource-specific text like "Delete tenant" or "Delete IVR").
+- **Delete style**: Red filled button: **red background** (e.g. `#dc2626`), **white text**, no border; hover a darker red (e.g. `#b91c1c`). Same visual weight as the Save button but red to indicate a destructive action. Use class `action-delete` for the Delete button.
+
+### List view: links to Edit only via the Edit action
+
+- The **primary key / name column** in the list must **not** be a link. Show the value as plain text (e.g. `{{ item.pkey }}`).
+- **Only the Edit action** (icon or button in the Edit column) must link to the Edit panel (`{resource}-detail`). Do not link the row item name to the edit panel.
+- Reference: `IvrsListView.vue` (name column is plain text; Edit icon is the only link to `ivr-detail`).
+
+### Form layout: one row per field (same as IVR)
+
+- All form fields must use the shared form components and **one row per field** layout:
+  - Put fields in a container with class **`form-fields`**.
+  - Use **`FormField`**, **`FormSelect`**, **`FormToggle`**, **`FormReadonly`** so each field renders as one row (label | input), with the same grid layout as IVR.
+- Do **not** use a table for form layout. Do **not** use raw `<label>` + `<input>` in a different layout (e.g. stacked label above input without the shared grid). Every field row should look like the IVR Create/Edit panels.
+
+### Reusable form components (required)
+
+All form fields must be implemented with the shared components from `src/components/forms/`:
+
+- **FormField** – text/number inputs (with optional hint, error, required).
+- **FormSelect** – dropdowns (single value from options or option groups).
+- **FormToggle** – YES/NO (or two-value) toggle (checkbox-style).
+- **FormReadonly** – display-only value (e.g. immutable identity fields on Edit).
+
+Use these for every field that fits (text, number, select, boolean/toggle, readonly). Do not replace them with raw HTML form elements for the same purpose.
+
+### Advanced sections
+
+- **Prefer showing all fields.** If a form has extra settings (e.g. "Advanced" options), show them inline under an **"Advanced"** section heading (`<h2 class="detail-heading">Advanced</h2>`) with the same one-row-per-field layout. Do **not** use a hide/reveal (collapsible) for these fields unless there is a strong reason—showing everything reduces cognitive load ("Don't make me think").
+- **On Create**: Every field in the Advanced section must use **FormField** / **FormSelect** / **FormToggle** as appropriate. No custom pill/switch markup; use the form components so the layout matches the rest of the form.
+- **On Edit**: The Edit panel should match the Create panel for the same resource. Same Advanced fields, also editable (using FormField/FormSelect/FormToggle), populated from the loaded item and included in the update payload. Only use a read-only block when the API does not support updating those fields.
+
+---
+
+## File Naming Conventions
+
+### View Files
+
+- **List View**: `{Resource}ListView.vue` (e.g., `TenantsListView.vue`, `IvrsListView.vue`)
+- **Create View**: `{Resource}CreateView.vue` (e.g., `TenantCreateView.vue`, `IvrCreateView.vue`)
+- **Edit View**: `{Resource}DetailView.vue` (e.g., `TenantDetailView.vue`, `IvrDetailView.vue`)
+
+**Note**: Use singular form for resource name in file names (e.g., `Ivr`, not `Ivr`). Plural is only used in the List view filename.
+
+### Component Files
+
+- **Form Components**: `src/components/forms/FormField.vue`, `FormSelect.vue`, `FormToggle.vue`, `FormReadonly.vue`
+- **Validation Composable**: `src/composables/useFormValidation.js`
+- **Validation Rules**: `src/utils/validation.js`
+
+---
+
+## Route Naming Conventions
+
+### Route Names
+
+- **List**: `{resource}s` (plural, lowercase, e.g., `ivrs`, `tenants`, `extensions`)
+- **Create**: `{resource}-create` (singular, lowercase, hyphenated, e.g., `ivr-create`, `tenant-create`)
+- **Detail/Edit**: `{resource}-detail` (singular, lowercase, hyphenated, e.g., `ivr-detail`, `tenant-detail`)
+
+### Route Paths
+
+- **List**: `/{resource}s` (e.g., `/ivrs`, `/tenants`)
+- **Create**: `/{resource}s/new` (e.g., `/ivrs/new`, `/tenants/new`)
+- **Detail**: `/{resource}s/:pkey` (e.g., `/ivrs/:pkey`, `/tenants/:pkey`)
+
+### Router Configuration
+
+Add routes to `src/router/index.js`:
+
+```javascript
+import {Resource}ListView from '../views/{Resource}ListView.vue'
+import {Resource}CreateView from '../views/{Resource}CreateView.vue'
+import {Resource}DetailView from '../views/{Resource}DetailView.vue'
+
+// Inside routes array:
+{ path: '{resources}', name: '{resources}', component: {Resource}ListView },
+{ path: '{resources}/new', name: '{resource}-create', component: {Resource}CreateView },
+{ path: '{resources}/:pkey', name: '{resource}-detail', component: {Resource}DetailView },
+```
+
+**Example**:
+```javascript
+{ path: 'ivrs', name: 'ivrs', component: IvrsListView },
+{ path: 'ivrs/new', name: 'ivr-create', component: IvrCreateView },
+{ path: 'ivrs/:pkey', name: 'ivr-detail', component: IvrDetailView },
+```
+
+---
+
+## API Endpoint Patterns
+
+### Endpoints
+
+- **List**: `GET /{resources}` (e.g., `GET /ivrs`, `GET /tenants`)
+- **Get One**: `GET /{resources}/{pkey}` (e.g., `GET /ivrs/1234`)
+- **Create**: `POST /{resources}` (e.g., `POST /ivrs`)
+- **Update**: `PUT /{resources}/{pkey}` (e.g., `PUT /ivrs/1234`)
+- **Delete**: `DELETE /{resources}/{pkey}` (e.g., `DELETE /ivrs/1234`)
+
+### Response Formats
+
+**List Response** (may vary):
+```javascript
+// Option 1: Direct array
+[{ pkey: '1234', ... }, { pkey: '5678', ... }]
+
+// Option 2: Wrapped in data
+{ data: [{ pkey: '1234', ... }] }
+
+// Option 3: Wrapped in resource name
+{ ivrs: [{ pkey: '1234', ... }] }
+
+// Option 4: Numeric keys object
+{ 0: { pkey: '1234', ... }, 1: { pkey: '5678', ... } }
+```
+
+**Single Resource Response**:
+```javascript
+{ pkey: '1234', shortuid: 'abc123', id: 'ksuid...', cluster: 'default', ... }
+```
+
+**Error Response**:
+```javascript
+{
+  data: {
+    field: ['Error message'],
+    field2: ['Another error']
+  },
+  message: 'General error message'
+}
+```
+
+### Using API Client
+
+```javascript
+import { getApiClient } from '@/api/client'
+
+// GET request
+const response = await getApiClient().get('resources')
+const resource = await getApiClient().get(`resources/${encodeURIComponent(pkey)}`)
+
+// POST request
+const created = await getApiClient().post('resources', { pkey: '1234', ... })
+
+// PUT request
+await getApiClient().put(`resources/${encodeURIComponent(pkey)}`, { ... })
+
+// DELETE request
+await getApiClient().delete(`resources/${encodeURIComponent(pkey)}`)
+
+// With query params
+const response = await getApiClient().get('destinations', { params: { cluster: 'default' } })
+```
+
+---
+
+## Common Patterns & Helpers
+
+### Tenant Resolution Pattern
+
+**Problem**: API may return tenant `shortuid` in `cluster` field, but dropdowns should display `pkey`.
+
+**Solution**: Create a computed map to resolve shortuid → pkey.
+
+```javascript
+// Load tenants
+const tenants = ref([])
+async function loadTenants() {
+  try {
+    const response = await getApiClient().get('tenants')
+    tenants.value = normalizeList(response)
+  } catch {
+    tenants.value = []
+  }
+}
+
+// Map shortuid → pkey for resolution
+const tenantShortuidToPkey = computed(() => {
+  const map = {}
+  for (const t of tenants.value) {
+    if (t.shortuid) map[String(t.shortuid)] = t.pkey
+    if (t.pkey) map[String(t.pkey)] = t.pkey  // Also map pkey to itself
+  }
+  return map
+})
+
+// Tenant options for dropdown (always use pkey)
+const tenantOptions = computed(() => {
+  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
+  return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
+})
+
+// Include current value if not in list (for edit view)
+const tenantOptionsForSelect = computed(() => {
+  const list = tenantOptions.value
+  const cur = cluster.value  // or editCluster.value
+  if (cur && !list.includes(cur)) {
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  }
+  return list
+})
+
+// In Edit view: Resolve cluster from API (may be shortuid) to pkey
+function syncEditFromResource() {
+  if (!resource.value) return
+  const clusterRaw = resource.value.cluster ?? 'default'
+  // Resolve shortuid to pkey for dropdown
+  editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
+  // ... other fields
+}
+
+// In List view: Display tenant pkey (resolve shortuid)
+function tenantDisplay(item) {
+  const c = item.cluster
+  if (c == null || c === '') return '—'
+  return tenantShortuidToPkey.value[String(c)] ?? c
+}
+```
+
+### Destinations Loading Pattern
+
+**Purpose**: Load destinations (Queues, Extensions, IVRs, CustomApps) for dropdowns.
+
+```javascript
+const destinations = ref(null)
+const destinationsLoading = ref(false)
+
+async function loadDestinations() {
+  const c = cluster.value  // or editCluster.value
+  if (!c) {
+    destinations.value = null
+    return
+  }
+  destinationsLoading.value = true
+  try {
+    const response = await getApiClient().get('destinations', { params: { cluster: c } })
+    destinations.value = response && typeof response === 'object' ? response : null
+  } catch {
+    destinations.value = null
+  } finally {
+    destinationsLoading.value = false
+  }
+}
+
+// Group destinations for optgroups
+const destinationGroups = computed(() => {
+  const d = destinations.value
+  if (!d || typeof d !== 'object') return {}
+  return {
+    Queues: Array.isArray(d.Queues) ? d.Queues : [],
+    Extensions: Array.isArray(d.Extensions) ? d.Extensions : [],
+    IVRs: Array.isArray(d.IVRs) ? d.IVRs : [],
+    CustomApps: Array.isArray(d.CustomApps) ? d.CustomApps : []
+  }
+})
+
+// Watch cluster changes to reload destinations
+watch(cluster, () => {
+  loadDestinations()
+  if (clusterValidation.touched.value) {
+    clusterValidation.validate()
+  }
+})
+```
+
+### Delete Confirmation Modal Pattern
+
+**List View**: Use Teleport for modal overlay.
+
+```vue
+<Teleport to="body">
+  <div v-if="confirmDeletePkey" class="modal-backdrop" @click.self="cancelConfirmDelete">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+      <h2 id="modal-delete-title" class="modal-title">Delete {Resource}?</h2>
+      <p class="modal-body">
+        {Resource} <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be undone.
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-cancel" @click="cancelConfirmDelete">Cancel</button>
+        <button type="button" class="modal-btn modal-btn-delete" :disabled="deletingPkey === confirmDeletePkey" @click="confirmAndDelete(confirmDeletePkey)">
+          {{ deletingPkey === confirmDeletePkey ? 'Deleting…' : 'Delete' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</Teleport>
+```
+
+**Script**:
+```javascript
+const confirmDeletePkey = ref(null)
+const deletingPkey = ref(null)
+const deleteError = ref('')
+
+function askConfirmDelete(pkey) {
+  confirmDeletePkey.value = pkey
+  deleteError.value = ''
+}
+
+function cancelConfirmDelete() {
+  confirmDeletePkey.value = null
+}
+
+async function confirmAndDelete(pkey) {
+  if (confirmDeletePkey.value !== pkey) return
+  deleteError.value = ''
+  deletingPkey.value = pkey
+  try {
+    await getApiClient().delete(`{resources}/${encodeURIComponent(pkey)}`)
+    await loadResources()  // Reload list
+    toast.show(`{Resource} ${pkey} deleted`)
+  } catch (err) {
+    deleteError.value = err.data?.message ?? err.message ?? 'Failed to delete {resource}'
+  } finally {
+    confirmDeletePkey.value = null
+    deletingPkey.value = null
+  }
+}
+```
+
+**CSS**:
+```css
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+.modal {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 1.5rem;
+  max-width: 24rem;
+  width: 100%;
+}
+.modal-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+.modal-body {
+  margin: 0 0 1.25rem 0;
+  font-size: 0.9375rem;
+  color: #475569;
+  line-height: 1.5;
+}
+.modal-body strong {
+  color: #0f172a;
+}
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+.modal-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  border: none;
+}
+.modal-btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+.modal-btn-cancel:hover {
+  background: #e2e8f0;
+}
+.modal-btn-delete {
+  background: #dc2626;
+  color: white;
+}
+.modal-btn-delete:hover:not(:disabled) {
+  background: #b91c1c;
+}
+.modal-btn-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+```
+
+### Sorting Pattern (List View)
+
+```javascript
+const sortKey = ref('pkey')
+const sortOrder = ref('asc')  // 'asc' | 'desc'
+
+function sortValue(item, key) {
+  const v = item[key]
+  return v == null ? '' : String(v)
+}
+
+const sortedItems = computed(() => {
+  const list = [...filteredItems.value]
+  const key = sortKey.value
+  const order = sortOrder.value
+  list.sort((a, b) => {
+    const va = sortValue(a, key).toLowerCase()
+    const vb = sortValue(b, key).toLowerCase()
+    let cmp = 0
+    if (va < vb) cmp = -1
+    else if (va > vb) cmp = 1
+    return order === 'asc' ? cmp : -cmp
+  })
+  return list
+})
+
+function setSort(key) {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortOrder.value = 'asc'
+  }
+}
+
+function sortClass(key) {
+  if (sortKey.value !== key) return ''
+  return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
+}
+```
+
+**Template**:
+```vue
+<th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">
+  Column Name
+</th>
+```
+
+### Filtering Pattern (List View)
+
+```javascript
+const filterText = ref('')
+
+const filteredItems = computed(() => {
+  const list = items.value
+  const q = (filterText.value || '').trim().toLowerCase()
+  if (!q) return list
+  return list.filter((item) => {
+    const pkey = (item.pkey ?? '').toString().toLowerCase()
+    const shortuid = (item.shortuid ?? '').toString().toLowerCase()
+    const desc = (item.description ?? '').toString().toLowerCase()
+    // Add other searchable fields
+    return pkey.includes(q) || shortuid.includes(q) || desc.includes(q)
+  })
+})
+```
+
+**Template**:
+```vue
+<input
+  v-model="filterText"
+  type="search"
+  class="filter-input"
+  placeholder="Filter by name, Local UID, tenant, or description"
+  aria-label="Filter {Resources}"
+/>
+```
+
+### Handling Optional Fields in API Payload
+
+**Pattern**: Only include fields in payload if they have values, or explicitly set to `null` if clearing.
+
+```javascript
+const body = {
+  pkey: pkey.value.trim(),
+  cluster: cluster.value.trim(),
+  active: active.value
+}
+
+// Optional string fields: include if trimmed value exists, else set to null
+if (cname.value.trim()) body.cname = cname.value.trim()
+else body.cname = null
+
+// Optional number fields: include if value exists and is valid
+if (greetnum.value !== '' && greetnum.value != null) {
+  body.greetnum = parseInt(greetnum.value, 10)
+}
+
+// Optional empty strings: include if trimmed value exists
+if (description.value.trim()) body.description = description.value.trim()
+```
+
+### Loading Related Data (Greetings, etc.)
+
+**Pattern**: Load related data for dropdowns (e.g., greetings for IVR).
+
+```javascript
+const greetings = ref([])
+const greetingsLoading = ref(false)
+
+async function loadGreetings() {
+  greetingsLoading.value = true
+  try {
+    const response = await getApiClient().get('greetings')
+    greetings.value = Array.isArray(response) ? response : (response?.data ?? [])
+  } catch {
+    greetings.value = []
+  } finally {
+    greetingsLoading.value = false
+  }
+}
+
+// Process greetings to extract numbers
+const greetingOptions = computed(() => {
+  const list = greetings.value
+  if (!Array.isArray(list)) return []
+  const nums = list
+    .map((name) => {
+      const m = String(name).match(/usergreeting(\d+)/i)
+      return m ? parseInt(m[1], 10) : null
+    })
+    .filter((n) => n != null)
+  return [...new Set(nums)].sort((a, b) => a - b)
+})
+
+// Use in FormSelect
+<FormSelect
+  :options="greetingOptions.map(n => String(n))"
+  :loading="greetingsLoading"
+/>
+```
+
+### Normalize List Response Pattern
+
+**Purpose**: Handle various API response formats consistently.
+
+```javascript
+function normalizeList(response) {
+  // Direct array
+  if (Array.isArray(response)) return response
+  
+  // Wrapped in object
+  if (response && typeof response === 'object') {
+    // Wrapped in 'data'
+    if (Array.isArray(response.data)) return response.data
+    
+    // Wrapped in resource name (e.g., { ivrs: [...] })
+    if (Array.isArray(response.{resources})) return response.{resources}
+    
+    // Numeric keys object (e.g., { 0: {...}, 1: {...} })
+    if (Object.keys(response).every((k) => /^\d+$/.test(k))) {
+      return Object.values(response)
+    }
+  }
+  
+  return []
+}
+```
+
+**Usage**:
+```javascript
+const response = await getApiClient().get('resources')
+resources.value = normalizeList(response)
+```
+
+### Handling Empty/Null Values
+
+**Display Pattern**: Use `?? '—'` for empty values in display.
+
+```vue
+<!-- In templates -->
+<td>{{ resource.description ?? '—' }}</td>
+<td>{{ resource.greetnum != null ? String(resource.greetnum) : '—' }}</td>
+
+<!-- In FormReadonly -->
+<FormReadonly :value="resource.pkey ?? '—'" />
+```
+
+**API Payload Pattern**: Handle optional fields correctly.
+
+```javascript
+const body = {
+  requiredField: field.value.trim(),
+  // Optional string: include if trimmed, else null
+  optionalString: optionalString.value.trim() || null,
+  // Optional number: include if valid, else omit
+  ...(optionalNumber.value !== '' && optionalNumber.value != null && {
+    optionalNumber: parseInt(optionalNumber.value, 10)
+  })
+}
+```
+
+### Complex Field Patterns (e.g., Keystroke Options)
+
+For resources with repeated field patterns (like IVR's option0-11, tag0-11, alert0-11):
+
+```javascript
+// Define entries array
+const optionEntries = [
+  { key: 'option0', tagKey: 'tag0', alertKey: 'alert0', label: '0' },
+  { key: 'option1', tagKey: 'tag1', alertKey: 'alert1', label: '1' },
+  // ... continue for all entries
+  { key: 'option10', tagKey: 'tag10', alertKey: 'alert10', label: '*' },
+  { key: 'option11', tagKey: 'tag11', alertKey: 'alert11', label: '#' }
+]
+
+// Initialize refs
+const options = ref({
+  option0: 'None', option1: 'None', /* ... */ option11: 'None'
+})
+const tags = ref({
+  tag0: '', tag1: '', /* ... */ tag11: ''
+})
+const alerts = ref({
+  alert0: '', alert1: '', /* ... */ alert11: ''
+})
+
+// Payload builder function
+function resourcePayload(optionsObj, tagsObj, alertsObj, timeoutVal) {
+  const body = {}
+  for (let i = 0; i <= 11; i++) {
+    const o = optionsObj[`option${i}`]
+    body[`option${i}`] = o != null && o !== '' ? String(o) : null
+    body[`tag${i}`] = tagsObj[`tag${i}`] != null && tagsObj[`tag${i}`] !== '' ? String(tagsObj[`tag${i}`]) : null
+    body[`alert${i}`] = alertsObj[`alert${i}`] != null && alertsObj[`alert${i}`] !== '' ? String(alertsObj[`alert${i}`]) : null
+  }
+  body.timeout = timeoutVal != null && timeoutVal !== '' ? String(timeoutVal) : null
+  return body
+}
+
+// Sync from API response
+function syncEditFromResource() {
+  if (!resource.value) return
+  const r = resource.value
+  for (let i = 0; i <= 11; i++) {
+    options.value[`option${i}`] = r[`option${i}`] ?? 'None'
+    tags.value[`tag${i}`] = r[`tag${i}`] ?? ''
+    alerts.value[`alert${i}`] = r[`alert${i}`] ?? ''
+  }
+}
+```
 
 ---
 
@@ -131,89 +810,95 @@ This document defines the standardized pattern for all CRUD panels in the applic
 
 ### Structure
 
-```
-<div class="create-view">
-  <p class="back">
-    <button type="button" class="back-btn" @click="goBack">← {Resource}s</button>
-  </p>
-  <h1>Create {Resource Name}</h1>
+```vue
+<template>
+  <div class="create-view">
+    <h1>Create {Resource Name}</h1>
 
-  <form class="form" @submit="onSubmit" @keydown="onKeydown">
-    <p v-if="error" id="{resource}-create-error" class="error" role="alert">{{ error }}</p>
+    <form class="form" @submit="onSubmit" @keydown="onKeydown">
+      <p v-if="error" id="{resource}-create-error" class="error" role="alert">{{ error }}</p>
 
-    <h2 class="detail-heading">Identity</h2>
-    <table class="detail-fields-table edit-form-fields-table" aria-label="Identity">
-      <tbody>
-        <tr>
-          <th class="detail-field-label" scope="row">
-            <label for="field-id">Field Label</label>
-          </th>
-          <td class="detail-field-value">
-            <input
-              id="field-id"
-              v-model="field"
-              :class="{ 'edit-input': true, 'input-error': fieldError && fieldTouched }"
-              :aria-invalid="fieldError && fieldTouched"
-              :aria-describedby="fieldError && fieldTouched ? 'field-id-error' : 'field-id-hint'"
-              @blur="onFieldBlur"
-            />
-            <p v-if="fieldError && fieldTouched" id="field-id-error" class="field-error" role="alert">
-              {{ fieldError }}
-            </p>
-            <p v-else id="field-id-hint" class="form-hint">
-              Hint text explaining the field.
-            </p>
-          </td>
-        </tr>
+      <h2 class="detail-heading">Identity</h2>
+      <div class="form-fields">
+        <FormField
+          id="pkey"
+          ref="pkeyInput"
+          v-model="pkey"
+          label="Primary Identifier"
+          type="text"
+          :error="pkeyValidation.error.value"
+          :touched="pkeyValidation.touched.value"
+          :required="true"
+          hint="Hint text explaining the field."
+          @blur="pkeyValidation.onBlur"
+        />
+        <FormSelect
+          id="cluster"
+          v-model="cluster"
+          label="Tenant"
+          :options="tenantOptions"
+          :error="clusterValidation.error.value"
+          :touched="clusterValidation.touched.value"
+          :required="true"
+          :loading="tenantsLoading"
+          hint="The tenant this resource belongs to."
+          @blur="clusterValidation.onBlur"
+        />
         <!-- More fields -->
-      </tbody>
-    </table>
+      </div>
 
-    <h2 class="detail-heading">Settings</h2>
-    <table class="detail-fields-table edit-form-fields-table" aria-label="Settings">
-      <!-- Settings fields -->
-    </table>
+      <h2 class="detail-heading">Settings</h2>
+      <div class="form-fields">
+        <FormToggle
+          id="active"
+          v-model="active"
+          label="Active?"
+          hint="If off, the resource will not be available."
+        />
+        <!-- More fields -->
+      </div>
 
-    <!-- Optional: Additional sections (e.g., Keystroke options) -->
-    <section class="destinations-section" aria-labelledby="...">
-      <h2 id="..." class="destinations-heading">Section Name</h2>
-      <!-- Section content -->
-    </section>
+      <!-- Optional: Additional sections -->
+      <section class="destinations-section" aria-labelledby="...">
+        <h2 id="..." class="destinations-heading">Section Name</h2>
+        <!-- Section content -->
+      </section>
 
-    <div class="actions">
-      <button type="submit" :disabled="loading">Create</button>
-      <button type="button" class="secondary" @click="goBack">Cancel</button>
-    </div>
-  </form>
-</div>
+      <div class="actions">
+        <button type="submit" :disabled="loading">{{ loading ? 'Creating…' : 'Create' }}</button>
+        <button type="button" class="secondary" @click="goBack">Cancel</button>
+      </div>
+    </form>
+  </div>
+</template>
 ```
 
 ### Key Elements
 
 **Navigation:**
-- Back button: `← {Resource}s` (navigates to list)
 - Heading: `Create {Resource Name}` (no dynamic name, resource is being created)
+- No back button at top (use Cancel button or browser back)
 
 **Form Structure:**
 - Always uses `<form>` with `@submit` handler
 - Error message at top: `role="alert"`, unique ID
 - Sections: Identity → Settings → (optional sections)
-- Each section: `<h2 class="detail-heading">` → `<table class="detail-fields-table">`
+- Each section: `<h2 class="detail-heading">` → `<div class="form-fields">` containing form components
 
 **Field Layout:**
-- Table-based: `<table>` with `<th>` (label) and `<td>` (input/value)
-- Labels: `<label>` inside `<th scope="row">`
-- Inputs: Inside `<td class="detail-field-value">`
-- Hints/Errors: `<p>` below input, conditional display
+- Uses reusable form components: `FormField`, `FormSelect`, `FormToggle`
+- CSS Grid layout: Labels and inputs side-by-side (semantic HTML, not tables)
+- Components handle validation states, ARIA attributes, and error/hint display automatically
 
 **Validation:**
-- Field-level error state: `fieldError`, `fieldTouched`
-- Visual states: `input-error`, `input-valid` classes
-- ARIA: `aria-invalid`, `aria-describedby`
-- Error messages: `role="alert"`, replace hints when present
+- Uses `useFormValidation` composable for each field
+- Validation rules defined in `@/utils/validation.js`
+- Components receive `:error` and `:touched` props from validation composable
+- Visual states handled by components (`input-error`, `input-valid` classes)
+- ARIA attributes handled by components (`aria-invalid`, `aria-describedby`)
 
 **Actions:**
-- Submit button: Primary style, shows loading state
+- Submit button: Primary style, shows loading state ("Creating…")
 - Cancel button: Secondary style, navigates back
 
 ### Field Order (Identity Section)
@@ -246,8 +931,12 @@ This document defines the standardized pattern for all CRUD panels in the applic
 
 ```css
 .create-view { max-width: 52rem; }
-.back { margin-bottom: 1rem; }
-.back-btn { /* Back button styling */ }
+.form {
+  margin-top: 1rem;  /* Spacing between h1 and form content */
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
 .detail-heading {
   font-size: 1rem;
   font-weight: 600;
@@ -255,26 +944,13 @@ This document defines the standardized pattern for all CRUD panels in the applic
   margin: 1.5rem 0 0.5rem 0;
 }
 .detail-heading:first-of-type {
-  margin-top: 0;
+  margin-top: 0;  /* First heading gets spacing from .form wrapper */
 }
-.detail-fields-table {
-  margin-top: 0.5rem;
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9375rem;
-  display: table;
-}
-.detail-field-label {
-  font-weight: 500;
-  color: #475569;
-  padding: 0.375rem 1rem 0.375rem 0;
-  vertical-align: top;
-  width: 1%;
-  white-space: nowrap;
-}
-.detail-field-value {
-  padding: 0.375rem 0;
-  vertical-align: top;
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;  /* Spacing between heading and fields */
 }
 .edit-input { /* Input styling */ }
 .input-error { /* Error state */ }
@@ -292,9 +968,6 @@ This document defines the standardized pattern for all CRUD panels in the applic
 
 ```
 <div class="detail-view" @keydown="onKeydown">
-  <p class="back">
-    <button type="button" class="back-btn" @click="goBack">← {Resource}s</button>
-  </p>
   <h1>Edit {Resource Name} {{ displayName || pkey }}</h1>
 
   <p v-if="loading" class="loading">Loading…</p>
@@ -307,40 +980,62 @@ This document defines the standardized pattern for all CRUD panels in the applic
         <p v-if="saveError" id="{resource}-edit-error" class="error" role="alert">{{ saveError }}</p>
 
         <h2 class="detail-heading">Identity</h2>
-        <table class="detail-fields-table edit-form-fields-table" aria-label="Identity">
-          <tbody>
-            <!-- Immutable fields (readonly) -->
-            <tr>
-              <th class="detail-field-label" scope="row">
-                <label for="edit-identity-pkey">Primary Identifier</label>
-              </th>
-              <td class="detail-field-value">
-                <p id="edit-identity-pkey" class="detail-readonly value-immutable" title="Immutable">
-                  {{ resource.pkey ?? '—' }}
-                </p>
-              </td>
-            </tr>
-            <!-- Editable fields -->
-            <tr>
-              <th class="detail-field-label" scope="row">
-                <label for="edit-field">Field Label</label>
-              </th>
-              <td class="detail-field-value">
-                <input id="edit-field" v-model="editField" class="edit-input" ... />
-                <!-- Hint or error -->
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="form-fields">
+          <!-- Immutable fields (readonly) -->
+          <FormReadonly
+            id="edit-identity-pkey"
+            label="Primary Identifier"
+            :value="resource.pkey ?? '—'"
+          />
+          <FormReadonly
+            id="edit-identity-shortuid"
+            label="Local UID"
+            :value="resource.shortuid ?? '—'"
+          />
+          <FormReadonly
+            id="edit-identity-id"
+            label="KSUID"
+            :value="resource.id ?? '—'"
+          />
+          <!-- Editable fields -->
+          <FormSelect
+            id="edit-cluster"
+            v-model="editCluster"
+            label="Tenant"
+            :options="tenantOptions"
+            :error="clusterValidation.error.value"
+            :touched="clusterValidation.touched.value"
+            :required="true"
+            hint="The tenant this resource belongs to."
+            @blur="clusterValidation.onBlur"
+          />
+          <FormField
+            id="edit-description"
+            v-model="editDescription"
+            label="Description (optional)"
+            type="text"
+            placeholder="Freeform description"
+          />
+        </div>
 
         <h2 class="detail-heading">Settings</h2>
-        <!-- Settings table -->
+        <div class="form-fields">
+          <FormToggle
+            id="edit-active"
+            v-model="editActive"
+            label="Active?"
+          />
+          <!-- More fields -->
+        </div>
 
         <!-- Optional sections -->
 
         <div class="edit-actions">
           <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
           <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
+          <button type="button" class="action-delete" :disabled="deleting" @click="askConfirmDelete">
+            {{ deleting ? 'Deleting…' : 'Delete' }}
+          </button>
         </div>
       </form>
     </div>
@@ -351,10 +1046,10 @@ This document defines the standardized pattern for all CRUD panels in the applic
 ### Key Elements
 
 **Navigation:**
-- Back button: `← {Resource}s`
 - Heading: `Edit {Resource Name} {displayName || pkey}`
   - Shows display name (cname) if available, falls back to pkey
   - Example: "Edit IVR Main Menu" or "Edit IVR 1234"
+- No back button at top (use Cancel button or browser back)
 
 **Always in Edit Mode:**
 - No read-only view
@@ -362,17 +1057,18 @@ This document defines the standardized pattern for all CRUD panels in the applic
 - Opens directly to edit mode (no intermediate view)
 
 **Field Organization:**
-- Identity section: Immutable fields first (pkey, shortuid, id), then editable
-- Settings section: All editable settings
-- Immutable fields: `<p class="detail-readonly value-immutable">` with `title="Immutable"`
+- Identity section: Immutable fields first (pkey, shortuid, id) using `FormReadonly`, then editable fields
+- Settings section: All editable settings using form components
+- Immutable fields: Use `FormReadonly` component (no italic styling, just visual distinction)
 
 **Validation:**
 - Same pattern as Create view
 - Field-level errors, visual states, ARIA attributes
 
-**Actions:**
-- Save button: Shows "Saving…" state
-- Cancel button: Navigates back to list (no "cancel edit" mode)
+**Actions (all three required):**
+- **Save** button: Primary style; shows "Saving…" when submitting.
+- **Cancel** button: Secondary style; navigates back to list.
+- **Delete** button: Red filled (`action-delete`); shows "Deleting…" when in progress; opens confirmation modal. If delete is not allowed for this item (e.g. default tenant), disable the button or show an error on click instead of opening the modal.
 
 ### Field Order (Identity Section - Edit)
 
@@ -388,137 +1084,259 @@ This document defines the standardized pattern for all CRUD panels in the applic
 
 Same as Create view, but may include additional fields that are only editable (not set on create).
 
+### CSS Classes
+
+```css
+.detail-view { max-width: 52rem; }
+.detail-content {
+  margin-top: 1rem;  /* Spacing between h1 and form content */
+}
+.detail-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.detail-heading:first-of-type {
+  margin-top: 0;  /* First heading gets spacing from .detail-content wrapper */
+}
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;  /* Spacing between heading and fields */
+}
+.edit-form {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+```
+
 ---
 
-## Common Patterns
+## Form Components
 
-### Boolean Fields
+### FormField Component
 
-**Use iOS-style sliding pill toggles:**
+**Purpose**: Text input fields with validation
 
+**Props:**
+- `id` (required): Unique field ID
+- `label` (required): Field label text
+- `v-model`: Two-way binding to field value
+- `type`: Input type (default: "text")
+- `placeholder`: Placeholder text
+- `hint`: Help text shown below field
+- `error`: Error message (from validation composable)
+- `touched`: Whether field has been touched (from validation composable)
+- `required`: Boolean for required fields
+- `disabled`: Boolean to disable field
+- `inputmode`: Input mode hint (e.g., "numeric")
+- `pattern`: HTML5 pattern attribute
+- `autocomplete`: Autocomplete attribute (default: "off")
+
+**Events:**
+- `@blur`: Emitted when field loses focus (connect to `validation.onBlur`)
+
+**Example:**
 ```vue
-<label class="toggle-pill-ios" aria-label="Field Name">
-  <input
-    type="checkbox"
-    :checked="field === 'YES'"
-    @change="field = $event.target.checked ? 'YES' : 'NO'"
-  />
-  <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
-</label>
-```
-
-**CSS:**
-```css
-.toggle-pill-ios { /* Container */ }
-.toggle-pill-track { /* Track background */ }
-.toggle-pill-thumb { /* Sliding thumb */ }
-/* Checked state: green background, thumb translated */
-```
-
-### Dropdown Fields
-
-```vue
-<select
-  id="field-id"
-  v-model="field"
-  class="edit-input"
-  :aria-invalid="fieldError && fieldTouched"
-  :aria-describedby="..."
-  :disabled="loading"
-  @blur="onFieldBlur"
->
-  <option v-if="loading" value="">Loading…</option>
-  <option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option>
-</select>
-```
-
-### Text Input Fields
-
-```vue
-<input
-  id="field-id"
-  v-model="field"
+<FormField
+  id="pkey"
+  ref="pkeyInput"
+  v-model="pkey"
+  label="Primary Identifier"
   type="text"
-  class="edit-input"
-  :class="{ 'input-error': fieldError && fieldTouched }"
-  placeholder="e.g. example"
-  :aria-invalid="fieldError && fieldTouched"
-  :aria-describedby="..."
-  @blur="onFieldBlur"
+  inputmode="numeric"
+  pattern="[0-9]{3,5}"
+  placeholder="e.g. 1234"
+  :error="pkeyValidation.error.value"
+  :touched="pkeyValidation.touched.value"
+  :required="true"
+  hint="Numeric ID (3-5 digits)."
+  @blur="pkeyValidation.onBlur"
 />
 ```
 
-### Readonly/Immutable Fields
+### FormSelect Component
 
+**Purpose**: Dropdown/select fields with validation
+
+**Props:**
+- `id` (required): Unique field ID
+- `label` (required): Field label text
+- `v-model`: Two-way binding to selected value
+- `options` (required): Array of option values (strings)
+- `option-groups`: Object with group names as keys, arrays of options as values
+- `hint`: Help text shown below field
+- `error`: Error message (from validation composable)
+- `touched`: Whether field has been touched (from validation composable)
+- `required`: Boolean for required fields
+- `disabled`: Boolean to disable field
+- `loading`: Boolean to show loading state
+- `loading-text`: Text shown when loading (default: "Loading…")
+- `empty-text`: Text for empty option (default: "—")
+- `aria-label`: Accessible label
+
+**Events:**
+- `@blur`: Emitted when field loses focus (connect to `validation.onBlur`)
+
+**Example:**
 ```vue
-<p class="detail-readonly value-immutable" title="Immutable">
-  {{ value ?? '—' }}
-</p>
+<FormSelect
+  id="cluster"
+  v-model="cluster"
+  label="Tenant"
+  :options="tenantOptions"
+  :option-groups="destinationGroups"
+  :error="clusterValidation.error.value"
+  :touched="clusterValidation.touched.value"
+  :required="true"
+  :loading="tenantsLoading"
+  hint="The tenant this resource belongs to."
+  @blur="clusterValidation.onBlur"
+/>
+```
+
+### FormToggle Component
+
+**Purpose**: iOS-style boolean toggle switches
+
+**Props:**
+- `id` (required): Unique field ID
+- `label` (required): Field label text
+- `v-model`: Two-way binding (expects 'YES'/'NO' strings)
+- `yes-value`: Value when checked (default: "YES")
+- `no-value`: Value when unchecked (default: "NO")
+- `hint`: Help text shown below toggle
+- `aria-label`: Accessible label
+
+**Example:**
+```vue
+<FormToggle
+  id="active"
+  v-model="active"
+  label="Active?"
+  hint="If off, the resource will not be available."
+/>
+```
+
+### FormReadonly Component
+
+**Purpose**: Display readonly/immutable fields (Edit view only)
+
+**Props:**
+- `id` (required): Unique field ID
+- `label` (required): Field label text
+- `value`: Value to display (default: "—")
+
+**Example:**
+```vue
+<FormReadonly
+  id="edit-identity-pkey"
+  label="Primary Identifier"
+  :value="resource.pkey ?? '—'"
+/>
 ```
 
 ---
 
 ## Validation Pattern
 
-### State Management
+### Validation Rules
+
+Define validation functions in `src/utils/validation.js`:
 
 ```javascript
-// Field-level validation state
-const fieldError = ref(null)
-const fieldTouched = ref(false)
-
-// Validation function
-function validateField(value) {
+export function validateFieldName(value) {
   if (!value || !value.trim()) {
     return 'Field is required'
   }
   // Additional validation rules
   return null // Valid
 }
+```
 
-// Blur handler
-function onFieldBlur() {
-  fieldTouched.value = true
-  fieldError.value = validateField(field.value)
-}
+### Using Validation Composable
 
-// Watch for changes (after first touch)
-watch(field, (newValue) => {
-  if (fieldTouched.value) {
-    fieldError.value = validateField(newValue)
-  }
-})
+```javascript
+// IMPORTANT: Declare refs BEFORE validation composables
+const field = ref('')
+const field2 = ref('')
 
-// Validate all on submit
-function validateAll() {
-  let isValid = true
-  fieldTouched.value = true
-  fieldError.value = validateField(field.value)
-  if (fieldError.value) isValid = false
-  // ... validate other fields
-  return isValid
-}
+// Use composable for each field (after refs are declared)
+const fieldValidation = useFormValidation(field, validateFieldName)
+const field2Validation = useFormValidation(field2, validateField2Name)
+
+// The composable returns:
+// - fieldValidation.error (ref)
+// - fieldValidation.touched (ref)
+// - fieldValidation.validate() (function)
+// - fieldValidation.onBlur() (function)
+// - fieldValidation.reset() (function)
 ```
 
 ### Template Integration
 
 ```vue
-<input
-  :class="{
-    'edit-input': true,
-    'input-error': fieldError && fieldTouched,
-    'input-valid': !fieldError && fieldTouched && field.trim()
-  }"
-  :aria-invalid="fieldError && fieldTouched"
-  :aria-describedby="fieldError && fieldTouched ? 'field-id-error' : 'field-id-hint'"
-  @blur="onFieldBlur"
+<FormField
+  id="field-id"
+  v-model="field"
+  label="Field Label"
+  :error="fieldValidation.error.value"
+  :touched="fieldValidation.touched.value"
+  :required="true"
+  hint="Hint text explaining the field."
+  @blur="fieldValidation.onBlur"
 />
-<p v-if="fieldError && fieldTouched" id="field-id-error" class="field-error" role="alert">
-  {{ fieldError }}
-</p>
-<p v-else id="field-id-hint" class="form-hint">
-  Hint text.
-</p>
+```
+
+### Validate All on Submit
+
+```javascript
+async function onSubmit(e) {
+  e.preventDefault()
+  error.value = ''
+  
+  // Validate all fields
+  const validations = [
+    { ...fieldValidation, fieldId: 'field-id' },
+    { ...field2Validation, fieldId: 'field2-id' }
+  ]
+  
+  if (!validateAll(validations)) {
+    // Focus first error field
+    await nextTick()
+    focusFirstError(validations, (id) => {
+      if (id === 'field-id' && fieldInput.value) return fieldInput.value
+      return document.getElementById(id)
+    })
+    return
+  }
+  
+  // Submit form...
+}
+```
+
+### Map API Errors to Fields
+
+```javascript
+catch (err) {
+  const errors = err?.data
+  if (errors && typeof errors === 'object') {
+    // Map server errors to field-level errors
+    if (errors.field) {
+      fieldValidation.touched.value = true
+      fieldValidation.error.value = Array.isArray(errors.field) ? errors.field[0] : errors.field
+    }
+    // ... map other fields
+    
+    // Focus first error
+    await nextTick()
+    focusFirstError(validations, (id) => document.getElementById(id))
+  }
+}
 ```
 
 ---
@@ -547,18 +1365,22 @@ function validateAll() {
 
 ### Vertical Spacing
 
-- **Main heading to first section**: 1.5rem margin-top on first `.detail-heading`
+- **Main heading to form content**: 
+  - Create panel: `.form` wrapper has `margin-top: 1rem`
+  - Edit panel: `.detail-content` wrapper has `margin-top: 1rem`
+- **Main heading to first section**: First `.detail-heading` has `margin-top: 0` (spacing comes from wrapper above)
 - **Between sections**: 1.5rem margin-top on `.detail-heading` (except first)
-- **Section heading to table**: 0.5rem margin-top on `.detail-fields-table`
-- **Between table rows**: No border, clean spacing
+- **Section heading to form fields**: 0.5rem margin-top on `.form-fields`
+- **Between form fields**: No gap (fields stack directly)
 - **After last section**: 1.5rem margin-bottom
 
 ### Horizontal Layout
 
-- **Table layout**: `display: table` (explicit)
-- **Label column**: Fixed width (`width: 1%`), `white-space: nowrap`
-- **Value column**: Flexible, takes remaining space
+- **Form field layout**: CSS Grid (`grid-template-columns: minmax(0, 1fr) 2fr`)
+- **Label column**: Fixed width (`minmax(0, 1fr)`), `white-space: nowrap`
+- **Value column**: Flexible, takes remaining space (`2fr`)
 - **Max width**: Create/Edit views: `max-width: 52rem`
+- **Semantic HTML**: Uses `<div>` with CSS Grid, not `<table>` (better for accessibility and responsive design)
 
 ---
 
@@ -599,6 +1421,12 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
+import { validateIvrPkey, validateTenant, validateGreetnum } from '@/utils/validation'
+import FormField from '@/components/forms/FormField.vue'
+import FormSelect from '@/components/forms/FormSelect.vue'
+import FormToggle from '@/components/forms/FormToggle.vue'
+import FormReadonly from '@/components/forms/FormReadonly.vue'  // Edit view only
 ```
 
 ### Standard Refs
@@ -616,12 +1444,17 @@ const deleteError = ref('')
 const deleting = ref(false)
 const pkey = computed(() => route.params.pkey)
 
-// Edit form fields (prefix with "edit")
-const editField = ref('')
+// Form fields (Create view)
+const field = ref('')
+const field2 = ref('')
 
-// Validation state
-const fieldError = ref(null)
-const fieldTouched = ref(false)
+// Edit form fields (Edit view - prefix with "edit")
+const editField = ref('')
+const editField2 = ref('')
+
+// Field-level validation using composable (must be declared AFTER refs)
+const fieldValidation = useFormValidation(field, validateFieldFunction)
+const field2Validation = useFormValidation(field2, validateField2Function)
 ```
 
 ### Standard Functions
@@ -640,7 +1473,7 @@ function onKeydown(e) {
   }
 }
 
-// Normalize API responses
+// Normalize API responses (for list views)
 function normalizeList(response) {
   if (Array.isArray(response)) return response
   if (response && typeof response === 'object') {
@@ -651,12 +1484,46 @@ function normalizeList(response) {
   return []
 }
 
-// Field errors from API
-function fieldErrors(err) {
-  if (!err?.data || typeof err.data !== 'object') return null
-  const entries = Object.entries(err.data).filter(([, v]) => Array.isArray(v) && v.length)
-  return entries.length ? Object.fromEntries(entries) : null
+// Sync form fields from loaded resource (Edit view)
+function syncEditFromResource() {
+  if (!resource.value) return
+  const r = resource.value
+  
+  // Map resource fields to edit fields
+  editField.value = r.field ?? ''
+  editCluster.value = r.cluster ?? 'default'
+  editActive.value = r.active ?? 'YES'
+  editDescription.value = r.description ?? ''
+  
+  // Reset validation state when loading new data
+  fieldValidation.reset()
+  clusterValidation.reset()
 }
+
+// Fetch resource data (Edit view)
+async function fetchResource() {
+  if (!pkey.value) return
+  loading.value = true
+  error.value = ''
+  try {
+    resource.value = await getApiClient().get(`{resources}/${encodeURIComponent(pkey.value)}`)
+    syncEditFromResource()
+    if (editCluster.value) loadDestinations()
+  } catch (err) {
+    error.value = err.data?.message || err.message || 'Failed to load resource'
+    resource.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+// Watch for cluster changes (Edit view - to reload destinations)
+watch(editCluster, () => {
+  if (editing.value) loadDestinations()
+  if (clusterValidation.touched.value) {
+    clusterValidation.validate()
+  }
+})
 ```
 
 ---
@@ -790,12 +1657,15 @@ When applying this pattern to existing panels:
 - [ ] Update list view header (Create button + Filter layout)
 - [ ] Update list view columns (add resource-specific columns)
 - [ ] Remove pkey link from list (navigation via edit icon only)
-- [ ] Update create view structure (Identity → Settings tables)
+- [ ] Update create view structure (Identity → Settings using form components)
 - [ ] Update edit view heading format ("Edit {Resource} {name}")
+- [ ] Ensure edit view has all three buttons: Save, Cancel, and Delete (in `.edit-actions`)
 - [ ] Remove read-only view from edit (always open in edit mode)
-- [ ] Convert boolean fields to iOS-style toggles
-- [ ] Implement table-based field layout
-- [ ] Add field-level validation
+- [ ] Replace manual fields with FormField/FormSelect/FormToggle components
+- [ ] Use FormReadonly for immutable fields in edit view
+- [ ] Replace manual validation with useFormValidation composable
+- [ ] Add validation rules to `@/utils/validation.js`
+- [ ] Import form components and validation composable
 - [ ] Update spacing and styling
 - [ ] Ensure consistent field ordering
 - [ ] Add ARIA attributes
@@ -804,16 +1674,1258 @@ When applying this pattern to existing panels:
 
 ---
 
-## Examples
+## Complete Example: Create View
 
-### Complete Examples
+### Script Setup
 
-See:
-- `IvrCreateView.vue` - Create view pattern
-- `IvrDetailView.vue` - Edit view pattern  
-- `IvrsListView.vue` - List view pattern
+```javascript
+<script setup>
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
+import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
+import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
+import { validateFieldName, validateTenant } from '@/utils/validation'
+import FormField from '@/components/forms/FormField.vue'
+import FormSelect from '@/components/forms/FormSelect.vue'
+import FormToggle from '@/components/forms/FormToggle.vue'
 
-These files serve as the reference implementation for this pattern.
+const router = useRouter()
+const toast = useToastStore()
+
+// Form field refs (declare BEFORE validation composables)
+const field = ref('')
+const cluster = ref('default')
+const active = ref('YES')
+const description = ref('')
+const tenants = ref([])
+const tenantsLoading = ref(true)
+const error = ref('')
+const loading = ref(false)
+const fieldInput = ref(null)
+
+// Validation composables (after refs are declared)
+const fieldValidation = useFormValidation(field, validateFieldName)
+const clusterValidation = useFormValidation(cluster, validateTenant)
+
+// Computed properties
+const tenantOptions = computed(() => {
+  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
+  return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
+})
+
+// Load data
+async function loadTenants() {
+  tenantsLoading.value = true
+  try {
+    const response = await getApiClient().get('tenants')
+    tenants.value = Array.isArray(response) ? response : (response?.data ?? [])
+  } catch {
+    tenants.value = []
+  } finally {
+    tenantsLoading.value = false
+  }
+}
+
+// Form submission
+async function onSubmit(e) {
+  e.preventDefault()
+  error.value = ''
+  
+  const validations = [
+    { ...fieldValidation, fieldId: 'field' },
+    { ...clusterValidation, fieldId: 'cluster' }
+  ]
+  
+  if (!validateAll(validations)) {
+    await nextTick()
+    focusFirstError(validations, (id) => {
+      if (id === 'field' && fieldInput.value) return fieldInput.value
+      return document.getElementById(id)
+    })
+    return
+  }
+  
+  loading.value = true
+  try {
+    const body = {
+      field: field.value.trim(),
+      cluster: cluster.value.trim(),
+      active: active.value,
+      description: description.value.trim() || null
+    }
+    const resource = await getApiClient().post('resources', body)
+    toast.show(`Resource ${resource.pkey} created`, 'success')
+    router.push({ name: 'resource-detail', params: { pkey: resource.pkey } })
+  } catch (err) {
+    const errors = err?.data
+    if (errors && typeof errors === 'object') {
+      if (errors.field) {
+        fieldValidation.touched.value = true
+        fieldValidation.error.value = Array.isArray(errors.field) ? errors.field[0] : errors.field
+      }
+      if (errors.cluster) {
+        clusterValidation.touched.value = true
+        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
+      }
+      await nextTick()
+      focusFirstError(validations, (id) => {
+        if (id === 'field' && fieldInput.value) return fieldInput.value
+        return document.getElementById(id)
+      })
+    } else {
+      error.value = err.data?.message ?? err.message ?? 'Failed to create resource'
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+function goBack() {
+  router.push({ name: 'resources' })
+}
+
+function onKeydown(e) {
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    goBack()
+  }
+}
+
+onMounted(async () => {
+  await loadTenants()
+  await nextTick()
+  fieldInput.value?.focus()
+})
+</script>
+```
+
+### Template
+
+```vue
+<template>
+  <div class="create-view">
+    <h1>Create Resource</h1>
+
+    <form class="form" @submit="onSubmit" @keydown="onKeydown">
+      <p v-if="error" id="resource-create-error" class="error" role="alert">{{ error }}</p>
+
+      <h2 class="detail-heading">Identity</h2>
+      <div class="form-fields">
+        <FormField
+          id="field"
+          ref="fieldInput"
+          v-model="field"
+          label="Primary Identifier"
+          type="text"
+          :error="fieldValidation.error.value"
+          :touched="fieldValidation.touched.value"
+          :required="true"
+          hint="Unique identifier for this resource."
+          @blur="fieldValidation.onBlur"
+        />
+        <FormSelect
+          id="cluster"
+          v-model="cluster"
+          label="Tenant"
+          :options="tenantOptions"
+          :error="clusterValidation.error.value"
+          :touched="clusterValidation.touched.value"
+          :required="true"
+          :loading="tenantsLoading"
+          hint="The tenant this resource belongs to."
+          @blur="clusterValidation.onBlur"
+        />
+        <FormField
+          id="description"
+          v-model="description"
+          label="Description (optional)"
+          type="text"
+          placeholder="Freeform description"
+          hint="Optional description."
+        />
+      </div>
+
+      <h2 class="detail-heading">Settings</h2>
+      <div class="form-fields">
+        <FormToggle
+          id="active"
+          v-model="active"
+          label="Active?"
+          hint="If off, the resource will not be available."
+        />
+      </div>
+
+      <div class="actions">
+        <button type="submit" :disabled="loading || tenantsLoading">
+          {{ loading ? 'Creating…' : 'Create' }}
+        </button>
+        <button type="button" class="secondary" @click="goBack">Cancel</button>
+      </div>
+    </form>
+  </div>
+</template>
+```
+
+### CSS
+
+```css
+<style scoped>
+.create-view {
+  max-width: 52rem;
+}
+.form {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.detail-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.detail-heading:first-of-type {
+  margin-top: 0;
+}
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;
+}
+.error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin: 0;
+}
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+.actions button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.actions button[type="submit"] {
+  color: #fff;
+  background: #2563eb;
+  border: none;
+}
+.actions button[type="submit"]:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+.actions button[type="submit"]:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.actions button.secondary {
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+}
+.actions button.secondary:hover {
+  background: #f1f5f9;
+}
+</style>
+```
+
+---
+
+## Complete List View Example
+
+### Script Setup
+
+```javascript
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
+
+const toast = useToastStore()
+const resources = ref([])
+const tenants = ref([])
+const loading = ref(true)
+const error = ref('')
+const deleteError = ref('')
+const deletingPkey = ref(null)
+const confirmDeletePkey = ref(null)
+const filterText = ref('')
+const sortKey = ref('pkey')
+const sortOrder = ref('asc')
+
+function normalizeList(response) {
+  if (Array.isArray(response)) return response
+  if (response && typeof response === 'object') {
+    if (Array.isArray(response.data)) return response.data
+    if (Array.isArray(response.{resources})) return response.{resources}
+    if (Object.keys(response).every((k) => /^\d+$/.test(k))) return Object.values(response)
+  }
+  return []
+}
+
+// Tenant resolution for display
+const tenantShortuidToPkey = computed(() => {
+  const map = {}
+  for (const t of tenants.value) {
+    if (t.shortuid) map[String(t.shortuid)] = t.pkey
+    if (t.pkey) map[String(t.pkey)] = t.pkey
+  }
+  return map
+})
+
+function tenantDisplay(item) {
+  const c = item.cluster
+  if (c == null || c === '') return '—'
+  return tenantShortuidToPkey.value[String(c)] ?? c
+}
+
+function localUidDisplay(item) {
+  const v = item.shortuid
+  return v == null || v === '' ? '—' : String(v)
+}
+
+// Filtering
+const filteredResources = computed(() => {
+  const list = resources.value
+  const q = (filterText.value || '').trim().toLowerCase()
+  if (!q) return list
+  return list.filter((item) => {
+    const pkey = (item.pkey ?? '').toString().toLowerCase()
+    const shortuid = (item.shortuid ?? '').toString().toLowerCase()
+    const desc = (item.description ?? '').toString().toLowerCase()
+    return pkey.includes(q) || shortuid.includes(q) || desc.includes(q)
+  })
+})
+
+// Sorting
+function sortValue(item, key) {
+  const v = item[key]
+  return v == null ? '' : String(v)
+}
+
+const sortedResources = computed(() => {
+  const list = [...filteredResources.value]
+  const key = sortKey.value
+  const order = sortOrder.value
+  list.sort((a, b) => {
+    const va = sortValue(a, key).toLowerCase()
+    const vb = sortValue(b, key).toLowerCase()
+    let cmp = 0
+    if (va < vb) cmp = -1
+    else if (va > vb) cmp = 1
+    return order === 'asc' ? cmp : -cmp
+  })
+  return list
+})
+
+function setSort(key) {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortOrder.value = 'asc'
+  }
+}
+
+function sortClass(key) {
+  if (sortKey.value !== key) return ''
+  return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
+}
+
+// Load data
+async function loadResources() {
+  loading.value = true
+  error.value = ''
+  try {
+    const [tenantsRes, resourcesRes] = await Promise.all([
+      getApiClient().get('tenants'),
+      getApiClient().get('{resources}')
+    ])
+    tenants.value = normalizeList(tenantsRes)
+    resources.value = normalizeList(resourcesRes)
+  } catch (err) {
+    error.value = err.data?.message || err.message || 'Failed to load {resources}'
+  } finally {
+    loading.value = false
+  }
+}
+
+// Delete
+function askConfirmDelete(pkey) {
+  confirmDeletePkey.value = pkey
+  deleteError.value = ''
+}
+
+function cancelConfirmDelete() {
+  confirmDeletePkey.value = null
+}
+
+async function confirmAndDelete(pkey) {
+  if (confirmDeletePkey.value !== pkey) return
+  deleteError.value = ''
+  deletingPkey.value = pkey
+  try {
+    await getApiClient().delete(`{resources}/${encodeURIComponent(pkey)}`)
+    await loadResources()
+    toast.show(`{Resource} ${pkey} deleted`)
+  } catch (err) {
+    deleteError.value = err.data?.message ?? err.message ?? 'Failed to delete {resource}'
+  } finally {
+    confirmDeletePkey.value = null
+    deletingPkey.value = null
+  }
+}
+
+onMounted(loadResources)
+</script>
+```
+
+### Template
+
+```vue
+<template>
+  <div class="list-view">
+    <header class="list-header">
+      <h1>{Resources}</h1>
+      <p class="toolbar">
+        <router-link :to="{ name: '{resource}-create' }" class="add-btn">Create</router-link>
+        <input
+          v-model="filterText"
+          type="search"
+          class="filter-input"
+          placeholder="Filter by name, Local UID, tenant, or description"
+          aria-label="Filter {Resources}"
+        />
+      </p>
+    </header>
+
+    <section v-if="loading || error || deleteError || resources.length === 0" class="list-states">
+      <p v-if="loading" class="loading">Loading {Resources} from API…</p>
+      <p v-else-if="error" class="error">{{ error }}</p>
+      <p v-if="deleteError" class="error">{{ deleteError }}</p>
+      <div v-else-if="resources.length === 0" class="empty">No {resources}. (API returned an empty list.)</div>
+    </section>
+
+    <section v-else class="list-body">
+      <p v-if="filterText && filteredResources.length === 0" class="empty">No {resources} match the filter.</p>
+      <table v-else class="table">
+        <thead>
+          <tr>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">Primary Identifier</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">Description</th>
+            <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true">✏️</span></th>
+            <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true">🗑️</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="resource in sortedResources" :key="resource.pkey">
+            <td>{{ resource.pkey }}</td>
+            <td class="cell-immutable" title="Immutable">{{ localUidDisplay(resource) }}</td>
+            <td>{{ tenantDisplay(resource) }}</td>
+            <td>{{ resource.description ?? '—' }}</td>
+            <td>
+              <router-link :to="{ name: '{resource}-detail', params: { pkey: resource.pkey } }" 
+                           class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
+                <span class="action-icon" aria-hidden="true">✏️</span>
+              </router-link>
+            </td>
+            <td>
+              <button
+                type="button"
+                class="cell-link cell-link-delete cell-link-icon"
+                :title="deletingPkey === resource.pkey ? 'Deleting…' : 'Delete'"
+                :aria-label="deletingPkey === resource.pkey ? 'Deleting…' : 'Delete'"
+                :disabled="deletingPkey === resource.pkey"
+                @click="askConfirmDelete(resource.pkey)"
+              >
+                <span class="action-icon" aria-hidden="true">🗑️</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <Teleport to="body">
+      <div v-if="confirmDeletePkey" class="modal-backdrop" @click.self="cancelConfirmDelete">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+          <h2 id="modal-delete-title" class="modal-title">Delete {Resource}?</h2>
+          <p class="modal-body">
+            {Resource} <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be undone.
+          </p>
+          <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-cancel" @click="cancelConfirmDelete">Cancel</button>
+            <button type="button" class="modal-btn modal-btn-delete" :disabled="deletingPkey === confirmDeletePkey" @click="confirmAndDelete(confirmDeletePkey)">
+              {{ deletingPkey === confirmDeletePkey ? 'Deleting…' : 'Delete' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+  </div>
+</template>
+```
+
+---
+
+## Complete Edit View Example
+
+### Script Setup
+
+```javascript
+<script setup>
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
+import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
+import { validateTenant, validateField } from '@/utils/validation'
+import FormField from '@/components/forms/FormField.vue'
+import FormSelect from '@/components/forms/FormSelect.vue'
+import FormToggle from '@/components/forms/FormToggle.vue'
+import FormReadonly from '@/components/forms/FormReadonly.vue'
+
+const route = useRoute()
+const router = useRouter()
+const toast = useToastStore()
+const resource = ref(null)
+const tenants = ref([])
+const loading = ref(true)
+const error = ref('')
+const saveError = ref('')
+const saving = ref(false)
+const deleteError = ref('')
+const deleting = ref(false)
+const confirmDeleteOpen = ref(false)
+
+// Form fields (declare BEFORE validation composables)
+const editField = ref('')
+const editCluster = ref('default')
+const editActive = ref('YES')
+const editDescription = ref('')
+
+// Validation composables (after refs)
+const fieldValidation = useFormValidation(editField, validateField)
+const clusterValidation = useFormValidation(editCluster, validateTenant)
+
+const pkey = computed(() => route.params.pkey)
+
+// Tenant resolution
+const tenantShortuidToPkey = computed(() => {
+  const map = {}
+  for (const t of tenants.value) {
+    if (t.shortuid) map[String(t.shortuid)] = t.pkey
+    if (t.pkey) map[String(t.pkey)] = t.pkey
+  }
+  return map
+})
+
+const tenantOptions = computed(() => {
+  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
+  return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
+})
+
+const tenantOptionsForSelect = computed(() => {
+  const list = tenantOptions.value
+  const cur = editCluster.value
+  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  return list
+})
+
+// Load data
+async function loadTenants() {
+  try {
+    const response = await getApiClient().get('tenants')
+    tenants.value = normalizeList(response)
+  } catch {
+    tenants.value = []
+  }
+}
+
+// Sync form from resource
+function syncEditFromResource() {
+  if (!resource.value) return
+  const r = resource.value
+  const clusterRaw = r.cluster ?? 'default'
+  editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
+  editField.value = r.field ?? ''
+  editActive.value = r.active ?? 'YES'
+  editDescription.value = r.description ?? ''
+  
+  // Reset validation state
+  fieldValidation.reset()
+  clusterValidation.reset()
+}
+
+// Fetch resource
+async function fetchResource() {
+  if (!pkey.value) return
+  loading.value = true
+  error.value = ''
+  try {
+    resource.value = await getApiClient().get(`{resources}/${encodeURIComponent(pkey.value)}`)
+    syncEditFromResource()
+  } catch (err) {
+    error.value = err.data?.message || err.message || 'Failed to load {resource}'
+    resource.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+// Watch for changes
+watch(pkey, fetchResource)
+watch(tenants, () => {
+  if (resource.value && editCluster.value) {
+    const resolved = tenantShortuidToPkey.value[editCluster.value]
+    if (resolved) editCluster.value = resolved
+  }
+}, { deep: true })
+watch(editCluster, () => {
+  if (clusterValidation.touched.value) {
+    clusterValidation.validate()
+  }
+})
+
+// Save
+async function saveEdit(e) {
+  e.preventDefault()
+  saveError.value = ''
+  
+  const validations = [
+    { ...fieldValidation, fieldId: 'edit-field' },
+    { ...clusterValidation, fieldId: 'edit-cluster' }
+  ]
+  
+  if (!validateAll(validations)) {
+    await nextTick()
+    focusFirstError(validations, (id) => document.getElementById(id))
+    return
+  }
+  
+  saving.value = true
+  try {
+    const body = {
+      field: editField.value.trim(),
+      cluster: editCluster.value.trim(),
+      active: editActive.value
+    }
+    if (editDescription.value.trim()) body.description = editDescription.value.trim()
+    
+    await getApiClient().put(`{resources}/${encodeURIComponent(pkey.value)}`, body)
+    await fetchResource()
+    toast.show(`{Resource} ${pkey.value} saved`)
+  } catch (err) {
+    const errors = err?.data
+    if (errors && typeof errors === 'object') {
+      if (errors.field) {
+        fieldValidation.touched.value = true
+        fieldValidation.error.value = Array.isArray(errors.field) ? errors.field[0] : errors.field
+      }
+      if (errors.cluster) {
+        clusterValidation.touched.value = true
+        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
+      }
+      const first = Object.values(errors).flat().find((m) => typeof m === 'string') ?? null
+      saveError.value = first ?? err.data?.message ?? err.message ?? 'Failed to update {resource}'
+      await nextTick()
+      focusFirstError(validations, (id) => document.getElementById(id))
+    } else {
+      saveError.value = err.data?.message ?? err.message ?? 'Failed to update {resource}'
+    }
+  } finally {
+    saving.value = false
+  }
+}
+
+// Delete
+function askConfirmDelete() {
+  deleteError.value = ''
+  confirmDeleteOpen.value = true
+}
+
+function cancelConfirmDelete() {
+  confirmDeleteOpen.value = false
+}
+
+async function confirmAndDelete() {
+  deleteError.value = ''
+  deleting.value = true
+  try {
+    await getApiClient().delete(`{resources}/${encodeURIComponent(pkey.value)}`)
+    toast.show(`{Resource} ${pkey.value} deleted`)
+    router.push({ name: '{resources}' })
+  } catch (err) {
+    deleteError.value = err.data?.message ?? err.message ?? 'Failed to delete {resource}'
+  } finally {
+    deleting.value = false
+    confirmDeleteOpen.value = false
+  }
+}
+
+function goBack() {
+  router.push({ name: '{resources}' })
+}
+
+function onKeydown(e) {
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    goBack()
+  }
+}
+
+onMounted(() => {
+  loadTenants()
+  fetchResource()
+})
+</script>
+```
+
+### Template
+
+```vue
+<template>
+  <div class="detail-view" @keydown="onKeydown">
+    <h1>Edit {Resource} {{ resource?.cname?.trim() ? resource.cname.trim() : pkey }}</h1>
+
+    <p v-if="loading" class="loading">Loading…</p>
+    <p v-else-if="error" class="error">{{ error }}</p>
+    <template v-else-if="resource">
+      <div class="detail-content">
+        <p v-if="deleteError" class="error">{{ deleteError }}</p>
+
+        <form class="edit-form" @submit="saveEdit">
+          <p v-if="saveError" id="{resource}-edit-error" class="error" role="alert">{{ saveError }}</p>
+
+          <h2 class="detail-heading">Identity</h2>
+          <div class="form-fields">
+            <FormReadonly
+              id="edit-identity-pkey"
+              label="Primary Identifier"
+              :value="resource.pkey ?? '—'"
+            />
+            <FormReadonly
+              id="edit-identity-shortuid"
+              label="Local UID"
+              :value="resource.shortuid ?? '—'"
+            />
+            <FormReadonly
+              id="edit-identity-id"
+              label="KSUID"
+              :value="resource.id ?? '—'"
+            />
+            <FormSelect
+              id="edit-cluster"
+              v-model="editCluster"
+              label="Tenant"
+              :options="tenantOptionsForSelect"
+              :error="clusterValidation.error.value"
+              :touched="clusterValidation.touched.value"
+              :required="true"
+              hint="The tenant this resource belongs to."
+              @blur="clusterValidation.onBlur"
+            />
+            <FormField
+              id="edit-description"
+              v-model="editDescription"
+              label="Description (optional)"
+              type="text"
+              placeholder="Freeform description"
+            />
+          </div>
+
+          <h2 class="detail-heading">Settings</h2>
+          <div class="form-fields">
+            <FormToggle
+              id="edit-active"
+              v-model="editActive"
+              label="Active?"
+            />
+          </div>
+
+          <div class="edit-actions">
+            <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+            <button type="button" class="secondary" @click="goBack">Cancel</button>
+            <button type="button" class="action-delete" :disabled="deleting" @click="askConfirmDelete">
+              {{ deleting ? 'Deleting…' : 'Delete' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </template>
+
+    <Teleport to="body">
+      <div v-if="confirmDeleteOpen" class="modal-backdrop" @click.self="cancelConfirmDelete">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+          <h2 id="modal-delete-title" class="modal-title">Delete {Resource}?</h2>
+          <p class="modal-body">
+            {Resource} <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.
+          </p>
+          <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-cancel" @click="cancelConfirmDelete">Cancel</button>
+            <button type="button" class="modal-btn modal-btn-delete" :disabled="deleting" @click="confirmAndDelete">
+              {{ deleting ? 'Deleting…' : 'Delete' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+  </div>
+</template>
+```
+
+---
+
+## Critical Gotchas & Pitfalls
+
+### 1. Ref Declaration Order
+
+**❌ WRONG**: Validation composable before ref declaration
+```javascript
+const fieldValidation = useFormValidation(field, validateField)  // ERROR: field not defined yet
+const field = ref('')
+```
+
+**✅ CORRECT**: Declare refs BEFORE validation composables
+```javascript
+const field = ref('')
+const fieldValidation = useFormValidation(field, validateField)
+```
+
+### 2. Validation Reset on Data Load
+
+**❌ WRONG**: Forgetting to reset validation when loading new data
+```javascript
+function syncEditFromResource() {
+  editField.value = resource.value.field
+  // Missing: fieldValidation.reset()
+}
+```
+
+**✅ CORRECT**: Always reset validation state when loading data
+```javascript
+function syncEditFromResource() {
+  editField.value = resource.value.field
+  fieldValidation.reset()  // Reset touched/error state
+}
+```
+
+### 3. Tenant shortuid Resolution
+
+**❌ WRONG**: Using cluster value directly in dropdown
+```javascript
+// API returns cluster as shortuid, but dropdown expects pkey
+editCluster.value = resource.value.cluster  // May be shortuid!
+```
+
+**✅ CORRECT**: Resolve shortuid to pkey
+```javascript
+const clusterRaw = resource.value.cluster ?? 'default'
+editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
+```
+
+### 4. Focus Management
+
+**❌ WRONG**: Trying to focus component ref directly
+```javascript
+pkeyInput.value.focus()  // Component ref, not DOM element
+```
+
+**✅ CORRECT**: Use component's exposed focus method
+```javascript
+pkeyInput.value?.focus()  // Component exposes focus() method
+// OR use focusFirstError helper
+focusFirstError(validations, (id) => {
+  if (id === 'pkey' && pkeyInput.value) return pkeyInput.value
+  return document.getElementById(id)
+})
+```
+
+### 5. API Error Mapping
+
+**❌ WRONG**: Not mapping array errors correctly
+```javascript
+fieldValidation.error.value = errors.field  // May be array!
+```
+
+**✅ CORRECT**: Handle both array and string errors
+```javascript
+fieldValidation.error.value = Array.isArray(errors.field) ? errors.field[0] : errors.field
+```
+
+### 6. Optional Field Handling
+
+**❌ WRONG**: Sending empty strings for optional fields
+```javascript
+body.description = editDescription.value  // May send empty string
+```
+
+**✅ CORRECT**: Only include if value exists, or set to null
+```javascript
+if (editDescription.value.trim()) body.description = editDescription.value.trim()
+// OR explicitly null
+body.description = editDescription.value.trim() || null
+```
+
+### 7. Loading State Management
+
+**❌ WRONG**: Not disabling form during save
+```javascript
+<button type="submit">Save</button>  // Can be clicked multiple times
+```
+
+**✅ CORRECT**: Disable during save operation
+```vue
+<button type="submit" :disabled="saving || loading">
+  {{ saving ? 'Saving…' : 'Save' }}
+</button>
+```
+
+### 8. Normalize List Response
+
+**❌ WRONG**: Assuming API always returns array
+```javascript
+resources.value = await getApiClient().get('resources')  // May be wrapped!
+```
+
+**✅ CORRECT**: Always normalize response
+```javascript
+const response = await getApiClient().get('resources')
+resources.value = normalizeList(response)
+```
+
+---
+
+## Reference Implementations
+
+See these files for complete working examples:
+- `src/views/IvrCreateView.vue` - Create view pattern
+- `src/views/IvrDetailView.vue` - Edit view pattern  
+- `src/views/IvrsListView.vue` - List view pattern
+- `src/components/forms/FormField.vue` - Form field component
+- `src/components/forms/FormSelect.vue` - Form select component
+- `src/components/forms/FormToggle.vue` - Form toggle component
+- `src/components/forms/FormReadonly.vue` - Form readonly component
+- `src/composables/useFormValidation.js` - Validation composable
+- `src/utils/validation.js` - Validation rules
+
+---
+
+## List View CSS
+
+```css
+<style scoped>
+.list-view {
+  padding: 1.5rem;
+}
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.list-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+.add-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #fff;
+  background: #2563eb;
+  border: none;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+.add-btn:hover {
+  background: #1d4ed8;
+}
+.filter-input {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  min-width: 20rem;
+}
+.filter-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
+}
+.th-sortable:hover {
+  background: #f8fafc;
+}
+.th-actions {
+  width: 3rem;
+  text-align: center;
+  padding: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+.table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+}
+.table tbody tr:hover {
+  background: #f8fafc;
+}
+.table td {
+  padding: 0.75rem;
+  vertical-align: top;
+}
+.cell-immutable {
+  color: #64748b;
+  font-style: italic;
+}
+.cell-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  color: #64748b;
+  text-decoration: none;
+  border-radius: 0.25rem;
+  transition: background-color 0.15s ease;
+}
+.cell-link:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.cell-link-delete:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+.action-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: inline-block;
+}
+.loading,
+.error,
+.empty {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+.error {
+  color: #dc2626;
+}
+</style>
+```
+
+---
+
+## Quick Start Checklist
+
+When building a new panel:
+
+1. **Create files**: `{Resource}ListView.vue`, `{Resource}CreateView.vue`, `{Resource}DetailView.vue`
+2. **Add routes** to `src/router/index.js`:
+   - `{ path: '{resources}', name: '{resources}', component: {Resource}ListView }`
+   - `{ path: '{resources}/new', name: '{resource}-create', component: {Resource}CreateView }`
+   - `{ path: '{resources}/:pkey', name: '{resource}-detail', component: {Resource}DetailView }`
+3. **Create validation rules** in `src/utils/validation.js`:
+   - Export functions like `validate{Resource}Pkey`, `validateTenant`, etc.
+   - Return error message string or `null` if valid
+4. **Build List view**:
+   - Use sorting/filtering patterns
+   - Include tenant resolution if applicable
+   - Add delete confirmation modal
+5. **Build Create view**:
+   - Import form components and validation composable
+   - Declare refs BEFORE validation composables
+   - Use FormField, FormSelect, FormToggle components
+   - Implement validation with useFormValidation
+   - Handle API errors and map to field-level errors
+6. **Build Edit view**:
+   - Use FormReadonly for immutable fields (pkey, shortuid, id)
+   - Use form components for editable fields
+   - Implement syncEditFromResource function
+   - Reset validation state when loading data
+   - Handle tenant shortuid → pkey resolution
+7. **Test**:
+   - Create new resource
+   - Edit existing resource
+   - Delete resource
+   - Validation errors display correctly
+   - API errors map to fields
+   - Loading states work
+   - Navigation works (browser back, Cancel button)
+8. **Verify**:
+   - Spacing matches pattern (1rem between h1 and form)
+   - Styling is consistent
+   - Accessibility (ARIA attributes, keyboard navigation)
+   - Responsive behavior
+
+---
+
+## Troubleshooting
+
+### Panel Won't Render
+
+**Symptom**: Blank screen, no error in console
+
+**Causes**:
+1. Validation composable called before ref declaration
+2. Missing import for form component
+3. Syntax error in template
+
+**Solution**:
+- Check refs are declared BEFORE validation composables
+- Verify all imports are correct
+- Check browser console for errors
+
+### Validation Not Working
+
+**Symptom**: No error messages, form submits invalid data
+
+**Causes**:
+1. Validation composable not connected to component
+2. `@blur` event not bound
+3. Validation function not imported
+
+**Solution**:
+- Ensure `:error` and `:touched` props are bound
+- Ensure `@blur="validation.onBlur"` is on component
+- Verify validation function is imported and passed to composable
+
+### Fields Not Updating
+
+**Symptom**: Changes to form fields don't persist
+
+**Causes**:
+1. `v-model` not bound correctly
+2. Ref not reactive
+3. Component not emitting update event
+
+**Solution**:
+- Verify `v-model="field"` syntax
+- Ensure ref is declared with `ref()`
+- Check component emits `update:modelValue`
+
+### API Errors Not Showing
+
+**Symptom**: Server returns errors but UI doesn't show them
+
+**Causes**:
+1. Error mapping not implemented
+2. Error structure different than expected
+3. Field names don't match
+
+**Solution**:
+- Check error structure: `err.data.field` vs `err.data.field[0]`
+- Verify field names match API response
+- Add console.log to inspect error structure
+
+### Tenant Dropdown Shows shortuid
+
+**Symptom**: Dropdown displays shortuid instead of pkey
+
+**Causes**:
+1. Not resolving shortuid to pkey
+2. Using cluster value directly
+3. tenantOptionsForSelect not including current value
+
+**Solution**:
+- Use `tenantShortuidToPkey` map to resolve
+- Ensure `tenantOptionsForSelect` includes current value if not in list
+
+### Focus Not Working
+
+**Symptom**: focusFirstError doesn't focus field
+
+**Causes**:
+1. Component ref not exposed correctly
+2. Field ID doesn't match
+3. Element not in DOM yet
+
+**Solution**:
+- Verify component exposes `focus()` method
+- Check fieldId matches component id
+- Use `await nextTick()` before focusing
+
+---
+
+## Testing Checklist
+
+Before considering a panel complete:
+
+### Functionality
+- [ ] Create new resource works
+- [ ] Edit existing resource works
+- [ ] Delete resource works
+- [ ] Cancel button navigates back
+- [ ] Browser back button works
+- [ ] Escape key navigates back
+- [ ] Filter in list view works
+- [ ] Sort in list view works
+- [ ] Validation errors display correctly
+- [ ] API errors map to correct fields
+- [ ] Loading states appear/disappear correctly
+- [ ] Toast notifications show on success
+
+### Validation
+- [ ] Required fields show error when empty
+- [ ] Field-level errors show on blur
+- [ ] Errors clear when field becomes valid
+- [ ] Submit prevents invalid submission
+- [ ] First error field receives focus on submit
+- [ ] Server errors map to field-level errors
+
+### Data Handling
+- [ ] List loads and displays correctly
+- [ ] Empty list shows appropriate message
+- [ ] Filtered empty list shows message
+- [ ] Tenant resolution works (shortuid → pkey)
+- [ ] Optional fields handle null/empty correctly
+- [ ] Immutable fields display correctly (no editing)
+
+### UI/UX
+- [ ] Spacing matches pattern (1rem between h1 and form)
+- [ ] Form components render correctly
+- [ ] Toggles work (YES/NO)
+- [ ] Dropdowns show correct options
+- [ ] Loading indicators show during async operations
+- [ ] Delete confirmation modal works
+- [ ] Responsive layout works (if applicable)
+
+### Accessibility
+- [ ] All form fields have labels
+- [ ] ARIA attributes present (`aria-invalid`, `aria-describedby`)
+- [ ] Error messages have `role="alert"`
+- [ ] Keyboard navigation works (Tab, Enter, Escape)
+- [ ] Focus indicators visible
+- [ ] Screen reader friendly
 
 ---
 

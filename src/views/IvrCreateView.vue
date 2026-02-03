@@ -3,6 +3,12 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
+import { validateIvrPkey, validateTenant, validateGreetnum } from '@/utils/validation'
+import FormField from '@/components/forms/FormField.vue'
+import FormSelect from '@/components/forms/FormSelect.vue'
+import FormToggle from '@/components/forms/FormToggle.vue'
+import { normalizeList } from '@/utils/listResponse'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -19,6 +25,14 @@ const destinationsLoading = ref(false)
 const error = ref('')
 const loading = ref(false)
 const pkeyInput = ref(null)
+const greetnum = ref('')
+const timeout = ref('operator')
+const listenforext = ref('NO')
+
+// Field-level validation using composable
+const pkeyValidation = useFormValidation(pkey, validateIvrPkey)
+const clusterValidation = useFormValidation(cluster, validateTenant)
+const greetnumValidation = useFormValidation(greetnum, validateGreetnum)
 
 // Per-key: Action on KeyPress (option0–11), Tag (tag0–11), Alert (alert0–11). Model defaults: option* = 'None', timeout = 'operator'
 const options = ref({
@@ -43,11 +57,8 @@ const alerts = ref({
   alert0: '', alert1: '', alert2: '', alert3: '', alert4: '', alert5: '',
   alert6: '', alert7: '', alert8: '', alert9: '', alert10: '', alert11: ''
 })
-const timeout = ref('operator')
-const greetnum = ref('')
 const greetings = ref([])
 const greetingsLoading = ref(false)
-const listenforext = ref('NO')
 
 const greetingOptions = computed(() => {
   const list = greetings.value
@@ -75,16 +86,6 @@ const optionEntries = [
   { key: 'option10', tagKey: 'tag10', alertKey: 'alert10', label: '*' },
   { key: 'option11', tagKey: 'tag11', alertKey: 'alert11', label: '#' }
 ]
-
-function normalizeList(response) {
-  if (Array.isArray(response)) return response
-  if (response && typeof response === 'object') {
-    if (Array.isArray(response.data)) return response.data
-    if (Array.isArray(response.tenants)) return response.tenants
-    if (Object.keys(response).every((k) => /^\d+$/.test(k))) return Object.values(response)
-  }
-  return []
-}
 
 const tenantOptions = computed(() => {
   const list = tenants.value.map((t) => t.pkey).filter(Boolean)
@@ -130,7 +131,7 @@ async function loadTenants() {
   tenantsLoading.value = true
   try {
     const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response)
+    tenants.value = normalizeList(response, 'tenants')
     if (tenants.value.length && !cluster.value) {
       const first = tenants.value.find((t) => t.pkey === 'default')?.pkey ?? tenants.value[0]?.pkey
       if (first) cluster.value = first
@@ -154,7 +155,12 @@ async function loadGreetings() {
   }
 }
 
-watch(cluster, () => loadDestinations())
+watch(cluster, () => {
+  loadDestinations()
+  if (clusterValidation.touched.value) {
+    clusterValidation.validate()
+  }
+})
 
 function fieldErrors(err) {
   if (!err?.data || typeof err.data !== 'object') return null
@@ -178,6 +184,24 @@ function ivrPayload(optionsObj, tagsObj, alertsObj, timeoutVal) {
 async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
+  
+  // Validate all fields before submitting
+  const validations = [
+    { ...pkeyValidation, fieldId: 'pkey' },
+    { ...clusterValidation, fieldId: 'cluster' },
+    { ...greetnumValidation, fieldId: 'greetnum' }
+  ]
+  
+  if (!validateAll(validations)) {
+    // Focus first error field
+    await nextTick()
+    focusFirstError(validations, (id) => {
+      if (id === 'pkey' && pkeyInput.value) return pkeyInput.value
+      return document.getElementById(id)
+    })
+    return
+  }
+  
   loading.value = true
   try {
     const body = {
@@ -200,8 +224,30 @@ async function onSubmit(e) {
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
+      // Map server errors to field-level errors
+      if (errors.pkey) {
+        pkeyValidation.touched.value = true
+        pkeyValidation.error.value = Array.isArray(errors.pkey) ? errors.pkey[0] : errors.pkey
+      }
+      if (errors.cluster) {
+        clusterValidation.touched.value = true
+        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
+      }
+      if (errors.greetnum) {
+        greetnumValidation.touched.value = true
+        greetnumValidation.error.value = Array.isArray(errors.greetnum) ? errors.greetnum[0] : errors.greetnum
+      }
+      
+      // Show general error if no field-specific errors
       const first = Object.values(errors).flat()[0]
       error.value = first || err.message
+      
+      // Focus first error field
+      await nextTick()
+      focusFirstError(validations, (id) => {
+        if (id === 'pkey' && pkeyInput.value) return pkeyInput.value
+        return document.getElementById(id)
+      })
     } else {
       error.value = err.data?.message ?? err.message ?? 'Failed to create IVR'
     }
@@ -232,168 +278,101 @@ onMounted(async () => {
 
 <template>
   <div class="create-view">
-    <p class="back">
-      <button type="button" class="back-btn" @click="goBack">← IVRs</button>
-    </p>
     <h1>Create IVR</h1>
 
     <form class="form" @submit="onSubmit" @keydown="onKeydown">
       <p v-if="error" id="ivr-create-error" class="error" role="alert">{{ error }}</p>
 
       <h2 class="detail-heading">Identity</h2>
-      <table class="detail-fields-table edit-form-fields-table" aria-label="Identity">
-        <tbody>
-          <tr>
-            <th class="detail-field-label" scope="row"><label for="pkey">IVR Direct Dial</label></th>
-            <td class="detail-field-value">
-              <input
-                id="pkey"
-                ref="pkeyInput"
-                v-model="pkey"
-                type="text"
-                inputmode="numeric"
-                pattern="[0-9]{3,5}"
-                class="edit-input"
-                placeholder="e.g. 1234"
-                required
-                autocomplete="off"
-              />
-              <p class="form-hint">Numeric ID (3-5 digits) for this IVR.</p>
-            </td>
-          </tr>
-          <tr>
-            <th class="detail-field-label" scope="row"><label for="cluster">Tenant</label></th>
-            <td class="detail-field-value">
-              <select
-                id="cluster"
-                v-model="cluster"
-                class="edit-input"
-                required
-                aria-label="Tenant"
-                :disabled="tenantsLoading"
-                :aria-busy="tenantsLoading"
-              >
-                <option v-if="tenantsLoading" value="">Loading…</option>
-                <template v-else>
-                  <option v-for="opt in tenantOptionsForSelect" :key="opt" :value="opt">{{ opt }}</option>
-                </template>
-              </select>
-              <p class="form-hint">The tenant this IVR belongs to. Tenants provide multi-tenant support.</p>
-            </td>
-          </tr>
-          <tr>
-            <th class="detail-field-label" scope="row"><label for="description">Description (optional)</label></th>
-            <td class="detail-field-value">
-              <input
-                id="description"
-                v-model="description"
-                type="text"
-                class="edit-input"
-                placeholder="Freeform description"
-                autocomplete="off"
-              />
-              <p class="form-hint">Shown in the IVR list.</p>
-            </td>
-          </tr>
-          <tr>
-            <th class="detail-field-label" scope="row"><label for="cname">Display name (optional)</label></th>
-            <td class="detail-field-value">
-              <input
-                id="cname"
-                v-model="cname"
-                type="text"
-                class="edit-input"
-                placeholder="Common name / label"
-                autocomplete="off"
-              />
-              <p class="form-hint">Optional label for this IVR.</p>
-            </td>
-          </tr>
-          <tr>
-            <th class="detail-field-label" scope="row"><label for="name">Name (optional)</label></th>
-            <td class="detail-field-value">
-              <input
-                id="name"
-                v-model="name"
-                type="text"
-                class="edit-input"
-                placeholder="Legacy name field"
-                autocomplete="off"
-              />
-              <p class="form-hint">Legacy name field; prefer Display name (cname) for new IVRs.</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="form-fields">
+        <FormField
+          id="pkey"
+          ref="pkeyInput"
+          v-model="pkey"
+          label="IVR Direct Dial"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]{3,5}"
+          placeholder="e.g. 1234"
+          :error="pkeyValidation.error.value"
+          :touched="pkeyValidation.touched.value"
+          :required="true"
+          hint="Numeric ID (3-5 digits) for this IVR."
+          @blur="pkeyValidation.onBlur"
+        />
+        <FormSelect
+          id="cluster"
+          v-model="cluster"
+          label="Tenant"
+          :options="tenantOptionsForSelect"
+          :error="clusterValidation.error.value"
+          :touched="clusterValidation.touched.value"
+          :required="true"
+          :loading="tenantsLoading"
+          hint="The tenant this IVR belongs to. Tenants provide multi-tenant support."
+          @blur="clusterValidation.onBlur"
+        />
+        <FormField
+          id="description"
+          v-model="description"
+          label="Description (optional)"
+          type="text"
+          placeholder="Freeform description"
+          hint="Shown in the IVR list."
+        />
+        <FormField
+          id="cname"
+          v-model="cname"
+          label="Display name (optional)"
+          type="text"
+          placeholder="Common name / label"
+          hint="Optional label for this IVR."
+        />
+        <FormField
+          id="name"
+          v-model="name"
+          label="Name (optional)"
+          type="text"
+          placeholder="Legacy name field"
+          hint="Legacy name field; prefer Display name (cname) for new IVRs."
+        />
+      </div>
 
       <h2 class="detail-heading">Settings</h2>
-      <table class="detail-fields-table edit-form-fields-table" aria-label="Settings">
-        <tbody>
-          <tr>
-            <th class="detail-field-label" scope="row">Active?</th>
-            <td class="detail-field-value">
-              <label class="toggle-pill-ios" aria-label="Active">
-                <input
-                  type="checkbox"
-                  :checked="active === 'YES'"
-                  @change="active = $event.target.checked ? 'YES' : 'NO'"
-                />
-                <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
-              </label>
-              <p class="form-hint">If off, the IVR will not be offered as a destination and callers cannot reach it.</p>
-            </td>
-          </tr>
-          <tr>
-            <th class="detail-field-label" scope="row"><label for="greetnum">Greeting Number</label></th>
-            <td class="detail-field-value">
-              <select
-                id="greetnum"
-                v-model="greetnum"
-                class="edit-input"
-                aria-label="Greeting number to play when IVR is activated"
-                :disabled="greetingsLoading"
-              >
-                <option value="">—</option>
-                <option v-for="n in greetingOptions" :key="n" :value="String(n)">{{ n }}</option>
-              </select>
-              <p class="form-hint">Greeting played when the IVR is activated. Greetings are created in the Greetings section.</p>
-            </td>
-          </tr>
-          <tr>
-            <th class="detail-field-label" scope="row">Listen for extension dial?</th>
-            <td class="detail-field-value">
-              <label class="toggle-pill-ios" aria-label="Listen for extension dial">
-                <input
-                  type="checkbox"
-                  :checked="listenforext === 'YES'"
-                  @change="listenforext = $event.target.checked ? 'YES' : 'NO'"
-                />
-                <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
-              </label>
-              <p class="form-hint">If on, the IVR listens for an extension number as well as key presses. This can slow response; you can use a separate sub-IVR for extension entry (e.g. "press star to enter extension").</p>
-            </td>
-          </tr>
-          <tr>
-            <th class="detail-field-label" scope="row"><label for="dest-timeout">Action on IVR Timeout</label></th>
-            <td class="detail-field-value">
-              <select
-                id="dest-timeout"
-                v-model="timeout"
-                class="edit-input timeout-select"
-                aria-label="Destination on timeout"
-              >
-                <option value="operator">Operator</option>
-                <option value="None">None</option>
-                <template v-for="(pkeys, group) in destinationGroups" :key="group">
-                  <optgroup v-if="pkeys.length" :label="group">
-                    <option v-for="p in pkeys" :key="p" :value="p">{{ p }}</option>
-                  </optgroup>
-                </template>
-              </select>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="form-fields">
+        <FormToggle
+          id="active"
+          v-model="active"
+          label="Active?"
+          hint="If off, the IVR will not be offered as a destination and callers cannot reach it."
+        />
+        <FormSelect
+          id="greetnum"
+          v-model="greetnum"
+          label="Greeting Number"
+          :options="greetingOptions.map(n => String(n))"
+          :error="greetnumValidation.error.value"
+          :touched="greetnumValidation.touched.value"
+          :loading="greetingsLoading"
+          empty-text="—"
+          hint="Greeting played when the IVR is activated. Greetings are created in the Greetings section."
+          @blur="greetnumValidation.onBlur"
+        />
+        <FormToggle
+          id="listenforext"
+          v-model="listenforext"
+          label="Listen for extension dial?"
+          hint="If on, the IVR listens for an extension number as well as key presses. This can slow response; you can use a separate sub-IVR for extension entry (e.g. &quot;press star to enter extension&quot;)."
+        />
+        <FormSelect
+          id="dest-timeout"
+          v-model="timeout"
+          label="Action on IVR Timeout"
+          :options="['operator', 'None']"
+          :option-groups="destinationGroups"
+          aria-label="Destination on timeout"
+        />
+      </div>
 
       <section class="destinations-section" aria-labelledby="ivr-destinations-heading">
         <h2 id="ivr-destinations-heading" class="destinations-heading">Keystroke options</h2>
@@ -459,6 +438,12 @@ onMounted(async () => {
 .create-view {
   max-width: 52rem;
 }
+.form {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
 .detail-heading {
   font-size: 1rem;
   font-weight: 600;
@@ -468,47 +453,11 @@ onMounted(async () => {
 .detail-heading:first-of-type {
   margin-top: 0;
 }
-.detail-fields-table {
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   margin-top: 0.5rem;
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9375rem;
-  display: table;
-}
-.detail-fields-table tbody {
-  display: table-row-group;
-}
-.detail-fields-table tbody tr {
-  display: table-row;
-}
-.detail-field-label {
-  font-weight: 500;
-  color: #475569;
-  text-align: left;
-  padding: 0.375rem 1rem 0.375rem 0;
-  vertical-align: top;
-  width: 1%;
-  white-space: nowrap;
-}
-.detail-field-value {
-  margin: 0;
-  padding: 0.375rem 0;
-  vertical-align: top;
-}
-.edit-form-fields-table .detail-field-value .form-hint {
-  margin: 0.25rem 0 0 0;
-  font-size: 0.8125rem;
-  color: #64748b;
-}
-.edit-input {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-}
-.edit-input:focus {
-  outline: none;
-  border-color: #3b82f6;
 }
 .timeout-select {
   min-width: 0;
@@ -524,53 +473,6 @@ onMounted(async () => {
   font-weight: 600;
   margin: 0 0 1rem 0;
   color: #0f172a;
-}
-.destinations-hint {
-  margin-bottom: 0.75rem;
-}
-/* iOS-style sliding pill toggle (on/off) */
-.toggle-pill-ios {
-  display: inline-block;
-  cursor: pointer;
-  user-select: none;
-  vertical-align: middle;
-}
-.toggle-pill-ios input {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-.toggle-pill-track {
-  display: block;
-  width: 51px;
-  height: 31px;
-  border-radius: 31px;
-  background: #e2e8f0;
-  position: relative;
-  transition: background-color 0.2s ease;
-}
-.toggle-pill-thumb {
-  position: absolute;
-  left: 2px;
-  top: 2px;
-  width: 27px;
-  height: 27px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease;
-}
-.toggle-pill-ios input:checked + .toggle-pill-track {
-  background: #34c759;
-}
-.toggle-pill-ios input:checked + .toggle-pill-track .toggle-pill-thumb {
-  transform: translateX(20px);
-}
-.toggle-pill-ios input:focus-visible + .toggle-pill-track {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
 }
 .destinations-table {
   display: flex;
@@ -610,47 +512,22 @@ onMounted(async () => {
 .dest-alert {
   min-width: 0;
 }
-.back {
-  margin-bottom: 1rem;
-}
-.back-btn {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  color: #64748b;
-  background: transparent;
+.edit-input {
+  padding: 0.5rem 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 0.375rem;
-  cursor: pointer;
+  font-size: 1rem;
+  transition: border-color 0.15s ease;
 }
-.back-btn:hover {
-  color: #0f172a;
-  background: #f1f5f9;
-}
-.form {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.form-label {
-  font-size: 0.875rem;
-  font-weight: 500;
+.edit-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 .form-hint {
   font-size: 0.8125rem;
   color: #64748b;
   margin: -0.25rem 0 0 0;
-}
-.form-input {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-}
-.form-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 .error {
   color: #dc2626;
