@@ -39,7 +39,7 @@ The plan is in **`workingdocs/PANEL_REFACTOR_STRATEGY.md`**. Summary:
 | Item | Status | Notes |
 |------|--------|--------|
 | **2.1** Tenant advanced fields → `src/constants/tenantAdvanced.js` | ✅ Done | ADVANCED_KEYS, ADVANCED_FIELDS, CLUSTER_CREATE_DEFAULTS, buildAdvancedPayload, buildInitialFormAdvanced, parseNum; TenantCreateView + TenantDetailView refactored to use it. |
-| **2.2** IVR destinations/keystrokes → `src/constants/ivrDestinations.js` | ⬜ **Next** | Extract OPTION_ENTRIES, buildIvrPayload; use in IvrCreateView + IvrDetailView. |
+| **2.2** IVR destinations/keystrokes → `src/constants/ivrDestinations.js` | ✅ Done | OPTION_ENTRIES, buildIvrPayload; IvrCreateView + IvrDetailView refactored to use it. |
 | **2.3** Other resources | As needed | Add shared module only when Create and Detail duplicate a large block. |
 
 ### Phase 3 & 4
@@ -49,8 +49,7 @@ The plan is in **`workingdocs/PANEL_REFACTOR_STRATEGY.md`**. Summary:
 
 ### Suggested order (from strategy doc)
 
-- Steps **1–5:** Done (listResponse, DeleteConfirmModal, tenantAdvanced.js; Tenant Create/Detail refactored).
-- **Step 6:** Add `ivrDestinations.js`, refactor IVR Create/Detail.
+- Steps **1–6:** Done (listResponse, DeleteConfirmModal, tenantAdvanced.js, ivrDestinations.js; Tenant and IVR Create/Detail refactored).
 - **Step 7:** Quick fixes — Tenant list toolbar `justify-content: space-between`, remove duplicate `.advanced-fields` CSS in TenantCreateView.
 - **Step 8:** Apply pattern to next resource (e.g. Extensions) using shared list + modal; repeat for remaining resources.
 
@@ -79,7 +78,7 @@ RoutesListView, InboundRoutesListView, TrunksListView, ExtensionsListView, Route
 
 ### Full pattern (list + create + edit)
 
-- **Tenant:** List/Create/Edit refactored; **tenantAdvanced.js** in use — no duplicate advanced config. **IVR:** List/Create/Edit refactored for shared list/modal/form components; still has duplicate optionEntries/ivrPayload (Step 6 will fix).
+- **Tenant:** List/Create/Edit refactored; **tenantAdvanced.js** in use — no duplicate advanced config. **IVR:** List/Create/Edit refactored; **ivrDestinations.js** in use — no duplicate optionEntries/ivrPayload.
 - **Routes, InboundRoutes, Trunks, Extensions:** List and Detail use DeleteConfirmModal; list views still have local normalizeList. Create views not yet fully audited against pattern (form components, normalizeList, etc.).
 - **Agents, Queues:** List views exist; may have local normalizeList and inline delete modal. Create/Detail may need full pattern pass.
 - **Backups:** List only; local normalizeList.
@@ -97,6 +96,7 @@ RoutesListView, InboundRoutesListView, TrunksListView, ExtensionsListView, Route
 | `src/utils/listResponse.js` | Shared `normalizeList(response, resourceKey?)`. |
 | `src/components/DeleteConfirmModal.vue` | Shared delete confirmation modal; use in list and detail views. |
 | `src/constants/tenantAdvanced.js` | Tenant advanced fields: ADVANCED_KEYS, ADVANCED_FIELDS, CLUSTER_CREATE_DEFAULTS, buildAdvancedPayload, buildInitialFormAdvanced, parseNum. |
+| `src/constants/ivrDestinations.js` | IVR keystroke options: OPTION_ENTRIES, buildIvrPayload. |
 | `src/components/forms/` | FormField, FormSelect, FormToggle, FormReadonly — use these for all form fields. |
 | `src/composables/useFormValidation.js` | Validation composable; use with validators from `src/utils/validation.js`. |
 
@@ -106,10 +106,9 @@ RoutesListView, InboundRoutesListView, TrunksListView, ExtensionsListView, Route
 
 1. **Read** `workingdocs/PANEL_PATTERN.md` (sections on List/Create/Edit and the checklist).
 2. **Read** `workingdocs/PANEL_REFACTOR_STRATEGY.md` (Phases 1–2 and suggested order).
-3. **Do Step 6:** Add `src/constants/ivrDestinations.js` with OPTION_ENTRIES and buildIvrPayload. Refactor IvrCreateView and IvrDetailView to use it.
-4. **Do Step 7:** TenantsListView toolbar add `justify-content: space-between`; TenantCreateView remove duplicate `.advanced-fields` CSS (if any remains).
-5. **Optional:** Migrate remaining list/create/detail views to use shared `normalizeList` from `listResponse.js` (remove local function, add import).
-6. **When touching any panel:** Use the Phase 4 checklist in the strategy doc so the same debt doesn’t come back.
+3. **Do Step 7:** TenantsListView toolbar add `justify-content: space-between`; TenantCreateView remove duplicate `.advanced-fields` CSS (if any remains).
+4. **Optional:** Migrate remaining list/create/detail views to use shared `normalizeList` from `listResponse.js` (remove local function, add import).
+5. **When touching any panel:** Use the Phase 4 checklist in the strategy doc so the same debt doesn’t come back.
 
 ---
 

@@ -14,7 +14,7 @@
 - **Phase 1.2** ✅ `src/components/DeleteConfirmModal.vue` exists. All list and detail views that have delete use it; inline modal markup/CSS removed.
 - **Phase 1.3** ⬜ Optional `fieldErrors(err)` not done.
 - **Phase 2.1** ✅ `src/constants/tenantAdvanced.js` added; TenantCreateView and TenantDetailView refactored to use it.
-- **Phase 2.2** ⬜ Next: Add `ivrDestinations.js`, refactor IVR Create/Detail.
+- **Phase 2.2** ✅ `src/constants/ivrDestinations.js` added; IvrCreateView and IvrDetailView refactored to use it.
 - **Step 7** ⬜ Quick fixes: Tenant list toolbar, Tenant Create duplicate `.advanced-fields` CSS.
 
 ---
@@ -140,7 +140,7 @@ When you add a new resource or refactor a panel to the latest pattern, use this 
 | 3 | Refactor TenantsListView + TenantDetailView to use both | Tenant uses shared pieces | ✅ Done |
 | 4 | Refactor IvrsListView + IvrCreateView + IvrDetailView to use both | IVR uses shared pieces | ✅ Done |
 | 5 | Add `src/constants/tenantAdvanced.js`, refactor Tenant Create/Detail to use it | No duplicate advanced config for Tenant | ✅ Done |
-| 6 | Add `src/constants/ivrDestinations.js`, refactor IVR Create/Detail to use it | No duplicate optionEntries/ivrPayload | ⬜ Next |
+| 6 | Add `src/constants/ivrDestinations.js`, refactor IVR Create/Detail to use it | No duplicate optionEntries/ivrPayload | ✅ Done |
 | 7 | Quick fixes: Tenant list toolbar, Tenant Create duplicate `.advanced-fields` CSS | Consistency and clean CSS | ⬜ |
 | 8 | Apply pattern to next resource (e.g. Extensions) **using** shared list + modal + any new resource-specific module | New panels stay debt-free | ⬜ Repeat for each resource |
 

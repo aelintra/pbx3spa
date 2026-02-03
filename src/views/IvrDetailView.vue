@@ -11,6 +11,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import { normalizeList } from '@/utils/listResponse'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import { OPTION_ENTRIES, buildIvrPayload } from '@/constants/ivrDestinations'
 
 const route = useRoute()
 const router = useRouter()
@@ -55,21 +56,6 @@ const pkey = computed(() => route.params.pkey)
 // Field-level validation using composable (must be after refs are declared)
 const clusterValidation = useFormValidation(editCluster, validateTenant)
 const greetnumValidation = useFormValidation(editGreetnum, validateGreetnum)
-
-const optionEntries = [
-  { key: 'option0', tagKey: 'tag0', alertKey: 'alert0', label: '0' },
-  { key: 'option1', tagKey: 'tag1', alertKey: 'alert1', label: '1' },
-  { key: 'option2', tagKey: 'tag2', alertKey: 'alert2', label: '2' },
-  { key: 'option3', tagKey: 'tag3', alertKey: 'alert3', label: '3' },
-  { key: 'option4', tagKey: 'tag4', alertKey: 'alert4', label: '4' },
-  { key: 'option5', tagKey: 'tag5', alertKey: 'alert5', label: '5' },
-  { key: 'option6', tagKey: 'tag6', alertKey: 'alert6', label: '6' },
-  { key: 'option7', tagKey: 'tag7', alertKey: 'alert7', label: '7' },
-  { key: 'option8', tagKey: 'tag8', alertKey: 'alert8', label: '8' },
-  { key: 'option9', tagKey: 'tag9', alertKey: 'alert9', label: '9' },
-  { key: 'option10', tagKey: 'tag10', alertKey: 'alert10', label: '*' },
-  { key: 'option11', tagKey: 'tag11', alertKey: 'alert11', label: '#' }
-]
 
 /** Tenant list for dropdown: use pkey for both value and display (API may return shortuid in cluster). */
 const tenantOptions = computed(() => {
@@ -232,19 +218,6 @@ function onKeydown(e) {
   }
 }
 
-/** Ensure option/tag/alert/timeout are sent as strings (API validation). Destinations can be numeric. */
-function ivrPayload(optionsObj, tagsObj, alertsObj, timeoutVal) {
-  const body = {}
-  for (let i = 0; i <= 11; i++) {
-    const o = optionsObj[`option${i}`]
-    body[`option${i}`] = o != null && o !== '' ? String(o) : null
-    body[`tag${i}`] = tagsObj[`tag${i}`] != null && tagsObj[`tag${i}`] !== '' ? String(tagsObj[`tag${i}`]) : null
-    body[`alert${i}`] = alertsObj[`alert${i}`] != null && alertsObj[`alert${i}`] !== '' ? String(alertsObj[`alert${i}`]) : null
-  }
-  body.timeout = timeoutVal != null && timeoutVal !== '' ? String(timeoutVal) : null
-  return body
-}
-
 async function saveEdit(e) {
   e.preventDefault()
   saveError.value = ''
@@ -267,7 +240,7 @@ async function saveEdit(e) {
     const body = {
       cluster: editCluster.value.trim(),
       active: editActive.value,
-      ...ivrPayload(options.value, tags.value, alerts.value, editTimeout.value),
+      ...buildIvrPayload(options.value, tags.value, alerts.value, editTimeout.value),
       listenforext: editListenforext.value
     }
     if (editCname.value.trim()) body.cname = editCname.value.trim()
@@ -442,7 +415,7 @@ async function confirmAndDelete() {
                 <span class="dest-cell dest-tag">Tag</span>
                 <span class="dest-cell dest-alert">Alert</span>
               </div>
-              <template v-for="item in optionEntries" :key="item.key">
+              <template v-for="item in OPTION_ENTRIES" :key="item.key">
                 <div class="destinations-row" :class="{ 'destinations-row-none': options[item.key] === 'None' }">
                   <label :for="'edit-dest-' + item.key" class="dest-cell dest-key">{{ item.label }}</label>
                   <select
