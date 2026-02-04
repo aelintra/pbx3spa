@@ -31,8 +31,9 @@ const { toasts } = storeToRefs(toastStore)
 <style scoped>
 .toast-container {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
+  left: 50%;
+  top: 1.5rem;
+  transform: translateX(-50%);
   z-index: 1100;
   display: flex;
   flex-direction: column;

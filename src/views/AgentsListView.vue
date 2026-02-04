@@ -35,6 +35,12 @@ function tenantPkeyDisplay(a) {
   return clusterToTenantPkey.value.get(String(c)) ?? c
 }
 
+/** Show queue value in list: empty/null/dash → 'None'. */
+function displayQueue(v) {
+  const s = (v ?? '').toString().trim()
+  return s === '' || s === '-' ? 'None' : s
+}
+
 const filteredAgents = computed(() => {
   const list = agents.value
   const q = (filterText.value || '').trim().toLowerCase()
@@ -153,9 +159,11 @@ onMounted(loadAgents)
       <table v-else class="table">
         <thead>
           <tr>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">Number</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">Agent</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('name')" @click="setSort('name')">Name</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('queue1')" @click="setSort('queue1')">Q1</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('queue2')" @click="setSort('queue2')">Q2</th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
             <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></th>
           </tr>
@@ -165,6 +173,8 @@ onMounted(loadAgents)
             <td>{{ a.pkey }}</td>
             <td>{{ tenantPkeyDisplay(a) }}</td>
             <td>{{ a.name ?? '—' }}</td>
+            <td>{{ displayQueue(a.queue1) }}</td>
+            <td>{{ displayQueue(a.queue2) }}</td>
             <td>
               <router-link :to="{ name: 'agent-detail', params: { pkey: a.pkey } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>

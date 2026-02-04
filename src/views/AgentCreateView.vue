@@ -180,6 +180,7 @@ async function onSubmit(e) {
     body.queue6 = queue6.value?.trim() || null
     await getApiClient().post('agents', body)
     if (!isMounted.value) return
+    toast.show(`Agent ${pkeyNum} created`)
     successMessage.value = `Agent ${pkeyNum} created. Create another or Cancel to exit.`
     loading.value = false
     // Defer reset to avoid Vue internal emitsOptions error; then bump key in a

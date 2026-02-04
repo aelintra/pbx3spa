@@ -69,6 +69,18 @@ const queueOptionsForTenant = computed(() => {
   return uniq
 })
 
+/** Normalize queue from API for form: null/undefined/'-'/'None' → ''. */
+function normalizeQueueFromApi(v) {
+  const s = (v ?? '').toString().trim()
+  return s === '' || s === '-' || s === 'None' ? '' : s
+}
+
+/** Normalize queue for save: empty/'-'/'None' → null so API gets null not '-'. */
+function normalizeQueueForSave(v) {
+  const s = (v ?? '').toString().trim()
+  return s === '' || s === '-' || s === 'None' ? null : s
+}
+
 /** Set any queue selection to '' (—) if it's not in the tenant's queues. */
 function clearQueuesNotInTenant() {
   const allowed = new Set(queueOptionsForTenant.value.filter((x) => x !== ''))
@@ -105,12 +117,12 @@ async function fetchAgent() {
     editCluster.value = agent.value?.cluster ?? 'default'
     editName.value = agent.value?.name ?? ''
     editPasswd.value = agent.value?.passwd != null ? String(agent.value.passwd) : ''
-    editQueue1.value = agent.value?.queue1 ?? ''
-    editQueue2.value = agent.value?.queue2 ?? ''
-    editQueue3.value = agent.value?.queue3 ?? ''
-    editQueue4.value = agent.value?.queue4 ?? ''
-    editQueue5.value = agent.value?.queue5 ?? ''
-    editQueue6.value = agent.value?.queue6 ?? ''
+    editQueue1.value = normalizeQueueFromApi(agent.value?.queue1)
+    editQueue2.value = normalizeQueueFromApi(agent.value?.queue2)
+    editQueue3.value = normalizeQueueFromApi(agent.value?.queue3)
+    editQueue4.value = normalizeQueueFromApi(agent.value?.queue4)
+    editQueue5.value = normalizeQueueFromApi(agent.value?.queue5)
+    editQueue6.value = normalizeQueueFromApi(agent.value?.queue6)
     clearQueuesNotInTenant()
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load agent')
@@ -156,12 +168,12 @@ async function saveEdit(e) {
       name: editName.value.trim(),
       passwd: passwdNum ?? (agent.value?.passwd != null ? parseInt(agent.value.passwd, 10) : 1001)
     }
-    body.queue1 = editQueue1.value.trim() || null
-    body.queue2 = editQueue2.value.trim() || null
-    body.queue3 = editQueue3.value.trim() || null
-    body.queue4 = editQueue4.value.trim() || null
-    body.queue5 = editQueue5.value.trim() || null
-    body.queue6 = editQueue6.value.trim() || null
+    body.queue1 = normalizeQueueForSave(editQueue1.value)
+    body.queue2 = normalizeQueueForSave(editQueue2.value)
+    body.queue3 = normalizeQueueForSave(editQueue3.value)
+    body.queue4 = normalizeQueueForSave(editQueue4.value)
+    body.queue5 = normalizeQueueForSave(editQueue5.value)
+    body.queue6 = normalizeQueueForSave(editQueue6.value)
     await getApiClient().put(`agents/${encodeURIComponent(pkey.value)}`, body)
     await fetchAgent()
     toast.show(`Agent ${pkey.value} saved`)
