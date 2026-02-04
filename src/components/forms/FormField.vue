@@ -66,6 +66,16 @@ const props = defineProps({
   debugReset: {
     type: Boolean,
     default: false
+  },
+  /** If true, render a textarea for freeform multi-line text (e.g. code fragment). */
+  multiline: {
+    type: Boolean,
+    default: false
+  },
+  /** Rows for textarea when multiline is true. */
+  rows: {
+    type: Number,
+    default: 8
   }
 })
 
@@ -99,6 +109,7 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
     </label>
     <div class="form-field-input-wrapper">
       <input
+        v-if="!multiline"
         :key="inputKey ?? id"
         ref="inputRef"
         :id="id"
@@ -118,6 +129,27 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
         :inputmode="inputmode"
         :pattern="pattern"
         :autocomplete="autocomplete"
+        @blur="handleBlur"
+      />
+      <textarea
+        v-else
+        :key="inputKey ?? id"
+        ref="inputRef"
+        :id="id"
+        v-model="inputValue"
+        :placeholder="placeholder"
+        :rows="rows"
+        :class="{
+          'form-input': true,
+          'form-input-textarea': true,
+          'form-input-error': hasError,
+          'form-input-valid': isValid
+        }"
+        :aria-invalid="hasError"
+        :aria-describedby="hasError ? errorId : (hint ? hintId : null)"
+        :aria-required="required"
+        :required="required"
+        :disabled="disabled"
         @blur="handleBlur"
       />
       <p
@@ -169,6 +201,12 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
   border: 1px solid #e2e8f0;
   border-radius: 0.375rem;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input-textarea {
+  min-height: 8em;
+  resize: vertical;
+  font-family: ui-monospace, monospace;
 }
 
 .form-input:focus {

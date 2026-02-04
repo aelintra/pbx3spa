@@ -40,6 +40,17 @@ export function validateTenantPkey(value) {
 }
 
 /**
+ * Validate Queue name (pkey) for create
+ * Required, non-empty
+ */
+export function validateQueuePkey(value) {
+  if (!value || !value.trim()) {
+    return 'Queue name is required'
+  }
+  return null
+}
+
+/**
  * Validate Route name (pkey) for create
  * Required, non-empty
  */

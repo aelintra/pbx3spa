@@ -13,6 +13,7 @@
 - Use CSS Grid layout (not tables) for form fields.
 - **Use shared list normalization:** Import `normalizeList` from `@/utils/listResponse.js` for any list fetch (list views, and Create/Edit views that load lists e.g. tenants). Do **not** define a local `normalizeList` in the view.
 - **Use shared delete modal:** Use the `<DeleteConfirmModal>` component from `@/components/DeleteConfirmModal.vue` for delete confirmation in list and detail views. Do **not** copy inline Teleport + modal markup and modal CSS into the view.
+- **Tenant (cluster) dropdown:** Do **not** assume the API returns tenant pkey. The API may return `cluster` as tenant **shortuid**. Follow the **Tenant Resolution Pattern** (see Common Patterns & Helpers): (1) options = tenant **pkey** only; (2) in **Edit** view when loading the resource, **resolve** `resource.cluster` to tenant pkey via a shortuid→pkey map before setting the form value; (3) in **List** view resolve cluster to pkey for display. No assumptions.
 
 ---
 
@@ -253,9 +254,17 @@ const response = await getApiClient().get('destinations', { params: { cluster: '
 
 ### Tenant Resolution Pattern
 
-**Problem**: API may return tenant `shortuid` in `cluster` field, but dropdowns should display `pkey`.
+**Mandatory** for any panel that has a tenant (cluster) dropdown. Do not assume the API returns pkey; follow this pattern.
 
-**Solution**: Create a computed map to resolve shortuid → pkey.
+**Problem**: API may return tenant `shortuid` in `cluster` field, but dropdowns must display and store tenant **pkey**.
+
+**Checklist (follow every time):**
+1. **Options:** Tenant dropdown options = tenant **pkey** only (e.g. `tenants.value.map((t) => t.pkey)`).
+2. **Edit view — load:** When syncing the loaded resource into the form, resolve `resource.cluster` (may be shortuid or pkey) to tenant **pkey** using a shortuid→pkey map; set the form cluster ref to that pkey. Do not set `editCluster = resource.cluster` directly.
+3. **List view — display:** When showing cluster/tenant in the list, resolve `item.cluster` to tenant pkey using the same map for display.
+4. **Save:** Send tenant **pkey** in create/update payloads (the form value is already pkey).
+
+**Solution**: Create a computed map to resolve shortuid → pkey, then use it when loading the Edit form and when displaying in the List.
 
 ```javascript
 // Load tenants
