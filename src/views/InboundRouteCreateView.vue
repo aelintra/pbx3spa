@@ -111,6 +111,20 @@ async function loadDestinations() {
   }
 }
 
+function resetForm() {
+  cluster.value = ''
+  carrier.value = ''
+  pkey.value = ''
+  trunkname.value = ''
+  openroute.value = 'None'
+  closeroute.value = 'None'
+  pkeyValidation.reset()
+  clusterValidation.reset()
+  carrierValidation.reset()
+  error.value = ''
+  loadDestinations()
+}
+
 watch(cluster, () => {
   loadDestinations()
   openroute.value = 'None'
@@ -147,9 +161,9 @@ async function onSubmit(e) {
       openroute: openroute.value && openroute.value !== 'None' ? openroute.value : undefined,
       closeroute: closeroute.value && closeroute.value !== 'None' ? closeroute.value : undefined
     }
-    const inboundRoute = await getApiClient().post('inboundroutes', body)
-    toast.show(`Inbound route ${inboundRoute.pkey} created`)
-    router.push({ name: 'inbound-route-detail', params: { pkey: inboundRoute.pkey } })
+    await getApiClient().post('inboundroutes', body)
+    toast.show(`Inbound route ${pkey.value.trim()} created`)
+    resetForm()
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
@@ -182,7 +196,7 @@ async function onSubmit(e) {
 }
 
 function goBack() {
-  router.push({ name: 'inbound-routes' })
+  window.location.replace(router.resolve({ name: 'inbound-routes' }).href)
 }
 
 function onKeydown(e) {

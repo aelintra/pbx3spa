@@ -8,25 +8,23 @@ const { toasts } = storeToRefs(toastStore)
 
 <template>
   <div class="toast-container" aria-live="polite" aria-label="Notifications">
-    <TransitionGroup name="toast">
-      <div
-        v-for="t in toasts"
-        :key="t.id"
-        class="toast"
-        :class="'toast-' + t.variant"
-        role="status"
+    <div
+      v-for="t in toasts"
+      :key="t.id"
+      class="toast"
+      :class="'toast-' + t.variant"
+      role="status"
+    >
+      <span class="toast-message">{{ t.message }}</span>
+      <button
+        type="button"
+        class="toast-dismiss"
+        aria-label="Dismiss"
+        @click="toastStore.dismiss(t.id)"
       >
-        <span class="toast-message">{{ t.message }}</span>
-        <button
-          type="button"
-          class="toast-dismiss"
-          aria-label="Dismiss"
-          @click="toastStore.dismiss(t.id)"
-        >
-          ×
-        </button>
-      </div>
-    </TransitionGroup>
+        ×
+      </button>
+    </div>
   </div>
 </template>
 
@@ -79,14 +77,5 @@ const { toasts } = storeToRefs(toastStore)
 .toast-dismiss:hover {
   color: #0f172a;
   background: #f1f5f9;
-}
-.toast-enter-active,
-.toast-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-.toast-enter-from,
-.toast-leave-to {
-  opacity: 0;
-  transform: translateX(100%);
 }
 </style>

@@ -82,6 +82,19 @@ async function loadTenants() {
   }
 }
 
+function resetForm() {
+  trunkType.value = ''
+  pkey.value = ''
+  cluster.value = 'default'
+  host.value = ''
+  password.value = ''
+  regthistrunk.value = 'NO'
+  transport.value = 'udp'
+  pkeyValidation.reset()
+  clusterValidation.reset()
+  error.value = ''
+}
+
 watch(trunkType, (newVal) => {
   if (newVal !== 'IAX2 trunk') regthistrunk.value = 'NO'
 })
@@ -138,15 +151,9 @@ async function onSubmit(e) {
       if (password.value) body.password = password.value
       if (regthistrunk.value === 'YES') body.register = 'yes'
     }
-    const trunk = await getApiClient().post('trunks', body)
-    const createdPkey = trunk?.pkey ?? trunk?.data?.pkey
-    if (createdPkey) {
-      toast.show(`Trunk ${createdPkey} created`)
-      router.push({ name: 'trunk-detail', params: { pkey: createdPkey } })
-    } else {
-      toast.show('Trunk created')
-      router.push({ name: 'trunks' })
-    }
+    await getApiClient().post('trunks', body)
+    toast.show(`Trunk ${pkey.value.trim()} created`)
+    resetForm()
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
@@ -171,7 +178,7 @@ async function onSubmit(e) {
 }
 
 function goBack() {
-  router.push({ name: 'trunks' })
+  window.location.replace(router.resolve({ name: 'trunks' }).href)
 }
 
 function onKeydown(e) {

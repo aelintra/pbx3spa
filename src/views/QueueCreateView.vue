@@ -2,12 +2,20 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
+const toast = useToastStore()
 const pkey = ref('')
 const cluster = ref('default')
 const error = ref('')
 const loading = ref(false)
+
+function resetForm() {
+  pkey.value = ''
+  cluster.value = 'default'
+  error.value = ''
+}
 
 function fieldErrors(err) {
   if (!err?.data || typeof err.data !== 'object') return null
@@ -20,11 +28,12 @@ async function onSubmit(e) {
   error.value = ''
   loading.value = true
   try {
-    const queue = await getApiClient().post('queues', {
+    await getApiClient().post('queues', {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim()
     })
-    router.push({ name: 'queue-detail', params: { pkey: queue.pkey } })
+    toast.show(`Queue ${pkey.value.trim()} created`)
+    resetForm()
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
@@ -39,7 +48,7 @@ async function onSubmit(e) {
 }
 
 function goBack() {
-  router.push({ name: 'queues' })
+  window.location.replace(router.resolve({ name: 'queues' }).href)
 }
 </script>
 

@@ -59,16 +59,16 @@ The plan is in **`workingdocs/PANEL_REFACTOR_STRATEGY.md`**. Summary:
 
 **Reference implementations (already on pattern):**
 
-- **List:** `src/views/IvrsListView.vue`, `src/views/TenantsListView.vue`, `src/views/RoutesListView.vue`, `src/views/InboundRoutesListView.vue`, `src/views/TrunksListView.vue`, `src/views/ExtensionsListView.vue`
-- **Create:** `src/views/IvrCreateView.vue`, `src/views/TenantCreateView.vue`, `src/views/RouteCreateView.vue`, `src/views/InboundRouteCreateView.vue`, `src/views/TrunkCreateView.vue`, `src/views/ExtensionCreateView.vue`
-- **Edit:** `src/views/IvrDetailView.vue`, `src/views/TenantDetailView.vue`, `src/views/RouteDetailView.vue`, `src/views/InboundRouteDetailView.vue`, `src/views/TrunkDetailView.vue`, `src/views/ExtensionDetailView.vue`
+- **List:** `src/views/IvrsListView.vue`, `src/views/TenantsListView.vue`, `src/views/RoutesListView.vue`, `src/views/InboundRoutesListView.vue`, `src/views/TrunksListView.vue`, `src/views/ExtensionsListView.vue`, `src/views/AgentsListView.vue`
+- **Create:** `src/views/IvrCreateView.vue`, `src/views/TenantCreateView.vue`, `src/views/RouteCreateView.vue`, `src/views/InboundRouteCreateView.vue`, `src/views/TrunkCreateView.vue`, `src/views/ExtensionCreateView.vue`, `src/views/AgentCreateView.vue`
+- **Edit:** `src/views/IvrDetailView.vue`, `src/views/TenantDetailView.vue`, `src/views/RouteDetailView.vue`, `src/views/InboundRouteDetailView.vue`, `src/views/TrunkDetailView.vue`, `src/views/ExtensionDetailView.vue`, `src/views/AgentDetailView.vue`
 
 ### Shared `normalizeList` (from `@/utils/listResponse.js`)
 
-**Using shared:** TenantsListView, IvrsListView, IvrCreateView, IvrDetailView, RoutesListView, RouteCreateView, RouteDetailView, InboundRoutesListView, InboundRouteCreateView, InboundRouteDetailView, TrunksListView, TrunkCreateView, TrunkDetailView, ExtensionsListView, ExtensionCreateView, ExtensionDetailView.
+**Using shared:** TenantsListView, IvrsListView, IvrCreateView, IvrDetailView, RoutesListView, RouteCreateView, RouteDetailView, InboundRoutesListView, InboundRouteCreateView, InboundRouteDetailView, TrunksListView, TrunkCreateView, TrunkDetailView, ExtensionsListView, ExtensionCreateView, ExtensionDetailView, AgentsListView, AgentCreateView, AgentDetailView.
 
 **Still using local `normalizeList` (candidate for migration):**  
-AgentsListView, QueuesListView, BackupsListView.
+QueuesListView, BackupsListView.
 
 → Migrating these: add `import { normalizeList } from '@/utils/listResponse'`, remove the local `function normalizeList(...)` in the file, and call `normalizeList(response)` or `normalizeList(response, 'resourceKey')` as needed (see `listResponse.js` for signature).
 
@@ -83,7 +83,8 @@ AgentsListView, QueuesListView, BackupsListView.
 - **Inbound Routes:** List/Create/Edit refactored; shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; always-edit Detail; validation (validateInboundRoutePkey, validateInboundCarrier).
 - **Trunks:** List/Create/Edit refactored; shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; always-edit Detail; validation (validateTrunkPkey, validateTenant).
 - **Extensions:** List/Create/Edit refactored; shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; always-edit Detail with Save/Cancel/Delete; validation (validateExtensionPkey, validateTenant); Detail exposes all API updateable fields (Identity, Transport, Advanced, Runtime).
-- **Agents, Queues:** List views exist; may have local normalizeList and inline delete modal. Create/Detail may need full pattern pass.
+- **Agents:** List/Create/Edit refactored; shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; always-edit Detail with Save/Cancel/Delete; validation (validateAgentPkey, validateTenant, validateAgentName, validateAgentPasswd); Detail exposes cluster, name, passwd, queue1–6.
+- **Queues:** List view exists; may have local normalizeList and inline delete modal. Create/Detail may need full pattern pass.
 - **Backups:** List only; local normalizeList.
 
 ---

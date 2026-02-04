@@ -2,22 +2,99 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
+import { normalizeList } from '@/utils/listResponse'
+import { firstErrorMessage } from '@/utils/formErrors'
+import FormField from '@/components/forms/FormField.vue'
+import FormSelect from '@/components/forms/FormSelect.vue'
+import FormReadonly from '@/components/forms/FormReadonly.vue'
+import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToastStore()
 const agent = ref(null)
+const tenants = ref([])
+const queues = ref([])
 const loading = ref(true)
 const error = ref('')
-const editing = ref(false)
 const editCluster = ref('default')
 const editName = ref('')
 const editPasswd = ref('')
+const editQueue1 = ref('')
+const editQueue2 = ref('')
+const editQueue3 = ref('')
+const editQueue4 = ref('')
+const editQueue5 = ref('')
+const editQueue6 = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
 const deleting = ref(false)
+const confirmDeleteOpen = ref(false)
 
 const pkey = computed(() => route.params.pkey)
+
+const tenantOptions = computed(() => {
+  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
+  return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
+})
+
+const tenantOptionsForSelect = computed(() => {
+  const list = tenantOptions.value
+  const cur = editCluster.value
+  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  return list
+})
+
+/** Current tenant's shortuid (queue.cluster stores tenant shortuid, not pkey). Resolve from pkey or use as shortuid if it matches a tenant. */
+const tenantShortuid = computed(() => {
+  const cluster = String(editCluster.value ?? '').trim()
+  if (!cluster) return ''
+  const byPkey = tenants.value.find((x) => String(x.pkey ?? '').trim() === cluster)
+  if (byPkey?.shortuid) return String(byPkey.shortuid).trim()
+  const byShortuid = tenants.value.find((x) => String(x.shortuid ?? '').trim() === cluster)
+  if (byShortuid) return cluster
+  return cluster
+})
+
+/** Queues for the agent's tenant only. Queue rows use cluster = tenant shortuid, so filter by that. No leading empty; FormSelect adds the "None" option via empty-text. */
+const queueOptionsForTenant = computed(() => {
+  const shortuid = tenantShortuid.value
+  const forTenant = queues.value
+    .filter((q) => String(q.cluster ?? '').trim() === shortuid)
+    .map((q) => q.pkey)
+    .filter(Boolean)
+  const uniq = [...new Set(forTenant)].sort((a, b) => String(a).localeCompare(String(b)))
+  return uniq
+})
+
+/** Set any queue selection to '' (—) if it's not in the tenant's queues. */
+function clearQueuesNotInTenant() {
+  const allowed = new Set(queueOptionsForTenant.value.filter((x) => x !== ''))
+  const refs = [editQueue1, editQueue2, editQueue3, editQueue4, editQueue5, editQueue6]
+  refs.forEach((r) => {
+    if (r.value && !allowed.has(String(r.value).trim())) r.value = ''
+  })
+}
+
+async function fetchTenants() {
+  try {
+    const response = await getApiClient().get('tenants')
+    tenants.value = normalizeList(response, 'tenants')
+  } catch {
+    tenants.value = []
+  }
+}
+
+async function fetchQueues() {
+  try {
+    const response = await getApiClient().get('queues')
+    queues.value = normalizeList(response, 'queues') || normalizeList(response)
+  } catch {
+    queues.value = []
+  }
+}
 
 async function fetchAgent() {
   if (!pkey.value) return
@@ -27,254 +104,238 @@ async function fetchAgent() {
     agent.value = await getApiClient().get(`agents/${encodeURIComponent(pkey.value)}`)
     editCluster.value = agent.value?.cluster ?? 'default'
     editName.value = agent.value?.name ?? ''
-    editPasswd.value = agent.value?.passwd ?? ''
+    editPasswd.value = agent.value?.passwd != null ? String(agent.value.passwd) : ''
+    editQueue1.value = agent.value?.queue1 ?? ''
+    editQueue2.value = agent.value?.queue2 ?? ''
+    editQueue3.value = agent.value?.queue3 ?? ''
+    editQueue4.value = agent.value?.queue4 ?? ''
+    editQueue5.value = agent.value?.queue5 ?? ''
+    editQueue6.value = agent.value?.queue6 ?? ''
+    clearQueuesNotInTenant()
   } catch (err) {
-    error.value = err.data?.message || err.message || 'Failed to load agent'
+    error.value = firstErrorMessage(err, 'Failed to load agent')
     agent.value = null
   } finally {
     loading.value = false
   }
 }
 
-onMounted(fetchAgent)
+onMounted(() => {
+  fetchTenants().then(() => fetchQueues().then(() => fetchAgent()))
+})
 watch(pkey, fetchAgent)
+watch(editCluster, clearQueuesNotInTenant)
 
 function goBack() {
   router.push({ name: 'agents' })
 }
 
-function startEdit() {
-  editCluster.value = agent.value?.cluster ?? 'default'
-  editName.value = agent.value?.name ?? ''
-  editPasswd.value = agent.value?.passwd ?? ''
-  saveError.value = ''
-  editing.value = true
+function cancelEdit() {
+  goBack()
 }
 
-function cancelEdit() {
-  editing.value = false
-  saveError.value = ''
+function onKeydown(e) {
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    goBack()
+  }
 }
 
 async function saveEdit(e) {
   e.preventDefault()
   saveError.value = ''
-  saving.value = true
-  const passwdNum = editPasswd.value !== '' ? parseInt(editPasswd.value, 10) : undefined
-  if (passwdNum !== undefined && (isNaN(passwdNum) || passwdNum < 1000 || passwdNum > 9999)) {
-    saveError.value = 'passwd must be 1000–9999'
-    saving.value = false
+  const passwdNum = editPasswd.value.trim() !== '' ? parseInt(editPasswd.value, 10) : undefined
+  if (passwdNum !== undefined && (isNaN(passwdNum) || passwdNum < 1001 || passwdNum > 9999)) {
+    saveError.value = 'Password must be 1001–9999'
     return
   }
+  saving.value = true
   try {
     const body = {
       cluster: editCluster.value.trim(),
-      name: editName.value.trim()
+      name: editName.value.trim(),
+      passwd: passwdNum ?? (agent.value?.passwd != null ? parseInt(agent.value.passwd, 10) : 1001)
     }
-    if (passwdNum !== undefined) body.passwd = passwdNum
+    body.queue1 = editQueue1.value.trim() || null
+    body.queue2 = editQueue2.value.trim() || null
+    body.queue3 = editQueue3.value.trim() || null
+    body.queue4 = editQueue4.value.trim() || null
+    body.queue5 = editQueue5.value.trim() || null
+    body.queue6 = editQueue6.value.trim() || null
     await getApiClient().put(`agents/${encodeURIComponent(pkey.value)}`, body)
     await fetchAgent()
-    editing.value = false
+    toast.show(`Agent ${pkey.value} saved`)
   } catch (err) {
-    const msg =
-      err.data?.cluster?.[0] ??
-      err.data?.name?.[0] ??
-      err.data?.passwd?.[0] ??
-      err.data?.message ??
-      err.message
-    saveError.value = msg || 'Failed to update agent'
+    saveError.value = firstErrorMessage(err, 'Failed to update agent')
   } finally {
     saving.value = false
   }
 }
 
-async function doDelete() {
-  if (!confirm(`Delete agent "${pkey.value}"? This cannot be undone.`)) return
+function askConfirmDelete() {
+  deleteError.value = ''
+  confirmDeleteOpen.value = true
+}
+
+function cancelConfirmDelete() {
+  confirmDeleteOpen.value = false
+}
+
+async function confirmAndDelete() {
   deleteError.value = ''
   deleting.value = true
   try {
     await getApiClient().delete(`agents/${encodeURIComponent(pkey.value)}`)
+    toast.show(`Agent ${pkey.value} deleted`)
     router.push({ name: 'agents' })
   } catch (err) {
-    deleteError.value = err.data?.message ?? err.message ?? 'Failed to delete agent'
+    deleteError.value = firstErrorMessage(err, 'Failed to delete agent')
   } finally {
     deleting.value = false
+    confirmDeleteOpen.value = false
   }
 }
-
-const detailFields = computed(() => {
-  if (!agent.value || typeof agent.value !== 'object') return []
-  const skip = new Set(['pkey'])
-  return Object.entries(agent.value)
-    .filter(([k]) => !skip.has(k))
-    .sort(([a], [b]) => a.localeCompare(b))
-})
 </script>
 
 <template>
-  <div>
-    <p class="back">
-      <button type="button" class="back-btn" @click="goBack">← Agents</button>
-    </p>
-    <h1>Agent: {{ pkey }}</h1>
+  <div class="detail-view" @keydown="onKeydown">
+    <h1>Edit Agent {{ pkey }}</h1>
 
     <p v-if="loading" class="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
     <template v-else-if="agent">
-      <p v-if="!editing" class="toolbar">
-        <button type="button" class="edit-btn" @click="startEdit">Edit</button>
-        <button
-          type="button"
-          class="delete-btn"
-          :disabled="deleting"
-          @click="doDelete"
-        >
-          {{ deleting ? 'Deleting…' : 'Delete agent' }}
-        </button>
-      </p>
-      <p v-if="deleteError" class="error">{{ deleteError }}</p>
-      <form v-else-if="editing" class="edit-form" @submit="saveEdit">
-        <label for="edit-cluster">cluster</label>
-        <input id="edit-cluster" v-model="editCluster" type="text" class="edit-input" required />
-        <label for="edit-name">name</label>
-        <input id="edit-name" v-model="editName" type="text" class="edit-input" required />
-        <label for="edit-passwd">passwd (1000–9999, optional)</label>
-        <input id="edit-passwd" v-model="editPasswd" type="number" min="1000" max="9999" class="edit-input" />
-        <p v-if="saveError" class="error">{{ saveError }}</p>
-        <div class="edit-actions">
-          <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
-          <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
-        </div>
-      </form>
-      <dl class="detail-list">
-        <dt>pkey</dt>
-        <dd>{{ agent.pkey }}</dd>
-        <template v-for="[key, value] in detailFields" :key="key">
-          <dt>{{ key }}</dt>
-          <dd>{{ value == null ? '—' : String(value) }}</dd>
-        </template>
-      </dl>
+      <div class="detail-content">
+        <p v-if="deleteError" class="error">{{ deleteError }}</p>
+
+        <form class="edit-form" @submit="saveEdit">
+          <p v-if="saveError" id="agent-edit-error" class="error" role="alert">{{ saveError }}</p>
+
+          <h2 class="detail-heading">Identity</h2>
+          <div class="form-fields">
+            <FormReadonly id="edit-identity-pkey" label="Agent number" :value="agent.pkey ?? '—'" class="readonly-identity" />
+            <FormSelect
+              id="edit-cluster"
+              v-model="editCluster"
+              label="Tenant"
+              :options="tenantOptionsForSelect"
+              :required="true"
+            />
+            <FormField
+              id="edit-name"
+              v-model="editName"
+              label="Name"
+              type="text"
+              placeholder="e.g. agent_name"
+              :required="true"
+            />
+            <FormField
+              id="edit-passwd"
+              v-model="editPasswd"
+              label="Password"
+              type="number"
+              min="1001"
+              max="9999"
+              placeholder="1001–9999"
+              :required="true"
+              hint="1001–9999. Required on save."
+            />
+          </div>
+
+          <h2 class="detail-heading">Queues</h2>
+          <div class="form-fields">
+            <FormSelect
+              id="edit-queue1"
+              v-model="editQueue1"
+              label="Queue 1"
+              :options="queueOptionsForTenant"
+              empty-text="None"
+            />
+            <FormSelect
+              id="edit-queue2"
+              v-model="editQueue2"
+              label="Queue 2"
+              :options="queueOptionsForTenant"
+              empty-text="None"
+            />
+            <FormSelect
+              id="edit-queue3"
+              v-model="editQueue3"
+              label="Queue 3"
+              :options="queueOptionsForTenant"
+              empty-text="None"
+            />
+            <FormSelect
+              id="edit-queue4"
+              v-model="editQueue4"
+              label="Queue 4"
+              :options="queueOptionsForTenant"
+              empty-text="None"
+            />
+            <FormSelect
+              id="edit-queue5"
+              v-model="editQueue5"
+              label="Queue 5"
+              :options="queueOptionsForTenant"
+              empty-text="None"
+            />
+            <FormSelect
+              id="edit-queue6"
+              v-model="editQueue6"
+              label="Queue 6"
+              :options="queueOptionsForTenant"
+              empty-text="None"
+            />
+          </div>
+
+          <div class="edit-actions">
+            <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+            <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
+            <button
+              type="button"
+              class="action-delete"
+              :disabled="deleting"
+              @click="askConfirmDelete"
+            >
+              {{ deleting ? 'Deleting…' : 'Delete' }}
+            </button>
+          </div>
+        </form>
+      </div>
     </template>
+
+    <DeleteConfirmModal
+      :show="confirmDeleteOpen"
+      title="Delete agent?"
+      :loading="deleting"
+      @confirm="confirmAndDelete"
+      @cancel="cancelConfirmDelete"
+    >
+      <template #body>
+        <p>Agent <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+      </template>
+    </DeleteConfirmModal>
   </div>
 </template>
 
 <style scoped>
-.back {
-  margin-bottom: 1rem;
-}
-.back-btn {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  color: #64748b;
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-.back-btn:hover {
-  color: #0f172a;
-  background: #f1f5f9;
-}
-.loading,
-.error {
-  margin-top: 1rem;
-}
-.error {
-  color: #dc2626;
-}
-.detail-list {
-  margin-top: 1rem;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.25rem 2rem;
-  font-size: 0.9375rem;
-  max-width: 36rem;
-}
-.detail-list dt {
-  font-weight: 500;
-  color: #475569;
-}
-.detail-list dd {
-  margin: 0;
-}
-.toolbar {
-  margin: 0 0 0.75rem 0;
-}
-.edit-btn,
-.delete-btn {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  margin-right: 0.5rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-.edit-btn {
-  color: #2563eb;
-  background: transparent;
-  border: 1px solid #93c5fd;
-}
-.edit-btn:hover {
-  background: #eff6ff;
-}
-.delete-btn {
-  color: #dc2626;
-  background: transparent;
-  border: 1px solid #fca5a5;
-}
-.delete-btn:hover:not(:disabled) {
-  background: #fef2f2;
-}
-.delete-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-.edit-form {
-  margin-bottom: 1rem;
-  max-width: 24rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.edit-form label {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-.edit-input {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-}
-.edit-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-}
-.edit-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-.edit-actions button {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-.edit-actions button[type="submit"] {
-  color: #fff;
-  background: #2563eb;
-  border: none;
-}
-.edit-actions button[type="submit"]:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-.edit-actions button.secondary {
-  color: #64748b;
-  background: transparent;
-  border: 1px solid #e2e8f0;
-}
-.edit-actions button.secondary:hover {
-  background: #f1f5f9;
-}
+.detail-view { max-width: 52rem; }
+.loading, .error { margin-top: 1rem; }
+.error { color: #dc2626; }
+.detail-content { margin-top: 1rem; }
+.detail-heading { font-size: 1rem; font-weight: 600; color: #334155; margin: 1.5rem 0 0.5rem 0; }
+.detail-heading:first-of-type { margin-top: 0; }
+.form-fields { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+.readonly-identity :deep(.form-field-label),
+.readonly-identity :deep(.form-readonly) { color: #94a3b8; }
+.readonly-identity :deep(.form-readonly) { background-color: #f1f5f9; border-color: #e2e8f0; }
+.edit-form { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.edit-actions { display: flex; gap: 0.5rem; }
+.edit-actions button { padding: 0.375rem 0.75rem; font-size: 0.875rem; font-weight: 500; border-radius: 0.375rem; cursor: pointer; }
+.edit-actions button[type="submit"] { color: #fff; background: #2563eb; border: none; }
+.edit-actions button[type="submit"]:disabled { opacity: 0.7; cursor: not-allowed; }
+.edit-actions button.secondary { color: #64748b; background: transparent; border: 1px solid #e2e8f0; }
+.edit-actions button.secondary:hover { background: #f1f5f9; }
+.edit-actions button.action-delete { color: #fff; background: #dc2626; border: none; }
+.edit-actions button.action-delete:hover:not(:disabled) { background: #b91c1c; }
+.edit-actions button.action-delete:disabled { opacity: 0.7; cursor: not-allowed; }
 </style>

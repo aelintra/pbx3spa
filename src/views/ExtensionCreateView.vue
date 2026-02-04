@@ -41,6 +41,17 @@ const tenantOptionsForSelect = computed(() => {
 const protocolOptions = ['SIP', 'WebRTC', 'Mailbox']
 const protocolChosen = computed(() => !!protocol.value)
 
+function resetForm() {
+  protocol.value = ''
+  pkey.value = ''
+  cluster.value = ''
+  desc.value = ''
+  macaddr.value = ''
+  pkeyValidation.reset()
+  clusterValidation.reset()
+  error.value = ''
+}
+
 async function loadTenants() {
   tenantsLoading.value = true
   try {
@@ -87,15 +98,9 @@ async function onSubmit(e) {
     }
     if (desc.value.trim()) body.desc = desc.value.trim()
     if (macaddr.value.trim()) body.macaddr = macaddr.value.trim().replace(/[^0-9a-fA-F]/g, '')
-    const extension = await getApiClient().post('extensions', body)
-    const createdPkey = extension?.pkey ?? extension?.data?.pkey
-    if (createdPkey) {
-      toast.show(`Extension ${createdPkey} created`)
-      router.push({ name: 'extension-detail', params: { pkey: createdPkey } })
-    } else {
-      toast.show('Extension created')
-      router.push({ name: 'extensions' })
-    }
+    await getApiClient().post('extensions', body)
+    toast.show(`Extension ${pkey.value.trim()} created`)
+    resetForm()
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
@@ -120,7 +125,7 @@ async function onSubmit(e) {
 }
 
 function goBack() {
-  router.push({ name: 'extensions' })
+  window.location.replace(router.resolve({ name: 'extensions' }).href)
 }
 
 function onKeydown(e) {

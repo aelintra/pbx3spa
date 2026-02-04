@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 
 const props = defineProps({
   id: {
@@ -57,6 +57,16 @@ const props = defineProps({
   ariaLabel: {
     type: String,
     default: null
+  },
+  /** When changed, the inner select is re-mounted (use after form reset so display updates). */
+  inputKey: {
+    type: [String, Number],
+    default: null
+  },
+  /** If true, log modelValue when it is '' or 'default' (for debugging form reset). */
+  debugReset: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -75,6 +85,11 @@ const hintId = computed(() => `${props.id}-hint`)
 function handleBlur() {
   emit('blur')
 }
+
+// Debug form reset: when debugReset is true, log when this select receives empty/default
+watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
+  if (dbg && (v === '' || v === 'default')) console.log('[FormSelect]', props.id, 'modelValue', JSON.stringify(v))
+}, { immediate: true })
 </script>
 
 <template>
@@ -85,6 +100,7 @@ function handleBlur() {
     </label>
     <div class="form-field-input-wrapper">
       <select
+        :key="inputKey ?? id"
         :id="id"
         v-model="selectValue"
         :class="{

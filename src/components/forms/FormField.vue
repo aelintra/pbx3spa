@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const inputRef = ref(null)
 defineExpose({ focus: () => inputRef.value?.focus() })
@@ -14,7 +14,7 @@ const props = defineProps({
     required: true
   },
   modelValue: {
-    type: String,
+    type: [String, Number],
     default: ''
   },
   type: {
@@ -56,6 +56,16 @@ const props = defineProps({
   autocomplete: {
     type: String,
     default: 'off'
+  },
+  /** When changed, the inner input is re-mounted (use after form reset so display updates). */
+  inputKey: {
+    type: [String, Number],
+    default: null
+  },
+  /** If true, log modelValue when it is '' or 'default' (for debugging form reset). */
+  debugReset: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -67,13 +77,18 @@ const inputValue = computed({
 })
 
 const hasError = computed(() => props.error && props.touched)
-const isValid = computed(() => !props.error && props.touched && props.modelValue.trim())
+const isValid = computed(() => !props.error && props.touched && String(props.modelValue ?? '').trim() !== '')
 const errorId = computed(() => `${props.id}-error`)
 const hintId = computed(() => `${props.id}-hint`)
 
 function handleBlur() {
   emit('blur')
 }
+
+// Debug form reset: when debugReset is true, log when this field receives empty/default
+watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
+  if (dbg && (v === '' || v === 'default')) console.log('[FormField]', props.id, 'modelValue', JSON.stringify(v))
+}, { immediate: true })
 </script>
 
 <template>
@@ -84,6 +99,7 @@ function handleBlur() {
     </label>
     <div class="form-field-input-wrapper">
       <input
+        :key="inputKey ?? id"
         ref="inputRef"
         :id="id"
         v-model="inputValue"

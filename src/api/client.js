@@ -51,6 +51,10 @@ export function createApiClient(baseUrl, token) {
     const res = await fetch(url, options)
     const text = await res.text()
     if (!res.ok) {
+      if (res.status === 401) {
+        useAuthStore().clearCredentials()
+        window.location.replace('/login')
+      }
       const err = new Error(`API ${method} ${path}: ${res.status} ${res.statusText}`)
       err.status = res.status
       err.response = text
@@ -73,6 +77,10 @@ export function createApiClient(baseUrl, token) {
     const url = path.startsWith('http') ? path : `${base}/${path.replace(/^\//, '')}`
     const res = await fetch(url, { method: 'GET', headers: { ...headers } })
     if (!res.ok) {
+      if (res.status === 401) {
+        useAuthStore().clearCredentials()
+        window.location.replace('/login')
+      }
       const text = await res.text()
       const err = new Error(`API GET ${path}: ${res.status} ${res.statusText}`)
       err.status = res.status

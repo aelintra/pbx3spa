@@ -73,6 +73,37 @@ export function validateExtensionPkey(value) {
 }
 
 /**
+ * Validate Agent pkey for create
+ * Required, integer 1000–9999
+ */
+export function validateAgentPkey(value) {
+  if (value === '' || value == null) return 'Agent number is required'
+  const num = parseInt(value, 10)
+  if (isNaN(num) || num < 1000 || num > 9999) return 'Must be 1000–9999'
+  return null
+}
+
+/**
+ * Validate Agent passwd
+ * Required, integer 1001–9999 (API min is 1001)
+ */
+export function validateAgentPasswd(value) {
+  if (value === '' || value == null) return 'Password is required'
+  const num = parseInt(value, 10)
+  if (isNaN(num) || num < 1001 || num > 9999) return 'Must be 1001–9999'
+  return null
+}
+
+/**
+ * Validate Agent name (alpha_dash: letters, numbers, underscore, hyphen)
+ * Required, non-empty
+ */
+export function validateAgentName(value) {
+  if (!value || !value.trim()) return 'Name is required'
+  return null
+}
+
+/**
  * Validate Route dialplan
  * Required; route will not work without it (e.g. _XXXXXX)
  */

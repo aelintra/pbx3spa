@@ -142,6 +142,36 @@ async function loadGreetings() {
   }
 }
 
+function resetForm() {
+  pkey.value = ''
+  cluster.value = 'default'
+  active.value = 'YES'
+  cname.value = ''
+  name.value = ''
+  description.value = ''
+  greetnum.value = ''
+  timeout.value = 'operator'
+  listenforext.value = 'NO'
+  options.value = {
+    option0: 'None', option1: 'None', option2: 'None', option3: 'None',
+    option4: 'None', option5: 'None', option6: 'None', option7: 'None',
+    option8: 'None', option9: 'None', option10: 'None', option11: 'None'
+  }
+  tags.value = {
+    tag0: '', tag1: '', tag2: '', tag3: '', tag4: '', tag5: '',
+    tag6: '', tag7: '', tag8: '', tag9: '', tag10: '', tag11: ''
+  }
+  alerts.value = {
+    alert0: '', alert1: '', alert2: '', alert3: '', alert4: '', alert5: '',
+    alert6: '', alert7: '', alert8: '', alert9: '', alert10: '', alert11: ''
+  }
+  pkeyValidation.reset()
+  clusterValidation.reset()
+  greetnumValidation.reset()
+  error.value = ''
+  loadDestinations()
+}
+
 watch(cluster, () => {
   loadDestinations()
   if (clusterValidation.touched.value) {
@@ -183,12 +213,9 @@ async function onSubmit(e) {
     if (name.value.trim()) body.name = name.value.trim()
     if (description.value.trim()) body.description = description.value.trim()
     if (greetnum.value !== '' && greetnum.value != null) body.greetnum = parseInt(greetnum.value, 10)
-    const ivr = await getApiClient().post('ivrs', body)
-    const createdPkey = ivr?.pkey ?? ivr?.data?.pkey
-    const message = createdPkey ? `IVR ${createdPkey} created` : 'IVR created'
-    toast.show(message, 'success')
-    await nextTick()
-    router.push({ name: 'ivr-detail', params: { pkey: createdPkey || pkey.value.trim() } })
+    await getApiClient().post('ivrs', body)
+    toast.show(`IVR ${pkey.value.trim()} created`, 'success')
+    resetForm()
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
@@ -225,7 +252,7 @@ async function onSubmit(e) {
 }
 
 function goBack() {
-  router.push({ name: 'ivrs' })
+  window.location.replace(router.resolve({ name: 'ivrs' }).href)
 }
 
 function onKeydown(e) {

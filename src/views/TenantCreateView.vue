@@ -33,6 +33,18 @@ const pkeyValidation = useFormValidation(pkey, validateTenantPkey)
 
 const formAdvanced = reactive(buildInitialFormAdvanced())
 
+function resetForm() {
+  pkey.value = ''
+  description.value = ''
+  clusterclid.value = ''
+  abstimeout.value = '14400'
+  chanmax.value = '30'
+  masteroclo.value = 'AUTO'
+  Object.assign(formAdvanced, buildInitialFormAdvanced())
+  pkeyValidation.reset()
+  error.value = ''
+}
+
 async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
@@ -61,9 +73,10 @@ async function onSubmit(e) {
       ...buildAdvancedPayload(formAdvanced)
     }
     const cleaned = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined && v !== ''))
-    const tenant = await getApiClient().post('tenants', cleaned)
-    toast.show(`Tenant ${tenant.pkey} created`)
-    router.push({ name: 'tenant-detail', params: { pkey: tenant.pkey } })
+    const createdPkey = pkey.value.trim()
+    await getApiClient().post('tenants', cleaned)
+    toast.show(`Tenant ${createdPkey} created`)
+    resetForm()
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
@@ -87,7 +100,7 @@ async function onSubmit(e) {
 }
 
 function goBack() {
-  router.push({ name: 'tenants' })
+  window.location.replace(router.resolve({ name: 'tenants' }).href)
 }
 
 function onKeydown(e) {

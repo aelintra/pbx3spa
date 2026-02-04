@@ -77,6 +77,24 @@ async function loadTrunks() {
   }
 }
 
+function resetForm() {
+  pkey.value = ''
+  cluster.value = 'default'
+  desc.value = ''
+  active.value = 'YES'
+  auth.value = 'NO'
+  dialplan.value = ''
+  path1.value = ''
+  path2.value = ''
+  path3.value = ''
+  path4.value = ''
+  strategy.value = 'hunt'
+  pkeyValidation.reset()
+  clusterValidation.reset()
+  dialplanValidation.reset()
+  error.value = ''
+}
+
 async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
@@ -95,7 +113,7 @@ async function onSubmit(e) {
   }
   loading.value = true
   try {
-    const created = await getApiClient().post('routes', {
+    await getApiClient().post('routes', {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
       desc: desc.value.trim() || undefined,
@@ -108,8 +126,8 @@ async function onSubmit(e) {
       path4: path4.value.trim() || undefined,
       strategy: strategy.value
     })
-    toast.show(`Route ${created.pkey} created`)
-    router.push({ name: 'route-detail', params: { pkey: created.pkey } })
+    toast.show(`Route ${pkey.value.trim()} created`)
+    resetForm()
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
@@ -142,7 +160,7 @@ async function onSubmit(e) {
 }
 
 function goBack() {
-  router.push({ name: 'routes' })
+  window.location.replace(router.resolve({ name: 'routes' }).href)
 }
 
 function onKeydown(e) {
