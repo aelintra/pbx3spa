@@ -38,7 +38,6 @@ async function logout() {
         <router-link to="/extensions" class="nav-link" active-class="active">Extensions</router-link>
         <router-link to="/trunks" class="nav-link" active-class="active">Trunks</router-link>
         <router-link to="/queues" class="nav-link" active-class="active">Queues</router-link>
-        <router-link to="/backups" class="nav-link" active-class="active">Backups</router-link>
         <router-link to="/agents" class="nav-link" active-class="active">Agents</router-link>
         <router-link to="/routes" class="nav-link" active-class="active">Routes</router-link>
         <router-link to="/ivrs" class="nav-link" active-class="active">IVRs</router-link>
