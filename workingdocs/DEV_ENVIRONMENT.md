@@ -70,6 +70,22 @@ If the PBX3 API uses a **self-signed certificate**, the browser blocks direct re
 - Use **base URL** `http://localhost:5173/api` (same origin as the app) when logging in or setting credentials. Requests to `/api/*` are forwarded to the real API.
 - **Proxy target** defaults to `https://192.168.1.205:44300`. To use another instance, set **VITE_API_PROXY_TARGET** in `.env.development` (e.g. `VITE_API_PROXY_TARGET=https://other-host:44300`).
 
+### 6a. Two “targets” — proxy vs login (don’t forget)
+
+There are two different places that refer to “which PBX3 instance” the app talks to. They do **not** override each other; they play different roles.
+
+| What | Where it’s set | What it does |
+|------|----------------|--------------|
+| **VITE_API_PROXY_TARGET** | `.env.development` (fallback in `vite.config.js`) | Tells the **Vite dev server** where to **proxy** requests when the browser calls `http://localhost:5173/api/...`. |
+| **SPA base URL** | **Login screen** → stored in auth store (`auth.baseUrl`) and sessionStorage (`pbx3_baseUrl`) | Tells the **browser** where to send API requests (the URL the app actually calls). |
+
+**How they interact:**
+
+- If the user logs in with base URL **`http://localhost:5173/api`** (the dev default): the browser sends all API requests to the dev server; the dev server then forwards them to **VITE_API_PROXY_TARGET**. So the real PBX3 instance is the one in `.env.development`.
+- If the user logs in with a **direct** URL (e.g. `https://192.168.1.150:44300/api`): the browser sends requests straight to that host. The proxy is not used; **VITE_API_PROXY_TARGET** is irrelevant for those requests.
+
+So: the SPA base URL (login) decides **where the browser sends the request**. Only when that is `http://localhost:5173/api` does the proxy (and thus **VITE_API_PROXY_TARGET**) come into play. To point at a different instance during dev without the user typing a new URL at login, change **VITE_API_PROXY_TARGET** in `.env.development` and restart the dev server; keep using `http://localhost:5173/api` at login.
+
 ---
 
 ## 7. Other useful commands (from pbx3-frontend)
