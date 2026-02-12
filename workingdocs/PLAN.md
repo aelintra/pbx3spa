@@ -177,7 +177,7 @@ Many internal/admin tools accept this trade-off: token in sessionStorage or memo
 
 ## 8. References (in repo / sibling repos)
 
-- **pbx3-frontend/README.md** — Role of this repo and pointer to API docs.
+- **pbx3spa/README.md** — Role of this repo and pointer to API docs.
 - **pbx3api/docs/** — Full API: api.md, auth.md, general.md, index.md.
 - **pbx3api/docs/routes-data-vs-operational.md** — Split of data vs operational routes; firewall nuance (list + add/change/delete rules via POST).
 - **pbx3api/docs/API_DOC_ISSUES.md** — Known doc/code issues.

@@ -6,7 +6,7 @@ Quick reference for new chats. See **PLAN.md** for full plan and design.
 
 ## Workspace and repos
 
-**pbx3-master** is a workspace folder that holds **pbx3**, **pbx3-frontend**, and **pbx3api** together so they can be opened in one place. It is **not** a git repo. The three projects are **separate repos** by design: keeping them functionally and physically separate is easier to manage and for users to envisage, and helps keep everything in the right place. Commits are made inside each project’s own repo. There are other repos in the overall project; for current work they are not needed — focus on pbx3, pbx3-frontend, and pbx3api.
+**pbx3-master** is a workspace folder that holds **pbx3**, **pbx3spa**, and **pbx3api** together so they can be opened in one place. It is **not** a git repo. The three projects are **separate repos** by design: keeping them functionally and physically separate is easier to manage and for users to envisage, and helps keep everything in the right place. Commits are made inside each project’s own repo. There are other repos in the overall project; for current work they are not needed — focus on pbx3, pbx3spa, and pbx3api.
 
 **Folder structure:**
 
@@ -15,9 +15,9 @@ Quick reference for new chats. See **PLAN.md** for full plan and design.
 | **pbx3-master** | Wrapper; root that contains the three repos below. |
 | **pbx3** | System backend (Asterisk, SQLite, config generation, dump/restore, etc.). |
 | **pbx3api** | Backend API; what the frontend calls. |
-| **pbx3-frontend** | Vue SPA admin UI; current work is here (own git repo, root is `pbx3-frontend/`). |
+| **pbx3spa** | Vue SPA admin UI; current work is here (own git repo, root is `pbx3spa/`). |
 
-Keeping the three projects functionally and physically separate is easier to manage. For current work, focus on **pbx3-frontend**; reference **pbx3api** for API contracts and **pbx3** for schema (e.g. full_schema.sql).
+Keeping the three projects functionally and physically separate is easier to manage. For current work, focus on **pbx3spa**; reference **pbx3api** for API contracts and **pbx3** for schema (e.g. full_schema.sql).
 
 **Commit everything.** When committing, stage and commit all modified and new files in the repo — keep one version of the truth in git. Uncommitted work can be missed by other sessions or agents and lead to confusion or lost changes.
 
@@ -42,7 +42,7 @@ Other files in that folder (e.g. sqlite_device.sql, sqlite_create_legacy.sql, sq
 
 ## Scope: legacy dump/restore (ignore for now)
 
-The **pbx3** tree (outside pbx3api and pbx3-frontend) contains **dump/restore routines** (e.g. dumper.php, dumpInstances.php under pbx3/pbx3-1/opt/pbx3/php/utilities/) that convert **old SARK databases** to **PBX3 databases**. They work on both old and new database versions. **For day-to-day work, ignore this legacy code.** Focus on **pbx3api**, **pbx3-frontend**, and the **db_sql schema files** as the source of truth. You may need to look at the dump/restore routines at some point (e.g. compatibility or conversion); until then, treat them as out of scope to avoid confusion.
+The **pbx3** tree (outside pbx3api and pbx3spa) contains **dump/restore routines** (e.g. dumper.php, dumpInstances.php under pbx3/pbx3-1/opt/pbx3/php/utilities/) that convert **old SARK databases** to **PBX3 databases**. They work on both old and new database versions. **For day-to-day work, ignore this legacy code.** Focus on **pbx3api**, **pbx3spa**, and the **db_sql schema files** as the source of truth. You may need to look at the dump/restore routines at some point (e.g. compatibility or conversion); until then, treat them as out of scope to avoid confusion.
 
 ---
 
@@ -60,7 +60,7 @@ So: **pkey** = what humans see (and may repeat per tenant); **shortuid** = what 
 
 ## What we're building
 
-**pbx3-frontend** = admin UI to manage PBX3 instances: connect to an instance (API base URL), authenticate (login → Bearer token), then perform CRUD on data (tenants, extensions, trunks, queues, IVRs, firewall rules, etc.) and run operational commands (backups, snapshots, syscommands, firewall restart, live state). See **pbx3api/docs/routes-data-vs-operational.md** for data vs operational split.
+**pbx3spa** = admin UI to manage PBX3 instances: connect to an instance (API base URL), authenticate (login → Bearer token), then perform CRUD on data (tenants, extensions, trunks, queues, IVRs, firewall rules, etc.) and run operational commands (backups, snapshots, syscommands, firewall restart, live state). See **pbx3api/docs/routes-data-vs-operational.md** for data vs operational split.
 
 ---
 
@@ -85,4 +85,4 @@ pbx3api **users** table (SQLite): `id`, `cluster`, `name`, `email`, `email_verif
 - **pbx3api/docs/** — api.md, auth.md, general.md (full API).
 - **pbx3api/docs/routes-data-vs-operational.md** — Data vs operational routes; firewall = list + add/change/delete rules via POST, PUT = restart.
 - **pbx3api/test/ENDPOINT_RESULTS.md** — Live test results.
-- **pbx3-frontend/workingdocs/PLAN.md** — Full plan, design, phases, next steps.
+- **pbx3spa/workingdocs/PLAN.md** — Full plan, design, phases, next steps.

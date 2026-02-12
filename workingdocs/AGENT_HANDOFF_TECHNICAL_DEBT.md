@@ -2,7 +2,7 @@
 
 **Purpose:** Let a new agent (or new session) pick up and continue technical debt reduction and panel conversion without redoing work or losing context.
 
-**Repo:** All work below is in **`pbx3-frontend`**. This is its own git repo (root is `pbx3-frontend/`, not the parent `pbx3-master/`).
+**Repo:** All work below is in **`pbx3spa`**. This is its own git repo (root is `pbx3spa/`, not the parent `pbx3-master/`).
 
 **Last updated:** 2026-02-03
 
@@ -124,7 +124,7 @@ QueuesListView, BackupsListView.
 
 ## 6. Conventions and gotchas
 
-- **Repo:** Work only in `pbx3-frontend`; run `git status` / `git add` / `git commit` from `pbx3-frontend/`.
+- **Repo:** Work only in `pbx3spa`; run `git status` / `git add` / `git commit` from `pbx3spa/`.
 - **Edit panels:** Every Edit panel must have **three** buttons at bottom: Save, Cancel, Delete (pattern doc is explicit). Delete opens DeleteConfirmModal; label "Delete" / "Deleting…", red style.
 - **List view:** Primary key/name column is plain text, **not** a link; only the Edit action (icon/button) links to the Edit panel.
 - **Validation:** Refs must be declared **before** `useFormValidation(...)` in script setup.

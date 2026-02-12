@@ -35,7 +35,7 @@ Rationale: YES/NO is already the majority in the schema (`active`, `swoclip`, et
    - Remove `in:ON,OFF`; accept only YES/NO.  
    - Models: default attributes and any logic that checks booleans should use YES/NO.
 
-3. **Frontend (pbx3-frontend)**  
+3. **Frontend (pbx3spa)**  
    - All boolean controls (pill sliders, toggles) bind to YES/NO.  
    - Remove mapping from API `NO` → display `OFF`; display YES/NO or “On”/“Off” as labels only.
 

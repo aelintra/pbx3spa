@@ -102,7 +102,7 @@ The old system revealed fields in two steps:
 ## 4. References
 
 - **pbx3api:** InboundRouteController.php, InboundRoute.php
-- **pbx3-frontend:** InboundRouteCreateView.vue, InboundRouteDetailView.vue
+- **pbx3spa:** InboundRouteCreateView.vue, InboundRouteDetailView.vue
 - **Schema:** sqlite_create_tenant.sql (inroutes)
 - **wizardnotes/ddi:** add-wizard.md, agent-brief-spa.md
 - **COMPLEX_CREATE_PLAN.md** — approach for type-chooser creates

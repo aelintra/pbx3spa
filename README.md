@@ -1,10 +1,10 @@
-# pbx3-frontend
+# pbx3spa
 
 Management (admin) UI for PBX3. This application is the front-end that operators use to configure and operate PBX3 systems.
 
 ## Architecture
 
-- **pbx3-frontend** runs as a separate application (e.g. in the browser or as a hosted dashboard).
+- **pbx3spa** runs as a separate application (e.g. in the browser or as a hosted dashboard).
 - Each **PBX3 instance** runs its own **pbx3api** (Laravel REST API) colocated on that instance.
 - This frontend communicates with **pbx3api** over HTTPS to manage PBX3 instances. There is no single central API: the frontend connects to the API of whichever PBX3 instance(s) it is managing.
 - Typical use: an operator selects or configures a PBX3 instance (by its pbx3api base URL), authenticates against that instance’s API (e.g. login → Bearer token), then uses the UI to manage that instance (extensions, trunks, queues, IVRs, system commands, etc.).
@@ -15,7 +15,7 @@ Management (admin) UI for PBX3. This application is the front-end that operators
 |----------------|------|
 | **pbx3**       | Backend worker on each PBX3 instance (Asterisk, config generation, etc.). No web UI; driven via API. |
 | **pbx3api**    | REST API colocated on every PBX3 instance. This frontend talks to pbx3api to manage the instance. |
-| **pbx3-frontend** | This repo — the management/admin provider for PBX3. |
+| **pbx3spa** | This repo — the management/admin provider for PBX3. |
 
 ## API documentation
 

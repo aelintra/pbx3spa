@@ -1,7 +1,7 @@
 # Panel Pattern Fidelity Audit
 
 **Date:** 2026-02-03  
-**Scope:** All CRUD panels in pbx3-frontend (Tenants, Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound Routes).  
+**Scope:** All CRUD panels in pbx3spa (Tenants, Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound Routes).  
 **Reference:** `workingdocs/PANEL_PATTERN.md`
 
 This document records departures from the standardized panel pattern. Items marked **MUST FIX** should be corrected for full pattern compliance; others are optional or acceptable exceptions.

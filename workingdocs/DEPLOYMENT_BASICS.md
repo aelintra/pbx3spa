@@ -107,7 +107,7 @@ For an SPA, the same `index.html` must be sent for `/`, `/tenants`, `/extensions
 
 ## 6. One concrete “publish” flow (example: Netlify)
 
-1. Code lives in GitHub (e.g. `pbx3-frontend`).
+1. Code lives in GitHub (e.g. `pbx3spa`).
 2. In Netlify: “Add new site” → “Import from Git” → choose repo.
 3. Build command: `npm run build`. Publish directory: `dist` (or whatever Vue/Vite outputs).
 4. Deploy. Netlify runs `npm install` and `npm run build`, then serves the contents of `dist/`.
