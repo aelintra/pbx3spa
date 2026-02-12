@@ -88,7 +88,7 @@ async function saveEdit(e) {
   try {
     await getApiClient().put(`tenants/${encodeURIComponent(pkey.value)}`, {
       description: editDescription.value.trim() || undefined,
-      clusterclid: editClusterclid.value.trim() ? editClusterclid.value.trim() : undefined,
+      clusterclid: editClusterclid.value.trim() ? editClusterclid.value.trim() : null,
       abstimeout: editAbstimeout.value.trim() ? editAbstimeout.value.trim() : undefined,
       chanmax: editChanmax.value.trim() ? editChanmax.value.trim() : undefined,
       masteroclo: editMasteroclo.value.trim() || undefined,
