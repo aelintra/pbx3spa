@@ -59,22 +59,22 @@ The plan is in **`workingdocs/PANEL_REFACTOR_STRATEGY.md`**. Summary:
 
 **Reference implementations (already on pattern):**
 
-- **List:** `src/views/IvrsListView.vue`, `src/views/TenantsListView.vue`, `src/views/RoutesListView.vue`, `src/views/InboundRoutesListView.vue`, `src/views/TrunksListView.vue`, `src/views/ExtensionsListView.vue`, `src/views/AgentsListView.vue`
-- **Create:** `src/views/IvrCreateView.vue`, `src/views/TenantCreateView.vue`, `src/views/RouteCreateView.vue`, `src/views/InboundRouteCreateView.vue`, `src/views/TrunkCreateView.vue`, `src/views/ExtensionCreateView.vue`, `src/views/AgentCreateView.vue`
-- **Edit:** `src/views/IvrDetailView.vue`, `src/views/TenantDetailView.vue`, `src/views/RouteDetailView.vue`, `src/views/InboundRouteDetailView.vue`, `src/views/TrunkDetailView.vue`, `src/views/ExtensionDetailView.vue`, `src/views/AgentDetailView.vue`
+- **List:** `src/views/IvrsListView.vue`, `src/views/TenantsListView.vue`, `src/views/RoutesListView.vue`, `src/views/InboundRoutesListView.vue`, `src/views/TrunksListView.vue`, `src/views/ExtensionsListView.vue`, `src/views/AgentsListView.vue`, `src/views/QueuesListView.vue`
+- **Create:** `src/views/IvrCreateView.vue`, `src/views/TenantCreateView.vue`, `src/views/RouteCreateView.vue`, `src/views/InboundRouteCreateView.vue`, `src/views/TrunkCreateView.vue`, `src/views/ExtensionCreateView.vue`, `src/views/AgentCreateView.vue`, `src/views/QueueCreateView.vue`
+- **Edit:** `src/views/IvrDetailView.vue`, `src/views/TenantDetailView.vue`, `src/views/RouteDetailView.vue`, `src/views/InboundRouteDetailView.vue`, `src/views/TrunkDetailView.vue`, `src/views/ExtensionDetailView.vue`, `src/views/AgentDetailView.vue`, `src/views/QueueDetailView.vue`
 
 ### Shared `normalizeList` (from `@/utils/listResponse.js`)
 
-**Using shared:** TenantsListView, IvrsListView, IvrCreateView, IvrDetailView, RoutesListView, RouteCreateView, RouteDetailView, InboundRoutesListView, InboundRouteCreateView, InboundRouteDetailView, TrunksListView, TrunkCreateView, TrunkDetailView, ExtensionsListView, ExtensionCreateView, ExtensionDetailView, AgentsListView, AgentCreateView, AgentDetailView.
+**Using shared:** TenantsListView, IvrsListView, IvrCreateView, IvrDetailView, RoutesListView, RouteCreateView, RouteDetailView, InboundRoutesListView, InboundRouteCreateView, InboundRouteDetailView, TrunksListView, TrunkCreateView, TrunkDetailView, ExtensionsListView, ExtensionCreateView, ExtensionDetailView, AgentsListView, AgentCreateView, AgentDetailView, QueuesListView, QueueCreateView, QueueDetailView.
 
 **Still using local `normalizeList` (candidate for migration):**  
-QueuesListView, BackupsListView.
+None. (Backups panel was removed/parked; no BackupsListView in codebase.)
 
-→ Migrating these: add `import { normalizeList } from '@/utils/listResponse'`, remove the local `function normalizeList(...)` in the file, and call `normalizeList(response)` or `normalizeList(response, 'resourceKey')` as needed (see `listResponse.js` for signature).
+→ If a new list view is added later, use `import { normalizeList } from '@/utils/listResponse'` and call `normalizeList(response)` or `normalizeList(response, { resourceKey: '…' })` as needed (see `listResponse.js` for signature).
 
 ### DeleteConfirmModal
 
-**Using shared:** All list and detail views that have delete: TenantsListView, TenantDetailView, IvrsListView, IvrDetailView, RoutesListView, RouteDetailView, InboundRoutesListView, InboundRouteDetailView, TrunksListView, TrunkDetailView, ExtensionsListView. (Agent/Queue/Backup list views were not in the refactor batch; if they have delete, they may still have inline modal — check and convert if so.)
+**Using shared:** All list and detail views that have delete: TenantsListView, TenantDetailView, IvrsListView, IvrDetailView, RoutesListView, RouteDetailView, InboundRoutesListView, InboundRouteDetailView, TrunksListView, TrunkDetailView, ExtensionsListView, AgentsListView, AgentDetailView, QueuesListView, QueueDetailView. (Backups panel removed/parked.)
 
 ### Full pattern (list + create + edit)
 
@@ -84,8 +84,8 @@ QueuesListView, BackupsListView.
 - **Trunks:** List/Create/Edit refactored; shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; always-edit Detail; validation (validateTrunkPkey, validateTenant).
 - **Extensions:** List/Create/Edit refactored; shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; always-edit Detail with Save/Cancel/Delete; validation (validateExtensionPkey, validateTenant); Detail exposes all API updateable fields (Identity, Transport, Advanced, Runtime).
 - **Agents:** List/Create/Edit refactored; shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; always-edit Detail with Save/Cancel/Delete; validation (validateAgentPkey, validateTenant, validateAgentName, validateAgentPasswd); Detail exposes cluster, name, passwd, queue1–6.
-- **Queues:** List view exists; may have local normalizeList and inline delete modal. Create/Detail may need full pattern pass.
-- **Backups:** List only; local normalizeList.
+- **Queues:** List/Create/Edit refactored; use shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; schema compliance (no `conf` field).
+- **Backups:** Removed/parked — no Backups view or route in codebase. See PROJECT_PLAN.md (Parked).
 
 ---
 
@@ -111,7 +111,7 @@ QueuesListView, BackupsListView.
 
 1. **Read** `workingdocs/PANEL_PATTERN.md` (sections on List/Create/Edit and the checklist).
 2. **Read** `workingdocs/PANEL_REFACTOR_STRATEGY.md` (Phases 1–2 and suggested order).
-3. **Optional:** Migrate remaining list/create/detail views to use shared `normalizeList` from `listResponse.js` (remove local function, add import).
+3. **Optional:** When adding a new list view, use shared `normalizeList` from `listResponse.js` from the start (no Backups panel; all current panels already use it).
 4. **When touching any panel:** Use the Phase 4 checklist in the strategy doc so the same debt doesn’t come back.
 
 ---
