@@ -2,6 +2,8 @@
 
 This folder is **for the AI (Cursor agent)** to record progress and build a memory of the pbx3spa system. When you start a new chat, read the files here to get up to speed. **Start with PROJECT_PLAN.md § "Current state (for the next chat)"** and **SESSION_HANDOFF.md** to see what's done, what's left, and what's planned next. **For technical debt reduction and panel pattern conversion**, start with **AGENT_HANDOFF_TECHNICAL_DEBT.md** and **PANEL_REFACTOR_STRATEGY.md**. **pbx3/full_schema.sql** is the schema yardstick for API models/controllers.
 
+**Naming note (2026-02-12):** Repo/component name changed from `pbx3-frontend` to `pbx3spa`. Docs and package metadata were updated to match.
+
 ## Contents
 
 | File | Purpose |

@@ -6,6 +6,8 @@
 
 ## Done
 
+- **Repo rename completed:** frontend repo/component naming is now `pbx3spa` (was `pbx3-frontend`); cross-repo docs in pbx3 and pbx3api were updated accordingly.
+- **Integration test milestone:** frontend sign-in to pbx3api was validated after nginx/php-fpm installer hardening in pbx3api. Current dev workflow uses LAN HTTP temporarily to avoid self-signed cert trust friction; see pbx3 TODO for HTTPS/LE completion before release.
 - Steps 1–17+; full CRUD for Tenants, Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound routes (list/detail/create per PANEL_PATTERN).
 - List blocks (§2.2), detail Identity/Settings/Advanced (§4.1), edit-from-list, delete confirmation modal, toasts.
 - Create wording: list toolbar = “Create”, create form submit = “Create” / “Creating…”.
