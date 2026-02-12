@@ -23,7 +23,6 @@ const error = ref('')
 const editCluster = ref('')
 const editDesc = ref('')
 const editActive = ref('YES')
-const editLocation = ref('local')
 const editTransport = ref('udp')
 const editCallbackto = ref('desk')
 const editCallerid = ref('')
@@ -32,9 +31,6 @@ const editCelltwin = ref('OFF')
 const editDevicerec = ref('None')
 const editDvrvmail = ref('')
 const editProtocol = ref('IPV4')
-const editProvision = ref('')
-const editProvisionwith = ref('IP')
-const editSndcreds = ref('No')
 const editVmailfwd = ref('')
 const saveError = ref('')
 const saving = ref(false)
@@ -100,7 +96,6 @@ async function fetchExtension() {
     editCluster.value = tenantPkey ?? 'default'
     editDesc.value = ext?.desc ?? ext?.description ?? ''
     editActive.value = ext?.active ?? 'YES'
-    editLocation.value = ext?.location ?? 'local'
     editTransport.value = ext?.transport ?? 'udp'
     editCallbackto.value = ext?.callbackto ?? 'desk'
     editCallerid.value = ext?.callerid != null ? String(ext.callerid) : ''
@@ -109,9 +104,6 @@ async function fetchExtension() {
     editDevicerec.value = ext?.devicerec ?? 'None'
     editDvrvmail.value = ext?.dvrvmail ?? ''
     editProtocol.value = ext?.protocol ?? 'IPV4'
-    editProvision.value = ext?.provision ?? ''
-    editProvisionwith.value = ext?.provisionwith ?? 'IP'
-    editSndcreds.value = ext?.sndcreds ?? 'No'
     editVmailfwd.value = ext?.vmailfwd ?? ''
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load extension')
@@ -167,7 +159,6 @@ async function saveEdit(e) {
       cluster: editCluster.value.trim(),
       device: extension.value?.device ?? 'MAILBOX',
       desc: editDesc.value.trim() || undefined,
-      location: editLocation.value,
       active: editActive.value,
       transport: editTransport.value,
       callbackto: editCallbackto.value,
@@ -177,9 +168,6 @@ async function saveEdit(e) {
       devicerec: editDevicerec.value,
       dvrvmail: editDvrvmail.value.trim() || undefined,
       protocol: editProtocol.value,
-      provision: editProvision.value.trim() || undefined,
-      provisionwith: editProvisionwith.value,
-      sndcreds: editSndcreds.value,
       vmailfwd: editVmailfwd.value.trim() || undefined
     }
     await getApiClient().put(`extensions/${encodeURIComponent(pkey.value)}`, body)
@@ -309,12 +297,6 @@ async function saveRuntime(e) {
           <h2 class="detail-heading">Transport</h2>
           <div class="form-fields">
             <FormSelect
-              id="edit-location"
-              v-model="editLocation"
-              label="Location"
-              :options="['local', 'remote']"
-            />
-            <FormSelect
               id="edit-transport"
               v-model="editTransport"
               label="Transport"
@@ -352,19 +334,6 @@ async function saveRuntime(e) {
               v-model="editProtocol"
               label="Protocol"
               :options="['IPV4', 'IPV6']"
-            />
-            <FormField id="edit-provision" v-model="editProvision" label="Provision" type="text" />
-            <FormSelect
-              id="edit-provisionwith"
-              v-model="editProvisionwith"
-              label="Provision with"
-              :options="['IP', 'FQDN']"
-            />
-            <FormSelect
-              id="edit-sndcreds"
-              v-model="editSndcreds"
-              label="Send credentials"
-              :options="['No', 'Once', 'Always']"
             />
             <FormField id="edit-vmailfwd" v-model="editVmailfwd" label="Voicemail forward (email)" type="email" />
           </div>
