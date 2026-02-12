@@ -18,7 +18,6 @@ const tenants = ref([])
 const loading = ref(true)
 const error = ref('')
 const editCluster = ref('default')
-const editConf = ref('')
 const editDevicerec = ref('None')
 const editGreetnum = ref('')
 const editOptions = ref('')
@@ -78,7 +77,6 @@ async function fetchQueue() {
     queue.value = await getApiClient().get(`queues/${encodeURIComponent(pkey.value)}`)
     const clusterRaw = queue.value?.cluster ?? 'default'
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
-    editConf.value = queue.value?.conf ?? ''
     editDevicerec.value = normalizeDevicerec(queue.value?.devicerec)
     const g = queue.value?.greetnum
     editGreetnum.value = (g == null || g === '' || String(g).trim() === 'None') ? '' : String(g).trim()
@@ -120,7 +118,6 @@ async function saveEdit(e) {
       cluster: editCluster.value.trim(),
       devicerec: editDevicerec.value || 'None'
     }
-    if (editConf.value.trim() !== '') body.conf = editConf.value.trim()
     if (editGreetnum.value.trim() !== '') body.greetnum = editGreetnum.value.trim()
     if (editOptions.value.trim() !== '') body.options = editOptions.value.trim()
     await getApiClient().put(`queues/${encodeURIComponent(pkey.value)}`, body)
@@ -222,14 +219,6 @@ const displayName = computed(() => queue.value?.pkey ?? pkey.value ?? '')
               label="Options"
               type="text"
               placeholder="Alpha options"
-            />
-            <FormField
-              id="edit-conf"
-              v-model="editConf"
-              label="Conf"
-              multiline
-              :rows="10"
-              placeholder="Code fragment (optional)"
             />
           </div>
 

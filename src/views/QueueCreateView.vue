@@ -14,7 +14,6 @@ const router = useRouter()
 const toast = useToastStore()
 const pkey = ref('')
 const cluster = ref('default')
-const conf = ref('')
 const devicerec = ref('None')
 const greetnum = ref('')
 const options = ref('')
@@ -63,7 +62,6 @@ onMounted(loadTenants)
 function resetForm() {
   pkey.value = ''
   cluster.value = 'default'
-  conf.value = ''
   devicerec.value = 'None'
   greetnum.value = ''
   options.value = ''
@@ -91,7 +89,6 @@ async function onSubmit(e) {
       cluster: cluster.value.trim(),
       devicerec: devicerec.value || 'None'
     }
-    if (conf.value.trim()) body.conf = conf.value.trim()
     if (greetnum.value.trim()) body.greetnum = greetnum.value.trim()
     if (options.value.trim()) body.options = options.value.trim()
     await getApiClient().post('queues', body)
@@ -179,14 +176,6 @@ async function onSubmit(e) {
           label="Options"
           type="text"
           placeholder="Alpha options"
-        />
-        <FormField
-          id="create-conf"
-          v-model="conf"
-          label="Conf"
-          multiline
-          :rows="10"
-          placeholder="Code fragment (optional)"
         />
       </div>
 

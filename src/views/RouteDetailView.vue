@@ -100,7 +100,7 @@ function syncEditFromRoute() {
   const r = routeData.value
   const tenantPkey = r.tenant_pkey ?? tenantPkeyDisplay(r.cluster)
   editCluster.value = tenantPkey ?? 'default'
-  editDesc.value = r.desc ?? r.description ?? ''
+  editDesc.value = r.description ?? ''
   editActive.value = r.active ?? 'YES'
   editAuth.value = r.auth ?? 'NO'
   editDialplan.value = r.dialplan ?? ''
@@ -158,7 +158,7 @@ async function saveEdit(e) {
   try {
     await getApiClient().put(`routes/${encodeURIComponent(pkey.value)}`, {
       cluster: editCluster.value.trim(),
-      desc: editDesc.value.trim() || undefined,
+      description: editDesc.value.trim() || undefined,
       active: editActive.value,
       auth: editAuth.value,
       dialplan: dialplanTrimmed,

@@ -116,7 +116,7 @@ async function onSubmit(e) {
     await getApiClient().post('routes', {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
-      desc: desc.value.trim() || undefined,
+      description: desc.value.trim() || undefined,
       active: active.value,
       auth: auth.value,
       dialplan: dialplan.value.trim(),
