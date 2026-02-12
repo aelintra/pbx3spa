@@ -344,7 +344,7 @@ async function saveRuntime(e) {
               id="edit-devicerec"
               v-model="editDevicerec"
               label="Devicerec"
-              :options="['None', 'OTR', 'OTRR', 'Inbound.Outbound', 'Both']"
+              :options="['default', 'None', 'OTR', 'OTRR', 'Inbound.Outbound', 'Both']"
             />
             <FormField id="edit-dvrvmail" v-model="editDvrvmail" label="DVR voicemail" type="text" />
             <FormSelect
