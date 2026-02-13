@@ -59,70 +59,59 @@ const editVcl = ref('')
 const editVoipmax = ref('')
 
 function syncEditFromSysglobal() {
-  if (!sysglobal.value) {
-    console.log('syncEditFromSysglobal: sysglobal.value is null/undefined')
-    return
-  }
+  if (!sysglobal.value) return
   const g = sysglobal.value
-  console.log('syncEditFromSysglobal: g =', g)
-  console.log('syncEditFromSysglobal: g.abstimeout =', g.abstimeout)
-  console.log('syncEditFromSysglobal: g.bindaddr =', g.bindaddr)
   
-  editAbstimeout.value = g.abstimeout != null ? String(g.abstimeout) : ''
-  editBindaddr.value = g.bindaddr ?? ''
-  editBindport.value = g.bindport ?? ''
-  editCosstart.value = g.cosstart ?? ''
-  editEdomain.value = g.edomain ?? ''
-  editEmergency.value = g.emergency ?? ''
-  editFqdn.value = g.fqdn ?? ''
-  editFqdninspect.value = g.fqdninspect ?? ''
-  editFqdnprov.value = g.fqdnprov ?? ''
-  editLanguage.value = g.language ?? ''
-  editLocalip.value = g.localip ?? ''
-  editLoglevel.value = g.loglevel != null ? String(g.loglevel) : ''
-  editLogopts.value = g.logopts ?? ''
-  editLogsipdispsize.value = g.logsipdispsize != null ? String(g.logsipdispsize) : ''
-  editLogsipnumfiles.value = g.logsipnumfiles != null ? String(g.logsipnumfiles) : ''
-  editLogsipfilesize.value = g.logsipfilesize != null ? String(g.logsipfilesize) : ''
-  editMaxin.value = g.maxin != null ? String(g.maxin) : ''
-  editMaxout.value = g.maxout != null ? String(g.maxout) : ''
-  editMycommit.value = g.mycommit ?? ''
-  editNatdefault.value = g.natdefault ?? ''
-  editNatparams.value = g.natparams ?? ''
-  editOperator.value = g.operator != null ? String(g.operator) : ''
-  editPwdlen.value = g.pwdlen != null ? String(g.pwdlen) : ''
-  editRecfiledlim.value = g.recfiledlim ?? ''
-  editReclimit.value = g.reclimit ?? ''
-  editRecmount.value = g.recmount ?? ''
-  editRecqdither.value = g.recqdither ?? ''
-  editRecqsearchlim.value = g.recqsearchlim ?? ''
-  editSessiontimout.value = g.sessiontimout != null ? String(g.sessiontimout) : ''
-  editSendedomain.value = g.sendedomain ?? ''
-  editSipflood.value = g.sipflood ?? ''
-  editSipdriver.value = g.sipdriver ?? ''
-  editSitename.value = g.sitename ?? ''
-  editStaticipv4.value = g.staticipv4 ?? ''
-  editSysop.value = g.sysop != null ? String(g.sysop) : ''
-  editSyspass.value = g.syspass != null ? String(g.syspass) : ''
-  editTlsport.value = g.tlsport != null ? String(g.tlsport) : ''
-  editUserotp.value = g.userotp ?? ''
-  editVcl.value = g.vcl ?? ''
-  editVoipmax.value = g.voipmax != null ? String(g.voipmax) : ''
+  // API returns uppercase keys - access them directly
+  editAbstimeout.value = g.ABSTIMEOUT != null ? String(g.ABSTIMEOUT) : ''
+  editBindaddr.value = g.BINDADDR ?? ''
+  editBindport.value = g.BINDPORT ?? ''
+  editCosstart.value = g.COSSTART ?? ''
+  editEdomain.value = g.EDOMAIN ?? ''
+  editEmergency.value = g.EMERGENCY ?? ''
+  editFqdn.value = g.FQDN ?? ''
+  editFqdninspect.value = g.FQDNINSPECT ?? ''
+  editFqdnprov.value = g.FQDNPROV ?? ''
+  editLanguage.value = g.LANGUAGE ?? ''
+  editLocalip.value = g.LOCALIP ?? ''
+  editLoglevel.value = g.LOGLEVEL != null ? String(g.LOGLEVEL) : ''
+  editLogopts.value = g.LOGOPTS ?? ''
+  editLogsipdispsize.value = g.LOGSIPDISPSIZE != null ? String(g.LOGSIPDISPSIZE) : ''
+  editLogsipnumfiles.value = g.LOGSIPNUMFILES != null ? String(g.LOGSIPNUMFILES) : ''
+  editLogsipfilesize.value = g.LOGSIPFILESIZE != null ? String(g.LOGSIPFILESIZE) : ''
+  editMaxin.value = g.MAXIN != null ? String(g.MAXIN) : ''
+  editMaxout.value = g.MAXOUT != null ? String(g.MAXOUT) : ''
+  editMycommit.value = g.MYCOMMIT ?? ''
+  editNatdefault.value = g.NATDEFAULT ?? ''
+  editNatparams.value = g.NATPARAMS ?? ''
+  editOperator.value = g.OPERATOR != null ? String(g.OPERATOR) : ''
+  editPwdlen.value = g.PWDLEN != null ? String(g.PWDLEN) : ''
+  editRecfiledlim.value = g.RECFILEDLIM ?? ''
+  editReclimit.value = g.RECLIMIT ?? ''
+  editRecmount.value = g.RECMOUNT ?? ''
+  editRecqdither.value = g.RECQDITHER ?? ''
+  editRecqsearchlim.value = g.RECQSEARCHLIM ?? ''
+  editSessiontimout.value = g.SESSIONTIMEOUT != null ? String(g.SESSIONTIMEOUT) : ''
+  editSendedomain.value = g.SENDEDOMAIN ?? ''
+  editSipflood.value = g.SIPFLOOD ?? ''
+  editSipdriver.value = g.SIPDRIVER ?? ''
+  editSitename.value = g.SITENAME ?? ''
+  editStaticipv4.value = g.STATICIPV4 ?? ''
+  editSysop.value = g.SYSOP != null ? String(g.SYSOP) : ''
+  editSyspass.value = g.SYSPASS != null ? String(g.SYSPASS) : ''
+  editTlsport.value = g.TLSPORT != null ? String(g.TLSPORT) : ''
+  editUserotp.value = g.USEROTP ?? ''
+  editVcl.value = g.VCL ?? ''
+  editVoipmax.value = g.VOIPMAX != null ? String(g.VOIPMAX) : ''
 }
 
 async function fetchSysglobal() {
   loading.value = true
   error.value = ''
   try {
-    const response = await getApiClient().get('sysglobals')
-    console.log('Sysglobals API response:', response)
-    console.log('Response keys:', Object.keys(response || {}))
-    sysglobal.value = response
+    sysglobal.value = await getApiClient().get('sysglobals')
     syncEditFromSysglobal()
-    console.log('After sync - editAbstimeout:', editAbstimeout.value)
-    console.log('After sync - editBindaddr:', editBindaddr.value)
   } catch (err) {
-    console.error('Error fetching sysglobals:', err)
     error.value = firstErrorMessage(err, 'Failed to load system globals')
     sysglobal.value = null
   } finally {
@@ -153,47 +142,47 @@ async function saveEdit(e) {
   try {
     const body = {}
     
-    // Only include fields that have values or explicitly set to null
-    if (editAbstimeout.value !== '') body.abstimeout = editAbstimeout.value ? parseInt(editAbstimeout.value, 10) : null
-    if (editBindaddr.value !== '') body.bindaddr = editBindaddr.value || null
-    if (editBindport.value !== '') body.bindport = editBindport.value || null
-    if (editCosstart.value !== '') body.cosstart = editCosstart.value || null
-    if (editEdomain.value !== '') body.edomain = editEdomain.value || null
-    if (editEmergency.value !== '') body.emergency = editEmergency.value || null
-    if (editFqdn.value !== '') body.fqdn = editFqdn.value || null
-    if (editFqdninspect.value !== '') body.fqdninspect = editFqdninspect.value || null
-    if (editFqdnprov.value !== '') body.fqdnprov = editFqdnprov.value || null
-    if (editLanguage.value !== '') body.language = editLanguage.value || null
-    if (editLocalip.value !== '') body.localip = editLocalip.value || null
-    if (editLoglevel.value !== '') body.loglevel = editLoglevel.value ? parseInt(editLoglevel.value, 10) : null
-    if (editLogopts.value !== '') body.logopts = editLogopts.value || null
-    if (editLogsipdispsize.value !== '') body.logsipdispsize = editLogsipdispsize.value ? parseInt(editLogsipdispsize.value, 10) : null
-    if (editLogsipnumfiles.value !== '') body.logsipnumfiles = editLogsipnumfiles.value ? parseInt(editLogsipnumfiles.value, 10) : null
-    if (editLogsipfilesize.value !== '') body.logsipfilesize = editLogsipfilesize.value ? parseInt(editLogsipfilesize.value, 10) : null
-    if (editMaxin.value !== '') body.maxin = editMaxin.value ? parseInt(editMaxin.value, 10) : null
-    if (editMaxout.value !== '') body.maxout = editMaxout.value ? parseInt(editMaxout.value, 10) : null
-    if (editMycommit.value !== '') body.mycommit = editMycommit.value || null
-    if (editNatdefault.value !== '') body.natdefault = editNatdefault.value || null
-    if (editNatparams.value !== '') body.natparams = editNatparams.value || null
-    if (editOperator.value !== '') body.operator = editOperator.value ? parseInt(editOperator.value, 10) : null
-    if (editPwdlen.value !== '') body.pwdlen = editPwdlen.value ? parseInt(editPwdlen.value, 10) : null
-    if (editRecfiledlim.value !== '') body.recfiledlim = editRecfiledlim.value || null
-    if (editReclimit.value !== '') body.reclimit = editReclimit.value || null
-    if (editRecmount.value !== '') body.recmount = editRecmount.value || null
-    if (editRecqdither.value !== '') body.recqdither = editRecqdither.value || null
-    if (editRecqsearchlim.value !== '') body.recqsearchlim = editRecqsearchlim.value || null
-    if (editSessiontimout.value !== '') body.sessiontimout = editSessiontimout.value ? parseInt(editSessiontimout.value, 10) : null
-    if (editSendedomain.value !== '') body.sendedomain = editSendedomain.value || null
-    if (editSipflood.value !== '') body.sipflood = editSipflood.value || null
-    if (editSipdriver.value !== '') body.sipdriver = editSipdriver.value || null
-    if (editSitename.value !== '') body.sitename = editSitename.value || null
-    if (editStaticipv4.value !== '') body.staticipv4 = editStaticipv4.value || null
-    if (editSysop.value !== '') body.sysop = editSysop.value ? parseInt(editSysop.value, 10) : null
-    if (editSyspass.value !== '') body.syspass = editSyspass.value ? parseInt(editSyspass.value, 10) : null
-    if (editTlsport.value !== '') body.tlsport = editTlsport.value ? parseInt(editTlsport.value, 10) : null
-    if (editUserotp.value !== '') body.userotp = editUserotp.value || null
-    if (editVcl.value !== '') body.vcl = editVcl.value || null
-    if (editVoipmax.value !== '') body.voipmax = editVoipmax.value ? parseInt(editVoipmax.value, 10) : null
+    // Send all fields - empty strings become null for nullable fields
+    body.abstimeout = editAbstimeout.value !== '' && editAbstimeout.value != null ? parseInt(editAbstimeout.value, 10) : null
+    body.bindaddr = editBindaddr.value && editBindaddr.value.trim() !== '' ? editBindaddr.value.trim() : null
+    body.bindport = editBindport.value && editBindport.value.trim() !== '' ? editBindport.value.trim() : null
+    body.cosstart = editCosstart.value && editCosstart.value.trim() !== '' ? editCosstart.value.trim() : null
+    body.edomain = editEdomain.value && editEdomain.value.trim() !== '' ? editEdomain.value.trim() : null
+    body.emergency = editEmergency.value && editEmergency.value.trim() !== '' ? editEmergency.value.trim() : null
+    body.fqdn = editFqdn.value && editFqdn.value.trim() !== '' ? editFqdn.value.trim() : null
+    body.fqdninspect = editFqdninspect.value && editFqdninspect.value.trim() !== '' ? editFqdninspect.value.trim() : null
+    body.fqdnprov = editFqdnprov.value && editFqdnprov.value.trim() !== '' ? editFqdnprov.value.trim() : null
+    body.language = editLanguage.value && editLanguage.value.trim() !== '' ? editLanguage.value.trim() : null
+    body.localip = editLocalip.value && editLocalip.value.trim() !== '' ? editLocalip.value.trim() : null
+    body.loglevel = editLoglevel.value !== '' && editLoglevel.value != null ? parseInt(editLoglevel.value, 10) : null
+    body.logopts = editLogopts.value && editLogopts.value.trim() !== '' ? editLogopts.value.trim() : null
+    body.logsipdispsize = editLogsipdispsize.value !== '' && editLogsipdispsize.value != null ? parseInt(editLogsipdispsize.value, 10) : null
+    body.logsipnumfiles = editLogsipnumfiles.value !== '' && editLogsipnumfiles.value != null ? parseInt(editLogsipnumfiles.value, 10) : null
+    body.logsipfilesize = editLogsipfilesize.value !== '' && editLogsipfilesize.value != null ? parseInt(editLogsipfilesize.value, 10) : null
+    body.maxin = editMaxin.value !== '' && editMaxin.value != null ? parseInt(editMaxin.value, 10) : null
+    body.maxout = editMaxout.value !== '' && editMaxout.value != null ? parseInt(editMaxout.value, 10) : null
+    body.mycommit = editMycommit.value && editMycommit.value.trim() !== '' ? editMycommit.value.trim() : null
+    body.natdefault = editNatdefault.value && editNatdefault.value.trim() !== '' ? editNatdefault.value.trim() : null
+    body.natparams = editNatparams.value && editNatparams.value.trim() !== '' ? editNatparams.value.trim() : null
+    body.operator = editOperator.value !== '' && editOperator.value != null ? parseInt(editOperator.value, 10) : null
+    body.pwdlen = editPwdlen.value !== '' && editPwdlen.value != null ? parseInt(editPwdlen.value, 10) : null
+    body.recfiledlim = editRecfiledlim.value && editRecfiledlim.value.trim() !== '' ? editRecfiledlim.value.trim() : null
+    body.reclimit = editReclimit.value && editReclimit.value.trim() !== '' ? editReclimit.value.trim() : null
+    body.recmount = editRecmount.value && editRecmount.value.trim() !== '' ? editRecmount.value.trim() : null
+    body.recqdither = editRecqdither.value && editRecqdither.value.trim() !== '' ? editRecqdither.value.trim() : null
+    body.recqsearchlim = editRecqsearchlim.value && editRecqsearchlim.value.trim() !== '' ? editRecqsearchlim.value.trim() : null
+    body.sessiontimout = editSessiontimout.value !== '' && editSessiontimout.value != null ? parseInt(editSessiontimout.value, 10) : null
+    body.sendedomain = editSendedomain.value && editSendedomain.value.trim() !== '' ? editSendedomain.value.trim() : null
+    body.sipflood = editSipflood.value && editSipflood.value.trim() !== '' ? editSipflood.value.trim() : null
+    body.sipdriver = editSipdriver.value && editSipdriver.value.trim() !== '' ? editSipdriver.value.trim() : null
+    body.sitename = editSitename.value && editSitename.value.trim() !== '' ? editSitename.value.trim() : null
+    body.staticipv4 = editStaticipv4.value && editStaticipv4.value.trim() !== '' ? editStaticipv4.value.trim() : null
+    body.sysop = editSysop.value !== '' && editSysop.value != null ? parseInt(editSysop.value, 10) : null
+    body.syspass = editSyspass.value !== '' && editSyspass.value != null ? parseInt(editSyspass.value, 10) : null
+    body.tlsport = editTlsport.value !== '' && editTlsport.value != null ? parseInt(editTlsport.value, 10) : null
+    body.userotp = editUserotp.value && editUserotp.value.trim() !== '' ? editUserotp.value.trim() : null
+    body.vcl = editVcl.value && editVcl.value.trim() !== '' ? editVcl.value.trim() : null
+    body.voipmax = editVoipmax.value !== '' && editVoipmax.value != null ? parseInt(editVoipmax.value, 10) : null
     
     await getApiClient().put('sysglobals', body)
     toast.show('System globals saved')
