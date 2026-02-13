@@ -92,19 +92,24 @@ async function loadAgents() {
   try {
     // Load agents first - don't wait for tenants to show agents list
     const agentsRes = await getApiClient().get('agents')
-    agents.value = normalizeList(agentsRes)
+    const agentsList = normalizeList(agentsRes)
+    console.log('Agents loaded:', agentsList.length, 'items')
+    agents.value = agentsList
     loading.value = false // Set loading false after agents load
     
     // Load tenants separately - don't block on this
     try {
       const tenantsRes = await getApiClient().get('tenants')
-      tenants.value = normalizeList(tenantsRes, 'tenants')
+      const tenantsList = normalizeList(tenantsRes, 'tenants')
+      console.log('Tenants loaded:', tenantsList.length, 'items')
+      tenants.value = tenantsList
     } catch (tenantsErr) {
       // If tenants fail, continue - agents list can still work
       console.warn('Failed to load tenants:', tenantsErr)
       tenants.value = []
     }
   } catch (err) {
+    console.error('Failed to load agents:', err)
     error.value = firstErrorMessage(err, 'Failed to load agents')
     loading.value = false
   }
