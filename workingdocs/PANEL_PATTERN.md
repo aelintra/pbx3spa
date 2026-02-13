@@ -120,9 +120,9 @@ When a form has fields that select a **destination** (e.g. open route, closed ro
 - **Show all groups:** FormSelect renders all optgroups in optionGroups; groups with no items show a "—" placeholder so the user always sees the full set of destination types (Queues, Extensions, IVRs, CustomApps, Routes). Do not hide or omit a group just because it is empty.
 - **Reference:** InboundRouteCreateView and InboundRouteDetailView: `destinationGroups` computed from destinations + routes, passed as `option-groups` to FormSelect for open route and closed route.
 
-### Fixed-choice fields (FormSelect, not free text)
+### Fixed-choice fields (Pills vs Select — 2–5 use pills, 6+ use dropdown)
 
-When the API or schema defines a **fixed set of allowed values** (e.g. validation rule `in:YES,NO` or a known enum), use **FormSelect** with that exact list. Do **not** use a free-text FormField with a placeholder listing the options.
+When the API or schema defines a **fixed set of allowed values** (e.g. validation rule `in:YES,NO` or a known enum), choose the control based on option count: **FormToggle** for YES/NO, **segmented pills** for 2–5 options, **FormSelect** for 6+ options. Do **not** use a free-text FormField with a placeholder listing the options.
 
 - **Examples:** `devicerec`, `strategy` (queue), `active` (YES/NO), `disa`, `iaxreg`, `pjsipreg`.
 - **Source of truth:** Cross-check the backend controller’s validation (e.g. `updateableColumns`) and/or schema comments to get the exact allowed values. Keep the SPA option list in sync with the API so validation never fails due to a typo or extra option.
@@ -179,7 +179,11 @@ Use the values the **API and schema expect**. For example: `active` and `moh` ar
 
 - **List**: `/{resource}s` (e.g., `/ivrs`, `/tenants`)
 - **Create**: `/{resource}s/new` (e.g., `/ivrs/new`, `/tenants/new`)
-- **Detail**: `/{resource}s/:pkey` (e.g., `/ivrs/:pkey`, `/tenants/:pkey`)
+- **Detail**: 
+  - **Tenant-scoped resources** (Extension, Queue, Agent, Route, Ivr, Trunk, InboundRoute): `/{resource}s/:shortuid` (e.g., `/extensions/:shortuid`, `/queues/:shortuid`)
+  - **Globally unique resources** (Tenant): `/{resource}s/:pkey` (e.g., `/tenants/:pkey`)
+
+**Important**: Use `shortuid` (not `pkey`) for tenant-scoped resources because `pkey` is only unique per tenant, not globally. Using `shortuid` ensures correct routing when the same `pkey` exists in multiple tenants.
 
 ### Router Configuration
 
@@ -193,14 +197,24 @@ import {Resource}DetailView from '../views/{Resource}DetailView.vue'
 // Inside routes array:
 { path: '{resources}', name: '{resources}', component: {Resource}ListView },
 { path: '{resources}/new', name: '{resource}-create', component: {Resource}CreateView },
+// For tenant-scoped resources (Extension, Queue, Agent, Route, Ivr, Trunk, InboundRoute):
+{ path: '{resources}/:shortuid', name: '{resource}-detail', component: {Resource}DetailView },
+// For globally unique resources (Tenant):
 { path: '{resources}/:pkey', name: '{resource}-detail', component: {Resource}DetailView },
 ```
 
-**Example**:
+**Example** (tenant-scoped resource):
 ```javascript
 { path: 'ivrs', name: 'ivrs', component: IvrsListView },
 { path: 'ivrs/new', name: 'ivr-create', component: IvrCreateView },
-{ path: 'ivrs/:pkey', name: 'ivr-detail', component: IvrDetailView },
+{ path: 'ivrs/:shortuid', name: 'ivr-detail', component: IvrDetailView },
+```
+
+**Example** (globally unique resource):
+```javascript
+{ path: 'tenants', name: 'tenants', component: TenantsListView },
+{ path: 'tenants/new', name: 'tenant-create', component: TenantCreateView },
+{ path: 'tenants/:pkey', name: 'tenant-detail', component: TenantDetailView },
 ```
 
 ---
@@ -210,10 +224,18 @@ import {Resource}DetailView from '../views/{Resource}DetailView.vue'
 ### Endpoints
 
 - **List**: `GET /{resources}` (e.g., `GET /ivrs`, `GET /tenants`)
-- **Get One**: `GET /{resources}/{pkey}` (e.g., `GET /ivrs/1234`)
+- **Get One**: 
+  - **Tenant-scoped resources**: `GET /{resources}/{shortuid}` (e.g., `GET /extensions/abc12345`, `GET /queues/xyz67890`)
+  - **Globally unique resources**: `GET /{resources}/{pkey}` (e.g., `GET /tenants/default`)
 - **Create**: `POST /{resources}` (e.g., `POST /ivrs`)
-- **Update**: `PUT /{resources}/{pkey}` (e.g., `PUT /ivrs/1234`)
-- **Delete**: `DELETE /{resources}/{pkey}` (e.g., `DELETE /ivrs/1234`)
+- **Update**: 
+  - **Tenant-scoped resources**: `PUT /{resources}/{shortuid}` (e.g., `PUT /extensions/abc12345`)
+  - **Globally unique resources**: `PUT /{resources}/{pkey}` (e.g., `PUT /tenants/default`)
+- **Delete**: 
+  - **Tenant-scoped resources**: `DELETE /{resources}/{shortuid}` (e.g., `DELETE /extensions/abc12345`)
+  - **Globally unique resources**: `DELETE /{resources}/{pkey}` (e.g., `DELETE /tenants/default`)
+
+**Important**: The API uses route model binding. For tenant-scoped resources, the backend models implement `resolveRouteBinding()` to resolve by `shortuid` (with fallback to `pkey` for backward compatibility). The frontend must send `shortuid` in URLs to ensure correct resolution when the same `pkey` exists in multiple tenants.
 
 ### Response Formats
 
@@ -253,22 +275,71 @@ import {Resource}DetailView from '../views/{Resource}DetailView.vue'
 ```javascript
 import { getApiClient } from '@/api/client'
 
-// GET request
+// GET request (list)
 const response = await getApiClient().get('resources')
-const resource = await getApiClient().get(`resources/${encodeURIComponent(pkey)}`)
+
+// GET request (single resource - tenant-scoped)
+const shortuid = computed(() => route.params.shortuid)
+const resource = await getApiClient().get(`resources/${encodeURIComponent(shortuid.value)}`)
+
+// GET request (single resource - globally unique)
+const pkey = computed(() => route.params.pkey)
+const resource = await getApiClient().get(`resources/${encodeURIComponent(pkey.value)}`)
 
 // POST request
 const created = await getApiClient().post('resources', { pkey: '1234', ... })
 
-// PUT request
-await getApiClient().put(`resources/${encodeURIComponent(pkey)}`, { ... })
+// PUT request (tenant-scoped)
+await getApiClient().put(`resources/${encodeURIComponent(shortuid.value)}`, { ... })
 
-// DELETE request
-await getApiClient().delete(`resources/${encodeURIComponent(pkey)}`)
+// PUT request (globally unique)
+await getApiClient().put(`resources/${encodeURIComponent(pkey.value)}`, { ... })
+
+// DELETE request (tenant-scoped)
+await getApiClient().delete(`resources/${encodeURIComponent(shortuid.value)}`)
+
+// DELETE request (globally unique)
+await getApiClient().delete(`resources/${encodeURIComponent(pkey.value)}`)
 
 // With query params
 const response = await getApiClient().get('destinations', { params: { cluster: 'default' } })
 ```
+
+---
+
+## Routing Identifier Requirements
+
+### shortuid vs pkey: When to Use Which
+
+**Tenant-scoped resources** (Extension, Queue, Agent, Route, Ivr, Trunk, InboundRoute):
+- **Use `shortuid`** for routing and API lookups
+- **Reason**: `pkey` is only unique per tenant, not globally. Using `shortuid` ensures correct routing when the same `pkey` exists in multiple tenants (e.g., extension "1001" in tenant "default" vs extension "1001" in tenant "acme").
+- **Frontend**: Route params use `:shortuid`, API calls use `shortuid` from route params
+- **Backend**: Models implement `resolveRouteBinding()` to resolve by `shortuid` first, with fallback to `pkey` for backward compatibility
+
+**Globally unique resources** (Tenant):
+- **Use `pkey`** for routing and API lookups
+- **Reason**: `pkey` is globally unique for tenants (it is the tenant identifier itself)
+- **Frontend**: Route params use `:pkey`, API calls use `pkey` from route params
+- **Backend**: Standard route model binding using `pkey` as primary key
+
+### Identifier Fields in Schema
+
+- **`id`** (KSUID, 27 chars): PRIMARY KEY, absolute uniqueness guarantee across PBX instances (used for tenant migration/merging)
+- **`shortuid`** (8 chars): UNIQUE constraint, globally unique within a PBX instance (used for routing and user-facing operations)
+- **`pkey`**: Tenant-scoped unique (for tenant-scoped resources) or globally unique (for tenants)
+
+### Implementation Checklist
+
+When creating or refactoring a panel for a tenant-scoped resource:
+
+- [ ] Router uses `:shortuid` parameter (not `:pkey`)
+- [ ] Detail view reads `shortuid` from route params: `const shortuid = computed(() => route.params.shortuid)`
+- [ ] List view links use `shortuid`: `router-link :to="{ name: 'resource-detail', params: { shortuid: item.shortuid } }"`
+- [ ] Delete functions in list views use `shortuid`: `await getApiClient().delete(\`resources/${encodeURIComponent(shortuid)}\`)`
+- [ ] Detail view API calls use `shortuid`: `await getApiClient().get(\`resources/${encodeURIComponent(shortuid.value)}\`)`
+- [ ] Watch statements watch `shortuid`: `watch(shortuid, fetchResource)`
+- [ ] Backend model implements `resolveRouteBinding()` to resolve by `shortuid`
 
 ---
 
@@ -762,12 +833,20 @@ function syncEditFromResource() {
         <tr v-for="item in sortedItems" :key="item.pkey">
           <td>{{ item.field }}</td>
           <td>
+            <!-- For tenant-scoped resources: -->
+            <router-link :to="{ name: '{resource}-detail', params: { shortuid: item.shortuid } }"
+            
+            <!-- For globally unique resources: -->
             <router-link :to="{ name: '{resource}-detail', params: { pkey: item.pkey } }" 
                          class="cell-link cell-link-icon" title="Edit">
               <!-- Edit icon -->
             </router-link>
           </td>
           <td>
+            <!-- For tenant-scoped resources: -->
+            <button @click="askConfirmDelete(item.shortuid)" class="cell-link cell-link-delete">
+            
+            <!-- For globally unique resources: -->
             <button @click="askConfirmDelete(item.pkey)" class="cell-link cell-link-delete">
               <!-- Delete icon -->
             </button>
@@ -1389,7 +1468,9 @@ catch (err) {
 - Click "Create" button → Navigate to `{resource}-create` route
 
 ### List → Edit
-- Click Edit icon → Navigate to `{resource}-detail` route with `pkey` param
+- Click Edit icon → Navigate to `{resource}-detail` route with `shortuid` param (for tenant-scoped resources) or `pkey` param (for globally unique resources)
+- **Tenant-scoped**: `router-link :to="{ name: 'resource-detail', params: { shortuid: item.shortuid } }"`
+- **Globally unique**: `router-link :to="{ name: 'resource-detail', params: { pkey: item.pkey } }"`
 - Always opens in edit mode (no read-only view)
 
 ### Create/Edit → List
@@ -1486,6 +1567,9 @@ const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
 const deleting = ref(false)
+// For tenant-scoped resources:
+const shortuid = computed(() => route.params.shortuid)
+// For globally unique resources:
 const pkey = computed(() => route.params.pkey)
 
 // Form fields (Create view)
@@ -1535,7 +1619,24 @@ function syncEditFromResource() {
   clusterValidation.reset()
 }
 
-// Fetch resource data (Edit view)
+// Fetch resource data (Edit view - tenant-scoped resources)
+async function fetchResource() {
+  if (!shortuid.value) return
+  loading.value = true
+  error.value = ''
+  try {
+    resource.value = await getApiClient().get(`{resources}/${encodeURIComponent(shortuid.value)}`)
+    syncEditFromResource()
+    if (editCluster.value) loadDestinations()
+  } catch (err) {
+    error.value = err.data?.message || err.message || 'Failed to load resource'
+    resource.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+// Fetch resource data (Edit view - globally unique resources)
 async function fetchResource() {
   if (!pkey.value) return
   loading.value = true
@@ -1795,6 +1896,9 @@ async function onSubmit(e) {
     }
     const resource = await getApiClient().post('resources', body)
     toast.show(`Resource ${resource.pkey} created`, 'success')
+    // For tenant-scoped resources:
+    router.push({ name: 'resource-detail', params: { shortuid: resource.shortuid } })
+    // For globally unique resources:
     router.push({ name: 'resource-detail', params: { pkey: resource.pkey } })
   } catch (err) {
     const errors = err?.data
@@ -2244,6 +2348,9 @@ const editDescription = ref('')
 const fieldValidation = useFormValidation(editField, validateField)
 const clusterValidation = useFormValidation(editCluster, validateTenant)
 
+// For tenant-scoped resources:
+const shortuid = computed(() => route.params.shortuid)
+// For globally unique resources:
 const pkey = computed(() => route.params.pkey)
 
 // Tenant resolution
