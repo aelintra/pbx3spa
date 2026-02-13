@@ -16,6 +16,7 @@ const toast = useToastStore()
 const pkey = ref('')
 const cluster = ref('default')
 const desc = ref('')
+const cname = ref('')
 const active = ref('YES')
 const auth = ref('NO')
 const dialplan = ref('')
@@ -81,6 +82,7 @@ function resetForm() {
   pkey.value = ''
   cluster.value = 'default'
   desc.value = ''
+  cname.value = ''
   active.value = 'YES'
   auth.value = 'NO'
   dialplan.value = ''
@@ -113,19 +115,21 @@ async function onSubmit(e) {
   }
   loading.value = true
   try {
-    await getApiClient().post('routes', {
+    const body = {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
-      description: desc.value.trim() || undefined,
       active: active.value,
       auth: auth.value,
       dialplan: dialplan.value.trim(),
-      path1: path1.value.trim() || undefined,
-      path2: path2.value.trim() || undefined,
-      path3: path3.value.trim() || undefined,
-      path4: path4.value.trim() || undefined,
       strategy: strategy.value
-    })
+    }
+    if (desc.value.trim()) body.description = desc.value.trim()
+    if (cname.value.trim()) body.cname = cname.value.trim()
+    if (path1.value.trim()) body.path1 = path1.value.trim()
+    if (path2.value.trim()) body.path2 = path2.value.trim()
+    if (path3.value.trim()) body.path3 = path3.value.trim()
+    if (path4.value.trim()) body.path4 = path4.value.trim()
+    await getApiClient().post('routes', body)
     toast.show(`Route ${pkey.value.trim()} created`)
     resetForm()
     await nextTick()
@@ -207,6 +211,24 @@ onMounted(() => {
           hint="Unique identifier for this route (ring group)."
           @blur="pkeyValidation.onBlur"
         />
+        <FormField
+          id="desc"
+          v-model="desc"
+          label="Description"
+          type="text"
+          placeholder="Freeform description"
+        />
+        <FormField
+          id="cname"
+          v-model="cname"
+          label="Common name"
+          type="text"
+          placeholder="Display name"
+        />
+      </div>
+
+      <h2 class="detail-heading">Settings</h2>
+      <div class="form-fields">
         <FormSelect
           id="cluster"
           v-model="cluster"
@@ -219,23 +241,13 @@ onMounted(() => {
           hint="The tenant this route belongs to."
           @blur="clusterValidation.onBlur"
         />
-        <FormField
-          id="desc"
-          v-model="desc"
-          label="Description (optional)"
-          type="text"
-          placeholder="Freeform description"
-        />
-      </div>
-
-      <h2 class="detail-heading">Settings</h2>
-      <div class="form-fields">
         <FormToggle
           id="active"
           v-model="active"
-          label="Active?"
+          label="Active"
           yes-value="YES"
           no-value="NO"
+          hint="If off, the route will not be available."
         />
         <FormToggle
           id="auth"
@@ -243,6 +255,7 @@ onMounted(() => {
           label="Auth (PIN dial)"
           yes-value="YES"
           no-value="NO"
+          hint="Require PIN for dialing."
         />
         <FormSelect
           id="strategy"

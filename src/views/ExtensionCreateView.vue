@@ -14,7 +14,7 @@ const router = useRouter()
 const toast = useToastStore()
 const protocol = ref('')
 const pkey = ref('')
-const cluster = ref('')
+const cluster = ref('default')
 const desc = ref('')
 const macaddr = ref('')
 const tenants = ref([])
@@ -44,7 +44,7 @@ const protocolChosen = computed(() => !!protocol.value)
 function resetForm() {
   protocol.value = ''
   pkey.value = ''
-  cluster.value = ''
+  cluster.value = 'default'
   desc.value = ''
   macaddr.value = ''
   pkeyValidation.reset()

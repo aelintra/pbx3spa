@@ -10,7 +10,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import { normalizeList } from '@/utils/listResponse'
 import { OPTION_ENTRIES, buildIvrPayload } from '@/constants/ivrDestinations'
-import { fieldErrors } from '@/utils/formErrors'
+import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -234,20 +234,13 @@ async function onSubmit(e) {
         greetnumValidation.touched.value = true
         greetnumValidation.error.value = Array.isArray(errors.greetnum) ? errors.greetnum[0] : errors.greetnum
       }
-      
-      // Show general error if no field-specific errors
-      const first = Object.values(errors).flat()[0]
-      error.value = first || err.message
-      
-      // Focus first error field
       await nextTick()
       focusFirstError(validations, (id) => {
         if (id === 'pkey' && pkeyInput.value) return pkeyInput.value
         return document.getElementById(id)
       })
-    } else {
-      error.value = err.data?.message ?? err.message ?? 'Failed to create IVR'
     }
+    error.value = firstErrorMessage(err, 'Failed to create IVR')
   } finally {
     loading.value = false
   }

@@ -1,11 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-
-// Debug form reset: set to true and open browser Console to trace refs/child props when debugging.
-const DEBUG_AGENT_RESET = false
-function debug(...args) {
-  if (DEBUG_AGENT_RESET) console.log('[AgentCreate]', ...args)
-}
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
@@ -22,6 +16,9 @@ const pkey = ref('')
 const cluster = ref('default')
 const name = ref('')
 const passwd = ref('')
+const cname = ref('')
+const description = ref('')
+const extlen = ref('')
 const queue1 = ref('')
 const queue2 = ref('')
 const queue3 = ref('')
@@ -35,12 +32,6 @@ const queuesLoading = ref(true)
 const error = ref('')
 const loading = ref(false)
 const pkeyInput = ref(null)
-const clusterSelect = ref(null)
-const nameInput = ref(null)
-const passwdInput = ref(null)
-const isMounted = ref(true)
-const successMessage = ref('')
-const fieldsKey = ref(0)
 
 const pkeyValidation = useFormValidation(pkey, validateAgentPkey)
 const clusterValidation = useFormValidation(cluster, validateTenant)
@@ -112,25 +103,24 @@ async function loadQueues() {
 onMounted(() => {
   loadTenants().then(() => loadQueues())
 })
-onUnmounted(() => { isMounted.value = false })
 
-watch(cluster, clearQueuesWhenTenantChanges)
-
-function clearQueuesWhenTenantChanges() {
+watch(cluster, () => {
   queue1.value = ''
   queue2.value = ''
   queue3.value = ''
   queue4.value = ''
   queue5.value = ''
   queue6.value = ''
-}
+})
 
 function resetForm() {
-  debug('resetForm: setting refs to defaults')
   pkey.value = ''
   cluster.value = 'default'
   name.value = ''
   passwd.value = ''
+  cname.value = ''
+  description.value = ''
+  extlen.value = ''
   queue1.value = ''
   queue2.value = ''
   queue3.value = ''
@@ -142,12 +132,29 @@ function resetForm() {
   nameValidation.reset()
   passwdValidation.reset()
   error.value = ''
-  debug('resetForm: refs now', { pkey: pkey.value, cluster: cluster.value, name: name.value, passwd: passwd.value })
+}
+
+function goBack() {
+  router.push({ name: 'agents' })
+}
+
+function onKeydown(e) {
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    goBack()
+  }
+}
+
+function parseNum(v) {
+  if (v === '' || v == null) return undefined
+  const n = Number(v)
+  return isNaN(n) ? undefined : n
 }
 
 async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
+
   const validations = [
     { ...pkeyValidation, fieldId: 'pkey' },
     { ...clusterValidation, fieldId: 'cluster' },
@@ -162,6 +169,7 @@ async function onSubmit(e) {
     })
     return
   }
+
   loading.value = true
   try {
     const pkeyNum = parseInt(String(pkey.value).trim(), 10)
@@ -172,76 +180,59 @@ async function onSubmit(e) {
       name: name.value.trim(),
       passwd: passwdNum
     }
+    if (cname.value.trim()) body.cname = cname.value.trim()
+    if (description.value.trim()) body.description = description.value.trim()
+    const extlenNum = parseNum(extlen.value)
+    if (extlenNum !== undefined) body.extlen = extlenNum
     body.queue1 = queue1.value?.trim() || null
     body.queue2 = queue2.value?.trim() || null
     body.queue3 = queue3.value?.trim() || null
     body.queue4 = queue4.value?.trim() || null
     body.queue5 = queue5.value?.trim() || null
     body.queue6 = queue6.value?.trim() || null
+
     await getApiClient().post('agents', body)
-    if (!isMounted.value) return
     toast.show(`Agent ${pkeyNum} created`)
-    successMessage.value = `Agent ${pkeyNum} created. Create another or Cancel to exit.`
-    loading.value = false
+    resetForm()
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    // Defer reset to avoid Vue internal emitsOptions error; then bump key in a
-    // second tick so fields re-mount after refs have flushed.
-    setTimeout(() => {
-      if (!isMounted.value) return
-      resetForm()
-      debug('50ms: refs after reset (before key)', { pkey: pkey.value, cluster: cluster.value, name: name.value, passwd: passwd.value })
-      setTimeout(() => {
-        if (!isMounted.value) return
-        debug('100ms: refs right before fieldsKey++', { pkey: pkey.value, cluster: cluster.value, name: name.value, passwd: passwd.value })
-        fieldsKey.value += 1
-        debug('100ms: fieldsKey is now', fieldsKey.value)
-      }, 50)
-    }, 50)
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
-      if (errors.pkey) { pkeyValidation.touched.value = true; pkeyValidation.error.value = Array.isArray(errors.pkey) ? errors.pkey[0] : errors.pkey }
-      if (errors.cluster) { clusterValidation.touched.value = true; clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster }
-      if (errors.name) { nameValidation.touched.value = true; nameValidation.error.value = Array.isArray(errors.name) ? errors.name[0] : errors.name }
-      if (errors.passwd) { passwdValidation.touched.value = true; passwdValidation.error.value = Array.isArray(errors.passwd) ? errors.passwd[0] : errors.passwd }
+      if (errors.pkey) {
+        pkeyValidation.touched.value = true
+        pkeyValidation.error.value = Array.isArray(errors.pkey) ? errors.pkey[0] : errors.pkey
+      }
+      if (errors.cluster) {
+        clusterValidation.touched.value = true
+        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
+      }
+      if (errors.name) {
+        nameValidation.touched.value = true
+        nameValidation.error.value = Array.isArray(errors.name) ? errors.name[0] : errors.name
+      }
+      if (errors.passwd) {
+        passwdValidation.touched.value = true
+        passwdValidation.error.value = Array.isArray(errors.passwd) ? errors.passwd[0] : errors.passwd
+      }
       await nextTick()
-      focusFirstError(
-        [
-          { ...pkeyValidation, fieldId: 'pkey' },
-          { ...clusterValidation, fieldId: 'cluster' },
-          { ...nameValidation, fieldId: 'name' },
-          { ...passwdValidation, fieldId: 'passwd' }
-        ],
-        (id) => (id === 'pkey' && pkeyInput.value ? pkeyInput.value : document.getElementById(id))
-      )
+      focusFirstError(validations, (id) => {
+        if (id === 'pkey' && pkeyInput.value) return pkeyInput.value
+        return document.getElementById(id)
+      })
     }
     error.value = firstErrorMessage(err, 'Failed to create agent')
   } finally {
     loading.value = false
   }
 }
-
-function goBack() {
-  router.push({ name: 'agents' })
-}
-
-function onKeydown(e) {
-  if (e.key === 'Escape') {
-    e.preventDefault()
-    goBack()
-  }
-}
 </script>
 
 <template>
   <div class="create-view" @keydown="onKeydown">
-    <header class="create-header">
-      <h1>Create agent</h1>
-    </header>
+    <h1>Create agent</h1>
 
-    <form class="form" @submit="onSubmit" @input="successMessage = ''">
-      <p v-if="successMessage" class="success" role="status">{{ successMessage }}</p>
+    <form class="form" @submit="onSubmit">
       <p v-if="error" id="agent-create-error" class="error" role="alert">{{ error }}</p>
 
       <div class="actions actions-top">
@@ -257,8 +248,6 @@ function onKeydown(e) {
           id="pkey"
           ref="pkeyInput"
           v-model="pkey"
-          :input-key="fieldsKey"
-          :debug-reset="DEBUG_AGENT_RESET"
           label="Agent number"
           type="number"
           min="1000"
@@ -271,25 +260,20 @@ function onKeydown(e) {
           @blur="pkeyValidation.onBlur"
         />
         <FormSelect
-          ref="clusterSelect"
           id="cluster"
           v-model="cluster"
-          :input-key="fieldsKey"
-          :debug-reset="DEBUG_AGENT_RESET"
           label="Tenant"
           :options="tenantOptionsForSelect"
           :error="clusterValidation.error.value"
           :touched="clusterValidation.touched.value"
           :required="true"
           :loading="tenantsLoading"
+          hint="The tenant this agent belongs to."
           @blur="clusterValidation.onBlur"
         />
         <FormField
-          ref="nameInput"
           id="name"
           v-model="name"
-          :input-key="fieldsKey"
-          :debug-reset="DEBUG_AGENT_RESET"
           label="Name"
           type="text"
           placeholder="e.g. agent_name"
@@ -300,11 +284,8 @@ function onKeydown(e) {
           @blur="nameValidation.onBlur"
         />
         <FormField
-          ref="passwdInput"
           id="passwd"
           v-model="passwd"
-          :input-key="fieldsKey"
-          :debug-reset="DEBUG_AGENT_RESET"
           label="Password"
           type="number"
           min="1001"
@@ -316,59 +297,76 @@ function onKeydown(e) {
           hint="1001–9999."
           @blur="passwdValidation.onBlur"
         />
+        <FormField
+          id="cname"
+          v-model="cname"
+          label="Common name"
+          type="text"
+          placeholder="Display name"
+        />
+        <FormField
+          id="description"
+          v-model="description"
+          label="Description"
+          type="text"
+          placeholder="Short description"
+        />
+        <FormField
+          id="extlen"
+          v-model="extlen"
+          label="Extension length"
+          type="text"
+          inputmode="numeric"
+          placeholder="e.g. 4"
+          hint="Extension length for this agent."
+        />
       </div>
 
       <h2 class="detail-heading">Queues</h2>
       <div class="form-fields">
         <FormSelect
-          id="create-queue1"
+          id="queue1"
           v-model="queue1"
-          :input-key="fieldsKey"
           label="Queue 1"
           :options="queueOptionsForTenant"
           empty-text="None"
           :loading="queuesLoading"
         />
         <FormSelect
-          id="create-queue2"
+          id="queue2"
           v-model="queue2"
-          :input-key="fieldsKey"
           label="Queue 2"
           :options="queueOptionsForTenant"
           empty-text="None"
           :loading="queuesLoading"
         />
         <FormSelect
-          id="create-queue3"
+          id="queue3"
           v-model="queue3"
-          :input-key="fieldsKey"
           label="Queue 3"
           :options="queueOptionsForTenant"
           empty-text="None"
           :loading="queuesLoading"
         />
         <FormSelect
-          id="create-queue4"
+          id="queue4"
           v-model="queue4"
-          :input-key="fieldsKey"
           label="Queue 4"
           :options="queueOptionsForTenant"
           empty-text="None"
           :loading="queuesLoading"
         />
         <FormSelect
-          id="create-queue5"
+          id="queue5"
           v-model="queue5"
-          :input-key="fieldsKey"
           label="Queue 5"
           :options="queueOptionsForTenant"
           empty-text="None"
           :loading="queuesLoading"
         />
         <FormSelect
-          id="create-queue6"
+          id="queue6"
           v-model="queue6"
-          :input-key="fieldsKey"
           label="Queue 6"
           :options="queueOptionsForTenant"
           empty-text="None"
@@ -387,28 +385,65 @@ function onKeydown(e) {
 </template>
 
 <style scoped>
-.create-view { max-width: 52rem; }
-.create-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  min-height: 2.5rem;
-  margin-bottom: 0.25rem;
+.create-view {
+  max-width: 52rem;
 }
-.create-header h1 { margin: 0; }
-.form { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
-.detail-heading { font-size: 1rem; font-weight: 600; color: #334155; margin: 1.5rem 0 0.5rem 0; }
-.detail-heading:first-of-type { margin-top: 0; }
-.form-fields { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
-.success { color: #166534; font-size: 0.9375rem; margin: 0; }
-.error { color: #dc2626; font-size: 0.875rem; margin: 0; }
-.actions { display: flex; gap: 0.75rem; margin-top: 0.25rem; }
-.actions button { padding: 0.5rem 1rem; font-size: 0.9375rem; font-weight: 500; border-radius: 0.375rem; cursor: pointer; }
-.actions button[type="submit"] { color: #fff; background: #2563eb; border: none; }
-.actions button[type="submit"]:hover:not(:disabled) { background: #1d4ed8; }
-.actions button[type="submit"]:disabled { opacity: 0.7; cursor: not-allowed; }
-.actions button.secondary { color: #64748b; background: transparent; border: 1px solid #e2e8f0; }
-.actions button.secondary:hover { background: #f1f5f9; }
+.form {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.detail-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.detail-heading:first-of-type {
+  margin-top: 0;
+}
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;
+}
+.error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin: 0;
+}
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+.actions button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.actions button[type="submit"] {
+  color: #fff;
+  background: #2563eb;
+  border: none;
+}
+.actions button[type="submit"]:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+.actions button[type="submit"]:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.actions button.secondary {
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+}
+.actions button.secondary:hover {
+  background: #f1f5f9;
+}
 </style>
