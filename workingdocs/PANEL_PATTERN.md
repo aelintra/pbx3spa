@@ -37,6 +37,19 @@ Every resource has **exactly three panels**. Use the same structure as the IVR p
 
 There is **no fourth panel** (e.g. no "item list" or intermediate list). Navigation is: **List ↔ Create** and **List ↔ Edit** only.
 
+### Singleton / edit-only panels (exception)
+
+Some resources are **singletons**: exactly one record per instance (e.g. system globals). For these, use **one panel only** (edit form), not three:
+
+- **No List panel** — there is nothing to list.
+- **No Create panel** — the record is created by the system.
+- **Single Edit panel** — one view that loads the singleton (e.g. `GET /sysglobals`), shows a form, and saves (e.g. `PUT /sysglobals`). No route parameter (no `:shortuid` or `:pkey`).
+- **No Delete button** — omit Delete and DeleteConfirmModal; show only **Save** and **Cancel** at top and bottom.
+- **Heading** — use a static heading (e.g. "System Globals") since there is no item name.
+- **Everything else** follows the pattern: FormField/FormSelect/FormToggle, `form-fields`, section headings, API field parity, `firstErrorMessage`, toast, Escape to go back. Use `.edit-actions` and `.edit-actions-top` for the action row in both positions.
+
+**Reference:** `SysglobalsEditView.vue` (route `/sysglobals`, API `GET`/`PUT` `sysglobals`).
+
 ### Create panel: heading
 
 The Create panel main heading must be **"Create {resource}"** in singular, lowercase (e.g. **"Create route"**, **"Create tenant"**, **"Create IVR"**). Do not add extra parentheticals (e.g. avoid "Create route (ring group)"); keep it short.

@@ -128,10 +128,14 @@ async function fetchRuntime() {
 }
 
 onMounted(() => {
-  fetchTenants().then(() => fetchExtension().then(() => fetchRuntime()))
+  fetchTenants().then(() => fetchExtension().then(() => {
+    if (extension.value) fetchRuntime()
+  }))
 })
 watch(shortuid, () => {
-  fetchExtension().then(() => fetchRuntime())
+  fetchExtension().then(() => {
+    if (extension.value) fetchRuntime()
+  })
 })
 
 function goBack() {
@@ -240,10 +244,16 @@ async function saveRuntime(e) {
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
-    <h1>Edit Extension {{ pkey }}</h1>
+    <h1>Edit Extension {{ extension?.pkey ?? '…' }}</h1>
 
     <p v-if="loading" class="loading">Loading…</p>
-    <p v-else-if="error" class="error">{{ error }}</p>
+    <div v-else-if="error" class="error-state">
+      <p class="error">{{ error }}</p>
+      <div class="error-actions">
+        <button type="button" class="btn secondary" @click="goBack">Back to extensions</button>
+        <button type="button" class="btn btn-primary" @click="() => fetchExtension().then(() => extension.value && fetchRuntime())">Retry</button>
+      </div>
+    </div>
     <template v-else-if="extension">
       <div class="detail-content">
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
@@ -409,7 +419,7 @@ async function saveRuntime(e) {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Extension <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>Extension <strong>{{ extension?.pkey ?? '—' }}</strong> will be permanently deleted. This cannot be undone.</p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -425,6 +435,39 @@ async function saveRuntime(e) {
 }
 .error {
   color: #dc2626;
+}
+.error-state {
+  margin-top: 1rem;
+}
+.error-state .error {
+  margin-bottom: 1rem;
+}
+.error-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+.error-actions button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.error-actions button.secondary {
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+}
+.error-actions button.secondary:hover {
+  background: #f1f5f9;
+}
+.error-actions button.btn-primary {
+  color: #fff;
+  background: #2563eb;
+  border: none;
+}
+.error-actions button.btn-primary:hover {
+  background: #1d4ed8;
 }
 .muted {
   color: #64748b;

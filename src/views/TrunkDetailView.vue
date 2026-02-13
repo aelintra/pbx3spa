@@ -215,7 +215,7 @@ async function confirmAndDelete() {
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
-    <h1>Edit Trunk {{ pkey }}</h1>
+    <h1>Edit Trunk {{ trunk?.pkey ?? '…' }}</h1>
 
     <p v-if="loading" class="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
@@ -342,7 +342,7 @@ async function confirmAndDelete() {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Trunk <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>Trunk <strong>{{ trunk?.pkey ?? '—' }}</strong> will be permanently deleted. This cannot be undone.</p>
       </template>
     </DeleteConfirmModal>
   </div>

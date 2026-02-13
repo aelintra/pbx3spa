@@ -1,7 +1,7 @@
 # Panel Pattern Fidelity Audit
 
 **Date:** 2026-02-03  
-**Scope:** All CRUD panels in pbx3spa (Tenants, Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound Routes).  
+**Scope:** All CRUD panels in pbx3spa (Tenants, Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound Routes), plus singleton panels (System Globals).  
 **Reference:** `workingdocs/PANEL_PATTERN.md`
 
 This document records departures from the standardized panel pattern. Items marked **MUST FIX** should be corrected for full pattern compliance; others are optional or acceptable exceptions.
@@ -20,6 +20,7 @@ This document records departures from the standardized panel pattern. Items mark
 | Routes | ✓ | ✓ | ✓ | None |
 | IVRs | ✓ | ✓ | ✓ | IVR destination grid uses raw `<label>`/`<select>`/`<input>` |
 | Inbound Routes | ✓ | ✓ | ✓ | None |
+| **System Globals** | — | — | ✓ | **Singleton:** edit-only by design (see PANEL_PATTERN.md "Singleton / edit-only panels"); no List/Create/Delete. Compliant. |
 
 ---
 

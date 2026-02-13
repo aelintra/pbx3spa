@@ -166,9 +166,9 @@ async function saveEdit(e) {
     if (Number.isNaN(body.timeout)) delete body.timeout
     if (Number.isNaN(body.wrapuptime)) delete body.wrapuptime
     if (Number.isNaN(body.divert)) delete body.divert
-    await getApiClient().put(`queues/${encodeURIComponent(pkey.value)}`, body)
+    await getApiClient().put(`queues/${encodeURIComponent(shortuid.value)}`, body)
     await fetchQueue()
-    toast.show(`Queue ${pkey.value} saved`)
+    toast.show(`Queue ${queue.value?.pkey ?? ''} saved`)
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update queue')
   } finally {

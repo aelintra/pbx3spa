@@ -303,7 +303,7 @@ async function confirmAndDelete() {
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
-    <h1>Edit IVR {{ ivr?.cname?.trim() ? ivr.cname.trim() : pkey }}</h1>
+    <h1>Edit IVR {{ ivr?.cname?.trim() ? ivr.cname.trim() : (ivr?.pkey ?? '…') }}</h1>
 
     <p v-if="loading" class="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
@@ -480,7 +480,7 @@ async function confirmAndDelete() {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>IVR <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>IVR <strong>{{ ivr?.pkey ?? '—' }}</strong> will be permanently deleted. This cannot be undone.</p>
       </template>
     </DeleteConfirmModal>
   </div>
