@@ -1,6 +1,6 @@
 # Standardized Panel Design Pattern
 
-**Last Updated**: 2026-02-03  
+**Last Updated**: 2026-02-12  
 **Based on**: IVR CRUD panels implementation (refactored with reusable components)  
 **Status**: Pattern established and documented, ready for application to all panels
 
@@ -80,6 +80,7 @@ The list panel main heading is typically the resource name plural (e.g. **"Tenan
      - **Set at create only (read-only on Edit):** On Create, include in POST body. On Edit, show with **FormReadonly** in the Identity section (with other non-updateable fields) and **do not** include in the PUT body. Style with low-light (e.g. class `readonly-identity`).
      - **Immutable (never editable):** e.g. pkey, id, shortuid — **only for fields the API actually returns**. Not every resource has `id` or `shortuid`; show FormReadonly in the Identity section only for fields present on the resource (e.g. Agent has `pkey` but no `shortuid`/`id`). On Edit only: FormReadonly in Identity section with low-light styling.
   3. **Verify:** No field in the API list is missing from the UI; no extra field is sent on PUT that the API does not accept (or that the product explicitly keeps read-only on edit).
+- **Edit panel completeness:** Edit panels must expose **every** updateable field from the controller/schema. Do not leave an edit panel "short" on fields (e.g. only a few fields when the API accepts many). Group fields into logical sections (Identity, Settings/Options, Connection, Timing & limits, Advanced) as appropriate for the resource so the form remains scannable.
 - **Required fields that affect behaviour:** If a field is required for the resource to work (e.g. a dialplan pattern without which the route will not function), mark it **required** in the UI, add a validator in `src/utils/validation.js`, and validate on Create (and block save on Edit if empty). Use the **placeholder** and **hint** to show an example value (e.g. `_XXXXXX` for dialplan). Do not label such fields as optional.
 
 ### Fields set at create only (read-only on Edit)
@@ -116,6 +117,25 @@ When a form has fields that select a **destination** (e.g. open route, closed ro
 - **Normalize the API response:** Destinations may be returned with different key casing (e.g. `Queues` vs `queues`). When building the optionGroups object, accept both shapes so the dropdown is populated regardless of server response format.
 - **Show all groups:** FormSelect renders all optgroups in optionGroups; groups with no items show a "—" placeholder so the user always sees the full set of destination types (Queues, Extensions, IVRs, CustomApps, Routes). Do not hide or omit a group just because it is empty.
 - **Reference:** InboundRouteCreateView and InboundRouteDetailView: `destinationGroups` computed from destinations + routes, passed as `option-groups` to FormSelect for open route and closed route.
+
+### Fixed-choice fields (FormSelect, not free text)
+
+When the API or schema defines a **fixed set of allowed values** (e.g. validation rule `in:YES,NO` or a known enum), use **FormSelect** with that exact list. Do **not** use a free-text FormField with a placeholder listing the options.
+
+- **Examples:** `devicerec`, `strategy` (queue), `active` (YES/NO), `disa`, `iaxreg`, `pjsipreg`.
+- **Source of truth:** Cross-check the backend controller’s validation (e.g. `updateableColumns`) and/or schema comments to get the exact allowed values. Keep the SPA option list in sync with the API so validation never fails due to a typo or extra option.
+
+### Device recording (devicerec)
+
+**Always use a dropdown (FormSelect), never a text field.** Options must match the API validation (e.g. Trunk/Extension/Inbound Route: `None`, `OTR`, `OTRR`, `Inbound`, `Outbound`, `Both`; Queue may add `default`). Use a **normalize** helper when loading: map unknown or empty API values to the first option (e.g. `'None'`) so the dropdown always shows a valid selection. On save, send the selected value (or `'None'` when empty). Do not use a single option like `"Inbound.Outbound"` with a period—if the API expects two choices, use two options: `Inbound` and `Outbound`.
+
+### Registration fields (iaxreg, pjsipreg)
+
+Use **FormSelect** with options `['', 'SND', 'RCV']` and `empty-text="—"`. Schema comment is typically "SND/RCV/NULL". Do **not** use a free-text field or comma-separated string. When loading, normalize unknown values to `''` (empty). On save, send the selected value or omit/undefined when empty.
+
+### Toggle values must match API (YES/NO vs ON/OFF)
+
+Use the values the **API and schema expect**. For example: `active` and `moh` are often validated as `in:YES,NO`; use **YES/NO** in FormToggle (`yes-value="YES"` `no-value="NO"`), not ON/OFF. Check the controller’s validation rules and schema defaults so the payload never sends a value the API rejects.
 
 ### Advanced sections
 
@@ -444,11 +464,15 @@ watch(cluster, () => {
 
 ### Sorting Pattern (List View)
 
+- **sortValue(item, key):** For display keys (e.g. `cluster`), return the display string (e.g. tenant pkey); for others return `item[key]` as string, or for numeric columns a comparable value.
+- **Numeric columns:** For keys like `timeout`, sort by number so 10 comes after 9. In the sort comparator, detect numeric columns and use `Number(a[key])` vs `Number(b[key])`, with NaN treated as lowest.
+
 ```javascript
 const sortKey = ref('pkey')
 const sortOrder = ref('asc')  // 'asc' | 'desc'
 
 function sortValue(item, key) {
+  if (key === 'cluster') return tenantPkeyDisplay(item)  // if applicable
   const v = item[key]
   return v == null ? '' : String(v)
 }
@@ -457,12 +481,22 @@ const sortedItems = computed(() => {
   const list = [...filteredItems.value]
   const key = sortKey.value
   const order = sortOrder.value
+  const isNumeric = key === 'timeout' || key === 'maxlen'  // add other numeric keys
   list.sort((a, b) => {
-    const va = sortValue(a, key).toLowerCase()
-    const vb = sortValue(b, key).toLowerCase()
     let cmp = 0
-    if (va < vb) cmp = -1
-    else if (va > vb) cmp = 1
+    if (isNumeric) {
+      const na = Number(a[key])
+      const nb = Number(b[key])
+      const va = Number.isNaN(na) ? -Infinity : na
+      const vb = Number.isNaN(nb) ? -Infinity : nb
+      if (va < vb) cmp = -1
+      else if (va > vb) cmp = 1
+    } else {
+      const va = sortValue(a, key).toLowerCase()
+      const vb = sortValue(b, key).toLowerCase()
+      if (va < vb) cmp = -1
+      else if (va > vb) cmp = 1
+    }
     return order === 'asc' ? cmp : -cmp
   })
   return list
@@ -763,13 +797,13 @@ function syncEditFromResource() {
 - Placeholder: Describes what can be filtered
 
 **Columns:**
-- Primary identifier (e.g., "IVR Direct Dial", "Tenant name")
-- Local UID (shortuid) - immutable styling
-- Tenant (if applicable) - resolve shortuid to pkey for display
-- Description
-- Resource-specific columns (e.g., Greeting number, Timeout)
-- Edit action (icon)
-- Delete action (icon)
+- **Identity:** Primary identifier (pkey/name), Local UID (shortuid) if the resource has it—use immutable styling for shortuid.
+- **Tenant** (if applicable)—resolve cluster/shortuid to tenant pkey for display (see Tenant Resolution Pattern).
+- **Key display columns** from the resource that users need to scan: cross-reference the schema and controller and include columns such as description, active, strategy, timeout, dialplan, path1, etc., as appropriate for the resource. Do not leave list panels with too few columns; add the ones that match common use (e.g. Queues: Local UID, Active, Strategy, Timeout; Routes: Dialplan, Path 1, Active).
+- **Every list column** should be **sortable** (use `th-sortable`, `setSort`, `sortClass`).
+- **Include new columns in the filter** so the search box can match them; update the filter computed and the placeholder text (e.g. "Filter by name, Local UID, tenant, description, dialplan, path 1, or active").
+- **Numeric columns** (e.g. timeout, maxlen): implement **numeric sort** in the sort comparator (compare `Number(a[key])` vs `Number(b[key])`, treating NaN as lowest) so "10" sorts after "9". For non-numeric columns, string sort is fine.
+- Edit action (icon), Delete action (icon)
 
 ### CSS Classes
 

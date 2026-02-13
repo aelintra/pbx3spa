@@ -53,8 +53,10 @@ const filteredRoutes = computed(() => {
     const shortuid = (r.shortuid ?? '').toString().toLowerCase()
     const tenantPkey = (r.tenant_pkey ?? map.get(String(r.cluster)) ?? r.cluster ?? '').toString().toLowerCase()
     const desc = (r.desc ?? r.description ?? '').toString().toLowerCase()
+    const dialplan = (r.dialplan ?? '').toString().toLowerCase()
+    const path1 = (r.path1 ?? '').toString().toLowerCase()
     const active = (r.active ?? '').toString().toLowerCase()
-    return pkey.includes(q) || shortuid.includes(q) || tenantPkey.includes(q) || desc.includes(q) || active.includes(q)
+    return pkey.includes(q) || shortuid.includes(q) || tenantPkey.includes(q) || desc.includes(q) || dialplan.includes(q) || path1.includes(q) || active.includes(q)
   })
 })
 
@@ -148,7 +150,7 @@ onMounted(loadRoutes)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, Local UID, tenant, description, or active"
+          placeholder="Filter by name, Local UID, tenant, description, dialplan, path 1, or active"
           aria-label="Filter routes"
         />
       </p>
@@ -178,8 +180,14 @@ onMounted(loadRoutes)
             <th class="th-sortable" title="Click to sort" :class="sortClass('desc')" @click="setSort('desc')">
               desc
             </th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('dialplan')" @click="setSort('dialplan')">
+              Dialplan
+            </th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('path1')" @click="setSort('path1')">
+              Path 1
+            </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">
-              Active?
+              Active
             </th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
             <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></th>
@@ -191,6 +199,8 @@ onMounted(loadRoutes)
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(r) }}</td>
             <td>{{ tenantPkeyDisplay(r) }}</td>
             <td>{{ r.desc ?? r.description ?? '—' }}</td>
+            <td>{{ r.dialplan ?? '—' }}</td>
+            <td>{{ r.path1 ?? '—' }}</td>
             <td>{{ r.active ?? '—' }}</td>
             <td>
               <router-link :to="{ name: 'route-detail', params: { pkey: r.pkey } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">

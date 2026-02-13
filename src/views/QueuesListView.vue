@@ -51,19 +51,30 @@ const filteredQueues = computed(() => {
 function sortValue(item, key) {
   if (key === 'cluster') return tenantPkeyDisplay(item)
   const v = item[key]
-  return v == null ? '' : String(v)
+  if (v == null || v === '') return ''
+  return key === 'timeout' ? String(Number(v)) : String(v)
 }
 
 const sortedQueues = computed(() => {
   const list = [...filteredQueues.value]
   const key = sortKey.value
   const order = sortOrder.value
+  const isNumeric = key === 'timeout'
   list.sort((a, b) => {
-    const va = sortValue(a, key).toLowerCase()
-    const vb = sortValue(b, key).toLowerCase()
     let cmp = 0
-    if (va < vb) cmp = -1
-    else if (va > vb) cmp = 1
+    if (isNumeric) {
+      const na = Number(a[key])
+      const nb = Number(b[key])
+      const va = Number.isNaN(na) ? -Infinity : na
+      const vb = Number.isNaN(nb) ? -Infinity : nb
+      if (va < vb) cmp = -1
+      else if (va > vb) cmp = 1
+    } else {
+      const va = sortValue(a, key).toLowerCase()
+      const vb = sortValue(b, key).toLowerCase()
+      if (va < vb) cmp = -1
+      else if (va > vb) cmp = 1
+    }
     return order === 'asc' ? cmp : -cmp
   })
   return list
@@ -153,8 +164,12 @@ onMounted(loadQueues)
         <thead>
           <tr>
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">Queue</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cname')" @click="setSort('cname')">Name</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('strategy')" @click="setSort('strategy')">Strategy</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('timeout')" @click="setSort('timeout')">Timeout</th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true">✏️</span></th>
             <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true">🗑️</span></th>
           </tr>
@@ -162,8 +177,12 @@ onMounted(loadQueues)
         <tbody>
           <tr v-for="q in sortedQueues" :key="q.pkey">
             <td>{{ q.pkey }}</td>
+            <td>{{ q.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(q) }}</td>
             <td>{{ q.cname ?? q.name ?? '—' }}</td>
+            <td>{{ q.active ?? '—' }}</td>
+            <td>{{ q.strategy ?? '—' }}</td>
+            <td>{{ q.timeout != null && q.timeout !== '' ? q.timeout : '—' }}</td>
             <td>
               <router-link :to="{ name: 'queue-detail', params: { pkey: q.pkey } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true">✏️</span>

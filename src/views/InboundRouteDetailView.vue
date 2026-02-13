@@ -28,12 +28,25 @@ const editCloseroute = ref('None')
 const destinations = ref(null)
 const destinationsLoading = ref(false)
 const editAlertinfo = ref('')
-const editMoh = ref('OFF')
+const editCallback = ref('')
+const editCallerid = ref('')
+const editCallprogress = ref('YES')
+const editCname = ref('')
+const editDevicerec = ref('None')
+const editMoh = ref('NO')
 const editSwoclip = ref('YES')
 const editDisa = ref('')
 const editDisapass = ref('')
+const editHost = ref('')
+const editIaxreg = ref('')
 const editInprefix = ref('')
+const editMatch = ref('')
+const editPassword = ref('')
+const editPeername = ref('')
+const editPjsipreg = ref('')
+const editRegister = ref('')
 const editTag = ref('')
+const editUsername = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -69,6 +82,22 @@ const tenantOptionsForSelect = computed(() => {
   if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
+
+const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'Outbound', 'Both']
+
+function normalizeDevicerec(v) {
+  if (v == null || String(v).trim() === '') return 'None'
+  const s = String(v).trim()
+  return devicerecOptions.includes(s) ? s : 'None'
+}
+
+const regOptions = ['', 'SND', 'RCV']
+
+function normalizeReg(v) {
+  if (v == null || String(v).trim() === '') return ''
+  const s = String(v).trim().toUpperCase()
+  return regOptions.includes(s) ? s : ''
+}
 
 /** Normalize destinations API response (handles both { Queues: [] } and { queues: [] } shapes). */
 function toDestArrays(d) {
@@ -142,12 +171,25 @@ function syncEditFromRoute() {
   editOpenroute.value = r.openroute ?? 'None'
   editCloseroute.value = r.closeroute ?? 'None'
   editAlertinfo.value = r.alertinfo ?? ''
-  editMoh.value = r.moh === 'NO' ? 'OFF' : (r.moh ?? 'OFF')
+  editCallback.value = r.callback ?? ''
+  editCallerid.value = r.callerid ?? ''
+  editCallprogress.value = (r.callprogress === 'NO') ? 'NO' : 'YES'
+  editCname.value = r.cname ?? ''
+  editDevicerec.value = normalizeDevicerec(r.devicerec)
+  editMoh.value = (r.moh === 'YES') ? 'YES' : 'NO'
   editSwoclip.value = r.swoclip ?? 'YES'
   editDisa.value = r.disa ?? ''
   editDisapass.value = r.disapass ?? ''
+  editHost.value = r.host ?? ''
+  editIaxreg.value = normalizeReg(r.iaxreg)
   editInprefix.value = r.inprefix != null ? String(r.inprefix) : ''
+  editMatch.value = r.match ?? ''
+  editPassword.value = ''
+  editPeername.value = r.peername ?? ''
+  editPjsipreg.value = normalizeReg(r.pjsipreg)
+  editRegister.value = r.register ?? ''
   editTag.value = r.tag ?? ''
+  editUsername.value = r.username ?? ''
 }
 
 async function fetchInboundRoute() {
@@ -195,21 +237,35 @@ async function saveEdit(e) {
   saving.value = true
   try {
     const inprefixVal = editInprefix.value.trim() === '' ? undefined : parseInt(editInprefix.value, 10)
-    await getApiClient().put(`inboundroutes/${encodeURIComponent(pkey.value)}`, {
+    const body = {
+      active: editActive.value,
       cluster: editCluster.value.trim(),
       description: editDescription.value.trim() || undefined,
       trunkname: editTrunkname.value.trim() || undefined,
-      active: editActive.value,
       openroute: editOpenroute.value || 'None',
       closeroute: editCloseroute.value || 'None',
       alertinfo: editAlertinfo.value.trim() || undefined,
+      callback: editCallback.value.trim() || undefined,
+      callerid: editCallerid.value.trim() || undefined,
+      callprogress: editCallprogress.value,
+      cname: editCname.value.trim() || undefined,
+      devicerec: editDevicerec.value || 'None',
       moh: editMoh.value,
       swoclip: editSwoclip.value,
       disa: editDisa.value || undefined,
       disapass: editDisapass.value.trim() || undefined,
+      host: editHost.value.trim() || undefined,
+      iaxreg: editIaxreg.value || undefined,
       inprefix: inprefixVal !== undefined && !isNaN(inprefixVal) ? inprefixVal : undefined,
-      tag: editTag.value.trim() || undefined
-    })
+      match: editMatch.value.trim() || undefined,
+      peername: editPeername.value.trim() || undefined,
+      pjsipreg: editPjsipreg.value || undefined,
+      register: editRegister.value.trim() || undefined,
+      tag: editTag.value.trim() || undefined,
+      username: editUsername.value.trim() || undefined
+    }
+    if (editPassword.value.trim()) body.password = editPassword.value.trim()
+    await getApiClient().put(`inboundroutes/${encodeURIComponent(pkey.value)}`, body)
     await fetchInboundRoute()
     toast.show(`Inbound route ${pkey.value} saved`)
   } catch (err) {
@@ -347,8 +403,15 @@ async function confirmAndDelete() {
               id="edit-moh"
               v-model="editMoh"
               label="MOH"
-              yes-value="ON"
-              no-value="OFF"
+              yes-value="YES"
+              no-value="NO"
+            />
+            <FormToggle
+              id="edit-callprogress"
+              v-model="editCallprogress"
+              label="Call progress"
+              yes-value="YES"
+              no-value="NO"
             />
             <FormToggle
               id="edit-swoclip"
@@ -384,6 +447,92 @@ async function confirmAndDelete() {
               id="edit-tag"
               v-model="editTag"
               label="Tag (optional)"
+              type="text"
+            />
+            <FormField
+              id="edit-cname"
+              v-model="editCname"
+              label="CNAME"
+              type="text"
+            />
+            <FormSelect
+              id="edit-devicerec"
+              v-model="editDevicerec"
+              label="Device recording"
+              :options="devicerecOptions"
+            />
+          </div>
+
+          <h2 class="detail-heading">Connection</h2>
+          <div class="form-fields">
+            <FormField
+              id="edit-host"
+              v-model="editHost"
+              label="Host"
+              type="text"
+              placeholder="IP or hostname"
+            />
+            <FormField
+              id="edit-username"
+              v-model="editUsername"
+              label="Username"
+              type="text"
+              autocomplete="off"
+            />
+            <FormField
+              id="edit-password"
+              v-model="editPassword"
+              label="Password"
+              type="password"
+              placeholder="Leave blank to keep current"
+              autocomplete="new-password"
+            />
+            <FormField
+              id="edit-peername"
+              v-model="editPeername"
+              label="Peername"
+              type="text"
+            />
+            <FormField
+              id="edit-register"
+              v-model="editRegister"
+              label="Register"
+              type="text"
+            />
+            <FormSelect
+              id="edit-iaxreg"
+              v-model="editIaxreg"
+              label="IAX registration"
+              :options="regOptions"
+              empty-text="—"
+            />
+            <FormSelect
+              id="edit-pjsipreg"
+              v-model="editPjsipreg"
+              label="PJSIP registration"
+              :options="regOptions"
+              empty-text="—"
+            />
+          </div>
+
+          <h2 class="detail-heading">Advanced</h2>
+          <div class="form-fields">
+            <FormField
+              id="edit-callback"
+              v-model="editCallback"
+              label="Callback"
+              type="text"
+            />
+            <FormField
+              id="edit-callerid"
+              v-model="editCallerid"
+              label="Caller ID"
+              type="text"
+            />
+            <FormField
+              id="edit-match"
+              v-model="editMatch"
+              label="Match"
               type="text"
             />
           </div>

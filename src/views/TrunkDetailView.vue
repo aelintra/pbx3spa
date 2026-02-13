@@ -35,7 +35,15 @@ const editInprefix = ref('')
 const editMatch = ref('')
 const editRegister = ref('')
 const editTag = ref('')
-const editDevicerec = ref('')
+const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'Outbound', 'Both']
+
+function normalizeDevicerec(s) {
+  if (s == null || s === '') return 'None'
+  const v = String(s).trim()
+  return devicerecOptions.includes(v) ? v : 'None'
+}
+
+const editDevicerec = ref('None')
 const editDisa = ref('')
 const editDisapass = ref('')
 const editTransform = ref('')
@@ -109,7 +117,7 @@ async function fetchTrunk() {
     editMatch.value = trunk.value?.match ?? ''
     editRegister.value = trunk.value?.register ?? ''
     editTag.value = trunk.value?.tag ?? ''
-    editDevicerec.value = trunk.value?.devicerec ?? ''
+    editDevicerec.value = normalizeDevicerec(trunk.value?.devicerec)
     editDisa.value = trunk.value?.disa ?? ''
     editDisapass.value = trunk.value?.disapass ?? ''
     editTransform.value = trunk.value?.transform ?? ''
@@ -163,7 +171,7 @@ async function saveEdit(e) {
       match: editMatch.value.trim() || undefined,
       register: editRegister.value.trim() || undefined,
       tag: editTag.value.trim() || undefined,
-      devicerec: editDevicerec.value.trim() || undefined,
+      devicerec: editDevicerec.value || 'None',
       disa: editDisa.value.trim() || undefined,
       disapass: editDisapass.value.trim() || undefined,
       transform: editTransform.value.trim() || undefined
@@ -293,12 +301,11 @@ async function confirmAndDelete() {
             <FormField id="edit-match" v-model="editMatch" label="Match" type="text" />
             <FormField id="edit-register" v-model="editRegister" label="Register" type="text" />
             <FormField id="edit-tag" v-model="editTag" label="Tag" type="text" />
-            <FormField
+            <FormSelect
               id="edit-devicerec"
               v-model="editDevicerec"
-              label="Devicerec"
-              type="text"
-              placeholder="None, OTR, OTRR, Inbound.Outbound, Both"
+              label="Device recording"
+              :options="devicerecOptions"
             />
             <FormSelect
               id="edit-disa"

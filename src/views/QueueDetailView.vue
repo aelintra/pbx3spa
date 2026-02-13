@@ -7,6 +7,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
@@ -17,10 +18,22 @@ const queue = ref(null)
 const tenants = ref([])
 const loading = ref(true)
 const error = ref('')
+const editActive = ref('YES')
 const editCluster = ref('default')
+const editDescription = ref('')
 const editDevicerec = ref('None')
+const editDivert = ref('')
 const editGreetnum = ref('')
+const editGreeting = ref('')
+const editMembers = ref('')
+const editMusicclass = ref('')
 const editOptions = ref('')
+const editRetry = ref('')
+const editWrapuptime = ref('')
+const editMaxlen = ref('')
+const editStrategy = ref('ringall')
+const editTimeout = ref('')
+const editAlertinfo = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -51,7 +64,8 @@ const tenantOptionsForSelect = computed(() => {
   return list
 })
 
-const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound']
+const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'default']
+const strategyOptions = ['ringall', 'roundrobin', 'leastrecent', 'fewestcalls', 'random', 'rrmemory']
 
 function normalizeDevicerec(v) {
   const s = (v ?? '').toString().trim()
@@ -75,12 +89,26 @@ async function fetchQueue() {
   error.value = ''
   try {
     queue.value = await getApiClient().get(`queues/${encodeURIComponent(pkey.value)}`)
-    const clusterRaw = queue.value?.cluster ?? 'default'
+    const q = queue.value
+    const clusterRaw = q?.cluster ?? 'default'
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
-    editDevicerec.value = normalizeDevicerec(queue.value?.devicerec)
-    const g = queue.value?.greetnum
+    editActive.value = (q?.active === 'NO') ? 'NO' : 'YES'
+    editDescription.value = q?.description ?? ''
+    editDevicerec.value = normalizeDevicerec(q?.devicerec)
+    editAlertinfo.value = q?.alertinfo ?? ''
+    editDivert.value = q?.divert != null && q?.divert !== '' ? String(q.divert) : ''
+    const g = q?.greetnum
     editGreetnum.value = (g == null || g === '' || String(g).trim() === 'None') ? '' : String(g).trim()
-    editOptions.value = queue.value?.options ?? ''
+    const gr = q?.greeting
+    editGreeting.value = (gr == null || gr === '' || String(gr).trim() === 'None') ? '' : String(gr).trim()
+    editMembers.value = q?.members ?? ''
+    editMusicclass.value = q?.musicclass ?? ''
+    editOptions.value = q?.options ?? ''
+    editRetry.value = q?.retry != null && q?.retry !== '' ? String(q.retry) : ''
+    editWrapuptime.value = q?.wrapuptime != null && q?.wrapuptime !== '' ? String(q.wrapuptime) : ''
+    editMaxlen.value = q?.maxlen != null && q?.maxlen !== '' ? String(q.maxlen) : ''
+    editStrategy.value = strategyOptions.includes(q?.strategy) ? q.strategy : 'ringall'
+    editTimeout.value = q?.timeout != null && q?.timeout !== '' ? String(q.timeout) : ''
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load queue')
     queue.value = null
@@ -115,11 +143,29 @@ async function saveEdit(e) {
   saving.value = true
   try {
     const body = {
+      active: editActive.value,
       cluster: editCluster.value.trim(),
-      devicerec: editDevicerec.value || 'None'
+      description: editDescription.value.trim() || undefined,
+      devicerec: editDevicerec.value || 'None',
+      alertinfo: editAlertinfo.value.trim() || undefined,
+      greetnum: editGreetnum.value.trim() || undefined,
+      greeting: editGreeting.value.trim() || undefined,
+      members: editMembers.value.trim() || undefined,
+      musicclass: editMusicclass.value.trim() || undefined,
+      options: editOptions.value.trim() || undefined,
+      strategy: editStrategy.value,
+      maxlen: parseInt(editMaxlen.value, 10),
+      retry: parseInt(editRetry.value, 10),
+      timeout: parseInt(editTimeout.value, 10),
+      wrapuptime: parseInt(editWrapuptime.value, 10),
+      divert: parseInt(editDivert.value, 10)
     }
-    if (editGreetnum.value.trim() !== '') body.greetnum = editGreetnum.value.trim()
-    if (editOptions.value.trim() !== '') body.options = editOptions.value.trim()
+    if (Number.isNaN(body.maxlen)) delete body.maxlen
+    else if (body.maxlen === 0) body.maxlen = 0
+    if (Number.isNaN(body.retry)) delete body.retry
+    if (Number.isNaN(body.timeout)) delete body.timeout
+    if (Number.isNaN(body.wrapuptime)) delete body.wrapuptime
+    if (Number.isNaN(body.divert)) delete body.divert
     await getApiClient().put(`queues/${encodeURIComponent(pkey.value)}`, body)
     await fetchQueue()
     toast.show(`Queue ${pkey.value} saved`)
@@ -191,9 +237,22 @@ const displayName = computed(() => queue.value?.pkey ?? pkey.value ?? '')
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"
-              label="Tenant"
+              label="Tenant (required)"
               :options="tenantOptionsForSelect"
               :required="true"
+            />
+            <FormToggle
+              id="edit-active"
+              v-model="editActive"
+              label="Active"
+              yes-value="YES"
+              no-value="NO"
+            />
+            <FormField
+              id="edit-description"
+              v-model="editDescription"
+              label="Description"
+              type="text"
             />
           </div>
 
@@ -202,23 +261,102 @@ const displayName = computed(() => queue.value?.pkey ?? pkey.value ?? '')
             <FormSelect
               id="edit-devicerec"
               v-model="editDevicerec"
-              label="Device recording"
+              label="Device recording (required)"
               :options="devicerecOptions"
               :required="true"
+            />
+            <FormSelect
+              id="edit-strategy"
+              v-model="editStrategy"
+              label="Strategy"
+              :options="strategyOptions"
             />
             <FormField
               id="edit-greetnum"
               v-model="editGreetnum"
               label="Greeting number"
               type="text"
-              placeholder="usergreeting1234"
+              placeholder="e.g. usergreeting1234"
+            />
+            <FormField
+              id="edit-greeting"
+              v-model="editGreeting"
+              label="Greeting"
+              type="text"
+              placeholder="Override greetnum"
             />
             <FormField
               id="edit-options"
               v-model="editOptions"
               label="Options"
               type="text"
-              placeholder="Alpha options"
+              placeholder="e.g. CiIknrtT"
+            />
+            <FormField
+              id="edit-musicclass"
+              v-model="editMusicclass"
+              label="Music class"
+              type="text"
+            />
+            <FormField
+              id="edit-members"
+              v-model="editMembers"
+              label="Members"
+              type="text"
+              placeholder="Comma-separated member list"
+            />
+          </div>
+
+          <h2 class="detail-heading">Timing &amp; limits</h2>
+          <div class="form-fields">
+            <FormField
+              id="edit-timeout"
+              v-model="editTimeout"
+              label="Timeout (seconds)"
+              type="text"
+              inputmode="numeric"
+              placeholder="e.g. 30"
+            />
+            <FormField
+              id="edit-retry"
+              v-model="editRetry"
+              label="Retry"
+              type="text"
+              inputmode="numeric"
+              placeholder="e.g. 1"
+            />
+            <FormField
+              id="edit-wrapuptime"
+              v-model="editWrapuptime"
+              label="Wrap-up time"
+              type="text"
+              inputmode="numeric"
+              placeholder="seconds"
+            />
+            <FormField
+              id="edit-maxlen"
+              v-model="editMaxlen"
+              label="Max length"
+              type="text"
+              inputmode="numeric"
+              placeholder="0 = unlimited"
+            />
+            <FormField
+              id="edit-divert"
+              v-model="editDivert"
+              label="Divert"
+              type="text"
+              inputmode="numeric"
+            />
+          </div>
+
+          <h2 class="detail-heading">Advanced</h2>
+          <div class="form-fields">
+            <FormField
+              id="edit-alertinfo"
+              v-model="editAlertinfo"
+              label="Alert info"
+              type="text"
             />
           </div>
 
