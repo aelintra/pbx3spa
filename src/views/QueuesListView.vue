@@ -184,12 +184,14 @@ onMounted(loadQueues)
             <td>{{ q.strategy ?? '—' }}</td>
             <td>{{ q.timeout != null && q.timeout !== '' ? q.timeout : '—' }}</td>
             <td>
-              <router-link :to="{ name: 'queue-detail', params: { shortuid: q.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
+              <router-link v-if="q.shortuid" :to="{ name: 'queue-detail', params: { shortuid: q.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true">✏️</span>
               </router-link>
+              <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot edit" style="opacity: 0.5;">—</span>
             </td>
             <td>
               <button
+                v-if="q.shortuid"
                 type="button"
                 class="cell-link cell-link-delete cell-link-icon"
                 :title="deletingPkey === q.shortuid ? 'Deleting…' : 'Delete'"
