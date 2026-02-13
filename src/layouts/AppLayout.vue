@@ -42,6 +42,7 @@ async function logout() {
         <router-link to="/routes" class="nav-link" active-class="active">Routes</router-link>
         <router-link to="/ivrs" class="nav-link" active-class="active">IVRs</router-link>
         <router-link to="/inbound-routes" class="nav-link" active-class="active">Inbound routes</router-link>
+        <router-link to="/sysglobals" class="nav-link" active-class="active">System Globals</router-link>
       </nav>
     </aside>
     <div class="main">

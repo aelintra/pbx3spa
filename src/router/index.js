@@ -26,6 +26,7 @@ import IvrDetailView from '../views/IvrDetailView.vue'
 import InboundRoutesListView from '../views/InboundRoutesListView.vue'
 import InboundRouteCreateView from '../views/InboundRouteCreateView.vue'
 import InboundRouteDetailView from '../views/InboundRouteDetailView.vue'
+import SysglobalsEditView from '../views/SysglobalsEditView.vue'
 import DashboardView from '../views/DashboardView.vue'
 
 const router = createRouter({
@@ -64,7 +65,8 @@ const router = createRouter({
         { path: 'ivrs/:shortuid', name: 'ivr-detail', component: IvrDetailView },
         { path: 'inbound-routes', name: 'inbound-routes', component: InboundRoutesListView },
         { path: 'inbound-routes/new', name: 'inbound-route-create', component: InboundRouteCreateView },
-        { path: 'inbound-routes/:shortuid', name: 'inbound-route-detail', component: InboundRouteDetailView }
+        { path: 'inbound-routes/:shortuid', name: 'inbound-route-detail', component: InboundRouteDetailView },
+        { path: 'sysglobals', name: 'sysglobals', component: SysglobalsEditView }
       ]
     }
   ]
