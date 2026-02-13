@@ -423,3 +423,29 @@ The following API elements may need updates to fully support shortuid-based rout
    - **Status**: Uses extension pkey in relationships
    - **Action**: Defer to end - needs thorough analysis of how Cos relationships work across tenants
    - **Note**: May need tenant-scoping or migration to shortuid/id, but requires full review first
+
+### Future Enhancement (Separate Mini-Project)
+10. **Database Constraints for Tenant-Scoped Uniqueness** - Add UNIQUE constraint on (cluster, pkey)
+   - **Status**: Application-level validation currently handles this
+   - **Rationale**: Database constraint provides defense-in-depth and prevents race conditions
+   - **Action**: 
+     - Add `UNIQUE (cluster, pkey)` constraint to tenant-scoped tables:
+       - `agent`
+       - `ipphone` (extensions)
+       - `queue`
+       - `route`
+       - `ivrmenu` (IVRs)
+       - `trunks`
+       - `inroutes`
+     - Ensure `cluster` is NOT NULL (or handle NULLs appropriately)
+     - Create migration to:
+       - Check for existing duplicates
+       - Clean up any duplicates
+       - Add constraint
+     - Update application code to catch database constraint violations and return friendly error messages
+   - **Benefits**:
+     - Prevents race conditions (two simultaneous requests can't both pass validation)
+     - Enforced at database level (cannot be bypassed)
+     - Better performance (indexed constraint)
+     - Consistent with existing pattern (`ipphonecosopen`/`ipphonecosclosed` already use composite keys)
+   - **Note**: Deferred to avoid database reload/migration work now. Application validation provides sufficient protection for current needs. Can be implemented as separate mini-project.
