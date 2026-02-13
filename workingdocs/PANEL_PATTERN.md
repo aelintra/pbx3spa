@@ -316,6 +316,7 @@ const response = await getApiClient().get('destinations', { params: { cluster: '
 - **Reason**: `pkey` is only unique per tenant, not globally. Using `shortuid` ensures correct routing when the same `pkey` exists in multiple tenants (e.g., extension "1001" in tenant "default" vs extension "1001" in tenant "acme").
 - **Frontend**: Route params use `:shortuid`, API calls use `shortuid` from route params
 - **Backend**: Models implement `resolveRouteBinding()` to resolve by `shortuid` first, with fallback to `pkey` for backward compatibility
+- **Defensive coding**: Always guard RouterLinks and delete buttons with `v-if="item.shortuid"` because `shortuid` may be `null` during data loading or if the server hasn't generated shortuid values yet. Show a placeholder ("—") when `shortuid` is null.
 
 **Globally unique resources** (Tenant):
 - **Use `pkey`** for routing and API lookups
@@ -335,7 +336,10 @@ When creating or refactoring a panel for a tenant-scoped resource:
 
 - [ ] Router uses `:shortuid` parameter (not `:pkey`)
 - [ ] Detail view reads `shortuid` from route params: `const shortuid = computed(() => route.params.shortuid)`
-- [ ] List view links use `shortuid`: `router-link :to="{ name: 'resource-detail', params: { shortuid: item.shortuid } }"`
+- [ ] List view links use `shortuid` with null guard: `router-link v-if="item.shortuid" :to="{ name: 'resource-detail', params: { shortuid: item.shortuid } }"`
+- [ ] List view shows placeholder when shortuid is null: `<span v-else class="cell-link cell-link-icon" title="No shortuid - cannot edit" style="opacity: 0.5;">—</span>`
+- [ ] Delete buttons in list views use `shortuid` with null guard: `button v-if="item.shortuid" @click="askConfirmDelete(item.shortuid)"`
+- [ ] Delete buttons show placeholder when shortuid is null: `<span v-else class="cell-link cell-link-icon" title="No shortuid - cannot delete" style="opacity: 0.5;">—</span>`
 - [ ] Delete functions in list views use `shortuid`: `await getApiClient().delete(\`resources/${encodeURIComponent(shortuid)}\`)`
 - [ ] Detail view API calls use `shortuid`: `await getApiClient().get(\`resources/${encodeURIComponent(shortuid.value)}\`)`
 - [ ] Watch statements watch `shortuid`: `watch(shortuid, fetchResource)`
@@ -1469,9 +1473,11 @@ catch (err) {
 
 ### List → Edit
 - Click Edit icon → Navigate to `{resource}-detail` route with `shortuid` param (for tenant-scoped resources) or `pkey` param (for globally unique resources)
-- **Tenant-scoped**: `router-link :to="{ name: 'resource-detail', params: { shortuid: item.shortuid } }"`
+- **Tenant-scoped**: `router-link v-if="item.shortuid" :to="{ name: 'resource-detail', params: { shortuid: item.shortuid } }"`
+- **Tenant-scoped (null shortuid)**: Show placeholder instead: `<span v-else class="cell-link cell-link-icon" title="No shortuid - cannot edit" style="opacity: 0.5;">—</span>`
 - **Globally unique**: `router-link :to="{ name: 'resource-detail', params: { pkey: item.pkey } }"`
 - Always opens in edit mode (no read-only view)
+- **Important**: Always guard RouterLinks with `v-if="item.shortuid"` to prevent Vue errors when `shortuid` is null (which can occur during data loading or if the server hasn't generated shortuid values yet)
 
 ### Create/Edit → List
 - Click Cancel button → Navigate to `{resource}s` route
