@@ -160,10 +160,10 @@ onMounted(loadAgents)
     </header>
 
     <section v-if="loading || error || deleteError || agents.length === 0" class="list-states">
-      <p v-if="loading" class="loading">Loading agents…</p>
+      <p v-if="loading" class="loading">Loading agents… (agents: {{ agents.length }}, tenants: {{ tenants.length }})</p>
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
-      <div v-else-if="agents.length === 0" class="empty">No agents.</div>
+      <div v-else-if="agents.length === 0" class="empty">No agents. (tenants loaded: {{ tenants.length }})</div>
     </section>
 
     <section v-else class="list-body">
