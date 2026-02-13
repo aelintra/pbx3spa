@@ -201,6 +201,7 @@ onMounted(loadQueues)
               >
                 <span class="action-icon" aria-hidden="true">🗑️</span>
               </button>
+              <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot delete" style="opacity: 0.5;">—</span>
             </td>
           </tr>
         </tbody>
