@@ -112,11 +112,11 @@ function syncEditFromRoute() {
 }
 
 async function fetchRoute() {
-  if (!pkey.value) return
+  if (!shortuid.value) return
   loading.value = true
   error.value = ''
   try {
-    routeData.value = await getApiClient().get(`routes/${encodeURIComponent(pkey.value)}`)
+    routeData.value = await getApiClient().get(`routes/${encodeURIComponent(shortuid.value)}`)
     syncEditFromRoute()
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load route')
