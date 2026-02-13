@@ -250,9 +250,24 @@ The following API elements may need updates to fully support shortuid-based rout
 
 **Action Required**: Update duplicate key validation to check `pkey + cluster` combination, or consider using `shortuid` uniqueness check (since shortuid is globally unique).
 
-### Controllers - Resource Relationships
+### Controllers - AMI Operations
 
-**Current Issue**: Some controllers reference resources by `pkey` in relationships, which may break when same `pkey` exists in multiple tenants.
+**Current Issue**: ExtensionController runtime methods use `$extension->pkey` for AMI operations, which may be ambiguous if same `pkey` exists in multiple tenants.
+
+**Affected Controllers**:
+- `ExtensionController::showruntime()` - Uses `$extension->pkey` for AMI GetDB calls (lines 206-208)
+- `ExtensionController::updateruntime()` - Uses `$extension->pkey` for AMI PutDB calls (lines 495-503)
+  - **Impact**: AMI operations use pkey, which may be ambiguous if same pkey in multiple tenants
+  - **Note**: AMI typically requires pkey within tenant context. Since route model binding now resolves by shortuid, we get the correct extension instance, so pkey should be unique within the tenant context. However, we should verify that AMI operations correctly identify the extension when called.
+
+**Action Required**: 
+- Verify that AMI operations correctly identify the extension (route model binding ensures correct extension instance)
+- Consider adding tenant context validation to ensure AMI operations are scoped to correct tenant
+- Document that AMI operations use pkey within tenant context (which is unique)
+
+### Controllers - Resource Relationships (Class of Service)
+
+**Current Issue**: CosOpenController and CosCloseController reference extensions by `IPphone_pkey` (extension pkey) in relationships, which may be ambiguous when same `pkey` exists in multiple tenants.
 
 **Affected Controllers**:
 - `CosOpenController` - Uses `IPphone_pkey` (extension pkey) in relationships
@@ -260,13 +275,13 @@ The following API elements may need updates to fully support shortuid-based rout
   - Line 61-62: Checks for duplicate relationship using `IPphone_pkey`
   - **Impact**: If extension "1001" exists in multiple tenants, relationship lookup may be ambiguous
 - `CosCloseController` - Same as CosOpenController
-- `ExtensionController::updateruntime()` - Uses `$extension->pkey` for AMI operations (lines 206-208, 495-503)
-  - **Impact**: AMI operations use pkey, which may be ambiguous if same pkey in multiple tenants
-  - **Note**: AMI may require pkey, but we should ensure we're operating on the correct extension
 
 **Action Required**: 
-- For relationship lookups: Consider using `shortuid` or `id` instead of `pkey` for foreign key relationships
-- For AMI operations: Verify that AMI operations correctly identify the extension (may need to pass cluster context)
+- **NEEDS THOROUGH REVIEW** - Class of Service relationships need comprehensive analysis before changes
+- Review how CosOpen/CosClose relationships work across tenants
+- Determine if relationships should be tenant-scoped or globally unique
+- Consider using `shortuid` or `id` instead of `pkey` for foreign key relationships, but only after full review
+- **Priority**: Defer to end of implementation list - needs thorough review first
 
 ### Controllers - Resource Lookups
 
@@ -386,15 +401,25 @@ The following API elements may need updates to fully support shortuid-based rout
 
 ### High Priority (Critical for Correctness)
 1. **Duplicate Key Validation** - Controllers must check `pkey + cluster` or use `shortuid` uniqueness
-2. **Resource Relationships** - CosOpen/CosClose controllers need to correctly identify extensions
-3. **AMI Operations** - Extension runtime operations must target correct extension
+   - **Status**: ExtensionController already correct; others need update
+   - **Action**: Update Queue, Agent, Route, Ivr, Trunk, InboundRoute controllers
+2. **AMI Operations** - Extension runtime operations must target correct extension
+   - **Status**: Route model binding ensures correct extension instance
+   - **Action**: Verify AMI operations work correctly with shortuid-based routing
+   - **Note**: AMI uses pkey within tenant context (unique), so should work correctly
 
 ### Medium Priority (Important for Consistency)
-4. **Model Relationships** - Foreign keys should use globally unique identifiers
-5. **API Documentation** - Documentation should reflect shortuid usage
-6. **Tests** - Tests should verify multi-tenant scenarios
+3. **Model Relationships** - Foreign keys should use globally unique identifiers
+4. **API Documentation** - Documentation should reflect shortuid usage
+5. **Tests** - Tests should verify multi-tenant scenarios
 
 ### Low Priority (Nice to Have)
-7. **Helper Functions** - Update for consistency
-8. **Background Jobs** - Update if they process tenant-scoped resources
-9. **Migrations/Seeders** - Update for future-proofing
+6. **Helper Functions** - Update for consistency
+7. **Background Jobs** - Update if they process tenant-scoped resources
+8. **Migrations/Seeders** - Update for future-proofing
+
+### Deferred (Needs Thorough Review)
+9. **Class of Service Relationships** - CosOpen/CosClose controllers need comprehensive review
+   - **Status**: Uses extension pkey in relationships
+   - **Action**: Defer to end - needs thorough analysis of how Cos relationships work across tenants
+   - **Note**: May need tenant-scoping or migration to shortuid/id, but requires full review first
