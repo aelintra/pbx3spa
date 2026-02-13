@@ -35,7 +35,7 @@ const deleteError = ref('')
 const deleting = ref(false)
 const confirmDeleteOpen = ref(false)
 
-const pkey = computed(() => route.params.pkey)
+const shortuid = computed(() => route.params.shortuid)
 
 const clusterToTenantPkey = computed(() => {
   const map = new Map()
@@ -129,7 +129,7 @@ async function fetchRoute() {
 onMounted(() => {
   Promise.all([fetchTenants(), fetchTrunks()]).then(() => fetchRoute())
 })
-watch(pkey, fetchRoute)
+watch(shortuid, fetchRoute)
 
 function goBack() {
   router.push({ name: 'routes' })
@@ -156,7 +156,7 @@ async function saveEdit(e) {
   }
   saving.value = true
   try {
-    await getApiClient().put(`routes/${encodeURIComponent(pkey.value)}`, {
+    await getApiClient().put(`routes/${encodeURIComponent(shortuid.value)}`, {
       cluster: editCluster.value.trim(),
       description: editDesc.value.trim() || undefined,
       active: editActive.value,
@@ -169,7 +169,7 @@ async function saveEdit(e) {
       strategy: editStrategy.value
     })
     await fetchRoute()
-    toast.show(`Route ${pkey.value} saved`)
+    toast.show(`Route saved`)
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update route')
   } finally {
@@ -190,8 +190,8 @@ async function confirmAndDelete() {
   deleteError.value = ''
   deleting.value = true
   try {
-    await getApiClient().delete(`routes/${encodeURIComponent(pkey.value)}`)
-    toast.show(`Route ${pkey.value} deleted`)
+    await getApiClient().delete(`routes/${encodeURIComponent(shortuid.value)}`)
+    toast.show(`Route deleted`)
     router.push({ name: 'routes' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete route')

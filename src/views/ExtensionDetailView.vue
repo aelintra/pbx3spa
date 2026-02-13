@@ -44,7 +44,7 @@ const editRingdelay = ref('')
 const runtimeSaveError = ref('')
 const runtimeSaving = ref(false)
 
-const pkey = computed(() => route.params.pkey)
+const shortuid = computed(() => route.params.shortuid)
 
 const clusterToTenantPkey = computed(() => {
   const map = new Map()
@@ -84,13 +84,13 @@ async function fetchTenants() {
 }
 
 async function fetchExtension() {
-  if (!pkey.value) return
+  if (!shortuid.value) return
   loading.value = true
   error.value = ''
   runtime.value = null
   runtimeError.value = ''
   try {
-    extension.value = await getApiClient().get(`extensions/${encodeURIComponent(pkey.value)}`)
+    extension.value = await getApiClient().get(`extensions/${encodeURIComponent(shortuid.value)}`)
     const ext = extension.value
     const tenantPkey = ext?.tenant_pkey ?? tenantPkeyDisplay(ext?.cluster)
     editCluster.value = tenantPkey ?? 'default'
@@ -114,10 +114,10 @@ async function fetchExtension() {
 }
 
 async function fetchRuntime() {
-  if (!pkey.value) return
+  if (!shortuid.value) return
   runtimeError.value = ''
   try {
-    runtime.value = await getApiClient().get(`extensions/${encodeURIComponent(pkey.value)}/runtime`)
+    runtime.value = await getApiClient().get(`extensions/${encodeURIComponent(shortuid.value)}/runtime`)
     editCfim.value = runtime.value?.cfim ?? ''
     editCfbs.value = runtime.value?.cfbs ?? ''
     editRingdelay.value = runtime.value?.ringdelay != null ? String(runtime.value.ringdelay) : ''
@@ -130,7 +130,7 @@ async function fetchRuntime() {
 onMounted(() => {
   fetchTenants().then(() => fetchExtension().then(() => fetchRuntime()))
 })
-watch(pkey, () => {
+watch(shortuid, () => {
   fetchExtension().then(() => fetchRuntime())
 })
 
@@ -155,7 +155,7 @@ async function saveEdit(e) {
   saving.value = true
   try {
     const body = {
-      pkey: pkey.value,
+      pkey: extension.value?.pkey,
       cluster: editCluster.value.trim(),
       device: extension.value?.device ?? 'MAILBOX',
       desc: editDesc.value.trim() || undefined,
@@ -170,9 +170,9 @@ async function saveEdit(e) {
       protocol: editProtocol.value,
       vmailfwd: editVmailfwd.value.trim() || undefined
     }
-    await getApiClient().put(`extensions/${encodeURIComponent(pkey.value)}`, body)
+    await getApiClient().put(`extensions/${encodeURIComponent(shortuid.value)}`, body)
     await fetchExtension()
-    toast.show(`Extension ${pkey.value} saved`)
+    toast.show(`Extension saved`)
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update extension')
   } finally {
@@ -193,8 +193,8 @@ async function confirmAndDelete() {
   deleteError.value = ''
   deleting.value = true
   try {
-    await getApiClient().delete(`extensions/${encodeURIComponent(pkey.value)}`)
-    toast.show(`Extension ${pkey.value} deleted`)
+    await getApiClient().delete(`extensions/${encodeURIComponent(shortuid.value)}`)
+    toast.show(`Extension deleted`)
     router.push({ name: 'extensions' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete extension')
@@ -222,7 +222,7 @@ async function saveRuntime(e) {
   runtimeSaveError.value = ''
   runtimeSaving.value = true
   try {
-    await getApiClient().put(`extensions/${encodeURIComponent(pkey.value)}/runtime`, {
+    await getApiClient().put(`extensions/${encodeURIComponent(shortuid.value)}/runtime`, {
       cfim: editCfim.value.trim() || null,
       cfbs: editCfbs.value.trim() || null,
       ringdelay: editRingdelay.value === '' ? null : parseInt(editRingdelay.value, 10)

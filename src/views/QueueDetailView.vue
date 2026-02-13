@@ -40,7 +40,7 @@ const deleteError = ref('')
 const deleting = ref(false)
 const confirmDeleteOpen = ref(false)
 
-const pkey = computed(() => route.params.pkey)
+const shortuid = computed(() => route.params.shortuid)
 
 // Tenant Resolution Pattern (PANEL_PATTERN.md): resolve API cluster (may be shortuid) to pkey for dropdown
 const tenantShortuidToPkey = computed(() => {
@@ -84,11 +84,11 @@ async function fetchTenants() {
 }
 
 async function fetchQueue() {
-  if (!pkey.value) return
+  if (!shortuid.value) return
   loading.value = true
   error.value = ''
   try {
-    queue.value = await getApiClient().get(`queues/${encodeURIComponent(pkey.value)}`)
+    queue.value = await getApiClient().get(`queues/${encodeURIComponent(shortuid.value)}`)
     const q = queue.value
     const clusterRaw = q?.cluster ?? 'default'
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
@@ -120,7 +120,7 @@ async function fetchQueue() {
 onMounted(() => {
   fetchTenants().then(() => fetchQueue())
 })
-watch(pkey, fetchQueue)
+watch(shortuid, fetchQueue)
 
 function goBack() {
   router.push({ name: 'queues' })
@@ -189,8 +189,8 @@ async function confirmAndDelete() {
   deleteError.value = ''
   deleting.value = true
   try {
-    await getApiClient().delete(`queues/${encodeURIComponent(pkey.value)}`)
-    toast.show(`Queue ${pkey.value} deleted`)
+    await getApiClient().delete(`queues/${encodeURIComponent(shortuid.value)}`)
+    toast.show(`Queue deleted`)
     router.push({ name: 'queues' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete queue')
@@ -200,7 +200,7 @@ async function confirmAndDelete() {
   }
 }
 
-const displayName = computed(() => queue.value?.pkey ?? pkey.value ?? '')
+const displayName = computed(() => queue.value?.pkey ?? '')
 </script>
 
 <template>

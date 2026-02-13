@@ -33,7 +33,7 @@ const deleteError = ref('')
 const deleting = ref(false)
 const confirmDeleteOpen = ref(false)
 
-const pkey = computed(() => route.params.pkey)
+const shortuid = computed(() => route.params.shortuid)
 
 const tenantOptions = computed(() => {
   const list = tenants.value.map((t) => t.pkey).filter(Boolean)
@@ -109,11 +109,11 @@ async function fetchQueues() {
 }
 
 async function fetchAgent() {
-  if (!pkey.value) return
+  if (!shortuid.value) return
   loading.value = true
   error.value = ''
   try {
-    agent.value = await getApiClient().get(`agents/${encodeURIComponent(pkey.value)}`)
+    agent.value = await getApiClient().get(`agents/${encodeURIComponent(shortuid.value)}`)
     editCluster.value = agent.value?.cluster ?? 'default'
     editName.value = agent.value?.name ?? ''
     editPasswd.value = agent.value?.passwd != null ? String(agent.value.passwd) : ''
@@ -135,7 +135,7 @@ async function fetchAgent() {
 onMounted(() => {
   fetchTenants().then(() => fetchQueues().then(() => fetchAgent()))
 })
-watch(pkey, fetchAgent)
+watch(shortuid, fetchAgent)
 watch(editCluster, clearQueuesNotInTenant)
 
 function goBack() {
@@ -174,9 +174,9 @@ async function saveEdit(e) {
     body.queue4 = normalizeQueueForSave(editQueue4.value)
     body.queue5 = normalizeQueueForSave(editQueue5.value)
     body.queue6 = normalizeQueueForSave(editQueue6.value)
-    await getApiClient().put(`agents/${encodeURIComponent(pkey.value)}`, body)
+    await getApiClient().put(`agents/${encodeURIComponent(shortuid.value)}`, body)
     await fetchAgent()
-    toast.show(`Agent ${pkey.value} saved`)
+    toast.show(`Agent saved`)
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update agent')
   } finally {
@@ -197,8 +197,8 @@ async function confirmAndDelete() {
   deleteError.value = ''
   deleting.value = true
   try {
-    await getApiClient().delete(`agents/${encodeURIComponent(pkey.value)}`)
-    toast.show(`Agent ${pkey.value} deleted`)
+    await getApiClient().delete(`agents/${encodeURIComponent(shortuid.value)}`)
+    toast.show(`Agent deleted`)
     router.push({ name: 'agents' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete agent')

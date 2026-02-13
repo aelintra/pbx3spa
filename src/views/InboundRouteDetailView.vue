@@ -53,7 +53,7 @@ const deleteError = ref('')
 const deleting = ref(false)
 const confirmDeleteOpen = ref(false)
 
-const pkey = computed(() => route.params.pkey)
+const shortuid = computed(() => route.params.shortuid)
 
 const clusterToTenantPkey = computed(() => {
   const map = new Map()
@@ -193,11 +193,11 @@ function syncEditFromRoute() {
 }
 
 async function fetchInboundRoute() {
-  if (!pkey.value) return
+  if (!shortuid.value) return
   loading.value = true
   error.value = ''
   try {
-    inboundRoute.value = await getApiClient().get(`inboundroutes/${encodeURIComponent(pkey.value)}`)
+    inboundRoute.value = await getApiClient().get(`inboundroutes/${encodeURIComponent(shortuid.value)}`)
     syncEditFromRoute()
     if (editCluster.value) loadDestinations()
   } catch (err) {
@@ -211,7 +211,7 @@ async function fetchInboundRoute() {
 onMounted(() => {
   fetchTenants().then(() => fetchInboundRoute())
 })
-watch(pkey, fetchInboundRoute)
+watch(shortuid, fetchInboundRoute)
 watch(editCluster, () => {
   loadDestinations()
 })
@@ -265,9 +265,9 @@ async function saveEdit(e) {
       username: editUsername.value.trim() || undefined
     }
     if (editPassword.value.trim()) body.password = editPassword.value.trim()
-    await getApiClient().put(`inboundroutes/${encodeURIComponent(pkey.value)}`, body)
+    await getApiClient().put(`inboundroutes/${encodeURIComponent(shortuid.value)}`, body)
     await fetchInboundRoute()
-    toast.show(`Inbound route ${pkey.value} saved`)
+    toast.show(`Inbound route saved`)
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update inbound route')
   } finally {
@@ -288,8 +288,8 @@ async function confirmAndDelete() {
   deleteError.value = ''
   deleting.value = true
   try {
-    await getApiClient().delete(`inboundroutes/${encodeURIComponent(pkey.value)}`)
-    toast.show(`Inbound route ${pkey.value} deleted`)
+    await getApiClient().delete(`inboundroutes/${encodeURIComponent(shortuid.value)}`)
+    toast.show(`Inbound route deleted`)
     router.push({ name: 'inbound-routes' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete inbound route')

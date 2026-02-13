@@ -119,8 +119,8 @@ async function loadExtensions() {
   }
 }
 
-function askConfirmDelete(pkey) {
-  confirmDeletePkey.value = pkey
+function askConfirmDelete(shortuid) {
+  confirmDeletePkey.value = shortuid
   deleteError.value = ''
 }
 
@@ -128,14 +128,14 @@ function cancelConfirmDelete() {
   confirmDeletePkey.value = null
 }
 
-async function confirmAndDeleteExtension(pkey) {
-  if (confirmDeletePkey.value !== pkey) return
+async function confirmAndDeleteExtension(shortuid) {
+  if (confirmDeletePkey.value !== shortuid) return
   deleteError.value = ''
-  deletingPkey.value = pkey
+  deletingPkey.value = shortuid
   try {
-    await getApiClient().delete(`extensions/${encodeURIComponent(pkey)}`)
+    await getApiClient().delete(`extensions/${encodeURIComponent(shortuid)}`)
     await loadExtensions()
-    toast.show(`Extension ${pkey} deleted`)
+    toast.show(`Extension deleted`)
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete extension')
   } finally {
@@ -214,7 +214,7 @@ onMounted(loadExtensions)
             <td>{{ e.transport ?? '—' }}</td>
             <td>{{ e.active ?? '—' }}</td>
             <td>
-              <router-link :to="{ name: 'extension-detail', params: { pkey: e.pkey } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
+              <router-link :to="{ name: 'extension-detail', params: { shortuid: e.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
               </router-link>
             </td>
@@ -222,10 +222,10 @@ onMounted(loadExtensions)
               <button
                 type="button"
                 class="cell-link cell-link-delete cell-link-icon"
-                :title="deletingPkey === e.pkey ? 'Deleting…' : 'Delete'"
-                :aria-label="deletingPkey === e.pkey ? 'Deleting…' : 'Delete'"
-                :disabled="deletingPkey === e.pkey"
-                @click="askConfirmDelete(e.pkey)"
+                :title="deletingPkey === e.shortuid ? 'Deleting…' : 'Delete'"
+                :aria-label="deletingPkey === e.shortuid ? 'Deleting…' : 'Delete'"
+                :disabled="deletingPkey === e.shortuid"
+                @click="askConfirmDelete(e.shortuid)"
               >
                 <span v-if="deletingPkey === e.pkey" class="action-icon action-icon-spin" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg></span>
                 <span v-else class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span>

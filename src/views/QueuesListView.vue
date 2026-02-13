@@ -107,8 +107,8 @@ async function loadQueues() {
   }
 }
 
-function askConfirmDelete(pkey) {
-  confirmDeletePkey.value = pkey
+function askConfirmDelete(shortuid) {
+  confirmDeletePkey.value = shortuid
   deleteError.value = ''
 }
 
@@ -116,14 +116,14 @@ function cancelConfirmDelete() {
   confirmDeletePkey.value = null
 }
 
-async function confirmAndDelete(pkey) {
-  if (confirmDeletePkey.value !== pkey) return
+async function confirmAndDelete(shortuid) {
+  if (confirmDeletePkey.value !== shortuid) return
   deleteError.value = ''
-  deletingPkey.value = pkey
+  deletingPkey.value = shortuid
   try {
-    await getApiClient().delete(`queues/${encodeURIComponent(pkey)}`)
+    await getApiClient().delete(`queues/${encodeURIComponent(shortuid)}`)
     await loadQueues()
-    toast.show(`Queue ${pkey} deleted`)
+    toast.show(`Queue deleted`)
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete queue')
   } finally {
@@ -184,7 +184,7 @@ onMounted(loadQueues)
             <td>{{ q.strategy ?? '—' }}</td>
             <td>{{ q.timeout != null && q.timeout !== '' ? q.timeout : '—' }}</td>
             <td>
-              <router-link :to="{ name: 'queue-detail', params: { pkey: q.pkey } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
+              <router-link :to="{ name: 'queue-detail', params: { shortuid: q.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true">✏️</span>
               </router-link>
             </td>
@@ -192,10 +192,10 @@ onMounted(loadQueues)
               <button
                 type="button"
                 class="cell-link cell-link-delete cell-link-icon"
-                :title="deletingPkey === q.pkey ? 'Deleting…' : 'Delete'"
-                :aria-label="deletingPkey === q.pkey ? 'Deleting…' : 'Delete'"
-                :disabled="deletingPkey === q.pkey"
-                @click="askConfirmDelete(q.pkey)"
+                :title="deletingPkey === q.shortuid ? 'Deleting…' : 'Delete'"
+                :aria-label="deletingPkey === q.shortuid ? 'Deleting…' : 'Delete'"
+                :disabled="deletingPkey === q.shortuid"
+                @click="askConfirmDelete(q.shortuid)"
               >
                 <span class="action-icon" aria-hidden="true">🗑️</span>
               </button>

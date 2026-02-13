@@ -46,25 +46,25 @@ const router = createRouter({
         { path: 'tenants/:pkey', name: 'tenant-detail', component: TenantDetailView },
         { path: 'extensions', name: 'extensions', component: ExtensionsListView },
         { path: 'extensions/new', name: 'extension-create', component: ExtensionCreateView },
-        { path: 'extensions/:pkey', name: 'extension-detail', component: ExtensionDetailView },
+        { path: 'extensions/:shortuid', name: 'extension-detail', component: ExtensionDetailView },
         { path: 'trunks', name: 'trunks', component: TrunksListView },
         { path: 'trunks/new', name: 'trunk-create', component: TrunkCreateView },
-        { path: 'trunks/:pkey', name: 'trunk-detail', component: TrunkDetailView },
+        { path: 'trunks/:shortuid', name: 'trunk-detail', component: TrunkDetailView },
         { path: 'queues', name: 'queues', component: QueuesListView },
         { path: 'queues/new', name: 'queue-create', component: QueueCreateView },
-        { path: 'queues/:pkey', name: 'queue-detail', component: QueueDetailView },
+        { path: 'queues/:shortuid', name: 'queue-detail', component: QueueDetailView },
         { path: 'agents', name: 'agents', component: AgentsListView },
         { path: 'agents/new', name: 'agent-create', component: AgentCreateView },
-        { path: 'agents/:pkey', name: 'agent-detail', component: AgentDetailView },
+        { path: 'agents/:shortuid', name: 'agent-detail', component: AgentDetailView },
         { path: 'routes', name: 'routes', component: RoutesListView },
         { path: 'routes/new', name: 'route-create', component: RouteCreateView },
-        { path: 'routes/:pkey', name: 'route-detail', component: RouteDetailView },
+        { path: 'routes/:shortuid', name: 'route-detail', component: RouteDetailView },
         { path: 'ivrs', name: 'ivrs', component: IvrsListView },
         { path: 'ivrs/new', name: 'ivr-create', component: IvrCreateView },
-        { path: 'ivrs/:pkey', name: 'ivr-detail', component: IvrDetailView },
+        { path: 'ivrs/:shortuid', name: 'ivr-detail', component: IvrDetailView },
         { path: 'inbound-routes', name: 'inbound-routes', component: InboundRoutesListView },
         { path: 'inbound-routes/new', name: 'inbound-route-create', component: InboundRouteCreateView },
-        { path: 'inbound-routes/:pkey', name: 'inbound-route-detail', component: InboundRouteDetailView }
+        { path: 'inbound-routes/:shortuid', name: 'inbound-route-detail', component: InboundRouteDetailView }
       ]
     }
   ]

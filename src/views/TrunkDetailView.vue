@@ -53,7 +53,7 @@ const deleteError = ref('')
 const deleting = ref(false)
 const confirmDeleteOpen = ref(false)
 
-const pkey = computed(() => route.params.pkey)
+const shortuid = computed(() => route.params.shortuid)
 
 /** Map cluster id, shortuid, or pkey → tenant pkey for display (always show pkey, not shortuid). */
 const clusterToTenantPkey = computed(() => {
@@ -94,11 +94,11 @@ async function fetchTenants() {
 }
 
 async function fetchTrunk() {
-  if (!pkey.value) return
+  if (!shortuid.value) return
   loading.value = true
   error.value = ''
   try {
-    trunk.value = await getApiClient().get(`trunks/${encodeURIComponent(pkey.value)}`)
+    trunk.value = await getApiClient().get(`trunks/${encodeURIComponent(shortuid.value)}`)
     editDescription.value = trunk.value?.description ?? ''
     editActive.value = trunk.value?.active ?? 'YES'
     const tenantPkey = trunk.value?.tenant_pkey ?? tenantPkeyDisplay(trunk.value?.cluster)
@@ -132,7 +132,7 @@ async function fetchTrunk() {
 onMounted(() => {
   fetchTenants().then(() => fetchTrunk())
 })
-watch(pkey, fetchTrunk)
+watch(shortuid, fetchTrunk)
 
 function goBack() {
   router.push({ name: 'trunks' })
@@ -177,9 +177,9 @@ async function saveEdit(e) {
       transform: editTransform.value.trim() || undefined
     }
     if (editPassword.value.trim()) body.password = editPassword.value.trim()
-    await getApiClient().put(`trunks/${encodeURIComponent(pkey.value)}`, body)
+    await getApiClient().put(`trunks/${encodeURIComponent(shortuid.value)}`, body)
     await fetchTrunk()
-    toast.show(`Trunk ${pkey.value} saved`)
+    toast.show(`Trunk saved`)
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update trunk')
   } finally {
@@ -200,8 +200,8 @@ async function confirmAndDelete() {
   deleteError.value = ''
   deleting.value = true
   try {
-    await getApiClient().delete(`trunks/${encodeURIComponent(pkey.value)}`)
-    toast.show(`Trunk ${pkey.value} deleted`)
+    await getApiClient().delete(`trunks/${encodeURIComponent(shortuid.value)}`)
+    toast.show(`Trunk deleted`)
     router.push({ name: 'trunks' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete trunk')

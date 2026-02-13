@@ -52,7 +52,7 @@ const deleteError = ref('')
 const deleting = ref(false)
 const confirmDeleteOpen = ref(false)
 
-const pkey = computed(() => route.params.pkey)
+const shortuid = computed(() => route.params.shortuid)
 
 // Field-level validation using composable (must be after refs are declared)
 const clusterValidation = useFormValidation(editCluster, validateTenant)
@@ -165,11 +165,11 @@ function syncEditFromIvr() {
 }
 
 async function fetchIvr() {
-  if (!pkey.value) return
+  if (!shortuid.value) return
   loading.value = true
   error.value = ''
   try {
-    ivr.value = await getApiClient().get(`ivrs/${encodeURIComponent(pkey.value)}`)
+    ivr.value = await getApiClient().get(`ivrs/${encodeURIComponent(shortuid.value)}`)
     syncEditFromIvr()
     editing.value = true
     saveError.value = ''
@@ -187,7 +187,7 @@ onMounted(() => {
   loadGreetings()
   fetchIvr()
 })
-watch(pkey, fetchIvr)
+watch(shortuid, fetchIvr)
 watch(tenants, () => {
   if (ivr.value && editCluster.value) {
     const resolved = tenantShortuidToPkey.value[editCluster.value]
@@ -250,10 +250,10 @@ async function saveEdit(e) {
     else body.name = null
     if (editDescription.value.trim()) body.description = editDescription.value.trim()
     if (editGreetnum.value !== '' && editGreetnum.value != null) body.greetnum = String(editGreetnum.value).trim()
-    await getApiClient().put(`ivrs/${encodeURIComponent(pkey.value)}`, body)
+    await getApiClient().put(`ivrs/${encodeURIComponent(shortuid.value)}`, body)
     await fetchIvr()
     editing.value = false
-    toast.show(`IVR ${pkey.value} saved`)
+    toast.show(`IVR saved`)
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
@@ -288,8 +288,8 @@ async function confirmAndDelete() {
   deleteError.value = ''
   deleting.value = true
   try {
-    await getApiClient().delete(`ivrs/${encodeURIComponent(pkey.value)}`)
-    toast.show(`IVR ${pkey.value} deleted`)
+    await getApiClient().delete(`ivrs/${encodeURIComponent(shortuid.value)}`)
+    toast.show(`IVR deleted`)
     router.push({ name: 'ivrs' })
   } catch (err) {
     deleteError.value = err.data?.message ?? err.message ?? 'Failed to delete IVR'
