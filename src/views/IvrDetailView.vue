@@ -418,35 +418,43 @@ async function confirmAndDelete() {
                 <span class="dest-cell dest-alert">Alert</span>
               </div>
               <template v-for="item in OPTION_ENTRIES" :key="item.key">
-                <div class="destinations-row" :class="{ 'destinations-row-none': options[item.key] === 'None' }">
-                  <label :for="'edit-dest-' + item.key" class="dest-cell dest-key">{{ item.label }}</label>
-                  <select
-                    :id="'edit-dest-' + item.key"
-                    v-model="options[item.key]"
-                    class="edit-input dest-cell dest-action"
-                  >
-                    <option value="None">None</option>
-                    <option value="Operator">Operator</option>
-                    <template v-for="(pkeys, group) in destinationGroups" :key="group">
-                      <optgroup v-if="pkeys.length" :label="group">
-                        <option v-for="p in pkeys" :key="p" :value="p">{{ p }}</option>
-                      </optgroup>
-                    </template>
-                  </select>
-                  <input
-                    :id="'edit-tag-' + item.key"
-                    v-model="tags[item.tagKey]"
-                    type="text"
-                    class="edit-input dest-cell dest-tag"
-                    placeholder="Tag"
-                  />
-                  <input
-                    :id="'edit-alert-' + item.key"
-                    v-model="alerts[item.alertKey]"
-                    type="text"
-                    class="edit-input dest-cell dest-alert"
-                    placeholder="Alert"
-                  />
+                <div class="destinations-row dest-row-fields" :class="{ 'destinations-row-none': options[item.key] === 'None' }">
+                  <span class="dest-cell dest-key">{{ item.label }}</span>
+                  <div class="dest-cell dest-action">
+                    <FormSelect
+                      :id="'edit-dest-' + item.key"
+                      v-model="options[item.key]"
+                      label="Action on KeyPress"
+                      :aria-label="'Destination for key ' + item.label"
+                      hide-label
+                      :options="['None', 'Operator']"
+                      :option-groups="destinationGroups"
+                    />
+                  </div>
+                  <div class="dest-cell dest-tag">
+                    <FormField
+                      :id="'edit-tag-' + item.key"
+                      v-model="tags[item.tagKey]"
+                      label="Tag"
+                      type="text"
+                      placeholder="Tag"
+                      :aria-label="'Tag for key ' + item.label"
+                      hide-label
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div class="dest-cell dest-alert">
+                    <FormField
+                      :id="'edit-alert-' + item.key"
+                      v-model="alerts[item.alertKey]"
+                      label="Alert"
+                      type="text"
+                      placeholder="Alert"
+                      :aria-label="'Alert for key ' + item.label"
+                      hide-label
+                      autocomplete="off"
+                    />
+                  </div>
                 </div>
               </template>
             </div>
@@ -656,6 +664,9 @@ async function confirmAndDelete() {
 .dest-cell {
   min-width: 0;
 }
+.dest-row-fields .dest-cell :deep(.form-field) {
+  margin-bottom: 0;
+}
 .dest-key {
   text-align: center;
   font-weight: 500;
@@ -666,6 +677,11 @@ async function confirmAndDelete() {
 .dest-tag,
 .dest-alert {
   min-width: 0;
+}
+.destinations-row-none .dest-key,
+.destinations-row-none .dest-cell :deep(.form-input),
+.destinations-row-none .dest-cell :deep(.form-select) {
+  color: #64748b;
 }
 .edit-input {
   padding: 0.5rem 0.75rem;

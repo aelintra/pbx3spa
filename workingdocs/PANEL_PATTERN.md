@@ -103,11 +103,13 @@ Some fields are updateable in the API but should **not** be changeable after cre
 All form fields must be implemented with the shared components from `src/components/forms/`:
 
 - **FormField** – text/number inputs (with optional hint, error, required).
-- **FormSelect** – dropdowns (single value from options or option groups). When using **optionGroups**, all groups are rendered; groups with no options show a "—" placeholder so the full list of types is always visible.
-- **FormToggle** – YES/NO (or two-value) toggle (checkbox-style).
+- **FormSelect** – dropdowns (single value from options or option groups). When using **optionGroups**, all groups are rendered; groups with no options show a "—" placeholder so the full list of types is always visible. Supports **hideLabel** for inline use (e.g. list rows, grids).
+- **FormToggle** – YES/NO (or two-value) toggle (checkbox-style). Supports **hideLabel** for inline use in list rows.
 - **FormReadonly** – display-only value (e.g. immutable identity fields on Edit).
 
-Use these for every field that fits (text, number, select, boolean/toggle, readonly). Do not replace them with raw HTML form elements for the same purpose.
+Use these for every field that fits (text, number, select, boolean/toggle, readonly). Do not replace them with raw HTML form elements for the same purpose. For **inline edits in list views** or **repeated fields in a grid** (e.g. IVR keystroke options), use FormSelect/FormToggle/FormField with **hideLabel** so the control fits in the cell or grid cell without a separate label column.
+
+**Grid of fields (e.g. IVR keystroke options):** When a form has a repeated pattern of rows (key/destination/tag/alert, or queue1–queue6, path1–path4, etc.), use **FormSelect** and **FormField** with **hideLabel** in each cell so layout and behaviour stay consistent with the rest of the app. Do not use raw `<select>` or `<input>` in the grid. Reference: IvrCreateView and IvrDetailView "Keystroke options" section — each row uses FormSelect for Action on KeyPress and FormField for Tag and Alert, with option-groups from the destinations API.
 
 ### Destination dropdowns (FormSelect with optionGroups)
 
@@ -804,6 +806,16 @@ function syncEditFromResource() {
 - **Include new columns in the filter** so the search box can match them; update the filter computed and the placeholder text (e.g. "Filter by name, Local UID, tenant, description, dialplan, path 1, or active").
 - **Numeric columns** (e.g. timeout, maxlen): implement **numeric sort** in the sort comparator (compare `Number(a[key])` vs `Number(b[key])`, treating NaN as lowest) so "10" sorts after "9". For non-numeric columns, string sort is fine.
 - Edit action (icon), Delete action (icon)
+
+### Inline edits in list views
+
+When a list has fields that users often change without opening the detail panel (e.g. **Active** YES/NO), provide **inline edit** in the table cell using the same form components.
+
+- **Use FormToggle or FormSelect** with **`hideLabel`** so the control fits in the cell (no label column). The component renders only the control; use `ariaLabel` or `label` for accessibility.
+- **On change:** Call the update API immediately (e.g. `PUT /queues/{pkey}` with the new value). No per-row "Save" button unless the product requires batching.
+- **Feedback:** On success, show a toast (e.g. "Queue 1060 updated"). On failure, show an error message (e.g. form-level or per-row; avoid blocking the whole list). Optionally show a brief saving state (e.g. disabled toggle or spinner) while the request is in flight.
+- **Track saving state per row** (e.g. `savingPkey` ref) so only the edited row shows loading and others remain editable.
+- **Apply to columns** where quick toggle/change is common: typically **Active** (YES/NO) first; other single-field inline edits (e.g. strategy, devicerec) can follow the same pattern where the API supports partial update.
 
 ### CSS Classes
 

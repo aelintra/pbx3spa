@@ -76,6 +76,15 @@ const props = defineProps({
   rows: {
     type: Number,
     default: 8
+  },
+  /** When true, hide the label (e.g. for grid/inline use). ariaLabel or label is used as the input aria-label. */
+  hideLabel: {
+    type: Boolean,
+    default: false
+  },
+  ariaLabel: {
+    type: String,
+    default: null
   }
 })
 
@@ -102,8 +111,8 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
 </script>
 
 <template>
-  <div class="form-field">
-    <label :for="id" class="form-field-label">
+  <div class="form-field" :class="{ 'form-field-inline': hideLabel }">
+    <label v-if="!hideLabel" :for="id" class="form-field-label">
       {{ label }}
       <span v-if="required" class="sr-only"> (required)</span>
     </label>
@@ -122,6 +131,7 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
           'form-input-valid': isValid
         }"
         :aria-invalid="hasError"
+        :aria-label="hideLabel ? (ariaLabel || label) : null"
         :aria-describedby="hasError ? errorId : (hint ? hintId : null)"
         :aria-required="required"
         :required="required"
@@ -146,6 +156,7 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
           'form-input-valid': isValid
         }"
         :aria-invalid="hasError"
+        :aria-label="hideLabel ? (ariaLabel || label) : null"
         :aria-describedby="hasError ? errorId : (hint ? hintId : null)"
         :aria-required="required"
         :required="required"
@@ -178,6 +189,10 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
   gap: 0.375rem 1rem;
   align-items: start;
   margin-bottom: 0.75rem;
+}
+.form-field-inline {
+  grid-template-columns: 1fr;
+  margin-bottom: 0;
 }
 
 .form-field-label {

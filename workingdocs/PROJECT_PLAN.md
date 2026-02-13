@@ -16,6 +16,8 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **To-do (Extensions):** Allow changing extension number (pkey). In SARK pkey was immutable; frontend already has an editable Ext field and redirect-on-save — API needs to support pkey update (e.g. add to updateable columns or dedicated rename flow) before enabling this behaviour.
 
+**To-do (IVR → trunk / PSTN):** Ring groups are implemented as queues in this system. We do not allow an IVR to directly target a trunk because there is no convenient way (right now) to supply the PSTN number. This may be supported in the future; when we do, add trunk (and/or PSTN-number) as a valid IVR destination option in the API and SPA (destination dropdowns, option groups).
+
 **To-do (Phone images):** API hosts the phone image library; SPA consumes URLs. API: store images on disk (or storage), sync from upstream (script/cron), expose e.g. `GET /api/phone-images/{filename}` or device-model → image URL; frontend uses those URLs in `<img>` (no library bundled in SPA).
 
 **To-do (Tenants – Timer status / masteroclo):** API can return null for tenant `masteroclo` (DB column has no DEFAULT; existing rows may be NULL). Frontend currently shows "AUTO" when null (sloppy but works). Prefer API fix: e.g. Tenant model accessor that returns `masteroclo ?? 'AUTO'`, or DB default + backfill, so the API always sends a value and the list doesn’t have to guess.
@@ -24,7 +26,7 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **To-do (pbx3api – Middleware on remote):** Investigate why `app/Http/Middleware/ValidateClusterAccess.php` does not appear on the remote test instance after pull even though newpanels is the branch in use and the file is tracked in git. User suspects it may be from an old Sanctum experiment or a deployment/build path that doesn’t include it.
 
-**Review later (UX – inline edit):** Consider inline edit for list rows *after* the system runs nicely on the current list → detail/edit pattern. The old system had inline edit in some areas; on bigger rows it looked clunky and took extra real estate on busy screens. Revisit only when the main pattern is stable and we want to optimise for high-frequency small edits.
+**Inline edit (pattern in place):** List views can support inline edits for fields that users often change without opening detail (e.g. **Active** YES/NO). Use **FormToggle** or **FormSelect** with **hideLabel** in the table cell; on change call the update API immediately; show toast on success. Pattern documented in PANEL_PATTERN.md § "Inline edits in list views"; it works. It was tried on the Queues list and reverted for now—we may revisit the look/UX when we add it again. Other lists (Trunks, Routes, IVRs, Inbound routes, etc.) can add the same when desired.
 
 **To-do (create panels):** Standardize remaining create panels per PANEL_PATTERN.md §3: **Extension**, **Trunk**, **Route**, **Queue**, **Agent**, **IVR**. For each: (a) preset create-form fields from DB SQL DEFAULTs and model `$attributes`; (b) group fields into Identity, Settings (or Transport), and optional Advanced; (c) use segmented pills for boolean and short fixed-choice fields instead of `<select>`. Tenant and Inbound route create are already done; use them as reference.
 

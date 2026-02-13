@@ -388,40 +388,43 @@ onMounted(async () => {
             <span class="dest-cell dest-alert">Alert</span>
           </div>
           <template v-for="item in OPTION_ENTRIES" :key="item.key">
-            <div class="destinations-row" :class="{ 'destinations-row-none': options[item.key] === 'None' }">
-              <label :for="'dest-' + item.key" class="dest-cell dest-key">{{ item.label }}</label>
-              <select
-                :id="'dest-' + item.key"
-                v-model="options[item.key]"
-                class="edit-input dest-cell dest-action"
-                :aria-label="'Destination for key ' + item.label"
-              >
-                <option value="None">None</option>
-                <option value="Operator">Operator</option>
-                <template v-for="(pkeys, group) in destinationGroups" :key="group">
-                  <optgroup v-if="pkeys.length" :label="group">
-                    <option v-for="p in pkeys" :key="p" :value="p">{{ p }}</option>
-                  </optgroup>
-                </template>
-              </select>
-              <input
-                :id="'tag-' + item.key"
-                v-model="tags[item.tagKey]"
-                type="text"
-                class="edit-input dest-cell dest-tag"
-                placeholder="e.g. US West Telesales"
-                :aria-label="'Tag for key ' + item.label"
-                autocomplete="off"
-              />
-              <input
-                :id="'alert-' + item.key"
-                v-model="alerts[item.alertKey]"
-                type="text"
-                class="edit-input dest-cell dest-alert"
-                placeholder="e.g. &lt;http://127.0.0.1/Bellcore-drX&gt;"
-                :aria-label="'Alert for key ' + item.label"
-                autocomplete="off"
-              />
+            <div class="destinations-row dest-row-fields" :class="{ 'destinations-row-none': options[item.key] === 'None' }">
+              <span class="dest-cell dest-key">{{ item.label }}</span>
+              <div class="dest-cell dest-action">
+                <FormSelect
+                  :id="'dest-' + item.key"
+                  v-model="options[item.key]"
+                  label="Action on KeyPress"
+                  :aria-label="'Destination for key ' + item.label"
+                  hide-label
+                  :options="['None', 'Operator']"
+                  :option-groups="destinationGroups"
+                />
+              </div>
+              <div class="dest-cell dest-tag">
+                <FormField
+                  :id="'tag-' + item.key"
+                  v-model="tags[item.tagKey]"
+                  label="Tag"
+                  type="text"
+                  placeholder="e.g. US West Telesales"
+                  :aria-label="'Tag for key ' + item.label"
+                  hide-label
+                  autocomplete="off"
+                />
+              </div>
+              <div class="dest-cell dest-alert">
+                <FormField
+                  :id="'alert-' + item.key"
+                  v-model="alerts[item.alertKey]"
+                  label="Alert"
+                  type="text"
+                  placeholder="e.g. &lt;http://127.0.0.1/Bellcore-drX&gt;"
+                  :aria-label="'Alert for key ' + item.label"
+                  hide-label
+                  autocomplete="off"
+                />
+              </div>
             </div>
           </template>
         </div>
@@ -429,7 +432,7 @@ onMounted(async () => {
       </section>
 
       <div class="actions">
-        <button type="submit" :disabled="loading || tenantsLoading">
+        <button type="submit" :disabled="loading || tenantsLoading || destinationsLoading || greetingsLoading">
           {{ loading ? 'Creating…' : 'Create' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
@@ -505,6 +508,9 @@ onMounted(async () => {
 .dest-cell {
   min-width: 0;
 }
+.dest-row-fields .dest-cell :deep(.form-field) {
+  margin-bottom: 0;
+}
 .dest-key {
   text-align: center;
   font-weight: 500;
@@ -515,18 +521,6 @@ onMounted(async () => {
 .dest-tag,
 .dest-alert {
   min-width: 0;
-}
-.edit-input {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-  transition: border-color 0.15s ease;
-}
-.edit-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 .form-hint {
   font-size: 0.8125rem;
