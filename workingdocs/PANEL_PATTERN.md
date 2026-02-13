@@ -838,7 +838,11 @@ function syncEditFromResource() {
           <td>{{ item.field }}</td>
           <td>
             <!-- For tenant-scoped resources: -->
-            <router-link :to="{ name: '{resource}-detail', params: { shortuid: item.shortuid } }"
+            <router-link v-if="item.shortuid" :to="{ name: '{resource}-detail', params: { shortuid: item.shortuid } }"
+                         class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
+              <span class="action-icon" aria-hidden="true">✏️</span>
+            </router-link>
+            <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot edit" style="opacity: 0.5;">—</span>
             
             <!-- For globally unique resources: -->
             <router-link :to="{ name: '{resource}-detail', params: { pkey: item.pkey } }" 
@@ -848,7 +852,10 @@ function syncEditFromResource() {
           </td>
           <td>
             <!-- For tenant-scoped resources: -->
-            <button @click="askConfirmDelete(item.shortuid)" class="cell-link cell-link-delete">
+            <button v-if="item.shortuid" @click="askConfirmDelete(item.shortuid)" class="cell-link cell-link-delete">
+              <span class="action-icon" aria-hidden="true">🗑️</span>
+            </button>
+            <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot delete" style="opacity: 0.5;">—</span>
             
             <!-- For globally unique resources: -->
             <button @click="askConfirmDelete(item.pkey)" class="cell-link cell-link-delete">
