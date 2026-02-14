@@ -299,18 +299,6 @@ onMounted(async () => {
           hint="Numeric ID (3-5 digits) for this IVR."
           @blur="pkeyValidation.onBlur"
         />
-        <FormSelect
-          id="cluster"
-          v-model="cluster"
-          label="Tenant"
-          :options="tenantOptionsForSelect"
-          :error="clusterValidation.error.value"
-          :touched="clusterValidation.touched.value"
-          :required="true"
-          :loading="tenantsLoading"
-          hint="The tenant this IVR belongs to. Tenants provide multi-tenant support."
-          @blur="clusterValidation.onBlur"
-        />
         <FormField
           id="description"
           v-model="description"
@@ -339,6 +327,18 @@ onMounted(async () => {
 
       <h2 class="detail-heading">Settings</h2>
       <div class="form-fields">
+        <FormSelect
+          id="cluster"
+          v-model="cluster"
+          label="Tenant"
+          :options="tenantOptionsForSelect"
+          :error="clusterValidation.error.value"
+          :touched="clusterValidation.touched.value"
+          :required="true"
+          :loading="tenantsLoading"
+          hint="The tenant this IVR belongs to."
+          @blur="clusterValidation.onBlur"
+        />
         <FormToggle
           id="active"
           v-model="active"

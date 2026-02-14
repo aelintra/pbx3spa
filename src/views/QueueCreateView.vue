@@ -214,6 +214,17 @@ async function onSubmit(e) {
           hint="Unique queue identifier."
           @blur="pkeyValidation.onBlur"
         />
+        <FormField
+          id="description"
+          v-model="description"
+          label="Description"
+          type="text"
+          placeholder="Short description"
+        />
+      </div>
+
+      <h2 class="detail-heading">Settings</h2>
+      <div class="form-fields">
         <FormSelect
           id="cluster"
           v-model="cluster"
@@ -234,17 +245,6 @@ async function onSubmit(e) {
           no-value="NO"
           hint="If off, the queue will not be available."
         />
-        <FormField
-          id="description"
-          v-model="description"
-          label="Description"
-          type="text"
-          placeholder="Short description"
-        />
-      </div>
-
-      <h2 class="detail-heading">Options</h2>
-      <div class="form-fields">
         <FormSelect
           id="devicerec"
           v-model="devicerec"

@@ -4,6 +4,14 @@
 
 **Reference implementations:** `TenantCreateView.vue`, `InboundRouteCreateView.vue`
 
+**Status (§3 grouping — Identity / Settings / optional Advanced):**
+- **Route:** Done (Identity: pkey, desc, cname; Settings: cluster, active, auth, strategy; Dialplan; Paths).
+- **Queue:** Done (Identity: pkey, description; Settings: cluster, active, devicerec, strategy, greetnum, greeting, options, musicclass, members; Timing & limits; Advanced).
+- **Agent:** Done (Identity: pkey, name, passwd, cname, description, extlen; Settings: cluster; Queues).
+- **IVR:** Done (Identity: pkey, description, cname, name; Settings: cluster, active, greetnum, listenforext, timeout; Keystroke options).
+- **Extension:** Done (protocol + Identity/Settings/Advanced per earlier pass).
+- **Trunk:** Has default type; see COMPLEX_CREATE_PLAN.md for type-chooser.
+
 ---
 
 ## Requirements Checklist (per PANEL_PATTERN.md §3)

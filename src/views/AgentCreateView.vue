@@ -261,18 +261,6 @@ async function onSubmit(e) {
           hint="1000–9999."
           @blur="pkeyValidation.onBlur"
         />
-        <FormSelect
-          id="cluster"
-          v-model="cluster"
-          label="Tenant"
-          :options="tenantOptionsForSelect"
-          :error="clusterValidation.error.value"
-          :touched="clusterValidation.touched.value"
-          :required="true"
-          :loading="tenantsLoading"
-          hint="The tenant this agent belongs to."
-          @blur="clusterValidation.onBlur"
-        />
         <FormField
           id="name"
           v-model="name"
@@ -321,6 +309,22 @@ async function onSubmit(e) {
           inputmode="numeric"
           placeholder="e.g. 4"
           hint="Extension length for this agent."
+        />
+      </div>
+
+      <h2 class="detail-heading">Settings</h2>
+      <div class="form-fields">
+        <FormSelect
+          id="cluster"
+          v-model="cluster"
+          label="Tenant"
+          :options="tenantOptionsForSelect"
+          :error="clusterValidation.error.value"
+          :touched="clusterValidation.touched.value"
+          :required="true"
+          :loading="tenantsLoading"
+          hint="The tenant this agent belongs to."
+          @blur="clusterValidation.onBlur"
         />
       </div>
 

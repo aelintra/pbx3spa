@@ -16,7 +16,13 @@
 - Home dashboard (PBX status, Commit/Start/Stop/Reboot); auth with sessionStorage, route guard, whoami.
 - **Create panels fully aligned with §3:** Tenant, Inbound route (use as reference).
 
-### Latest session (tenant-scoped panels – id vs pkey)
+### Latest session (create-panel standardization + UX)
+
+- **Create-panel standardization (§3):** Route, Queue, Agent, and IVR create panels now use consistent **Identity / Settings / optional Advanced** grouping. Identity = name/identifiers/description; Settings = tenant (cluster), active, and main behaviour; then resource-specific sections (Dialplan, Paths, Queues, Timing, Keystroke options, Advanced). Extension and Trunk create were already aligned. See **CREATE_PANELS_STANDARDIZATION.md** status.
+- **UX – no selectable "-" in dropdowns:** FormSelect default `emptyText` is now `''`; all dropdowns use a concrete default and a real option (e.g. "None") instead of `empty-text`. Route path1–4, Agent queue1–6, IVR greetnum, Trunk type, InboundRoute open/closed default to "None" or first option; submit maps "None" to omit/null. PANEL_PATTERN rule added.
+- **UX – toggles for booleans:** Tenant Advanced two-option pill fields (enabled/disabled, YES/NO, on/off) now use **FormToggle** instead of FormSelect. FormSegmentedPill used for 2–3 option primary fields; 4+ options stay FormSelect (per PILLS_RETROFIT_LIST).
+
+### Previous session (tenant-scoped panels – id vs pkey)
 
 - **Tenant-scoped panels – identity and uniqueness (pbx3api):** Fixed cross-tenant update bug (e.g. editing extension 1000 in tenant A was updating extension 1000 in tenant B). **Pattern:** use **id** (KSUID) for identity (which row to update/delete); use **pkey + cluster** for uniqueness (same pkey in different clusters is allowed). All tenant-scoped controllers (Extension, Queue, Agent, Route, Trunk, IVR, Inbound route) now do explicit `Model::where('id', $id)->update($dirty)` and `$model->syncOriginal()` instead of `$model->save()`. ExtensionRequest and TrunkRequest: pkey unique per cluster, ignore current row by id, and skip unique check when pkey is unchanged on update (avoids 422 when only toggling e.g. Active). **Docs:** **pbx3api/docs/TENANT_SCOPED_PATTERN.md** (full reference); **pbx3api/.cursor/rules/tenant-scoped-panels.mdc** (Cursor rule when editing API controllers/models/requests). Applies to future tenant-scoped resources (e.g. Custom apps); not to Tenants (cluster) themselves.
 
@@ -42,20 +48,11 @@
 
 **Approach:** One create view per resource + type chooser + conditional fields + one polymorphic create API per resource. See **workingdocs/COMPLEX_CREATE_PLAN.md**.
 
-**Status (create exercise):** Tenant, Extension, Trunk, Inbound route create done; IVR create still to do (minimal form today). Finish IVR create per §3 (tenant dropdown, description, defaults). 
+**Status (create exercise):** Tenant, Extension, Trunk, Inbound route, and **IVR** create done. IVR create has Identity (pkey, description, cname, name), Settings (tenant, active, greetnum, listenforext, timeout), and Keystroke options; defaults preset (active YES, greetnum None, timeout operator, listenforext NO). 
 
 ### Create-panel standardization (PANEL_PATTERN §3 + §8)
 
-Standardize these create panels so they match §3 (SQL defaults, Identity/Settings/Advanced, segmented pills):
-
-- **Extension**
-- **Trunk** (first: type-chooser create per COMPLEX_CREATE_PLAN)
-- **Route**
-- **Queue**
-- **Agent**
-- **IVR**
-
-For each: (a) preset create-form fields from DB SQL DEFAULTs and model `$attributes`; (b) group fields into Identity, Settings (or Transport), and optional Advanced; (c) use segmented pills for boolean and short fixed-choice fields instead of `<select>`.
+**Done:** All six create panels (Extension, Trunk, Route, Queue, Agent, IVR) now match §3: Identity / Settings / optional Advanced grouping; defaults preset where applicable; FormToggle for booleans, FormSegmentedPill for 2–3 option fields, FormSelect for 4+. See **CREATE_PANELS_STANDARDIZATION.md** for status. Trunk type-chooser and conditional fields remain per COMPLEX_CREATE_PLAN.md.
 
 ### Boolean pill style (to decide)
 
