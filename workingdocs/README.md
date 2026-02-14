@@ -27,9 +27,10 @@ This folder is **for the AI (Cursor agent)** to record progress and build a memo
 
 | Path | Role |
 |------|------|
-| **pbx3-master** | Wrapper; root that contains the three repos below. |
+| **pbx3-master** | Placeholder folder; **not a git repo**. Contains the four repos below. |
 | **pbx3** | System backend (Asterisk, SQLite, config generation, etc.). |
-| **pbx3api** | Backend API; what the frontend calls. |
+| **pbx3api** | Backend API; what the frontend calls. Tenant-scoped pattern doc and Cursor rule live here. |
+| **pbx3cagi** | (Repo.) |
 | **pbx3spa** | Vue SPA admin UI; current work is here (own git repo, root is `pbx3spa/`). |
 
 ## Context in one sentence

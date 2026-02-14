@@ -2,6 +2,8 @@
 
 **Start here:** Read **PROJECT_PLAN.md** § Current state and **PANEL_PATTERN.md** §8 to see what’s done and what’s left.
 
+**Repos:** **pbx3-master** is not a git repo; it is a placeholder folder containing the four repos: **pbx3**, **pbx3api**, **pbx3cagi**, **pbx3spa**. Commit in the relevant repo.
+
 ---
 
 ## Done
@@ -14,7 +16,11 @@
 - Home dashboard (PBX status, Commit/Start/Stop/Reboot); auth with sessionStorage, route guard, whoami.
 - **Create panels fully aligned with §3:** Tenant, Inbound route (use as reference).
 
-### Latest session (IVR edit completeness + name TODO)
+### Latest session (tenant-scoped panels – id vs pkey)
+
+- **Tenant-scoped panels – identity and uniqueness (pbx3api):** Fixed cross-tenant update bug (e.g. editing extension 1000 in tenant A was updating extension 1000 in tenant B). **Pattern:** use **id** (KSUID) for identity (which row to update/delete); use **pkey + cluster** for uniqueness (same pkey in different clusters is allowed). All tenant-scoped controllers (Extension, Queue, Agent, Route, Trunk, IVR, Inbound route) now do explicit `Model::where('id', $id)->update($dirty)` and `$model->syncOriginal()` instead of `$model->save()`. ExtensionRequest and TrunkRequest: pkey unique per cluster, ignore current row by id, and skip unique check when pkey is unchanged on update (avoids 422 when only toggling e.g. Active). **Docs:** **pbx3api/docs/TENANT_SCOPED_PATTERN.md** (full reference); **pbx3api/.cursor/rules/tenant-scoped-panels.mdc** (Cursor rule when editing API controllers/models/requests). Applies to future tenant-scoped resources (e.g. Custom apps); not to Tenants (cluster) themselves.
+
+### Previous session (IVR edit completeness + name TODO)
 
 - **IVR id/shortuid fix (pbx3api):** Ivr model had `id` and `shortuid` in `$attributes` (default null), which prevented Eloquent from hydrating them from the DB. Removed those defaults so IVR behaves like Tenant/Trunk/Extension; IvrController index/show now return model/collection directly (no DB workaround). Committed in pbx3api.
 - **IVR edit panel – all editable items (pbx3api + pbx3spa):** API `updateableColumns` now include **active** (YES/NO), **cname** (Display name), **name** (legacy). Edit and create panels: Active toggle, Display name (cname), Name (optional), plus existing description, tenant, greeting, listenforext, timeout, keystroke options (option/tag/alert). Identity read view shows Name, Display name, Description; Settings shows Active?, Tenant, Greeting, Listen for extension dial?, Timeout.
@@ -90,6 +96,7 @@ For each: (a) preset create-form fields from DB SQL DEFAULTs and model `$attribu
 - **PANEL_PATTERN.md** §8 — reference implementation status; §3 for create-form rules; §2.2 list blocks; §4.1 detail blocks.
 - **BOOLEAN_STANDARDISATION.md** — plan and fixer for standardising boolean columns to YES/NO; migration in pbx3api (run when ready).
 - **pbx3api/docs/TODO_IVR_NAME.md** — IVR ivrmenu `name` field: research usage and decide whether to remove from API/UI (schema marks name deprecated in favour of cname).
+- **pbx3api/docs/TENANT_SCOPED_PATTERN.md** — Tenant-scoped panels: id for identity, pkey+cluster for uniqueness; controller update by id; Form Request pkey rules. **pbx3api/.cursor/rules/tenant-scoped-panels.mdc** — Cursor rule for same (when editing API controllers/models/requests).
 - **pbx3/full_schema.sql** — schema yardstick; API models/controllers must match column set (see SYSTEM_CONTEXT.md).
 - **wizardnotes/** — add-wizard.md, agent-brief-spa.md per resource (DDI, extension, trunk, ivr).
 - **SYSTEM_CONTEXT.md**, **README.md** — context and setup.
