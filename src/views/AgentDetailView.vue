@@ -47,6 +47,17 @@ const tenantOptionsForSelect = computed(() => {
   return list
 })
 
+/** Map cluster id, shortuid, or pkey → tenant pkey for display (same pattern as other Detail views). Resolve API cluster (may be shortuid) to pkey for dropdown. */
+const clusterToTenantPkey = computed(() => {
+  const map = new Map()
+  for (const t of tenants.value) {
+    if (t.id != null) map.set(String(t.id), t.pkey ?? t.id)
+    if (t.shortuid != null) map.set(String(t.shortuid), t.pkey ?? t.shortuid)
+    if (t.pkey != null) map.set(String(t.pkey), t.pkey)
+  }
+  return map
+})
+
 /** Current tenant's shortuid (queue.cluster stores tenant shortuid, not pkey). Resolve from pkey or use as shortuid if it matches a tenant. */
 const tenantShortuid = computed(() => {
   const cluster = String(editCluster.value ?? '').trim()
@@ -114,7 +125,8 @@ async function fetchAgent() {
   error.value = ''
   try {
     agent.value = await getApiClient().get(`agents/${encodeURIComponent(shortuid.value)}`)
-    editCluster.value = agent.value?.cluster ?? 'default'
+    const clusterRaw = agent.value?.cluster ?? 'default'
+    editCluster.value = clusterToTenantPkey.value.get(String(clusterRaw)) ?? clusterRaw
     editName.value = agent.value?.name ?? ''
     editPasswd.value = agent.value?.passwd != null ? String(agent.value.passwd) : ''
     editQueue1.value = normalizeQueueFromApi(agent.value?.queue1)
