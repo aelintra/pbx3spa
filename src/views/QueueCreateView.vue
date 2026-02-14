@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateQueuePkey, validateTenant } from '@/utils/validation'
@@ -13,6 +14,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 
 const router = useRouter()
 const toast = useToastStore()
+const { ensureFetched, applySchemaDefaults } = useSchema()
 const pkey = ref('')
 const cluster = ref('default')
 const active = ref('YES')
@@ -70,7 +72,21 @@ async function loadTenants() {
   }
 }
 
-onMounted(loadTenants)
+onMounted(async () => {
+  await ensureFetched()
+  applySchemaDefaults('queues', {
+    cluster,
+    active,
+    description,
+    devicerec,
+    strategy,
+    timeout,
+    retry,
+    wrapuptime,
+    maxlen
+  })
+  await loadTenants()
+})
 
 function resetForm() {
   pkey.value = ''

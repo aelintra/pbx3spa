@@ -16,7 +16,11 @@
 - Home dashboard (PBX status, Commit/Start/Stop/Reboot); auth with sessionStorage, route guard, whoami.
 - **Create panels fully aligned with §3:** Tenant, Inbound route (use as reference).
 
-### Latest session (create-panel standardization + UX)
+### Latest session (field mutability – API-driven schema)
+
+- **Field mutability (API-driven):** Done. API exposes **GET /schemas** (SchemaService + SchemaController) with `read_only`, `updateable`, and `defaults` per resource (extensions, queues, agents, routes, trunks, ivrs, inroutes, tenants). Frontend uses **useSchema** composable (fetch on first use, module-level cache; no Pinia): `ensureFetched()`, `getSchema(resource)`, `applySchemaDefaults(resource, refsByKey)`. All **eight detail views** derive read_only from schema (no hard-coded readonly lists). All **eight create views** preset form fields from `schema.defaults` where the key exists. Fallback when schema is missing was deferred (Occam’s razor). See **FIELD_MUTABILITY_API_PLAN.md** and **pbx3api/docs/SCHEMAS_ENDPOINT.md**. PANEL_PATTERN.md updated: useSchema is required for edit views; schema composable in shared components list.
+
+### Previous session (create-panel standardization + UX)
 
 - **Create-panel standardization (§3):** Route, Queue, Agent, and IVR create panels now use consistent **Identity / Settings / optional Advanced** grouping. Identity = name/identifiers/description; Settings = tenant (cluster), active, and main behaviour; then resource-specific sections (Dialplan, Paths, Queues, Timing, Keystroke options, Advanced). Extension and Trunk create were already aligned. See **CREATE_PANELS_STANDARDIZATION.md** status.
 - **UX – no selectable "-" in dropdowns:** FormSelect default `emptyText` is now `''`; all dropdowns use a concrete default and a real option (e.g. "None") instead of `empty-text`. Route path1–4, Agent queue1–6, IVR greetnum, Trunk type, InboundRoute open/closed default to "None" or first option; submit maps "None" to omit/null. PANEL_PATTERN rule added.
@@ -65,7 +69,7 @@
 - **Extensions:** Allow changing extension number (pkey) — needs API support first.
 - **Phone images:** API hosts library; SPA consumes URLs.
 - **Tenants – Timer status / masteroclo:** API null handling; prefer API fix (e.g. model accessor or DB default).
-- **Field mutability:** Prefer API-driven immutable metadata so frontend can derive lowlight without per-panel lists.
+- **Field mutability:** Done — API-driven; frontend uses GET /schemas (useSchema composable). See FIELD_MUTABILITY_API_PLAN.md.
 - **Review later (UX):** Inline edit for list rows — revisit when main pattern is stable.
 
 ### Panel pattern audit (for when we come back)

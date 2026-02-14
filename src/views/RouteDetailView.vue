@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
@@ -15,6 +16,10 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const { getSchema, ensureFetched } = useSchema()
+function isReadOnly(field) {
+  return getSchema('routes')?.read_only?.includes(field) ?? false
+}
 const routeData = ref(null)
 const tenants = ref([])
 const trunks = ref([])
@@ -127,8 +132,10 @@ async function fetchRoute() {
   }
 }
 
-onMounted(() => {
-  Promise.all([fetchTenants(), fetchTrunks()]).then(() => fetchRoute())
+onMounted(async () => {
+  await ensureFetched()
+  await Promise.all([fetchTenants(), fetchTrunks()])
+  await fetchRoute()
 })
 watch(shortuid, fetchRoute)
 
@@ -231,21 +238,12 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly
-              id="edit-identity-pkey"
-              label="Route name"
-              :value="routeData.pkey ?? '—'"
-            />
-            <FormReadonly
-              id="edit-identity-shortuid"
-              label="Local UID"
-              :value="routeData.shortuid ?? '—'"
-            />
-            <FormReadonly
-              id="edit-identity-id"
-              label="KSUID"
-              :value="routeData.id ?? '—'"
-            />
+            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Route name" :value="routeData.pkey ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-pkey" :model-value="routeData.pkey ?? '—'" label="Route name" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="routeData.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-shortuid" :model-value="routeData.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="routeData.id ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-id" :model-value="routeData.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormField
               id="edit-desc"
               v-model="editDesc"
@@ -387,6 +385,14 @@ async function confirmAndDelete() {
   flex-direction: column;
   gap: 0;
   margin-top: 0.5rem;
+}
+.readonly-identity :deep(.form-field-label),
+.readonly-identity :deep(.form-readonly) {
+  color: #94a3b8;
+}
+.readonly-identity :deep(.form-readonly) {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
 }
 .edit-form {
   margin-bottom: 1rem;

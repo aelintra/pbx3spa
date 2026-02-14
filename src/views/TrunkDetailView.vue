@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
@@ -15,6 +16,10 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const { getSchema, ensureFetched } = useSchema()
+function isReadOnly(field) {
+  return getSchema('trunks')?.read_only?.includes(field) ?? false
+}
 const trunk = ref(null)
 const tenants = ref([])
 const loading = ref(true)
@@ -45,7 +50,7 @@ function normalizeDevicerec(s) {
 }
 
 const editDevicerec = ref('None')
-const editDisa = ref('')
+const editDisa = ref('None')
 const editDisapass = ref('')
 const editTransform = ref('')
 const saveError = ref('')
@@ -119,7 +124,7 @@ async function fetchTrunk() {
     editRegister.value = trunk.value?.register ?? ''
     editTag.value = trunk.value?.tag ?? ''
     editDevicerec.value = normalizeDevicerec(trunk.value?.devicerec)
-    editDisa.value = trunk.value?.disa ?? ''
+    editDisa.value = trunk.value?.disa?.trim() || 'None'
     editDisapass.value = trunk.value?.disapass ?? ''
     editTransform.value = trunk.value?.transform ?? ''
   } catch (err) {
@@ -130,8 +135,10 @@ async function fetchTrunk() {
   }
 }
 
-onMounted(() => {
-  fetchTenants().then(() => fetchTrunk())
+onMounted(async () => {
+  await ensureFetched()
+  await fetchTenants()
+  await fetchTrunk()
 })
 watch(shortuid, fetchTrunk)
 
@@ -173,7 +180,7 @@ async function saveEdit(e) {
       register: editRegister.value.trim() || undefined,
       tag: editTag.value.trim() || undefined,
       devicerec: editDevicerec.value || 'None',
-      disa: editDisa.value.trim() || undefined,
+      disa: (editDisa.value.trim() && editDisa.value.trim() !== 'None') ? editDisa.value.trim() : undefined,
       disapass: editDisapass.value.trim() || undefined,
       transform: editTransform.value.trim() || undefined
     }
@@ -242,10 +249,14 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly id="edit-identity-pkey" label="Name" :value="trunk.pkey ?? '—'" class="readonly-identity" />
-            <FormReadonly id="edit-identity-shortuid" label="Local UID" :value="trunk.shortuid ?? '—'" class="readonly-identity" />
-            <FormReadonly id="edit-identity-id" label="KSUID" :value="trunk.id ?? '—'" class="readonly-identity" />
-            <FormReadonly id="edit-identity-transport" label="Transport" :value="trunk.transport ?? 'udp'" class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Name" :value="trunk.pkey ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-pkey" :model-value="trunk.pkey ?? '—'" label="Name" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="trunk.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-shortuid" :model-value="trunk.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="trunk.id ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-id" :model-value="trunk.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('transport')" id="edit-identity-transport" label="Transport" :value="trunk.transport ?? 'udp'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-transport" :model-value="trunk.transport ?? 'udp'" label="Transport" disabled class="readonly-identity" />
             <FormField
               id="edit-description"
               v-model="editDescription"
@@ -312,8 +323,7 @@ async function confirmAndDelete() {
               id="edit-disa"
               v-model="editDisa"
               label="DISA"
-              :options="['', 'DISA', 'CALLBACK']"
-              empty-display="—"
+              :options="['None', 'DISA', 'CALLBACK']"
             />
             <FormField id="edit-disapass" v-model="editDisapass" label="DISA pass" type="text" autocomplete="off" />
             <FormField id="edit-transform" v-model="editTransform" label="Transform" type="text" />

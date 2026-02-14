@@ -1,6 +1,6 @@
 # Standardized Panel Design Pattern
 
-**Last Updated**: 2026-02-12  
+**Last Updated**: 2026-02-14  
 **Based on**: IVR CRUD panels implementation (refactored with reusable components)  
 **Status**: Pattern established and documented, ready for application to all panels
 
@@ -8,6 +8,8 @@
 - **You must use the reusable form components** for all form fields: `FormField`, `FormSelect`, `FormToggle`, `FormReadonly` (from `src/components/forms/`). Do not use raw `<label>` + `<input>` / `<select>` for fields that these components can represent. Use them so that layout, accessibility, and behaviour stay consistent across panels.
 - **Editable fields must match the API:** Create and Edit panels must expose **every** field the API accepts. Do not omit fields. Before building or refactoring a panel, **cross-reference with the API**: list all fields from the backend controller’s create/update validation (e.g. `updateableColumns` in PHP, or request rules) and optionally the resource’s schema (e.g. `full_schema.sql`). For each field, add a corresponding FormField, FormSelect, or FormToggle (editable), or FormReadonly (read-only on Edit). See **API field parity (editable fields)** and **Field parity checklist** below.
 - This pattern also uses the `useFormValidation` composable where validation is needed.
+- **Edit (detail) views must use the `useSchema` composable** for read-only vs editable fields: import `useSchema` from `@/composables/useSchema`, call `ensureFetched()` in onMounted before loading the resource, and use `getSchema(resource)` to decide which fields render as FormReadonly (see Schema composable below). Do **not** hard-code a list of readonly field names in the view.
+- **Create views must use the `useSchema` composable** for initial field values: in onMounted, call `await ensureFetched()` before other loads, then `applySchemaDefaults(resource, refsByKey)` where `refsByKey` maps schema key → ref for each field that has a schema default (e.g. `{ cluster, active, transport }`). Do **not** hard-code default constants that duplicate the API schema; use schema as the source. See Schema composable below.
 - Do NOT use the old table-based approach for form fields.
 - Always declare refs BEFORE validation composables.
 - Use CSS Grid layout (not tables) for form fields.
@@ -210,6 +212,7 @@ Use the values the **API and schema expect**. For example: `active` and `moh` ar
 - **DeleteConfirmModal**: `src/components/DeleteConfirmModal.vue` — use for delete confirmation in list and detail views (do not copy inline modal markup).
 - **List normalization**: `src/utils/listResponse.js` — export `normalizeList`; use for all list fetches (do not define local normalizeList).
 - **Validation Composable**: `src/composables/useFormValidation.js`
+- **Schema Composable**: `src/composables/useSchema.js` — use in **Edit and Create views**. **(Edit)** Call `ensureFetched()` in onMounted before fetching the resource; use `getSchema('{resource}')` (e.g. `getSchema('extensions')`, `getSchema('ivrs')`) so for each identity/system field, if `getSchema('…').read_only.includes(fieldName)` render **FormReadonly**, else a disabled FormField with the same value. **(Create)** In onMounted, `await ensureFetched()` then `applySchemaDefaults('{resource}', { key: ref, … })` to preset form refs from `schema.defaults` (only non-null/empty defaults are applied). Resource names match the API: `extensions`, `queues`, `agents`, `routes`, `trunks`, `ivrs`, `inroutes`, `tenants`. New resources: add the resource to the API SchemaService mapping and controller `getUpdateableColumns()` so GET /schemas returns it. See `FIELD_MUTABILITY_API_PLAN.md` and `pbx3api/docs/SCHEMAS_ENDPOINT.md`.
 - **Validation Rules**: `src/utils/validation.js`
 
 ---
@@ -1250,9 +1253,11 @@ When a list has fields that users often change without opening the detail panel 
 
 ### Field Order (Identity Section - Edit)
 
-1. Primary identifier (readonly, immutable) — use class `readonly-identity` for low-light
-2. Local UID (readonly, immutable) — `readonly-identity` — **only if the API returns it** (e.g. many resources have it; Agent does not)
-3. KSUID (readonly, immutable) — `readonly-identity` — **only if the API returns it**
+**Which fields are readonly** is determined by the **schema** (useSchema composable, `GET /schemas`), not a hard-coded list. For each field, if `getSchema('{resource}').read_only.includes(fieldName)` use FormReadonly; otherwise use the appropriate editable control (or a disabled FormField for display). Order and styling:
+
+1. Primary identifier (readonly when in schema read_only) — use class `readonly-identity` for low-light
+2. Local UID (readonly when in schema) — `readonly-identity` — **only if the API returns it** (e.g. many resources have it; Agent does not)
+3. KSUID (readonly when in schema) — `readonly-identity` — **only if the API returns it**
 4. Any other read-only-in-edit fields (e.g. Transport) — `readonly-identity`; do not include in save payload
 5. Tenant (editable dropdown)
 6. Description (optional, editable)
@@ -2817,6 +2822,7 @@ See these files for complete working examples:
 - `src/components/forms/FormToggle.vue` - Form toggle component
 - `src/components/forms/FormReadonly.vue` - Form readonly component
 - `src/composables/useFormValidation.js` - Validation composable
+- `src/composables/useSchema.js` - Schema composable (Edit: read_only from GET /schemas; Create: applySchemaDefaults from schema.defaults)
 - `src/utils/validation.js` - Validation rules
 
 ---
@@ -2964,13 +2970,15 @@ When building a new panel:
    - Include tenant resolution if applicable
    - Add delete confirmation modal
 5. **Build Create view**:
-   - Import form components and validation composable
+   - Import form components, validation composable, and **useSchema**
    - Declare refs BEFORE validation composables
+   - In onMounted: `await ensureFetched()` then `applySchemaDefaults('{resource}', { schemaKey: ref, … })` so fields with schema defaults are preset (see Schema composable)
    - Use FormField, FormSelect, FormToggle components
    - Implement validation with useFormValidation
    - Handle API errors and map to field-level errors
 6. **Build Edit view**:
-   - Use FormReadonly for immutable fields (pkey, shortuid, id)
+   - Import **useSchema**; in onMounted call `await ensureFetched()` before fetching the resource
+   - For each identity/system field: if `getSchema('{resource}').read_only.includes(fieldName)` use **FormReadonly**, else use the appropriate editable control (or disabled FormField). Do **not** hard-code a list of readonly fields
    - Use form components for editable fields
    - Implement syncEditFromResource function
    - Reset validation state when loading data

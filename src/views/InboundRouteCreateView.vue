@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateInboundRoutePkey, validateTenant, validateInboundCarrier } from '@/utils/validation'
@@ -13,6 +14,7 @@ import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 
 const router = useRouter()
 const toast = useToastStore()
+const { ensureFetched, applySchemaDefaults } = useSchema()
 const cluster = ref('')
 const carrier = ref('')
 const pkey = ref('')
@@ -132,8 +134,10 @@ watch(cluster, () => {
   closeroute.value = 'None'
 })
 
-onMounted(() => {
-  loadTenants()
+onMounted(async () => {
+  await ensureFetched()
+  applySchemaDefaults('inroutes', { cluster })
+  await loadTenants()
 })
 
 async function onSubmit(e) {

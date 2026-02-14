@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateIvrPkey, validateTenant, validateGreetnum } from '@/utils/validation'
@@ -14,6 +15,7 @@ import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 
 const router = useRouter()
 const toast = useToastStore()
+const { ensureFetched, applySchemaDefaults } = useSchema()
 const pkey = ref('')
 const cluster = ref('default')
 const active = ref('YES')
@@ -260,6 +262,8 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
+  await ensureFetched()
+  applySchemaDefaults('ivrs', { cluster, active, cname, name, description, greetnum, timeout, listenforext })
   await loadTenants()
   await loadDestinations()
   await loadGreetings()

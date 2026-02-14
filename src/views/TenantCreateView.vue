@@ -2,6 +2,7 @@
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateTenantPkey } from '@/utils/validation'
@@ -19,6 +20,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 
 const router = useRouter()
 const toast = useToastStore()
+const { ensureFetched, applySchemaDefaults } = useSchema()
 const pkey = ref('')
 const description = ref('')
 const clusterclid = ref('')
@@ -113,7 +115,9 @@ function onKeydown(e) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await ensureFetched()
+  applySchemaDefaults('tenants', { description, clusterclid, abstimeout, chanmax, masteroclo })
   nextTick().then(() => pkeyInput.value?.focus())
 })
 </script>

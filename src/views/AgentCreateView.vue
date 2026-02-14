@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateAgentPkey, validateTenant, validateAgentPasswd, validateAgentName } from '@/utils/validation'
@@ -12,6 +13,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 
 const router = useRouter()
 const toast = useToastStore()
+const { ensureFetched, applySchemaDefaults } = useSchema()
 const pkey = ref('')
 const cluster = ref('default')
 const name = ref('')
@@ -102,8 +104,11 @@ async function loadQueues() {
   }
 }
 
-onMounted(() => {
-  loadTenants().then(() => loadQueues())
+onMounted(async () => {
+  await ensureFetched()
+  applySchemaDefaults('agents', { cluster, name, cname, description })
+  await loadTenants()
+  await loadQueues()
 })
 
 watch(cluster, () => {

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateRoutePkey, validateTenant, validateDialplan } from '@/utils/validation'
@@ -14,6 +15,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 
 const router = useRouter()
 const toast = useToastStore()
+const { ensureFetched, applySchemaDefaults } = useSchema()
 const pkey = ref('')
 const cluster = ref('default')
 const desc = ref('')
@@ -179,9 +181,11 @@ function onKeydown(e) {
   }
 }
 
-onMounted(() => {
-  loadTenants()
-  loadTrunks()
+onMounted(async () => {
+  await ensureFetched()
+  applySchemaDefaults('routes', { cluster, desc, active, auth, strategy })
+  await loadTenants()
+  await loadTrunks()
 })
 </script>
 

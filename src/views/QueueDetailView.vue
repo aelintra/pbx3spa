@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
@@ -14,6 +15,10 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const { getSchema, ensureFetched } = useSchema()
+function isReadOnly(field) {
+  return getSchema('queues')?.read_only?.includes(field) ?? false
+}
 const queue = ref(null)
 const tenants = ref([])
 const loading = ref(true)
@@ -117,8 +122,10 @@ async function fetchQueue() {
   }
 }
 
-onMounted(() => {
-  fetchTenants().then(() => fetchQueue())
+onMounted(async () => {
+  await ensureFetched()
+  await fetchTenants()
+  await fetchQueue()
 })
 watch(shortuid, fetchQueue)
 
@@ -231,9 +238,16 @@ const displayName = computed(() => queue.value?.pkey ?? '')
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly id="edit-identity-pkey" label="Queue name" :value="queue.pkey ?? '—'" class="readonly-identity" />
-            <FormReadonly v-if="queue.shortuid != null && queue.shortuid !== ''" id="edit-identity-shortuid" label="Local UID" :value="queue.shortuid ?? '—'" class="readonly-identity" />
-            <FormReadonly v-if="queue.id != null && queue.id !== ''" id="edit-identity-id" label="KSUID" :value="queue.id ?? '—'" class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Queue name" :value="queue.pkey ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-pkey" :model-value="queue.pkey ?? '—'" label="Queue name" disabled class="readonly-identity" />
+            <template v-if="queue.shortuid != null && queue.shortuid !== ''">
+              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="queue.shortuid ?? '—'" class="readonly-identity" />
+              <FormField v-else id="edit-identity-shortuid" :model-value="queue.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
+            </template>
+            <template v-if="queue.id != null && queue.id !== ''">
+              <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="queue.id ?? '—'" class="readonly-identity" />
+              <FormField v-else id="edit-identity-id" :model-value="queue.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
+            </template>
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"

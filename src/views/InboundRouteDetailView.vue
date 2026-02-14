@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
@@ -15,6 +16,10 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const { getSchema, ensureFetched } = useSchema()
+function isReadOnly(field) {
+  return getSchema('inroutes')?.read_only?.includes(field) ?? false
+}
 const inboundRoute = ref(null)
 const tenants = ref([])
 const routes = ref([])
@@ -36,7 +41,7 @@ const editCname = ref('')
 const editDevicerec = ref('None')
 const editMoh = ref('NO')
 const editSwoclip = ref('YES')
-const editDisa = ref('')
+const editDisa = ref('None')
 const editDisapass = ref('')
 const editHost = ref('')
 const editIaxreg = ref('')
@@ -179,7 +184,7 @@ function syncEditFromRoute() {
   editDevicerec.value = normalizeDevicerec(r.devicerec)
   editMoh.value = (r.moh === 'YES') ? 'YES' : 'NO'
   editSwoclip.value = r.swoclip ?? 'YES'
-  editDisa.value = r.disa ?? ''
+  editDisa.value = r.disa?.trim() || 'None'
   editDisapass.value = r.disapass ?? ''
   editHost.value = r.host ?? ''
   editIaxreg.value = normalizeReg(r.iaxreg)
@@ -209,8 +214,10 @@ async function fetchInboundRoute() {
   }
 }
 
-onMounted(() => {
-  fetchTenants().then(() => fetchInboundRoute())
+onMounted(async () => {
+  await ensureFetched()
+  await fetchTenants()
+  await fetchInboundRoute()
 })
 watch(shortuid, fetchInboundRoute)
 watch(editCluster, () => {
@@ -253,7 +260,7 @@ async function saveEdit(e) {
       devicerec: editDevicerec.value || 'None',
       moh: editMoh.value,
       swoclip: editSwoclip.value,
-      disa: editDisa.value || undefined,
+      disa: (editDisa.value.trim() && editDisa.value.trim() !== 'None') ? editDisa.value.trim() : undefined,
       disapass: editDisapass.value.trim() || undefined,
       host: editHost.value.trim() || undefined,
       iaxreg: editIaxreg.value || undefined,
@@ -329,21 +336,12 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly
-              id="edit-identity-pkey"
-              label="DiD/CLiD"
-              :value="inboundRoute.pkey ?? '—'"
-            />
-            <FormReadonly
-              id="edit-identity-shortuid"
-              label="Local UID"
-              :value="inboundRoute.shortuid ?? '—'"
-            />
-            <FormReadonly
-              id="edit-identity-id"
-              label="KSUID"
-              :value="inboundRoute.id ?? '—'"
-            />
+            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="DiD/CLiD" :value="inboundRoute.pkey ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-pkey" :model-value="inboundRoute.pkey ?? '—'" label="DiD/CLiD" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="inboundRoute.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-shortuid" :model-value="inboundRoute.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="inboundRoute.id ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-id" :model-value="inboundRoute.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormField
               id="edit-description"
               v-model="editDescription"
@@ -423,8 +421,7 @@ async function confirmAndDelete() {
               id="edit-disa"
               v-model="editDisa"
               label="DISA"
-              :options="['', 'DISA', 'CALLBACK']"
-              empty-display="—"
+              :options="['None', 'DISA', 'CALLBACK']"
             />
             <FormField
               id="edit-disapass"
@@ -594,6 +591,14 @@ async function confirmAndDelete() {
   flex-direction: column;
   gap: 0;
   margin-top: 0.5rem;
+}
+.readonly-identity :deep(.form-field-label),
+.readonly-identity :deep(.form-readonly) {
+  color: #94a3b8;
+}
+.readonly-identity :deep(.form-readonly) {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
 }
 .edit-form {
   margin-bottom: 1rem;

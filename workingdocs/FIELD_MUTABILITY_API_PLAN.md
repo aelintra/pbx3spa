@@ -34,7 +34,17 @@ Include resources that have both:
 
 Additional resources (Sysglobal, HolidayTimer, DayTimer, CustomApp, CosOpen, CosClose, ClassOfService, etc.) can be added later using the same mechanism.
 
-### 1.2 Out of scope (for this plan)
+### 1.2 Many panels / scaling (recommended approach)
+
+Many more panels will be built before the application is finished. The schema approach scales without redesign:
+
+- **New panels use schema from day one.** When you add a new resource (e.g. Sysglobal, HolidayTimer): (1) add it to the API mapping and expose updateable columns on its controller, (2) build the SPA detail/create view using the composable for read_only and defaults. No hard-coded readonly or default lists in the new panel.
+- **Mapping grows with the app.** Extend the SchemaService mapping (and controller getter) when you add each new panel; no need to support every future resource in the first release.
+- **Recommended rollout:** Complete **A1–A7** (API) and **F1 + F4** (composable + fallback) first. Then build **new** panels schema-first. Migrate the **existing eight** detail views (F2–F3) when convenient—either in one pass or as you touch each view. This keeps momentum on new panels while still reaching a single source of truth for all.
+
+If payload or performance ever becomes an issue with many resources, add `GET /schemas/{resource}` later and have the composable fetch per resource; not required up front.
+
+### 1.3 Out of scope (for this plan)
 
 - Caching (per decision: no cache; keep it simple).
 - Exposing “widget” or “component type” (dropdown vs toggle) from the API; frontend continues to choose component per field.
@@ -125,11 +135,12 @@ Additional resources (Sysglobal, HolidayTimer, DayTimer, CustomApp, CosOpen, Cos
 
 ## 3. Frontend (SPA) side
 
-### 3.1 Fetching and storing schema
+### 3.1 Fetching and storing schema (Option B: composable + cache, no Pinia)
 
-- **When:** On first need (e.g. when user first opens a detail or create view that uses schema), or on app init after login. One fetch per session is enough.
-- **Where:** Call `GET /schemas` via existing API client. Store result in Pinia (e.g. `useSchemaStore()` with `schemas: {}` or `schemasByResource`). No persistence; in-memory only.
-- **Auth:** Use same auth as other API calls (Bearer token). If 401/403, do not store schema; views can fall back to current hard-coded behaviour until schema is available.
+- **Decision:** Fetch schema data **when a view needs it** (e.g. when opening a detail or create view). Use a **composable** (e.g. `useSchema()` or `useSchema(resource)`) that calls `GET /schemas` via the existing API client. **No Pinia store.** Cache the result in the composable (e.g. module-level ref) so the first view that needs schema triggers one fetch, and subsequent views reuse that result for the session—no duplicate requests when navigating between panels.
+- **When:** First time any view that uses the composable runs; then reuse cached result until page reload.
+- **Where:** Composable returns e.g. `{ schema, loading, error }` (or per-resource slice). In-memory cache only; no persistence.
+- **Auth:** Same as other API calls (Bearer token). If 401/403, composable exposes error; views fall back to current hard-coded behaviour until schema is available.
 
 ### 3.2 Using schema in detail (edit) views
 
@@ -146,14 +157,51 @@ Additional resources (Sysglobal, HolidayTimer, DayTimer, CustomApp, CosOpen, Cos
 
 ### 3.4 Phased rollout (frontend)
 
-1. **Phase 1:** Add schema fetch and Pinia store; no view changes. Confirm `/schemas` response and store shape.
+1. **Phase 1:** Add schema composable (fetch on first use, module-level cache); no view changes. Confirm `/schemas` response and composable return shape.
 2. **Phase 2:** Switch **one** detail view (e.g. ExtensionDetailView) to use schema for read_only. Remove hard-coded FormReadonly list for that view; derive from schema. Test thoroughly.
 3. **Phase 3:** Switch remaining detail views (Queue, Agent, Route, Trunk, IVR, InboundRoute, Tenant) to schema-driven read_only. Remove all hard-coded read-only lists.
 4. **Phase 4 (optional):** Use schema.defaults in create views to preset initial values; remove duplicated default constants where they match the schema.
 
 ---
 
-## 4. Implementation order (high level)
+## 4. Testable steps (check each before proceeding)
+
+Do one step; verify the “Done when” criteria; then proceed. Do not start the next step until the current one is signed off.
+
+**Recommended order when many panels remain to build:** Do **A1–A7** (full API), then **F1** (composable) and **F4** (fallback). After that, build new panels schema-first. Do **F2–F3** (migrate existing eight detail views) in one pass or as you touch each view.
+
+### API (pbx3api)
+
+| Step | What to do | Done when |
+|------|------------|-----------|
+| **A1** | Add a **mapping** (array or config): resource key → [Controller class, Model class] for extensions, queues, agents, routes, trunks, ivrs, inroutes, tenants. No route or controller yet; just the mapping (e.g. inside a new SchemaService stub or a config file). | You have one place that defines the eight resources and their controller/model pairs. Code that reads this mapping runs without error. |
+| **A2** | On each in-scope **controller**, add a way for SchemaService to get updateable column names (e.g. public `getUpdateableColumns()` or a trait). Use the existing `$updateableColumns` (or equivalent) as the source. | SchemaService (or a small test script) can call each controller’s getter and receive the list of updateable column names for all eight resources. |
+| **A3** | In **SchemaService**: for one resource (e.g. extensions), given the model’s `$table`, run `PRAGMA table_info('table_name')` on the API’s DB connection. Build a small array: column names + `dflt_value` for that table. | Running the service for “extensions” returns column names and default values that match the running DB (spot-check 2–3 columns and defaults). |
+| **A4** | In **SchemaService**: for that same resource, combine (a) all column names from PRAGMA, (b) updateable list from the controller, (c) defaults from PRAGMA. Output shape: `read_only` (all columns − updateable; id/shortuid always in read_only), `updateable`, `defaults`. | For “extensions”, you get read_only, updateable, and defaults with no errors; read_only and updateable are consistent with each other and the DB. |
+| **A5** | Extend SchemaService to **all eight resources** in the mapping. Loop over the mapping; for each, run PRAGMA, get updateable, build read_only/updateable/defaults. Return one object keyed by resource (e.g. `extensions`, `queues`, …). Handle missing table or missing controller gracefully (empty or omit that resource). | Calling `getSchemas()` returns an object with all eight keys; each key has read_only, updateable, defaults; no fatal errors. |
+| **A6** | Add **SchemaController** with one method (e.g. `index`) that returns `SchemaService->getSchemas()`. Register **GET /schemas** in `routes/api.php` inside the admin middleware group. | With valid admin auth, `GET /schemas` returns 200 and JSON with the same shape as A5. Without auth, 401/403. |
+| **A7** | **Manual test:** Call GET /schemas; inspect JSON. For at least **extensions** and **queues**: (1) read_only contains id, shortuid, pkey and other non-updateable columns; (2) updateable matches the controller; (3) defaults for 2–3 columns match PRAGMA (e.g. cluster = "default", active = "YES"). | You have confirmed the response shape and that at least two resources have correct read_only, updateable, and defaults. **Checkpoint: API is done for this feature.** |
+
+### Frontend (pbx3spa)
+
+| Step | What to do | Done when |
+|------|------------|-----------|
+| **F1** | Add **useSchema** composable: on first call, `GET /schemas` via API client; store result in a module-level ref; return `{ schema, getSchema(resource), loading, error }`. No Pinia. | In a view or dev harness, calling the composable once populates `schema`; calling again does not trigger a second request (cache). getSchema('extensions') returns the extensions slice. |
+| **F2** | **ExtensionDetailView:** Use composable to get schema for ‘extensions’. For each displayed field, if `getSchema('extensions').read_only.includes(fieldKey)` render FormReadonly, else render editable control. Remove any hard-coded list of readonly field names for extensions. | Opening Extension detail: identity/system fields are readonly, others editable. Behaviour matches or improves on current. No console errors. |
+| **F3** | **Remaining detail views** (Queue, Agent, Route, Trunk, IVR, InboundRoute, Tenant): same as F2—use schema from composable for read_only; remove hard-coded readonly lists. | All eight detail views derive read_only from schema. No view has a hard-coded readonly list for this feature. |
+| **F4** | **Fallback (deferred):** If schema is missing, views use schema-only read_only (no schema ⇒ no read_only list ⇒ fields render as disabled inputs). No fallback message or retry in UI. *Future:* If a need arises (e.g. schema on a different path from data), add fallback readonly list per resource and/or retry + message. | Simpler implementation; schema and data share the same API so “no schema” typically means “no data” too. |
+| **F5** | **(Optional)** Create views: when opening a create form, preset form refs from `getSchema(resource).defaults` where the key exists. | Create form (e.g. Queue or Extension) shows default values in fields that have schema.defaults; no regression on create submit. |
+
+### After implementation
+
+| Step | What to do | Done when |
+|------|------------|-----------|
+| **D1** | Add short doc in pbx3api (e.g. `docs/SCHEMAS_ENDPOINT.md`): GET /schemas purpose, response shape, that read_only/defaults come from DB and controller. | Doc exists and is accurate. |
+| **D2** | Update SESSION_HANDOFF and PROJECT_PLAN: field mutability is API-driven; frontend uses GET /schemas (composable, Option B). Mark “Field mutability (API)” to-do done or updated. | Handoff and project plan reflect current state. |
+
+---
+
+## 4b. Implementation order (high-level reference)
 
 | Step | Where   | What |
 |------|---------|------|
@@ -162,7 +210,7 @@ Additional resources (Sysglobal, HolidayTimer, DayTimer, CustomApp, CosOpen, Cos
 | 3    | pbx3api | Expose updateableColumns (trait or getUpdateableColumns() on each controller). |
 | 4    | pbx3api | Add SchemaController (or single method), GET /schemas, call SchemaService, return JSON. Register route. |
 | 5    | pbx3api | Manual test: GET /schemas returns expected shape for extensions, queues, etc. |
-| 6    | pbx3spa | Add Pinia store for schema; fetch GET /schemas on first use or app init. |
+| 6    | pbx3spa | Add schema composable (fetch GET /schemas on first use, module-level cache; no Pinia). |
 | 7    | pbx3spa | ExtensionDetailView: use schema to decide FormReadonly vs editable; remove hard-coded readonly list. |
 | 8    | pbx3spa | Remaining detail views: same as step 7. |
 | 9    | pbx3spa | (Optional) Create views: preset form defaults from schema.defaults. |
@@ -180,9 +228,9 @@ Additional resources (Sysglobal, HolidayTimer, DayTimer, CustomApp, CosOpen, Cos
 
 ### pbx3spa
 
-- [ ] `src/stores/schemaStore.js` (or `.ts`) — state: schemas; action: fetchSchemas(); getter: getSchema(resource).
+- [ ] `src/composables/useSchema.js` (or `.ts`) — composable: fetch GET /schemas on first use, cache in module-level ref; return e.g. `{ schema, getSchema(resource), loading, error }`. No Pinia.
 - [ ] `src/api/client.js` (or equivalent) — no change if fetch is just get('schemas').
-- [ ] Detail views (Extension, Queue, Agent, Route, Trunk, Ivr, InboundRoute, Tenant): use schema store to decide FormReadonly vs editable; remove hard-coded readonly lists.
+- [ ] Detail views (Extension, Queue, Agent, Route, Trunk, Ivr, InboundRoute, Tenant): use schema (from composable) to decide FormReadonly vs editable; remove hard-coded readonly lists.
 - [ ] (Optional) Create views: use schema.defaults to set initial form values.
 
 ---

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateTrunkPkey, validateTenant } from '@/utils/validation'
@@ -14,6 +15,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 
 const router = useRouter()
 const toast = useToastStore()
+const { ensureFetched, applySchemaDefaults } = useSchema()
 const trunkType = ref('SIP (send registration)')
 const pkey = ref('')
 const cluster = ref('default')
@@ -100,7 +102,11 @@ watch(trunkType, (newVal) => {
   if (newVal !== 'IAX2 trunk') regthistrunk.value = 'NO'
 })
 
-onMounted(loadTenants)
+onMounted(async () => {
+  await ensureFetched()
+  applySchemaDefaults('trunks', { cluster, transport })
+  await loadTenants()
+})
 
 async function onSubmit(e) {
   e.preventDefault()

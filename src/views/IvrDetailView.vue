@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateTenant, validateGreetnum } from '@/utils/validation'
@@ -17,6 +18,10 @@ import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const { getSchema, ensureFetched } = useSchema()
+function isReadOnly(field) {
+  return getSchema('ivrs')?.read_only?.includes(field) ?? false
+}
 const ivr = ref(null)
 const tenants = ref([])
 const loading = ref(true)
@@ -189,7 +194,8 @@ async function fetchIvr() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await ensureFetched()
   loadTenants()
   loadGreetings()
   fetchIvr()
@@ -331,21 +337,12 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly
-              id="edit-identity-pkey"
-              label="IVR Direct Dial"
-              :value="ivr.pkey ?? '—'"
-            />
-            <FormReadonly
-              id="edit-identity-shortuid"
-              label="Local UID"
-              :value="ivr.shortuid ?? '—'"
-            />
-            <FormReadonly
-              id="edit-identity-id"
-              label="KSUID"
-              :value="ivr.id ?? '—'"
-            />
+            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="IVR Direct Dial" :value="ivr.pkey ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-pkey" :model-value="ivr.pkey ?? '—'" label="IVR Direct Dial" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="ivr.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-shortuid" :model-value="ivr.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="ivr.id ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-id" :model-value="ivr.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"
@@ -520,6 +517,14 @@ async function confirmAndDelete() {
   flex-direction: column;
   gap: 0;
   margin-top: 0.5rem;
+}
+.readonly-identity :deep(.form-field-label),
+.readonly-identity :deep(.form-readonly) {
+  color: #94a3b8;
+}
+.readonly-identity :deep(.form-readonly) {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
 }
 .toolbar {
   margin: 0 0 0.75rem 0;

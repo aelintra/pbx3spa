@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
@@ -13,6 +14,12 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const route = useRoute()
+const { getSchema, ensureFetched } = useSchema()
+
+/** True if field is read-only per schema (extensions). */
+function isReadOnly(field) {
+  return getSchema('extensions')?.read_only?.includes(field) ?? false
+}
 const router = useRouter()
 const toast = useToastStore()
 const extension = ref(null)
@@ -129,10 +136,11 @@ async function fetchRuntime() {
   }
 }
 
-onMounted(() => {
-  fetchTenants().then(() => fetchExtension().then(() => {
-    if (extension.value) fetchRuntime()
-  }))
+onMounted(async () => {
+  await ensureFetched()
+  await fetchTenants()
+  await fetchExtension()
+  if (extension.value) await fetchRuntime()
 })
 watch(shortuid, () => {
   fetchExtension().then(() => {
@@ -278,11 +286,16 @@ async function saveRuntime(e) {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly id="edit-identity-pkey" label="Ext" :value="extension.pkey ?? '—'" class="readonly-identity" />
-            <FormReadonly id="edit-identity-shortuid" label="SIP Identity" :value="extension.shortuid ?? '—'" class="readonly-identity" />
-            <FormReadonly id="edit-identity-id" label="KSUID" :value="extension.id ?? '—'" class="readonly-identity" />
-            <FormReadonly id="edit-identity-macaddr" label="MAC address" :value="extension.macaddr?.trim() || 'Unknown'" class="readonly-identity" />
-            <FormReadonly id="edit-identity-device" label="Device" :value="extension.device ?? '—'" class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Ext" :value="extension.pkey ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-pkey" :model-value="extension.pkey ?? '—'" label="Ext" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="SIP Identity" :value="extension.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-shortuid" :model-value="extension.shortuid ?? '—'" label="SIP Identity" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="extension.id ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-id" :model-value="extension.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('macaddr')" id="edit-identity-macaddr" label="MAC address" :value="extension.macaddr?.trim() || 'Unknown'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-macaddr" :model-value="extension.macaddr?.trim() || 'Unknown'" label="MAC address" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('device')" id="edit-identity-device" label="Device" :value="extension.device ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-device" :model-value="extension.device ?? '—'" label="Device" disabled class="readonly-identity" />
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"

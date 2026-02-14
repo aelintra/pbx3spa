@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
@@ -13,6 +14,10 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const { getSchema, ensureFetched } = useSchema()
+function isReadOnly(field) {
+  return getSchema('agents')?.read_only?.includes(field) ?? false
+}
 const agent = ref(null)
 const tenants = ref([])
 const queues = ref([])
@@ -146,8 +151,11 @@ async function fetchAgent() {
   }
 }
 
-onMounted(() => {
-  fetchTenants().then(() => fetchQueues().then(() => fetchAgent()))
+onMounted(async () => {
+  await ensureFetched()
+  await fetchTenants()
+  await fetchQueues()
+  await fetchAgent()
 })
 watch(shortuid, fetchAgent)
 watch(editCluster, clearQueuesNotInTenant)
@@ -251,7 +259,8 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly id="edit-identity-pkey" label="Agent number" :value="agent.pkey ?? '—'" class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Agent number" :value="agent.pkey ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-pkey" :model-value="agent.pkey ?? '—'" label="Agent number" disabled class="readonly-identity" />
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"

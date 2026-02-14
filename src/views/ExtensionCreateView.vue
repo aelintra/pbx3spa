@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateExtensionPkey, validateTenant } from '@/utils/validation'
@@ -11,10 +12,12 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
+import FormReadonly from '@/components/forms/FormReadonly.vue'
 
 const router = useRouter()
 const toast = useToastStore()
-const protocol = ref('')
+const { ensureFetched, applySchemaDefaults, getSchema } = useSchema()
+const protocol = ref('SIP')
 const pkey = ref('')
 const cluster = ref('default')
 const desc = ref('')
@@ -49,8 +52,13 @@ const tenantOptionsForSelect = computed(() => {
   return list
 })
 
-const protocolOptions = ['SIP', 'WebRTC', 'Mailbox']
-const protocolChosen = computed(() => !!protocol.value)
+const deviceDisplay = computed(() => {
+  const p = protocol.value
+  if (p === 'SIP') return 'General SIP'
+  if (p === 'WebRTC') return 'WebRTC'
+  if (p === 'Mailbox') return 'Mailbox'
+  return p || '—'
+})
 
 watch(protocol, (val) => {
   if (val === 'WebRTC') transport.value = 'wss'
@@ -58,7 +66,7 @@ watch(protocol, (val) => {
 })
 
 function resetForm() {
-  protocol.value = ''
+  protocol.value = 'SIP'
   pkey.value = ''
   cluster.value = 'default'
   desc.value = ''
@@ -93,18 +101,33 @@ async function loadTenants() {
   }
 }
 
-onMounted(() => {
-  loadTenants()
+onMounted(async () => {
+  await ensureFetched()
+  applySchemaDefaults('extensions', {
+    cluster,
+    active,
+    transport,
+    celltwin,
+    devicerec,
+    desc,
+    protocol: ipversion
+  })
+  const deviceDefault = getSchema('extensions')?.defaults?.device
+  if (deviceDefault !== undefined && deviceDefault !== null && deviceDefault !== '') {
+    const d = String(deviceDefault).trim()
+    if (d === 'General SIP' || d === 'SIP') protocol.value = 'SIP'
+    else if (d === 'WebRTC') protocol.value = 'WebRTC'
+    else if (d === 'MAILBOX') protocol.value = 'Mailbox'
+  } else {
+    protocol.value = 'SIP'
+  }
+  await loadTenants()
   nextTick().then(() => pkeyInput.value?.focus())
 })
 
 async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
-  if (!protocolChosen.value) {
-    error.value = 'Please choose a protocol'
-    return
-  }
   const validations = [
     { ...pkeyValidation, fieldId: 'pkey' },
     { ...clusterValidation, fieldId: 'cluster' }
@@ -183,7 +206,7 @@ function onKeydown(e) {
       <p v-if="error" id="extension-create-error" class="error" role="alert">{{ error }}</p>
 
       <div class="actions actions-top">
-        <button type="submit" :disabled="loading || tenantsLoading || !protocolChosen">
+        <button type="submit" :disabled="loading || tenantsLoading">
           {{ loading ? 'Creating…' : 'Create' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
@@ -233,13 +256,10 @@ function onKeydown(e) {
 
       <h2 class="detail-heading">Settings</h2>
       <div class="form-fields">
-        <FormSegmentedPill
-          id="protocol"
-          v-model="protocol"
-          label="Protocol"
-          :options="protocolOptions"
-          hint="SIP, WebRTC, or Mailbox."
-          aria-label="Choose protocol"
+        <FormReadonly
+          id="device"
+          label="Device"
+          :value="deviceDisplay"
         />
         <FormToggle
           id="active"
@@ -307,7 +327,7 @@ function onKeydown(e) {
       </div>
 
       <div class="actions">
-        <button type="submit" :disabled="loading || !protocolChosen || tenantsLoading">
+        <button type="submit" :disabled="loading || tenantsLoading">
           {{ loading ? 'Creating…' : 'Create' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
