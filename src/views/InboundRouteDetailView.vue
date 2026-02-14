@@ -7,6 +7,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
@@ -383,7 +384,6 @@ async function confirmAndDelete() {
               :options="openrouteOptions"
               :option-groups="destinationGroups"
               :loading="destinationsLoading"
-              empty-text="None"
             />
             <FormSelect
               id="edit-closeroute"
@@ -391,7 +391,6 @@ async function confirmAndDelete() {
               label="Closed route"
               :options="closerouteOptions"
               :option-groups="destinationGroups"
-              empty-text="None"
             />
             <FormField
               id="edit-alertinfo"
@@ -420,12 +419,12 @@ async function confirmAndDelete() {
               yes-value="YES"
               no-value="NO"
             />
-            <FormSelect
+            <FormSegmentedPill
               id="edit-disa"
               v-model="editDisa"
               label="DISA"
               :options="['', 'DISA', 'CALLBACK']"
-              empty-text="—"
+              empty-display="—"
             />
             <FormField
               id="edit-disapass"
@@ -499,19 +498,19 @@ async function confirmAndDelete() {
               label="Register"
               type="text"
             />
-            <FormSelect
+            <FormSegmentedPill
               id="edit-iaxreg"
               v-model="editIaxreg"
               label="IAX registration"
               :options="regOptions"
-              empty-text="—"
+              empty-display="—"
             />
-            <FormSelect
+            <FormSegmentedPill
               id="edit-pjsipreg"
               v-model="editPjsipreg"
               label="PJSIP registration"
               :options="regOptions"
-              empty-text="—"
+              empty-display="—"
             />
           </div>
 

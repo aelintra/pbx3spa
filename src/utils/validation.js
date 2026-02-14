@@ -163,7 +163,7 @@ export function validateInboundCarrier(value) {
  * Optional, but if provided must be valid integer >= 0
  */
 export function validateGreetnum(value) {
-  if (!value || value === '') {
+  if (value === 'None' || !value || value === '') {
     return null // Optional field
   }
   const num = parseInt(value, 10)

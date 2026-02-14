@@ -21,12 +21,12 @@ const error = ref('')
 const editCluster = ref('default')
 const editName = ref('')
 const editPasswd = ref('')
-const editQueue1 = ref('')
-const editQueue2 = ref('')
-const editQueue3 = ref('')
-const editQueue4 = ref('')
-const editQueue5 = ref('')
-const editQueue6 = ref('')
+const editQueue1 = ref('None')
+const editQueue2 = ref('None')
+const editQueue3 = ref('None')
+const editQueue4 = ref('None')
+const editQueue5 = ref('None')
+const editQueue6 = ref('None')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -69,7 +69,7 @@ const tenantShortuid = computed(() => {
   return cluster
 })
 
-/** Queues for the agent's tenant only. Queue rows use cluster = tenant shortuid, so filter by that. No leading empty; FormSelect adds the "None" option via empty-text. */
+/** Queues for the agent's tenant only. Queue rows use cluster = tenant shortuid, so filter by that. */
 const queueOptionsForTenant = computed(() => {
   const shortuid = tenantShortuid.value
   const forTenant = queues.value
@@ -80,10 +80,12 @@ const queueOptionsForTenant = computed(() => {
   return uniq
 })
 
-/** Normalize queue from API for form: null/undefined/'-'/'None' → ''. */
+const queueOptions = computed(() => ['None', ...queueOptionsForTenant.value])
+
+/** Normalize queue from API for form: null/undefined/'-'/'None' → 'None'. */
 function normalizeQueueFromApi(v) {
   const s = (v ?? '').toString().trim()
-  return s === '' || s === '-' || s === 'None' ? '' : s
+  return s === '' || s === '-' || s === 'None' ? 'None' : s
 }
 
 /** Normalize queue for save: empty/'-'/'None' → null so API gets null not '-'. */
@@ -92,12 +94,12 @@ function normalizeQueueForSave(v) {
   return s === '' || s === '-' || s === 'None' ? null : s
 }
 
-/** Set any queue selection to '' (—) if it's not in the tenant's queues. */
+/** Set any queue selection to 'None' if it's not in the tenant's queues. */
 function clearQueuesNotInTenant() {
-  const allowed = new Set(queueOptionsForTenant.value.filter((x) => x !== ''))
+  const allowed = new Set(['None', ...queueOptionsForTenant.value])
   const refs = [editQueue1, editQueue2, editQueue3, editQueue4, editQueue5, editQueue6]
   refs.forEach((r) => {
-    if (r.value && !allowed.has(String(r.value).trim())) r.value = ''
+    if (r.value && !allowed.has(String(r.value).trim())) r.value = 'None'
   })
 }
 
@@ -284,43 +286,37 @@ async function confirmAndDelete() {
               id="edit-queue1"
               v-model="editQueue1"
               label="Queue 1"
-              :options="queueOptionsForTenant"
-              empty-text="None"
+              :options="queueOptions"
             />
             <FormSelect
               id="edit-queue2"
               v-model="editQueue2"
               label="Queue 2"
-              :options="queueOptionsForTenant"
-              empty-text="None"
+              :options="queueOptions"
             />
             <FormSelect
               id="edit-queue3"
               v-model="editQueue3"
               label="Queue 3"
-              :options="queueOptionsForTenant"
-              empty-text="None"
+              :options="queueOptions"
             />
             <FormSelect
               id="edit-queue4"
               v-model="editQueue4"
               label="Queue 4"
-              :options="queueOptionsForTenant"
-              empty-text="None"
+              :options="queueOptions"
             />
             <FormSelect
               id="edit-queue5"
               v-model="editQueue5"
               label="Queue 5"
-              :options="queueOptionsForTenant"
-              empty-text="None"
+              :options="queueOptions"
             />
             <FormSelect
               id="edit-queue6"
               v-model="editQueue6"
               label="Queue 6"
-              :options="queueOptionsForTenant"
-              empty-text="None"
+              :options="queueOptions"
             />
           </div>
 

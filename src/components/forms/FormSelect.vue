@@ -50,9 +50,10 @@ const props = defineProps({
     type: String,
     default: 'Loading…'
   },
+  /** Optional placeholder for an empty option. Default '' so no selectable "—" is shown; use a real default (e.g. "None") in options instead. */
   emptyText: {
     type: String,
-    default: '—'
+    default: ''
   },
   ariaLabel: {
     type: String,

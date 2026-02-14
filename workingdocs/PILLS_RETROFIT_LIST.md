@@ -1,8 +1,8 @@
 # Segmented Pills Retrofit List
 
-**Rule:** Use segmented pills (button group) for **2–5 options**, FormSelect (dropdown) for **6+ options**.
+**Rule (refined):** Use segmented pills for **2–3 options only** (primary fields, short labels). Use FormSelect (dropdown) for **4+ options**, long labels, and dynamic lists. See PANEL_PATTERN.md § Fixed-choice fields.
 
-**Status:** Segmented pill component not yet created. This list tracks fields to retrofit once component is available.
+**Status:** FormSegmentedPill exists; pills are applied to 2–3 option fields. Fields with 4–5 options (transport, devicerec, trunk type, etc.) intentionally use dropdowns.
 
 ---
 

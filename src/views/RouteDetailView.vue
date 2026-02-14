@@ -7,6 +7,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
@@ -24,10 +25,10 @@ const editDesc = ref('')
 const editActive = ref('YES')
 const editAuth = ref('NO')
 const editDialplan = ref('')
-const editPath1 = ref('')
-const editPath2 = ref('')
-const editPath3 = ref('')
-const editPath4 = ref('')
+const editPath1 = ref('None')
+const editPath2 = ref('None')
+const editPath3 = ref('None')
+const editPath4 = ref('None')
 const editStrategy = ref('hunt')
 const saveError = ref('')
 const saving = ref(false)
@@ -71,10 +72,10 @@ const trunkPkeys = computed(() => {
 })
 
 function pathOptions(currentValue) {
-  const list = trunkPkeys.value
-  if (!currentValue) return list
-  if (list.includes(currentValue)) return list
-  return [currentValue, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  const base = ['None', ...trunkPkeys.value]
+  if (!currentValue || currentValue === 'None') return base
+  if (base.includes(currentValue)) return base
+  return [currentValue, ...base].sort((a, b) => (a === 'None' ? -1 : b === 'None' ? 1 : String(a).localeCompare(String(b))))
 }
 
 async function fetchTenants() {
@@ -104,10 +105,10 @@ function syncEditFromRoute() {
   editActive.value = r.active ?? 'YES'
   editAuth.value = r.auth ?? 'NO'
   editDialplan.value = r.dialplan ?? ''
-  editPath1.value = r.path1 && r.path1 !== 'None' ? r.path1 : ''
-  editPath2.value = r.path2 && r.path2 !== 'None' ? r.path2 : ''
-  editPath3.value = r.path3 && r.path3 !== 'None' ? r.path3 : ''
-  editPath4.value = r.path4 && r.path4 !== 'None' ? r.path4 : ''
+  editPath1.value = r.path1 && String(r.path1).trim() ? r.path1 : 'None'
+  editPath2.value = r.path2 && String(r.path2).trim() ? r.path2 : 'None'
+  editPath3.value = r.path3 && String(r.path3).trim() ? r.path3 : 'None'
+  editPath4.value = r.path4 && String(r.path4).trim() ? r.path4 : 'None'
   editStrategy.value = r.strategy ?? 'hunt'
 }
 
@@ -162,10 +163,10 @@ async function saveEdit(e) {
       active: editActive.value,
       auth: editAuth.value,
       dialplan: dialplanTrimmed,
-      path1: editPath1.value.trim() || undefined,
-      path2: editPath2.value.trim() || undefined,
-      path3: editPath3.value.trim() || undefined,
-      path4: editPath4.value.trim() || undefined,
+      path1: editPath1.value !== 'None' && editPath1.value.trim() ? editPath1.value.trim() : undefined,
+      path2: editPath2.value !== 'None' && editPath2.value.trim() ? editPath2.value.trim() : undefined,
+      path3: editPath3.value !== 'None' && editPath3.value.trim() ? editPath3.value.trim() : undefined,
+      path4: editPath4.value !== 'None' && editPath4.value.trim() ? editPath4.value.trim() : undefined,
       strategy: editStrategy.value
     })
     await fetchRoute()
@@ -278,7 +279,7 @@ async function confirmAndDelete() {
               yes-value="YES"
               no-value="NO"
             />
-            <FormSelect
+            <FormSegmentedPill
               id="edit-strategy"
               v-model="editStrategy"
               label="Strategy"
@@ -307,28 +308,24 @@ async function confirmAndDelete() {
               v-model="editPath1"
               label="Path 1"
               :options="pathOptions(editPath1)"
-              empty-text="None"
             />
             <FormSelect
               id="edit-path2"
               v-model="editPath2"
               label="Path 2"
               :options="pathOptions(editPath2)"
-              empty-text="None"
             />
             <FormSelect
               id="edit-path3"
               v-model="editPath3"
               label="Path 3"
               :options="pathOptions(editPath3)"
-              empty-text="None"
             />
             <FormSelect
               id="edit-path4"
               v-model="editPath4"
               label="Path 4"
               :options="pathOptions(editPath4)"
-              empty-text="None"
             />
           </div>
 

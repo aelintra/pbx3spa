@@ -7,6 +7,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
@@ -307,12 +308,12 @@ async function confirmAndDelete() {
               label="Device recording"
               :options="devicerecOptions"
             />
-            <FormSelect
+            <FormSegmentedPill
               id="edit-disa"
               v-model="editDisa"
               label="DISA"
               :options="['', 'DISA', 'CALLBACK']"
-              empty-text="—"
+              empty-display="—"
             />
             <FormField id="edit-disapass" v-model="editDisapass" label="DISA pass" type="text" autocomplete="off" />
             <FormField id="edit-transform" v-model="editTransform" label="Transform" type="text" />

@@ -9,6 +9,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 
 const router = useRouter()
@@ -20,10 +21,10 @@ const cname = ref('')
 const active = ref('YES')
 const auth = ref('NO')
 const dialplan = ref('')
-const path1 = ref('')
-const path2 = ref('')
-const path3 = ref('')
-const path4 = ref('')
+const path1 = ref('None')
+const path2 = ref('None')
+const path3 = ref('None')
+const path4 = ref('None')
 const strategy = ref('hunt')
 const error = ref('')
 const loading = ref(false)
@@ -53,6 +54,8 @@ const trunkPkeys = computed(() => {
   const list = trunks.value.map((t) => t.pkey).filter(Boolean)
   return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
 })
+
+const pathOptions = computed(() => ['None', ...trunkPkeys.value])
 
 async function loadTenants() {
   tenantsLoading.value = true
@@ -86,10 +89,10 @@ function resetForm() {
   active.value = 'YES'
   auth.value = 'NO'
   dialplan.value = ''
-  path1.value = ''
-  path2.value = ''
-  path3.value = ''
-  path4.value = ''
+  path1.value = 'None'
+  path2.value = 'None'
+  path3.value = 'None'
+  path4.value = 'None'
   strategy.value = 'hunt'
   pkeyValidation.reset()
   clusterValidation.reset()
@@ -125,10 +128,10 @@ async function onSubmit(e) {
     }
     if (desc.value.trim()) body.description = desc.value.trim()
     if (cname.value.trim()) body.cname = cname.value.trim()
-    if (path1.value.trim()) body.path1 = path1.value.trim()
-    if (path2.value.trim()) body.path2 = path2.value.trim()
-    if (path3.value.trim()) body.path3 = path3.value.trim()
-    if (path4.value.trim()) body.path4 = path4.value.trim()
+    if (path1.value && path1.value !== 'None') body.path1 = path1.value.trim()
+    if (path2.value && path2.value !== 'None') body.path2 = path2.value.trim()
+    if (path3.value && path3.value !== 'None') body.path3 = path3.value.trim()
+    if (path4.value && path4.value !== 'None') body.path4 = path4.value.trim()
     await getApiClient().post('routes', body)
     toast.show(`Route ${pkey.value.trim()} created`)
     resetForm()
@@ -257,7 +260,7 @@ onMounted(() => {
           no-value="NO"
           hint="Require PIN for dialing."
         />
-        <FormSelect
+        <FormSegmentedPill
           id="strategy"
           v-model="strategy"
           label="Strategy"
@@ -288,29 +291,25 @@ onMounted(() => {
           id="path1"
           v-model="path1"
           label="Path 1"
-          :options="trunkPkeys"
-          empty-text="None"
+          :options="pathOptions"
         />
         <FormSelect
           id="path2"
           v-model="path2"
           label="Path 2"
-          :options="trunkPkeys"
-          empty-text="None"
+          :options="pathOptions"
         />
         <FormSelect
           id="path3"
           v-model="path3"
           label="Path 3"
-          :options="trunkPkeys"
-          empty-text="None"
+          :options="pathOptions"
         />
         <FormSelect
           id="path4"
           v-model="path4"
           label="Path 4"
-          :options="trunkPkeys"
-          empty-text="None"
+          :options="pathOptions"
         />
       </div>
 

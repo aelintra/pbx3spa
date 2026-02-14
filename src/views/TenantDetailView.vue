@@ -5,6 +5,7 @@ import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
@@ -210,12 +211,11 @@ async function confirmAndDelete() {
               type="text"
               placeholder="integer"
             />
-            <FormSelect
+            <FormSegmentedPill
               id="edit-masteroclo"
               v-model="editMasteroclo"
               label="Timer status"
               :options="['AUTO', 'CLOSED']"
-              empty-text=""
             />
           </div>
 
@@ -230,6 +230,14 @@ async function confirmAndDelete() {
                   yes-value="YES"
                   no-value="NO"
                 />
+                <FormToggle
+                  v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
+                  :id="`edit-adv-${f.key}`"
+                  v-model="formAdvanced[f.key]"
+                  :label="f.label"
+                  :yes-value="f.options[0]"
+                  :no-value="f.options[1]"
+                />
                 <FormSelect
                   v-else-if="f.type === 'pill'"
                   :id="`edit-adv-${f.key}`"
@@ -237,7 +245,6 @@ async function confirmAndDelete() {
                   :label="f.label"
                   :options="f.options"
                   :required="false"
-                  empty-text=""
                 />
                 <FormField
                   v-else-if="f.type === 'number'"

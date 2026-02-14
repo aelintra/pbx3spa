@@ -14,6 +14,7 @@
 - **Use shared list normalization:** Import `normalizeList` from `@/utils/listResponse.js` for any list fetch (list views, and Create/Edit views that load lists e.g. tenants). Do **not** define a local `normalizeList` in the view.
 - **Use shared delete modal:** Use the `<DeleteConfirmModal>` component from `@/components/DeleteConfirmModal.vue` for delete confirmation in list and detail views. Do **not** copy inline Teleport + modal markup and modal CSS into the view.
 - **Tenant (cluster) dropdown:** Do **not** assume the API returns tenant pkey. The API may return `cluster` as tenant **shortuid**. Follow the **Tenant Resolution Pattern** (see Common Patterns & Helpers): (1) options = tenant **pkey** only; (2) in **Edit** view when loading the resource, **resolve** `resource.cluster` to tenant pkey via a shortuid→pkey map before setting the form value; (3) in **List** view resolve cluster to pkey for display. No assumptions.
+- **No selectable "—" or "-" in dropdowns:** Every FormSelect must have a concrete default (e.g. first option or "None"). For optional fields, include "None" (or the appropriate sentinel) in the **options** array and default the model to that value; do **not** use `empty-text` to add a selectable dash. The user must never be able to choose "-" or "—" as a value. On submit, map the sentinel (e.g. "None") to omit or null for the API when the field is optional.
 
 ---
 
@@ -133,20 +134,53 @@ When a form has fields that select a **destination** (e.g. open route, closed ro
 - **Show all groups:** FormSelect renders all optgroups in optionGroups; groups with no items show a "—" placeholder so the user always sees the full set of destination types (Queues, Extensions, IVRs, CustomApps, Routes). Do not hide or omit a group just because it is empty.
 - **Reference:** InboundRouteCreateView and InboundRouteDetailView: `destinationGroups` computed from destinations + routes, passed as `option-groups` to FormSelect for open route and closed route.
 
-### Fixed-choice fields (Pills vs Select — 2–5 use pills, 6+ use dropdown)
+### Fixed-choice fields (Pills vs Select — 2–3 pills, 4+ dropdown)
 
-When the API or schema defines a **fixed set of allowed values** (e.g. validation rule `in:YES,NO` or a known enum), choose the control based on option count: **FormToggle** for YES/NO, **segmented pills** for 2–5 options, **FormSelect** for 6+ options. Do **not** use a free-text FormField with a placeholder listing the options.
+When the API or schema defines a **fixed set of allowed values** (e.g. validation rule `in:YES,NO` or a known enum), choose the control as follows: **FormToggle** for YES/NO; **FormSegmentedPill** for **2–3 options only** (primary fields, short labels); **FormSelect** for **4+ options**, long labels, and dynamic lists. Do **not** use a free-text FormField with a placeholder listing the options.
 
-- **Examples:** `devicerec`, `strategy` (queue), `active` (YES/NO), `disa`, `iaxreg`, `pjsipreg`.
+**Refinement (UX):** Narrow pills to 2–3 option, primary fields only. Use dropdowns for 4–5 options and for long or many labels. Keeps the UX gain where it's highest and the rule easy to explain.
+
 - **Source of truth:** Cross-check the backend controller’s validation (e.g. `updateableColumns`) and/or schema comments to get the exact allowed values. Keep the SPA option list in sync with the API so validation never fails due to a typo or extra option.
+
+**Fields that use pills (2–3 options):**
+
+| View | Field | Options | Count |
+|------|--------|---------|-------|
+| InboundRouteCreateView | carrier (DDI type) | DiD, CLID | 2 |
+| ExtensionCreateView | protocol | SIP, WebRTC, Mailbox | 3 |
+| ExtensionCreateView | callbackto | desk, cell | 2 |
+| ExtensionCreateView | ipversion (Protocol IP) | IPV4, IPV6 | 2 |
+| ExtensionDetailView | callbackto, ipversion (Protocol) | desk/cell, IPV4/IPV6 | 2 |
+| TenantCreateView / TenantDetailView | masteroclo (Timer status) | AUTO, CLOSED | 2 |
+| RouteCreateView / RouteDetailView | strategy | hunt, balance | 2 |
+| InboundRouteDetailView | disa | (empty), DISA, CALLBACK | 3 |
+| InboundRouteDetailView | iaxreg, pjsipreg | (empty), SND, RCV | 3 |
+| TrunkDetailView | disa | (empty), DISA, CALLBACK | 3 |
+
+**Fields that use dropdown (4+ options or long labels):**
+
+| View | Field | Count | Reason |
+|------|--------|-------|--------|
+| ExtensionCreateView / ExtensionDetailView | transport, devicerec | 4, 5 | 4+ options |
+| TrunkCreateView | trunk type, transport | 4 | 4 options, long labels |
+| QueueCreateView / QueueDetailView | devicerec | 5 | 5 options |
+| QueueCreateView / QueueDetailView | strategy | 6 | 6+ options |
+| TrunkDetailView / InboundRouteDetailView | devicerec | 6 | 6 options |
+| All | Tenant, Path 1–4, destinations, etc. | variable | Dynamic list — not fixed choice |
+
+**YES/NO (FormToggle, not pills):** Use FormToggle for two-value booleans (e.g. active, celltwin, listenforext, moh).
 
 ### Device recording (devicerec)
 
-**Always use a dropdown (FormSelect), never a text field.** Options must match the API validation (e.g. Trunk/Extension/Inbound Route: `None`, `OTR`, `OTRR`, `Inbound`, `Outbound`, `Both`; Queue may add `default`). Use a **normalize** helper when loading: map unknown or empty API values to the first option (e.g. `'None'`) so the dropdown always shows a valid selection. On save, send the selected value (or `'None'` when empty). Do not use a single option like `"Inbound.Outbound"` with a period—if the API expects two choices, use two options: `Inbound` and `Outbound`.
+**Always use a dropdown (FormSelect), never a text field.** Options must match the API validation for that resource. Use a **normalize** helper when loading: map unknown or empty API values to the first option (e.g. `'None'`) so the dropdown always shows a valid selection. On save, send the selected value (or `'None'` when empty). Do not use a single option like `"Inbound.Outbound"` with a period—if the API expects two choices, use two options: `Inbound` and `Outbound`.
+
+**Option set per resource:** Check the backend controller’s validation for the resource (Extension, Trunk, Queue, Inbound Route, etc.). Option lists can differ (e.g. Queue may include `default`; others include `Outbound`, `Both`).
+
+**Extension only — OTR/OTRR removed:** For Extension panels, do **not** include `OTR` or `OTRR` in the devicerec options. Allowed values are `default`, `None`, `Inbound`, `Outbound`, `Both`. When **loading** an extension, if the API returns `OTR` or `OTRR` for devicerec, **normalize to `'Both'`** so the form displays and saves a valid option; on save the stored value will be `Both`.
 
 ### Registration fields (iaxreg, pjsipreg)
 
-Use **FormSelect** with options `['', 'SND', 'RCV']` and `empty-text="—"`. Schema comment is typically "SND/RCV/NULL". Do **not** use a free-text field or comma-separated string. When loading, normalize unknown values to `''` (empty). On save, send the selected value or omit/undefined when empty.
+Use **FormSelect** with options that include a sentinel for "none" (e.g. `['None', 'SND', 'RCV']`); default to that sentinel. Do **not** use `empty-text="—"`. Schema comment is typically "SND/RCV/NULL". When loading, normalize unknown/null to the sentinel. On save, send the selected value or omit/null when the sentinel is selected.
 
 ### Toggle values must match API (YES/NO vs ON/OFF)
 
@@ -454,15 +488,15 @@ const queueOptionsForTenant = computed(() => {
 })
 ```
 
-Use `queueOptionsForTenant` for queue dropdowns and `empty-text="None"` so a single "None" option appears when the user clears the selection.
+Use `queueOptions = ['None', ...queueOptionsForTenant]` for queue dropdowns; default queue1–queue6 to `'None'`. Do not use `empty-text`; "None" is a real option in the list.
 
 ### Empty queue / optional choice normalization
 
 When a resource has optional queue (or similar) fields that can be "none":
 
 - **Display (list or readonly):** Show `'None'` for `null`, `''`, or `'-'` (not em dash '—'). Use a helper, e.g. `displayQueue(v) => (v == null || v === '' || v === '-' ? 'None' : String(v).trim())`.
-- **Load (Edit form):** Normalize API values to form empty string: `null`, `''`, `'-'`, `'None'` → `''` so the dropdown shows "None".
-- **Save (Create/Edit payload):** Normalize form empty to API: `''`, `'-'`, `'None'` → `null` (or omit) so the API receives a clear "no selection" value.
+- **Load (Edit form):** Normalize API values to form: `null`, `''`, `'-'`, `'None'` → `'None'` so the dropdown shows the "None" option (no selectable dash).
+- **Save (Create/Edit payload):** When value is `'None'`, send `null` (or omit) so the API receives a clear "no selection" value.
 
 Example helpers:
 

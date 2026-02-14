@@ -19,12 +19,12 @@ const passwd = ref('')
 const cname = ref('')
 const description = ref('')
 const extlen = ref('')
-const queue1 = ref('')
-const queue2 = ref('')
-const queue3 = ref('')
-const queue4 = ref('')
-const queue5 = ref('')
-const queue6 = ref('')
+const queue1 = ref('None')
+const queue2 = ref('None')
+const queue3 = ref('None')
+const queue4 = ref('None')
+const queue5 = ref('None')
+const queue6 = ref('None')
 const tenants = ref([])
 const queues = ref([])
 const tenantsLoading = ref(true)
@@ -61,7 +61,7 @@ const tenantShortuid = computed(() => {
   return clusterVal
 })
 
-/** Queues for the selected tenant only (queue.cluster = tenant shortuid). No leading empty; FormSelect adds "None" via empty-text. */
+/** Queues for the selected tenant only (queue.cluster = tenant shortuid). */
 const queueOptionsForTenant = computed(() => {
   const shortuid = tenantShortuid.value
   const forTenant = queues.value
@@ -71,6 +71,8 @@ const queueOptionsForTenant = computed(() => {
   const uniq = [...new Set(forTenant)].sort((a, b) => String(a).localeCompare(String(b)))
   return uniq
 })
+
+const queueOptions = computed(() => ['None', ...queueOptionsForTenant.value])
 
 async function loadTenants() {
   tenantsLoading.value = true
@@ -105,12 +107,12 @@ onMounted(() => {
 })
 
 watch(cluster, () => {
-  queue1.value = ''
-  queue2.value = ''
-  queue3.value = ''
-  queue4.value = ''
-  queue5.value = ''
-  queue6.value = ''
+  queue1.value = 'None'
+  queue2.value = 'None'
+  queue3.value = 'None'
+  queue4.value = 'None'
+  queue5.value = 'None'
+  queue6.value = 'None'
 })
 
 function resetForm() {
@@ -121,12 +123,12 @@ function resetForm() {
   cname.value = ''
   description.value = ''
   extlen.value = ''
-  queue1.value = ''
-  queue2.value = ''
-  queue3.value = ''
-  queue4.value = ''
-  queue5.value = ''
-  queue6.value = ''
+  queue1.value = 'None'
+  queue2.value = 'None'
+  queue3.value = 'None'
+  queue4.value = 'None'
+  queue5.value = 'None'
+  queue6.value = 'None'
   pkeyValidation.reset()
   clusterValidation.reset()
   nameValidation.reset()
@@ -184,12 +186,12 @@ async function onSubmit(e) {
     if (description.value.trim()) body.description = description.value.trim()
     const extlenNum = parseNum(extlen.value)
     if (extlenNum !== undefined) body.extlen = extlenNum
-    body.queue1 = queue1.value?.trim() || null
-    body.queue2 = queue2.value?.trim() || null
-    body.queue3 = queue3.value?.trim() || null
-    body.queue4 = queue4.value?.trim() || null
-    body.queue5 = queue5.value?.trim() || null
-    body.queue6 = queue6.value?.trim() || null
+    body.queue1 = queue1.value && queue1.value !== 'None' ? queue1.value.trim() : null
+    body.queue2 = queue2.value && queue2.value !== 'None' ? queue2.value.trim() : null
+    body.queue3 = queue3.value && queue3.value !== 'None' ? queue3.value.trim() : null
+    body.queue4 = queue4.value && queue4.value !== 'None' ? queue4.value.trim() : null
+    body.queue5 = queue5.value && queue5.value !== 'None' ? queue5.value.trim() : null
+    body.queue6 = queue6.value && queue6.value !== 'None' ? queue6.value.trim() : null
 
     await getApiClient().post('agents', body)
     toast.show(`Agent ${pkeyNum} created`)
@@ -328,48 +330,42 @@ async function onSubmit(e) {
           id="queue1"
           v-model="queue1"
           label="Queue 1"
-          :options="queueOptionsForTenant"
-          empty-text="None"
+          :options="queueOptions"
           :loading="queuesLoading"
         />
         <FormSelect
           id="queue2"
           v-model="queue2"
           label="Queue 2"
-          :options="queueOptionsForTenant"
-          empty-text="None"
+          :options="queueOptions"
           :loading="queuesLoading"
         />
         <FormSelect
           id="queue3"
           v-model="queue3"
           label="Queue 3"
-          :options="queueOptionsForTenant"
-          empty-text="None"
+          :options="queueOptions"
           :loading="queuesLoading"
         />
         <FormSelect
           id="queue4"
           v-model="queue4"
           label="Queue 4"
-          :options="queueOptionsForTenant"
-          empty-text="None"
+          :options="queueOptions"
           :loading="queuesLoading"
         />
         <FormSelect
           id="queue5"
           v-model="queue5"
           label="Queue 5"
-          :options="queueOptionsForTenant"
-          empty-text="None"
+          :options="queueOptions"
           :loading="queuesLoading"
         />
         <FormSelect
           id="queue6"
           v-model="queue6"
           label="Queue 6"
-          :options="queueOptionsForTenant"
-          empty-text="None"
+          :options="queueOptions"
           :loading="queuesLoading"
         />
       </div>

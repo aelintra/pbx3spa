@@ -27,7 +27,7 @@ const destinationsLoading = ref(false)
 const error = ref('')
 const loading = ref(false)
 const pkeyInput = ref(null)
-const greetnum = ref('')
+const greetnum = ref('None')
 const timeout = ref('operator')
 const listenforext = ref('NO')
 
@@ -73,6 +73,8 @@ const greetingOptions = computed(() => {
     .filter((n) => n != null)
   return [...new Set(nums)].sort((a, b) => a - b)
 })
+
+const greetingOptionsWithNone = computed(() => ['None', ...greetingOptions.value.map((n) => String(n))])
 
 const tenantOptions = computed(() => {
   const list = tenants.value.map((t) => t.pkey).filter(Boolean)
@@ -149,7 +151,7 @@ function resetForm() {
   cname.value = ''
   name.value = ''
   description.value = ''
-  greetnum.value = ''
+  greetnum.value = 'None'
   timeout.value = 'operator'
   listenforext.value = 'NO'
   options.value = {
@@ -212,7 +214,7 @@ async function onSubmit(e) {
     if (cname.value.trim()) body.cname = cname.value.trim()
     if (name.value.trim()) body.name = name.value.trim()
     if (description.value.trim()) body.description = description.value.trim()
-    if (greetnum.value !== '' && greetnum.value != null) body.greetnum = parseInt(greetnum.value, 10)
+    if (greetnum.value && greetnum.value !== 'None') body.greetnum = parseInt(greetnum.value, 10)
     await getApiClient().post('ivrs', body)
     toast.show(`IVR ${pkey.value.trim()} created`, 'success')
     resetForm()
@@ -347,11 +349,10 @@ onMounted(async () => {
           id="greetnum"
           v-model="greetnum"
           label="Greeting Number"
-          :options="greetingOptions.map(n => String(n))"
+          :options="greetingOptionsWithNone"
           :error="greetnumValidation.error.value"
           :touched="greetnumValidation.touched.value"
           :loading="greetingsLoading"
-          empty-text="—"
           hint="Greeting played when the IVR is activated. Greetings are created in the Greetings section."
           @blur="greetnumValidation.onBlur"
         />

@@ -7,6 +7,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
@@ -101,7 +102,8 @@ async function fetchExtension() {
     editCallerid.value = ext?.callerid != null ? String(ext.callerid) : ''
     editCellphone.value = ext?.cellphone != null ? String(ext.cellphone) : ''
     editCelltwin.value = ext?.celltwin ?? 'OFF'
-    editDevicerec.value = ext?.devicerec ?? 'None'
+    const rawDevicerec = ext?.devicerec
+    editDevicerec.value = (rawDevicerec === 'OTR' || rawDevicerec === 'OTRR') ? 'Both' : (rawDevicerec ?? 'None')
     editDvrvmail.value = ext?.dvrvmail ?? ''
     editProtocol.value = ext?.protocol ?? 'IPV4'
     editVmailfwd.value = ext?.vmailfwd ?? ''
@@ -317,7 +319,7 @@ async function saveRuntime(e) {
 
           <h2 class="detail-heading">Advanced</h2>
           <div class="form-fields">
-            <FormSelect
+            <FormSegmentedPill
               id="edit-callbackto"
               v-model="editCallbackto"
               label="Callback to"
@@ -336,13 +338,13 @@ async function saveRuntime(e) {
               id="edit-devicerec"
               v-model="editDevicerec"
               label="Devicerec"
-              :options="['default', 'None', 'OTR', 'OTRR', 'Inbound', 'Outbound', 'Both']"
+              :options="['default', 'None', 'Inbound', 'Outbound', 'Both']"
             />
             <FormField id="edit-dvrvmail" v-model="editDvrvmail" label="DVR voicemail" type="text" />
-            <FormSelect
+            <FormSegmentedPill
               id="edit-protocol"
               v-model="editProtocol"
-              label="Protocol"
+              label="Protocol (IP version)"
               :options="['IPV4', 'IPV6']"
             />
             <FormField id="edit-vmailfwd" v-model="editVmailfwd" label="Voicemail forward (email)" type="email" />

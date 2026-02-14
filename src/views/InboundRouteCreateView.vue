@@ -9,6 +9,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -237,7 +238,7 @@ function onKeydown(e) {
           hint="The tenant this inbound route belongs to."
           @blur="clusterValidation.onBlur"
         />
-        <FormSelect
+        <FormSegmentedPill
           id="carrier"
           v-model="carrier"
           label="DDI type"
@@ -245,8 +246,8 @@ function onKeydown(e) {
           :error="carrierValidation.error.value"
           :touched="carrierValidation.touched.value"
           :required="true"
-          empty-text="Choose type"
           hint="DiD or CLID."
+          aria-label="Choose type"
           @blur="carrierValidation.onBlur"
         />
         <FormField
@@ -280,7 +281,6 @@ function onKeydown(e) {
           :options="openrouteOptions"
           :option-groups="destinationGroups"
           :loading="destinationsLoading"
-          empty-text="None"
           hint="Destination when line is open."
         />
         <FormSelect
@@ -289,7 +289,6 @@ function onKeydown(e) {
           label="Closed route"
           :options="closerouteOptions"
           :option-groups="destinationGroups"
-          empty-text="None"
           hint="Destination when line is closed."
         />
       </div>

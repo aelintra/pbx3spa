@@ -9,11 +9,12 @@ import { normalizeList } from '@/utils/listResponse'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 
 const router = useRouter()
 const toast = useToastStore()
-const trunkType = ref('')
+const trunkType = ref('SIP (send registration)')
 const pkey = ref('')
 const cluster = ref('default')
 const host = ref('')
@@ -83,7 +84,7 @@ async function loadTenants() {
 }
 
 function resetForm() {
-  trunkType.value = ''
+  trunkType.value = 'SIP (send registration)'
   pkey.value = ''
   cluster.value = 'default'
   host.value = ''
@@ -212,7 +213,6 @@ function onKeydown(e) {
           v-model="trunkType"
           label="Trunk type"
           :options="trunkTypeOptions"
-          empty-text="Choose a trunk type"
           hint="SIP (send/accept/trusted) or IAX2."
           aria-label="Choose trunk type"
         />

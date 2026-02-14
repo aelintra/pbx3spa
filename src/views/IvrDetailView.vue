@@ -27,7 +27,7 @@ const editActive = ref('YES')
 const editCname = ref('')
 const editName = ref('')
 const editDescription = ref('')
-const editGreetnum = ref('')
+const editGreetnum = ref('None')
 const editListenforext = ref('NO')
 const editTimeout = ref('operator')
 const options = ref({
@@ -103,6 +103,13 @@ const greetingOptions = computed(() => {
   return [...new Set(nums)].sort((a, b) => a - b)
 })
 
+function greetingOptionsWithNone(currentValue) {
+  const base = ['None', ...greetingOptions.value.map((n) => String(n))]
+  if (!currentValue || currentValue === 'None') return base
+  if (base.includes(currentValue)) return base
+  return [currentValue, ...base]
+}
+
 async function loadTenants() {
   try {
     const response = await getApiClient().get('tenants')
@@ -151,7 +158,7 @@ function syncEditFromIvr() {
   editCname.value = r.cname ?? ''
   editName.value = r.name ?? ''
   editDescription.value = r.description ?? ''
-  editGreetnum.value = r.greetnum != null ? String(r.greetnum) : ''
+  editGreetnum.value = r.greetnum != null ? String(r.greetnum) : 'None'
   editListenforext.value = r.listenforext ?? 'NO'
   editTimeout.value = r.timeout ?? 'operator'
   for (let i = 0; i <= 11; i++) {
@@ -249,7 +256,7 @@ async function saveEdit(e) {
     if (editName.value.trim()) body.name = editName.value.trim()
     else body.name = null
     if (editDescription.value.trim()) body.description = editDescription.value.trim()
-    if (editGreetnum.value !== '' && editGreetnum.value != null) body.greetnum = String(editGreetnum.value).trim()
+    if (editGreetnum.value && editGreetnum.value !== 'None') body.greetnum = parseInt(editGreetnum.value, 10)
     await getApiClient().put(`ivrs/${encodeURIComponent(shortuid.value)}`, body)
     await fetchIvr()
     editing.value = false
@@ -385,11 +392,10 @@ async function confirmAndDelete() {
               id="edit-greetnum"
               v-model="editGreetnum"
               label="Greeting Number"
-              :options="greetingOptions.map(n => String(n))"
+              :options="greetingOptionsWithNone(editGreetnum)"
               :error="greetnumValidation.error.value"
               :touched="greetnumValidation.touched.value"
               :loading="greetingsLoading"
-              empty-text="—"
               hint="Greeting played when the IVR is activated. Greetings are created in the Greetings section."
               @blur="greetnumValidation.onBlur"
             />

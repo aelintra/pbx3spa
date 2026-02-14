@@ -14,6 +14,7 @@ import {
 import { fieldErrors } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 
 const router = useRouter()
@@ -179,12 +180,11 @@ onMounted(() => {
           type="number"
           placeholder="integer"
         />
-        <FormSelect
+        <FormSegmentedPill
           id="masteroclo"
           v-model="masteroclo"
           label="Timer status"
           :options="['AUTO', 'CLOSED']"
-          empty-text=""
         />
       </div>
 
@@ -199,6 +199,14 @@ onMounted(() => {
               yes-value="YES"
               no-value="NO"
             />
+            <FormToggle
+              v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
+              :id="`adv-${f.key}`"
+              v-model="formAdvanced[f.key]"
+              :label="f.label"
+              :yes-value="f.options[0]"
+              :no-value="f.options[1]"
+            />
             <FormSelect
               v-else-if="f.type === 'pill'"
               :id="`adv-${f.key}`"
@@ -206,7 +214,6 @@ onMounted(() => {
               :label="f.label"
               :options="f.options"
               :required="false"
-              empty-text=""
             />
             <FormField
               v-else-if="f.type === 'number'"
