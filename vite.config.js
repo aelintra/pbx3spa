@@ -5,7 +5,9 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig(({ mode }) => {
   // Load env so VITE_API_PROXY_TARGET is available when config runs (Vite doesn't load .env before config by default)
   const env = loadEnv(mode, process.cwd(), '')
-  const proxyTarget = env.VITE_API_PROXY_TARGET || 'http://192.168.1.150:44300'
+  // Proxy target is only used when the user enters the dev server as API base at login (e.g. http://localhost:5173/api).
+  // The user normally sets their API server URL at login; set VITE_API_PROXY_TARGET in .env.development for that dev-only case.
+  const proxyTarget = env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8000'
 
   return {
     plugins: [vue()],
@@ -15,7 +17,7 @@ export default defineConfig(({ mode }) => {
       }
     },
     server: {
-      // Proxy /api to PBX3 instance. Set VITE_API_PROXY_TARGET in .env.development (default: 192.168.1.150 test server).
+      // Proxy /api when the app is pointed at the dev server as API base (see comment above).
       proxy: {
         '/api': {
           target: proxyTarget,

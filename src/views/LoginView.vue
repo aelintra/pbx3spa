@@ -7,7 +7,8 @@ import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
 const auth = useAuthStore()
 
-const baseUrl = ref(import.meta.env.DEV ? 'http://localhost:5173/api' : '')
+// API base URL is set by the user at login (e.g. http://host:port/api). No pre-fill.
+const baseUrl = ref('')
 const email = ref('')
 const password = ref('')
 const error = ref('')
@@ -54,7 +55,7 @@ async function onSubmit(e) {
         id="baseUrl"
         v-model="baseUrl"
         type="url"
-        placeholder="https://host:port/api"
+        placeholder="e.g. http://192.168.1.150:44300/api"
         required
       />
 
