@@ -181,7 +181,7 @@ onMounted(loadAgents)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="a in sortedAgents" :key="a.shortuid ?? a.pkey">
+          <tr v-for="a in sortedAgents" :key="a.shortuid || a.id || (a.cluster || '') + '-' + (a.pkey || '')">
             <td>{{ a.pkey }}</td>
             <td>{{ tenantPkeyDisplay(a) }}</td>
             <td>{{ a.name ?? '—' }}</td>

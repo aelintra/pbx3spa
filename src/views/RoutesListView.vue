@@ -194,7 +194,7 @@ onMounted(loadRoutes)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="r in sortedRoutes" :key="r.pkey">
+          <tr v-for="r in sortedRoutes" :key="r.shortuid || r.id || (r.cluster || '') + '-' + (r.pkey || '')">
             <td>{{ r.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(r) }}</td>
             <td>{{ tenantPkeyDisplay(r) }}</td>

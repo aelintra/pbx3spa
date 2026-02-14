@@ -204,7 +204,7 @@ onMounted(loadExtensions)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="e in sortedExtensions" :key="e.pkey">
+          <tr v-for="e in sortedExtensions" :key="e.shortuid || e.id || (e.cluster || '') + '-' + (e.pkey || '')">
             <td>{{ e.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ sipIdentityDisplay(e) }}</td>
             <td>{{ tenantPkeyDisplay(e) }}</td>

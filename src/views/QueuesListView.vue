@@ -175,7 +175,7 @@ onMounted(loadQueues)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="q in sortedQueues" :key="q.pkey">
+          <tr v-for="q in sortedQueues" :key="q.shortuid || q.id || (q.cluster || '') + '-' + (q.pkey || '')">
             <td>{{ q.pkey }}</td>
             <td>{{ q.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(q) }}</td>

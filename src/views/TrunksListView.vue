@@ -195,7 +195,7 @@ onMounted(loadTrunks)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="tr in sortedTrunks" :key="tr.pkey">
+          <tr v-for="tr in sortedTrunks" :key="tr.shortuid || tr.id || (tr.cluster || '') + '-' + (tr.pkey || '')">
             <td>{{ tr.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(tr) }}</td>
             <td>{{ tenantPkeyDisplay(tr) }}</td>

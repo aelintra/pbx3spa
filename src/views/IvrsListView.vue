@@ -171,7 +171,7 @@ onMounted(loadIvrs)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="ivr in sortedIvrs" :key="ivr.pkey">
+          <tr v-for="ivr in sortedIvrs" :key="ivr.shortuid || ivr.id || (ivr.cluster || '') + '-' + (ivr.pkey || '')">
             <td>{{ ivr.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(ivr) }}</td>
             <td>{{ tenantDisplay(ivr) }}</td>
