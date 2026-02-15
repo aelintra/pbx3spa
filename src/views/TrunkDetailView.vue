@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
-import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
@@ -21,12 +20,10 @@ function isReadOnly(field) {
   return getSchema('trunks')?.read_only?.includes(field) ?? false
 }
 const trunk = ref(null)
-const tenants = ref([])
 const loading = ref(true)
 const error = ref('')
 const editDescription = ref('')
 const editActive = ref('YES')
-const editCluster = ref('default')
 const editHost = ref('')
 const editUsername = ref('')
 const editPeername = ref('')
@@ -61,44 +58,6 @@ const confirmDeleteOpen = ref(false)
 
 const shortuid = computed(() => route.params.shortuid)
 
-/** Map cluster id, shortuid, or pkey → tenant pkey for display (always show pkey, not shortuid). */
-const clusterToTenantPkey = computed(() => {
-  const map = new Map()
-  for (const t of tenants.value) {
-    if (t.id != null) map.set(String(t.id), t.pkey ?? t.id)
-    if (t.shortuid != null) map.set(String(t.shortuid), t.pkey ?? t.shortuid)
-    if (t.pkey != null) map.set(String(t.pkey), t.pkey)
-  }
-  return map
-})
-
-function tenantPkeyDisplay(clusterValue) {
-  if (clusterValue == null || clusterValue === '') return '—'
-  const s = String(clusterValue)
-  return clusterToTenantPkey.value.get(s) ?? trunk.value?.tenant_pkey ?? s
-}
-
-const tenantOptions = computed(() => {
-  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
-  return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
-})
-
-const tenantOptionsForSelect = computed(() => {
-  const list = tenantOptions.value
-  const cur = editCluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
-  return list
-})
-
-async function fetchTenants() {
-  try {
-    const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response, 'tenants')
-  } catch {
-    tenants.value = []
-  }
-}
-
 async function fetchTrunk() {
   if (!shortuid.value) return
   loading.value = true
@@ -107,8 +66,6 @@ async function fetchTrunk() {
     trunk.value = await getApiClient().get(`trunks/${encodeURIComponent(shortuid.value)}`)
     editDescription.value = trunk.value?.description ?? ''
     editActive.value = trunk.value?.active ?? 'YES'
-    const tenantPkey = trunk.value?.tenant_pkey ?? tenantPkeyDisplay(trunk.value?.cluster)
-    editCluster.value = tenantPkey ?? 'default'
     editHost.value = trunk.value?.host ?? ''
     editUsername.value = trunk.value?.username ?? ''
     editPeername.value = trunk.value?.peername ?? ''
@@ -137,7 +94,6 @@ async function fetchTrunk() {
 
 onMounted(async () => {
   await ensureFetched()
-  await fetchTenants()
   await fetchTrunk()
 })
 watch(shortuid, fetchTrunk)
@@ -165,7 +121,7 @@ async function saveEdit(e) {
     const body = {
       description: editDescription.value.trim() || undefined,
       active: editActive.value,
-      cluster: editCluster.value.trim(),
+      cluster: 'default', // TRUNK_ROUTE_MULTITENANCY: trunks are default-tenant only, not changeable
       host: editHost.value.trim(),
       username: editUsername.value.trim() || undefined,
       peername: editPeername.value.trim() || undefined,
@@ -267,13 +223,6 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Settings</h2>
           <div class="form-fields">
-            <FormSelect
-              id="edit-cluster"
-              v-model="editCluster"
-              label="Tenant"
-              :options="tenantOptionsForSelect"
-              :required="true"
-            />
             <FormToggle
               id="edit-active"
               v-model="editActive"
