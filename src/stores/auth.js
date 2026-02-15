@@ -29,6 +29,13 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     isLoggedIn(state) {
       return Boolean(state.token)
+    },
+    abilities(state) {
+      return state.user?.abilities ?? []
+    },
+    can(state) {
+      const abilities = state.user?.abilities ?? []
+      return (ability) => abilities.includes(ability)
     }
   },
 

@@ -33,16 +33,22 @@ async function logout() {
   <div class="app-layout">
     <aside class="sidebar">
       <nav class="nav">
-        <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">Home</router-link>
-        <router-link to="/tenants" class="nav-link" active-class="active">Tenants</router-link>
-        <router-link to="/extensions" class="nav-link" active-class="active">Extensions</router-link>
-        <router-link to="/trunks" class="nav-link" active-class="active">Trunks</router-link>
-        <router-link to="/queues" class="nav-link" active-class="active">Queues</router-link>
-        <router-link to="/agents" class="nav-link" active-class="active">Agents</router-link>
-        <router-link to="/routes" class="nav-link" active-class="active">Routes</router-link>
-        <router-link to="/ivrs" class="nav-link" active-class="active">IVRs</router-link>
-        <router-link to="/inbound-routes" class="nav-link" active-class="active">Inbound routes</router-link>
-        <router-link to="/sysglobals" class="nav-link" active-class="active">System Globals</router-link>
+        <template v-if="auth.can('admin')">
+          <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">Home</router-link>
+          <router-link to="/tenants" class="nav-link" active-class="active">Tenants</router-link>
+          <router-link to="/extensions" class="nav-link" active-class="active">Extensions</router-link>
+          <router-link to="/trunks" class="nav-link" active-class="active">Trunks</router-link>
+          <router-link to="/queues" class="nav-link" active-class="active">Queues</router-link>
+          <router-link to="/agents" class="nav-link" active-class="active">Agents</router-link>
+          <router-link to="/routes" class="nav-link" active-class="active">Routes</router-link>
+          <router-link to="/ivrs" class="nav-link" active-class="active">IVRs</router-link>
+          <router-link to="/inbound-routes" class="nav-link" active-class="active">Inbound routes</router-link>
+          <router-link to="/users" class="nav-link" active-class="active">Users</router-link>
+          <router-link to="/sysglobals" class="nav-link" active-class="active">System Globals</router-link>
+        </template>
+        <template v-else>
+          <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">Home</router-link>
+        </template>
       </nav>
     </aside>
     <div class="main">

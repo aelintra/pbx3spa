@@ -28,6 +28,13 @@ import InboundRouteCreateView from '../views/InboundRouteCreateView.vue'
 import InboundRouteDetailView from '../views/InboundRouteDetailView.vue'
 import SysglobalsEditView from '../views/SysglobalsEditView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import NoAccessView from '../views/NoAccessView.vue'
+import UsersListView from '../views/UsersListView.vue'
+import UserCreateView from '../views/UserCreateView.vue'
+import { getApiClient } from '@/api/client'
+
+/** Routes that require neither login nor admin. Add e.g. '/register' here when adding self-service sign-up. */
+const PUBLIC_ROUTES = ['/login']
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,6 +49,7 @@ const router = createRouter({
       component: AppLayout,
       children: [
         { path: '', name: 'dashboard', component: DashboardView },
+        { path: 'no-access', name: 'no-access', component: NoAccessView },
         { path: 'tenants', name: 'tenants', component: TenantsListView },
         { path: 'tenants/new', name: 'tenant-create', component: TenantCreateView },
         { path: 'tenants/:pkey', name: 'tenant-detail', component: TenantDetailView },
@@ -66,16 +74,41 @@ const router = createRouter({
         { path: 'inbound-routes', name: 'inbound-routes', component: InboundRoutesListView },
         { path: 'inbound-routes/new', name: 'inbound-route-create', component: InboundRouteCreateView },
         { path: 'inbound-routes/:shortuid', name: 'inbound-route-detail', component: InboundRouteDetailView },
+        { path: 'users', name: 'users', component: UsersListView },
+        { path: 'users/new', name: 'user-create', component: UserCreateView },
         { path: 'sysglobals', name: 'sysglobals', component: SysglobalsEditView }
       ]
     }
   ]
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
-  if (to.path !== '/login' && !auth.isLoggedIn) {
+
+  if (PUBLIC_ROUTES.includes(to.path)) {
+    return
+  }
+
+  if (!auth.isLoggedIn) {
     return { path: '/login' }
+  }
+
+  if (to.path === '/no-access') {
+    return
+  }
+
+  if (!auth.user) {
+    try {
+      const user = await getApiClient().get('auth/whoami')
+      auth.setUser(user)
+    } catch {
+      auth.clearCredentials()
+      return { path: '/login' }
+    }
+  }
+
+  if (!auth.can('admin')) {
+    return { name: 'no-access' }
   }
 })
 

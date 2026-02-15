@@ -12,7 +12,7 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **Parked:** Backups — review after first CRUD set; behaviour may depend on PBX3 internals.
 
-**Later (API-dependent):** Admin user management panel (admins only; API needs stronger user/privilege support first). Help messages — API to expose tt_help_core (sqlite_message.sql data) for display in admin panels; then frontend consumes.
+**Later (API-dependent):** Admin user management panel (admins only; API needs stronger user/privilege support first). Pattern: **workingdocs/ADMIN_PANELS_AND_PERMISSIONS.md**. Minimal rollout: **workingdocs/PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** (Phase 0: SPA `can('admin')`, route guard, optional nav gate; Phase 1 later). **Auth rules for agents:** **workingdocs/AUTH_PATTERNS.md** — follow when touching login, tokens, whoami, or guards; preserves 2FA, self-service, and centralized auth options. Help messages — API to expose tt_help_core (sqlite_message.sql data) for display in admin panels; then frontend consumes.
 
 **To-do (Extensions – defer for now):** Allow changing extension number (pkey). Can wait for now but we’ll need to do it at some point. API needs to support pkey update (e.g. add to updateable columns or dedicated rename flow) before enabling.
 
@@ -34,7 +34,7 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **Scope note:** Legacy dump/restore routines (pbx3 tree: dumper.php, dumpInstances.php, etc.) convert SARK → PBX3 and work on old and new DB versions. Ignore them for day-to-day work; focus on pbx3api, pbx3spa, and db_sql schemas. See **SYSTEM_CONTEXT.md** § "Scope: legacy dump/restore".
 
-**Next chat:** Read **workingdocs/PROJECT_PLAN.md** (§ Current state), **workingdocs/SESSION_HANDOFF.md** (latest done/left), **workingdocs/SYSTEM_CONTEXT.md**, and **workingdocs/README.md**. Schema yardstick: **pbx3/full_schema.sql**; API models/controllers must match. For trunk ownership, allocation, or tenant migration, read **workingdocs/TRUNK_ROUTE_MULTITENANCY.md**. Create panels §3 and Field mutability (GET /schemas, useSchema) are done; next: complex create refinements (COMPLEX_CREATE_PLAN.md) or other follow-ups. Boolean standardisation: **BOOLEAN_STANDARDISATION.md** (plan + migration; run when ready).
+**Next chat:** Read **workingdocs/PROJECT_PLAN.md** (§ Current state), **workingdocs/SESSION_HANDOFF.md** (latest done/left), **workingdocs/SYSTEM_CONTEXT.md**, and **workingdocs/README.md**. Schema yardstick: **pbx3/full_schema.sql**; API models/controllers must match. For trunk ownership, allocation, or tenant migration, read **workingdocs/TRUNK_ROUTE_MULTITENANCY.md**. **Auth:** When touching login, tokens, whoami, or route guards, read **workingdocs/AUTH_PATTERNS.md** — do not freelance; patterns preserve 2FA, self-service, and centralized auth options. Create panels §3 and Field mutability (GET /schemas, useSchema) are done; next: complex create refinements (COMPLEX_CREATE_PLAN.md) or other follow-ups. Boolean standardisation: **BOOLEAN_STANDARDISATION.md** (plan + migration; run when ready).
 
 ---
 
