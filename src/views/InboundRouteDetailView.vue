@@ -34,8 +34,6 @@ const editCloseroute = ref('None')
 const destinations = ref(null)
 const destinationsLoading = ref(false)
 const editAlertinfo = ref('')
-const editCallback = ref('')
-const editCallerid = ref('')
 const editCallprogress = ref('YES')
 const editCname = ref('')
 const editDevicerec = ref('None')
@@ -43,16 +41,8 @@ const editMoh = ref('NO')
 const editSwoclip = ref('YES')
 const editDisa = ref('None')
 const editDisapass = ref('')
-const editHost = ref('')
-const editIaxreg = ref('')
 const editInprefix = ref('')
-const editMatch = ref('')
-const editPassword = ref('')
-const editPeername = ref('')
-const editPjsipreg = ref('')
-const editRegister = ref('')
 const editTag = ref('')
-const editUsername = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -95,14 +85,6 @@ function normalizeDevicerec(v) {
   if (v == null || String(v).trim() === '') return 'None'
   const s = String(v).trim()
   return devicerecOptions.includes(s) ? s : 'None'
-}
-
-const regOptions = ['', 'SND', 'RCV']
-
-function normalizeReg(v) {
-  if (v == null || String(v).trim() === '') return ''
-  const s = String(v).trim().toUpperCase()
-  return regOptions.includes(s) ? s : ''
 }
 
 /** Normalize destinations API response (handles both { Queues: [] } and { queues: [] } shapes). */
@@ -177,8 +159,6 @@ function syncEditFromRoute() {
   editOpenroute.value = r.openroute ?? 'None'
   editCloseroute.value = r.closeroute ?? 'None'
   editAlertinfo.value = r.alertinfo ?? ''
-  editCallback.value = r.callback ?? ''
-  editCallerid.value = r.callerid ?? ''
   editCallprogress.value = (r.callprogress === 'NO') ? 'NO' : 'YES'
   editCname.value = r.cname ?? ''
   editDevicerec.value = normalizeDevicerec(r.devicerec)
@@ -186,16 +166,8 @@ function syncEditFromRoute() {
   editSwoclip.value = r.swoclip ?? 'YES'
   editDisa.value = r.disa?.trim() || 'None'
   editDisapass.value = r.disapass ?? ''
-  editHost.value = r.host ?? ''
-  editIaxreg.value = normalizeReg(r.iaxreg)
   editInprefix.value = r.inprefix != null ? String(r.inprefix) : ''
-  editMatch.value = r.match ?? ''
-  editPassword.value = ''
-  editPeername.value = r.peername ?? ''
-  editPjsipreg.value = normalizeReg(r.pjsipreg)
-  editRegister.value = r.register ?? ''
   editTag.value = r.tag ?? ''
-  editUsername.value = r.username ?? ''
 }
 
 async function fetchInboundRoute() {
@@ -253,8 +225,6 @@ async function saveEdit(e) {
       openroute: editOpenroute.value || 'None',
       closeroute: editCloseroute.value || 'None',
       alertinfo: editAlertinfo.value.trim() || undefined,
-      callback: editCallback.value.trim() || undefined,
-      callerid: editCallerid.value.trim() || undefined,
       callprogress: editCallprogress.value,
       cname: editCname.value.trim() || undefined,
       devicerec: editDevicerec.value || 'None',
@@ -262,17 +232,9 @@ async function saveEdit(e) {
       swoclip: editSwoclip.value,
       disa: (editDisa.value.trim() && editDisa.value.trim() !== 'None') ? editDisa.value.trim() : undefined,
       disapass: editDisapass.value.trim() || undefined,
-      host: editHost.value.trim() || undefined,
-      iaxreg: editIaxreg.value || undefined,
       inprefix: inprefixVal !== undefined && !isNaN(inprefixVal) ? inprefixVal : undefined,
-      match: editMatch.value.trim() || undefined,
-      peername: editPeername.value.trim() || undefined,
-      pjsipreg: editPjsipreg.value || undefined,
-      register: editRegister.value.trim() || undefined,
-      tag: editTag.value.trim() || undefined,
-      username: editUsername.value.trim() || undefined
+      tag: editTag.value.trim() || undefined
     }
-    if (editPassword.value.trim()) body.password = editPassword.value.trim()
     await getApiClient().put(`inboundroutes/${encodeURIComponent(shortuid.value)}`, body)
     await fetchInboundRoute()
     toast.show(`Inbound route saved`)
@@ -456,80 +418,6 @@ async function confirmAndDelete() {
               v-model="editDevicerec"
               label="Device recording"
               :options="devicerecOptions"
-            />
-          </div>
-
-          <h2 class="detail-heading">Connection</h2>
-          <div class="form-fields">
-            <FormField
-              id="edit-host"
-              v-model="editHost"
-              label="Host"
-              type="text"
-              placeholder="IP or hostname"
-            />
-            <FormField
-              id="edit-username"
-              v-model="editUsername"
-              label="Username"
-              type="text"
-              autocomplete="off"
-            />
-            <FormField
-              id="edit-password"
-              v-model="editPassword"
-              label="Password"
-              type="password"
-              placeholder="Leave blank to keep current"
-              autocomplete="new-password"
-            />
-            <FormField
-              id="edit-peername"
-              v-model="editPeername"
-              label="Peername"
-              type="text"
-            />
-            <FormField
-              id="edit-register"
-              v-model="editRegister"
-              label="Register"
-              type="text"
-            />
-            <FormSegmentedPill
-              id="edit-iaxreg"
-              v-model="editIaxreg"
-              label="IAX registration"
-              :options="regOptions"
-              empty-display="—"
-            />
-            <FormSegmentedPill
-              id="edit-pjsipreg"
-              v-model="editPjsipreg"
-              label="PJSIP registration"
-              :options="regOptions"
-              empty-display="—"
-            />
-          </div>
-
-          <h2 class="detail-heading">Advanced</h2>
-          <div class="form-fields">
-            <FormField
-              id="edit-callback"
-              v-model="editCallback"
-              label="Callback"
-              type="text"
-            />
-            <FormField
-              id="edit-callerid"
-              v-model="editCallerid"
-              label="Caller ID"
-              type="text"
-            />
-            <FormField
-              id="edit-match"
-              v-model="editMatch"
-              label="Match"
-              type="text"
             />
           </div>
 

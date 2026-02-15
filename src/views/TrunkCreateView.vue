@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
@@ -10,8 +10,6 @@ import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
-import FormToggle from '@/components/forms/FormToggle.vue'
-
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
@@ -20,7 +18,6 @@ const pkey = ref('')
 const cluster = ref('default')
 const host = ref('')
 const password = ref('')
-const regthistrunk = ref('NO')
 const transport = ref('udp')
 const error = ref('')
 const loading = ref(false)
@@ -30,7 +27,6 @@ const pkeyValidation = useFormValidation(pkey, validateTrunkPkey)
 
 const carrier = computed(() => {
   if (trunkType.value.startsWith('SIP')) return 'GeneralSIP'
-  if (trunkType.value === 'IAX2 trunk') return 'GeneralIAX2'
   return ''
 })
 const sipRegistration = computed(() => {
@@ -44,15 +40,13 @@ const isSIPSendReg = computed(() => trunkType.value === 'SIP (send registration)
 const isSIPAcceptReg = computed(() => trunkType.value === 'SIP (accept registration)')
 const isSIPTrustedPeer = computed(() => trunkType.value === 'SIP (trusted peer)')
 const isSIP = computed(() => carrier.value === 'GeneralSIP')
-const isIAX2 = computed(() => carrier.value === 'GeneralIAX2')
-const showHost = computed(() => isSIPSendReg.value || isSIPTrustedPeer.value || isIAX2.value)
+const showHost = computed(() => isSIPSendReg.value || isSIPTrustedPeer.value)
 const passwordRequired = computed(() => isSIPSendReg.value || isSIPAcceptReg.value)
 
 const trunkTypeOptions = [
   'SIP (send registration)',
   'SIP (accept registration)',
-  'SIP (trusted peer)',
-  'IAX2 trunk'
+  'SIP (trusted peer)'
 ]
 
 function resetForm() {
@@ -61,15 +55,10 @@ function resetForm() {
   cluster.value = 'default'
   host.value = ''
   password.value = ''
-  regthistrunk.value = 'NO'
   transport.value = 'udp'
   pkeyValidation.reset()
   error.value = ''
 }
-
-watch(trunkType, (newVal) => {
-  if (newVal !== 'IAX2 trunk') regthistrunk.value = 'NO'
-})
 
 onMounted(async () => {
   await ensureFetched()
@@ -118,10 +107,6 @@ async function onSubmit(e) {
       }
       if (sipRegistration.value) body.sipRegistration = sipRegistration.value
       body.transport = transport.value
-    } else {
-      body.host = host.value.trim()
-      if (password.value) body.password = password.value
-      if (regthistrunk.value === 'YES') body.register = 'yes'
     }
     await getApiClient().post('trunks', body)
     toast.show(`Trunk ${pkey.value.trim()} created`)
@@ -180,7 +165,7 @@ function onKeydown(e) {
           v-model="trunkType"
           label="Trunk type"
           :options="trunkTypeOptions"
-          hint="SIP (send/accept/trusted) or IAX2."
+          hint="SIP (send/accept/trusted)."
           aria-label="Choose trunk type"
         />
       </div>
@@ -233,23 +218,6 @@ function onKeydown(e) {
             :required="passwordRequired"
             autocomplete="new-password"
           />
-          <template v-if="isIAX2">
-            <FormField
-              id="password-iax"
-              v-model="password"
-              label="Password"
-              type="password"
-              placeholder="Optional"
-              autocomplete="new-password"
-            />
-            <FormToggle
-              id="regthistrunk"
-              v-model="regthistrunk"
-              label="Register this trunk?"
-              yes-value="YES"
-              no-value="NO"
-            />
-          </template>
         </div>
       </template>
 

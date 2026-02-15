@@ -34,12 +34,13 @@ So we can ship a type-chooser trunk create quickly on the current API, then exte
 
 **Update (post–Trunk):**
 
-- **Trunk create** — Done (type chooser, id/shortuid, tenant schema, API working).
+- **Trunk create** — **Done.** SIP-only type chooser (send/accept/trusted), conditional fields, tenant schema, API working. IAX2 removed from UI (effectively unusable); **ToDo** when needed: see § ToDo — Trunk / IAX2.
+- **DDI (Inbound routes)** — **Done.** Create panel and edit panel aligned with legacy: Identity + Settings only; Connection and Advanced sections removed from edit. To-do: review underlying table for removed fields (see PROJECT_PLAN).
 - **IVR** — Deferred for now. UX is complex (many options/keys, alert/option/tag grid); leave until later.
 - **Extension** — Simplified in PBX3 vs SARK: **no on-board phone provisioning**; provisioning is a separate service. Extension create is straightforward: choose **protocol** (SIP or WebRTC). Use **sensible defaults** for transport: **SIP → UDP**, **WebRTC → TLS** (implied). No need to expose transport on create; defaults are enough. **Mailbox** defaults to the extension number (pkey); no mailbox field on create (covers >99% of use cases); administrator can adjust after creation if needed.
 - **Extension create — minimum fields:** Extension number (pkey), Name (desc), Tenant (cluster), MAC address (optional). **Tenant** must be a **dropdown** populated with all tenant (cluster) pkeys (e.g. from GET tenants). Protocol chooser (SIP / WebRTC) plus these fields is the minimum create form.
 - **Extension bulk create (later):** Optional future feature: input multiple MAC addresses or a number range and create many extensions in one transaction. Valuable for initial site setup (exists in the old system) but rarely used in practice; defer until after single-extension create is done.
-- **Revised order:** DDI (Inbound routes) next, then Extension (now straightforward), IVR later when we tackle its UX.
+- **Revised order:** Extension create next, then IVR later when we tackle its UX.
 
 ---
 
@@ -47,8 +48,7 @@ So we can ship a type-chooser trunk create quickly on the current API, then exte
 
 ### 3.1 Frontend (TrunkCreateView.vue)
 
-- **Today:** Single form with pkey, carrier (dropdown **GeneralSIP** | **GeneralIAX2** only), cluster, username, host. No type chooser, no conditional fields, no password or regthistrunk. Submit sends `pkey`, `carrier`, `cluster`, `username`, `host`.
-- **Gap:** Legacy had 5 types (SIP send reg, SIP accept reg, SIP trusted peer, GeneralIAX2, InterSARK) with different required/optional fields per type (see wizardnotes/trunk/add-wizard.md, agent-brief-spa.md). Current form exposes only two carrier values and always the same fields.
+- **Done:** Type chooser (SIP send registration, SIP accept registration, SIP trusted peer only; IAX2 removed). Conditional fields (host, password, transport by type). Submit sends `pkey`, `carrier: GeneralSIP`, `cluster`, `username`, `host`, optional `password`, `sipRegistration`, `transport`. IAX2 deferred (see § ToDo).
 
 ### 3.2 API (pbx3api TrunkController::save)
 
@@ -87,6 +87,16 @@ So we can ship a type-chooser trunk create quickly on the current API, then exte
 ### Later — Full five types
 
 When API supports the full legacy set, add to the chooser: “SIP (send registration)”, “SIP (accept registration)”, “SIP (trusted peer)”, “InterSARK”, with type-specific validation and conditional fields per wizardnotes/trunk/agent-brief-spa.md.
+
+---
+
+## ToDo — Trunk / IAX2 (deferred)
+
+- **Current state accepted.** Trunk create (GeneralSIP and GeneralIAX2 in dropdown, pkey, cluster, username, host) is left as-is for now.
+- **IAX2 refinements deferred.** IAX2 has not been developed for years (legacy/unmaintained protocol) but is still used by some systems. When needed later:
+  - **Frontend:** Type chooser (SIP trunk vs IAX2 trunk), conditional fields for IAX2 (e.g. regthistrunk YES/NO pills), password field; see Phase 1 in §4.
+  - **API:** Fix GeneralIAX2 technology bug (set `technology = 'IAX2'`, not peername); allow password and regthistrunk on create for IAX2; see Phase 2 in §4.
+- §3 and §4 above remain the reference for implementation when this ToDo is picked up.
 
 ---
 
