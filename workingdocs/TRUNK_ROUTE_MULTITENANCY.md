@@ -54,7 +54,7 @@ We adopt **standard virtual trunk names** as the user-facing model. Under the ho
 
 **Outbound routes:** For the first implementation, when a user builds an **outbound route**, they simply choose **any trunk in the default tenant** (e.g. `cluster = 'default'`). No virtual-trunk layer or allocation yet; the route’s trunk dropdown is populated from trunks in the default tenant. This gets routing working; the virtual-trunk allocation model (Primary, Secondary, etc.) is a later phase.
 
-**When moving the trunks table** from tenant SQL to instance SQL, also update **full_schema.sql** and **running_schema.sql** (in pbx3) if they are derived from or kept in sync with these create scripts.
+**When moving the trunks table** from tenant SQL to instance SQL, edit only the create scripts in **pbx3/pbx3-1/opt/pbx3/db/db_sql**; that directory is the canonical definition of the DB. full_schema.sql and running_schema.sql can be ignored for this change.
 
 ---
 
