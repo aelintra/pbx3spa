@@ -95,7 +95,9 @@ async function fetchTenants() {
 async function fetchTrunks() {
   try {
     const response = await getApiClient().get('trunks')
-    trunks.value = normalizeList(response, 'trunks') || normalizeList(response)
+    const list = normalizeList(response, 'trunks') || normalizeList(response) || []
+    // First cut: only show trunks in the default tenant (TRUNK_ROUTE_MULTITENANCY)
+    trunks.value = list.filter((t) => String(t?.cluster ?? '') === 'default')
   } catch {
     trunks.value = []
   }

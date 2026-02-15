@@ -5,8 +5,7 @@ import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
-import { validateTrunkPkey, validateTenant } from '@/utils/validation'
-import { normalizeList } from '@/utils/listResponse'
+import { validateTrunkPkey } from '@/utils/validation'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
@@ -25,12 +24,9 @@ const regthistrunk = ref('NO')
 const transport = ref('udp')
 const error = ref('')
 const loading = ref(false)
-const tenants = ref([])
-const tenantsLoading = ref(true)
 const pkeyInput = ref(null)
 
 const pkeyValidation = useFormValidation(pkey, validateTrunkPkey)
-const clusterValidation = useFormValidation(cluster, validateTenant)
 
 const carrier = computed(() => {
   if (trunkType.value.startsWith('SIP')) return 'GeneralSIP'
@@ -58,32 +54,6 @@ const trunkTypeOptions = [
   'SIP (trusted peer)',
   'IAX2 trunk'
 ]
-const tenantOptions = computed(() => {
-  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
-  return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
-})
-const tenantOptionsForSelect = computed(() => {
-  const list = tenantOptions.value
-  const cur = cluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
-  return list
-})
-
-async function loadTenants() {
-  tenantsLoading.value = true
-  try {
-    const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response, 'tenants')
-    if (tenants.value.length && !cluster.value) {
-      const first = tenants.value.find((t) => t.pkey === 'default')?.pkey ?? tenants.value[0]?.pkey
-      if (first) cluster.value = first
-    }
-  } catch {
-    tenants.value = []
-  } finally {
-    tenantsLoading.value = false
-  }
-}
 
 function resetForm() {
   trunkType.value = 'SIP (send registration)'
@@ -94,7 +64,6 @@ function resetForm() {
   regthistrunk.value = 'NO'
   transport.value = 'udp'
   pkeyValidation.reset()
-  clusterValidation.reset()
   error.value = ''
 }
 
@@ -105,7 +74,6 @@ watch(trunkType, (newVal) => {
 onMounted(async () => {
   await ensureFetched()
   applySchemaDefaults('trunks', { cluster, transport })
-  await loadTenants()
 })
 
 async function onSubmit(e) {
@@ -115,10 +83,7 @@ async function onSubmit(e) {
     error.value = 'Please choose a trunk type'
     return
   }
-  const validations = [
-    { ...pkeyValidation, fieldId: 'pkey' },
-    { ...clusterValidation, fieldId: 'cluster' }
-  ]
+  const validations = [{ ...pkeyValidation, fieldId: 'pkey' }]
   if (!validateAll(validations)) {
     await nextTick()
     focusFirstError(validations, (id) => {
@@ -170,13 +135,9 @@ async function onSubmit(e) {
         pkeyValidation.touched.value = true
         pkeyValidation.error.value = Array.isArray(errors.pkey) ? errors.pkey[0] : errors.pkey
       }
-      if (errors.cluster) {
-        clusterValidation.touched.value = true
-        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
-      }
       await nextTick()
       focusFirstError(
-        [{ ...pkeyValidation, fieldId: 'pkey' }, { ...clusterValidation, fieldId: 'cluster' }],
+        [{ ...pkeyValidation, fieldId: 'pkey' }],
         (id) => (id === 'pkey' && pkeyInput.value ? pkeyInput.value : document.getElementById(id))
       )
     }
@@ -206,7 +167,7 @@ function onKeydown(e) {
       <p v-if="error" id="trunk-create-error" class="error" role="alert">{{ error }}</p>
 
       <div class="actions actions-top">
-        <button type="submit" :disabled="loading || tenantsLoading || !typeChosen">
+        <button type="submit" :disabled="loading || !typeChosen">
           {{ loading ? 'Creating…' : 'Create' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
@@ -238,17 +199,6 @@ function onKeydown(e) {
             :touched="pkeyValidation.touched.value"
             :required="true"
             @blur="pkeyValidation.onBlur"
-          />
-          <FormSelect
-            id="cluster"
-            v-model="cluster"
-            label="Tenant"
-            :options="tenantOptionsForSelect"
-            :error="clusterValidation.error.value"
-            :touched="clusterValidation.touched.value"
-            :required="true"
-            :loading="tenantsLoading"
-            @blur="clusterValidation.onBlur"
           />
         </div>
 
@@ -304,7 +254,7 @@ function onKeydown(e) {
       </template>
 
       <div class="actions">
-        <button type="submit" :disabled="loading || !typeChosen || tenantsLoading">
+        <button type="submit" :disabled="loading || !typeChosen">
           {{ loading ? 'Creating…' : 'Create' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
