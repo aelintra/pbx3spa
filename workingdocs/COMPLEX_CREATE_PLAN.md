@@ -2,6 +2,8 @@
 
 Planning for create flows that in the old system used a **type chooser** and **conditional fields**: Inbound routes (DDI), Extensions, Trunks, IVRs. See **wizardnotes/** for legacy analysis (add-wizard.md, agent-brief-spa.md per resource).
 
+**Trunk/route ownership and allocation:** Trunks are collective (shared); DIDs are privately owned by the tenant. Trunk allocation (virtual trunks with standard names — Primary, Secondary, International, Failover — mapped to real trunks by the admin) supports tenant portability. See **TRUNK_ROUTE_MULTITENANCY.md** for the full model; virtual-trunk schema/API/UI are a later phase after the current trunk create work.
+
 ---
 
 ## 1. Approach decision

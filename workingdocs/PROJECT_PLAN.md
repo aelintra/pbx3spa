@@ -34,7 +34,7 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **Scope note:** Legacy dump/restore routines (pbx3 tree: dumper.php, dumpInstances.php, etc.) convert SARK → PBX3 and work on old and new DB versions. Ignore them for day-to-day work; focus on pbx3api, pbx3spa, and db_sql schemas. See **SYSTEM_CONTEXT.md** § "Scope: legacy dump/restore".
 
-**Next chat:** Read **workingdocs/PROJECT_PLAN.md** (§ Current state), **workingdocs/SESSION_HANDOFF.md** (latest done/left), **workingdocs/SYSTEM_CONTEXT.md**, and **workingdocs/README.md**. Schema yardstick: **pbx3/full_schema.sql**; API models/controllers must match. Create panels §3 and Field mutability (GET /schemas, useSchema) are done; next: complex create refinements (COMPLEX_CREATE_PLAN.md) or other follow-ups. Boolean standardisation: **BOOLEAN_STANDARDISATION.md** (plan + migration; run when ready).
+**Next chat:** Read **workingdocs/PROJECT_PLAN.md** (§ Current state), **workingdocs/SESSION_HANDOFF.md** (latest done/left), **workingdocs/SYSTEM_CONTEXT.md**, and **workingdocs/README.md**. Schema yardstick: **pbx3/full_schema.sql**; API models/controllers must match. For trunk ownership, allocation, or tenant migration, read **workingdocs/TRUNK_ROUTE_MULTITENANCY.md**. Create panels §3 and Field mutability (GET /schemas, useSchema) are done; next: complex create refinements (COMPLEX_CREATE_PLAN.md) or other follow-ups. Boolean standardisation: **BOOLEAN_STANDARDISATION.md** (plan + migration; run when ready).
 
 ---
 

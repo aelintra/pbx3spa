@@ -21,6 +21,7 @@ This folder is **for the AI (Cursor agent)** to record progress and build a memo
 | **AGENT_HANDOFF_TECHNICAL_DEBT.md** | Handoff for new agent: current status, which panels use shared pieces, next steps, key files. Use when continuing debt reduction or panel conversion. |
 | **BOOLEAN_STANDARDISATION.md** | Plan and fixer to standardise boolean columns to YES/NO; create migration in pbx3api when ready (none in repo yet). |
 | **SESSION_HANDOFF.md** | Where we left off: done, left to do, references. |
+| **TRUNK_ROUTE_MULTITENANCY.md** | Trunk/route ownership (collective vs private), allocation, migration mechanics, first cut; read when working on trunks, outbound routes, or tenant migration. |
 | **README.md** | This file. |
 
 ## Folder structure
