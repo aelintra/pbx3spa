@@ -26,6 +26,7 @@ This folder is **for the AI (Cursor agent)** to record progress and build a memo
 | **DATABASE_CHANGES_FOR_PROVISIONING.md** | Exact DB changes for provisioning (user applies manually; PBX3 has no Laravel migrations). |
 | **OLD_SYSTEM_EXTENSION_CREATE_REFERENCE.md** | How the legacy system did extension create and Save/Commit. |
 | **EXTENSION_PROVISIONING_ISSUES.md** | Known fixes and decisions (getVendorFromMac, adjustAstProvSettings, etc.). |
+| **HOLISTIC_ASSESSMENT.md** | UX, fitness for purpose, and approach (DB → generator → Asterisk); alternatives considered. |
 | **TRUNK_ROUTE_MULTITENANCY.md** | Trunk/route ownership (collective vs private), allocation, migration mechanics, first cut; read when working on trunks, outbound routes, or tenant migration. |
 | **README.md** | This file. |
 
