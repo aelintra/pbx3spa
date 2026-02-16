@@ -2,6 +2,8 @@
 
 **Start here:** Read **PROJECT_PLAN.md** § Current state and **PANEL_PATTERN.md** §8 to see what’s done and what’s left.
 
+**Next priority – Extension provisioning:** Plan is **finalised**. User is applying DB changes manually (see **DATABASE_CHANGES_FOR_PROVISIONING.md**). To implement: read **EXTENSION_PROVISIONING_QUICKSTART.md** then **EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md** (§8, §5); implement API then frontend per plan §5.
+
 **Repos:** **pbx3-master** is not a git repo; it is a placeholder folder containing the four repos: **pbx3**, **pbx3api**, **pbx3cagi**, **pbx3spa**. Commit in the relevant repo.
 
 ---
@@ -24,7 +26,7 @@
 
 - **DDI (Inbound routes):** Done. Edit panel simplified: Connection and Advanced sections removed; Identity + Settings only (matches legacy). To-do added: review underlying inbound-route table to decide whether removed columns (host, username, password, peername, register, iaxreg, pjsipreg, callback, callerid, match) should be physically removed from schema or retained. Marked complete in COMPLEX_CREATE_PLAN.md and PROJECT_PLAN.md.
 
-- **Extension create:** User will return to this. Only remaining item in complex create sequence (IVR is deferred). See COMPLEX_CREATE_PLAN.md for requirements: protocol chooser (SIP/WebRTC), pkey, name, tenant dropdown, optional MAC; transport defaults (SIP→UDP, WebRTC→TLS).
+- **Extension create / provisioning:** Plan finalised. See **EXTENSION_PROVISIONING_QUICKSTART.md** and **EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md**. Scope: extensionType (SIP/WebRTC), optional MAC for SIP (provisioned vs General SIP), Device lookup, provision string, Save vs Commit (no generator on Save; Commit runs genAst + reload). User is doing DB changes manually (DATABASE_CHANGES_FOR_PROVISIONING.md); next agent implements API then frontend per plan §5.
 
 ### Previous session (field mutability – API-driven schema)
 
@@ -62,7 +64,7 @@
 
 **Approach:** One create view per resource + type chooser + conditional fields + one polymorphic create API per resource. See **workingdocs/COMPLEX_CREATE_PLAN.md**.
 
-**Status:** **Trunk create: done** (SIP-only chooser; IAX2 deferred). **DDI (Inbound routes): done** (create + edit aligned to legacy; Connection/Advanced removed from edit). **Extension create:** User will return to this (only remaining item; protocol chooser SIP/WebRTC, pkey, name, tenant, optional MAC). **IVR:** Deferred (complex UX; do later). See COMPLEX_CREATE_PLAN.md for details. 
+**Status:** **Trunk create: done** (SIP-only chooser; IAX2 deferred). **DDI (Inbound routes): done** (create + edit aligned to legacy; Connection/Advanced removed from edit). **Extension create / provisioning: plan finalised** – implement per EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md and EXTENSION_PROVISIONING_QUICKSTART.md (API then frontend; user doing DB changes). **IVR:** Deferred (complex UX; do later). See COMPLEX_CREATE_PLAN.md for other create flows. 
 
 ### Create-panel standardization (PANEL_PATTERN §3 + §8)
 
@@ -103,7 +105,10 @@
 ## References
 
 - **PROJECT_PLAN.md** § Current state — full “next chat” instructions, stack, principles, job steps.
-- **COMPLEX_CREATE_PLAN.md** — complex create flows: Trunk done, DDI done, Extension next (user will return), IVR deferred.
+- **EXTENSION_PROVISIONING_QUICKSTART.md** — start here for extension provisioning (read order, key files, implementation order).
+- **EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md** — full plan; §8 Build readiness, §5 Implementation order.
+- **DATABASE_CHANGES_FOR_PROVISIONING.md** — DB changes list (user applies manually; PBX3 has no Laravel migrations).
+- **COMPLEX_CREATE_PLAN.md** — complex create flows: Trunk done, DDI done, Extension (provisioning plan finalised), IVR deferred.
 - **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** — Phase 0 rollout (abilities, can(), route guard, Users panel); Phase 1 later.
 - **ADMIN_PANELS_AND_PERMISSIONS.md** — Pattern: abilities, admin vs tenant areas, row-level scope.
 - **AUTH_PATTERNS.md** — Auth contract and rules for agents (2FA, self-service, centralized auth); follow when touching login/tokens/whoami/guards.

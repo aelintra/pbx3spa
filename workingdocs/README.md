@@ -1,6 +1,6 @@
 # workingdocs
 
-This folder is **for the AI (Cursor agent)** to record progress and build a memory of the pbx3spa system. When you start a new chat, read the files here to get up to speed. **Start with PROJECT_PLAN.md § "Current state (for the next chat)"** and **SESSION_HANDOFF.md** to see what's done, what's left, and what's planned next. **For technical debt reduction and panel pattern conversion**, start with **AGENT_HANDOFF_TECHNICAL_DEBT.md** and **PANEL_REFACTOR_STRATEGY.md**. **pbx3/full_schema.sql** is the schema yardstick for API models/controllers.
+This folder is **for the AI (Cursor agent)** to record progress and build a memory of the pbx3spa system. When you start a new chat, read the files here to get up to speed. **Start with SESSION_HANDOFF.md** and **PROJECT_PLAN.md § "Current state (for the next chat)"** to see what's done, what's left, and what's planned next. **For extension provisioning (next priority):** read **EXTENSION_PROVISIONING_QUICKSTART.md** then the deployment plan. **For technical debt reduction and panel pattern conversion**, start with **AGENT_HANDOFF_TECHNICAL_DEBT.md** and **PANEL_REFACTOR_STRATEGY.md**. **pbx3/full_schema.sql** is the schema yardstick for API models/controllers.
 
 **Naming note (2026-02-12):** Repo/component name changed from `pbx3-frontend` to `pbx3spa`. Docs and package metadata were updated to match.
 
@@ -20,7 +20,12 @@ This folder is **for the AI (Cursor agent)** to record progress and build a memo
 | **PANEL_REFACTOR_STRATEGY.md** | Technical debt plan: Phase 1–4, shared normalizeList/DeleteConfirmModal, resource-specific config; suggested order; checklist. |
 | **AGENT_HANDOFF_TECHNICAL_DEBT.md** | Handoff for new agent: current status, which panels use shared pieces, next steps, key files. Use when continuing debt reduction or panel conversion. |
 | **BOOLEAN_STANDARDISATION.md** | Plan and fixer to standardise boolean columns to YES/NO; create migration in pbx3api when ready (none in repo yet). |
-| **SESSION_HANDOFF.md** | Where we left off: done, left to do, references. |
+| **SESSION_HANDOFF.md** | Where we left off: done, left to do, references. **Next priority:** Extension provisioning (plan finalised; see EXTENSION_PROVISIONING_QUICKSTART.md). |
+| **EXTENSION_PROVISIONING_QUICKSTART.md** | Start here for extension provisioning: read order, key files, implementation order. |
+| **EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md** | Full plan (schema, API, frontend, Save vs Commit); §8 Build readiness, §5 Implementation order. |
+| **DATABASE_CHANGES_FOR_PROVISIONING.md** | Exact DB changes for provisioning (user applies manually; PBX3 has no Laravel migrations). |
+| **OLD_SYSTEM_EXTENSION_CREATE_REFERENCE.md** | How the legacy system did extension create and Save/Commit. |
+| **EXTENSION_PROVISIONING_ISSUES.md** | Known fixes and decisions (getVendorFromMac, adjustAstProvSettings, etc.). |
 | **TRUNK_ROUTE_MULTITENANCY.md** | Trunk/route ownership (collective vs private), allocation, migration mechanics, first cut; read when working on trunks, outbound routes, or tenant migration. |
 | **README.md** | This file. |
 
