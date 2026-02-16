@@ -17,7 +17,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults, getSchema } = useSchema()
-const protocol = ref('SIP')
+const extensionType = ref('SIP')
 const pkey = ref('')
 const cluster = ref('default')
 const desc = ref('')
@@ -29,7 +29,7 @@ const callerid = ref('')
 const cellphone = ref('')
 const celltwin = ref('OFF')
 const devicerec = ref('None')
-const ipversion = ref('IPV4')
+const protocol = ref('IPV4')
 const vmailfwd = ref('')
 const tenants = ref([])
 const tenantsLoading = ref(true)
@@ -53,20 +53,19 @@ const tenantOptionsForSelect = computed(() => {
 })
 
 const deviceDisplay = computed(() => {
-  const p = protocol.value
-  if (p === 'SIP') return 'General SIP'
-  if (p === 'WebRTC') return 'WebRTC'
-  if (p === 'Mailbox') return 'Mailbox'
-  return p || '—'
+  const t = extensionType.value
+  if (t === 'SIP') return macaddr.value?.trim() ? 'Provisioned SIP' : 'General SIP'
+  if (t === 'WebRTC') return 'WebRTC'
+  return t || '—'
 })
 
-watch(protocol, (val) => {
+watch(extensionType, (val) => {
   if (val === 'WebRTC') transport.value = 'wss'
   else if (val === 'SIP') transport.value = 'udp'
 })
 
 function resetForm() {
-  protocol.value = 'SIP'
+  extensionType.value = 'SIP'
   pkey.value = ''
   cluster.value = 'default'
   desc.value = ''
@@ -78,7 +77,7 @@ function resetForm() {
   cellphone.value = ''
   celltwin.value = 'OFF'
   devicerec.value = 'None'
-  ipversion.value = 'IPV4'
+  protocol.value = 'IPV4'
   vmailfwd.value = ''
   pkeyValidation.reset()
   clusterValidation.reset()
@@ -110,16 +109,16 @@ onMounted(async () => {
     celltwin,
     devicerec,
     desc,
-    protocol: ipversion
+    protocol
   })
   const deviceDefault = getSchema('extensions')?.defaults?.device
   if (deviceDefault !== undefined && deviceDefault !== null && deviceDefault !== '') {
     const d = String(deviceDefault).trim()
-    if (d === 'General SIP' || d === 'SIP') protocol.value = 'SIP'
-    else if (d === 'WebRTC') protocol.value = 'WebRTC'
-    else if (d === 'MAILBOX') protocol.value = 'Mailbox'
+    if (d === 'General SIP' || d === 'SIP') extensionType.value = 'SIP'
+    else if (d === 'WebRTC') extensionType.value = 'WebRTC'
+    else extensionType.value = 'SIP'
   } else {
-    protocol.value = 'SIP'
+    extensionType.value = 'SIP'
   }
   await loadTenants()
   nextTick().then(() => pkeyInput.value?.focus())
@@ -145,16 +144,18 @@ async function onSubmit(e) {
     const body = {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
-      protocol: protocol.value,
+      extensionType: extensionType.value,
       active: active.value,
       transport: transport.value,
       callbackto: callbackto.value,
       celltwin: celltwin.value,
       devicerec: devicerec.value,
-      ipversion: ipversion.value
+      protocol: protocol.value
     }
     if (desc.value.trim()) body.desc = desc.value.trim()
-    if (macaddr.value.trim()) body.macaddr = macaddr.value.trim().replace(/[^0-9a-fA-F]/g, '')
+    if (extensionType.value === 'SIP' && macaddr.value.trim()) {
+      body.macaddr = macaddr.value.trim().replace(/[^0-9a-fA-F]/g, '')
+    }
     if (callerid.value.trim()) body.callerid = callerid.value.trim()
     if (cellphone.value.trim()) body.cellphone = cellphone.value.trim()
     if (vmailfwd.value.trim()) body.vmailfwd = vmailfwd.value.trim()
@@ -244,13 +245,20 @@ function onKeydown(e) {
           type="text"
           placeholder="Short description or display name"
         />
+        <FormSegmentedPill
+          id="extensionType"
+          v-model="extensionType"
+          label="Extension type"
+          :options="['SIP', 'WebRTC']"
+        />
         <FormField
+          v-if="extensionType === 'SIP'"
           id="macaddr"
           v-model="macaddr"
           label="MAC address (optional)"
           type="text"
           placeholder="e.g. 001122334455 (12 hex digits)"
-          hint="SIP/WebRTC only. Leave blank for Mailbox."
+          hint="Optional. For device provisioning (auto-detects vendor)."
         />
       </div>
 
@@ -313,8 +321,8 @@ function onKeydown(e) {
           :options="['default', 'None', 'Inbound', 'Outbound', 'Both']"
         />
         <FormSegmentedPill
-          id="ipversion"
-          v-model="ipversion"
+          id="protocol"
+          v-model="protocol"
           label="Protocol (IP version)"
           :options="['IPV4', 'IPV6']"
         />

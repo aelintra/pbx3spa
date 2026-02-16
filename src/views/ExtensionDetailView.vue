@@ -38,6 +38,7 @@ const editCellphone = ref('')
 const editCelltwin = ref('OFF')
 const editDevicerec = ref('None')
 const editDvrvmail = ref('')
+const editMacaddr = ref('')
 const editProtocol = ref('IPV4')
 const editVmailfwd = ref('')
 const saveError = ref('')
@@ -112,6 +113,7 @@ async function fetchExtension() {
     const rawDevicerec = ext?.devicerec
     editDevicerec.value = (rawDevicerec === 'OTR' || rawDevicerec === 'OTRR') ? 'Both' : (rawDevicerec ?? 'None')
     editDvrvmail.value = ext?.dvrvmail ?? ''
+    editMacaddr.value = ext?.macaddr != null ? String(ext.macaddr).trim() : ''
     editProtocol.value = ext?.protocol ?? 'IPV4'
     editVmailfwd.value = ext?.vmailfwd ?? ''
   } catch (err) {
@@ -171,16 +173,17 @@ async function saveEdit(e) {
     const body = {
       pkey: extension.value?.pkey,
       cluster: editCluster.value.trim(),
-      device: extension.value?.device ?? 'MAILBOX',
+      device: extension.value?.device ?? 'General SIP',
       desc: editDesc.value.trim() || undefined,
       active: editActive.value,
       transport: editTransport.value,
       callbackto: editCallbackto.value,
-      callerid: editCallerid.value.trim() ? parseInt(editCallerid.value, 10) : undefined,
-      cellphone: editCellphone.value.trim() ? parseInt(editCellphone.value, 10) : undefined,
+      callerid: editCallerid.value.trim() || undefined,
+      cellphone: editCellphone.value.trim() || undefined,
       celltwin: editCelltwin.value,
       devicerec: editDevicerec.value,
       dvrvmail: editDvrvmail.value.trim() || undefined,
+      macaddr: editMacaddr.value.trim() ? editMacaddr.value.trim().replace(/[^0-9a-fA-F]/g, '') : null,
       protocol: editProtocol.value,
       vmailfwd: editVmailfwd.value.trim() || undefined
     }
@@ -292,8 +295,16 @@ async function saveRuntime(e) {
             <FormField v-else id="edit-identity-shortuid" :model-value="extension.shortuid ?? '—'" label="SIP Identity" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="extension.id ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-id" :model-value="extension.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('macaddr')" id="edit-identity-macaddr" label="MAC address" :value="extension.macaddr?.trim() || 'Unknown'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-macaddr" :model-value="extension.macaddr?.trim() || 'Unknown'" label="MAC address" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('macaddr')" id="edit-identity-macaddr" label="MAC address" :value="extension.macaddr?.trim() || '—'" class="readonly-identity" />
+            <FormField
+              v-else
+              id="edit-identity-macaddr"
+              v-model="editMacaddr"
+              label="MAC address"
+              type="text"
+              placeholder="12 hex digits or 00:11:22:33:44:55"
+              hint="Optional. Add or change to provision device; clear to switch to General SIP."
+            />
             <FormReadonly v-if="isReadOnly('device')" id="edit-identity-device" label="Device" :value="extension.device ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-device" :model-value="extension.device ?? '—'" label="Device" disabled class="readonly-identity" />
             <FormSelect
