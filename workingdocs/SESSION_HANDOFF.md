@@ -16,7 +16,17 @@
 - Home dashboard (PBX status, Commit/Start/Stop/Reboot); auth with sessionStorage, route guard, whoami.
 - **Create panels fully aligned with §3:** Tenant, Inbound route (use as reference).
 
-### Latest session (field mutability – API-driven schema)
+### Latest session (permissions Phase 0 + trunk/DDI completion)
+
+- **Permissions Phase 0 (minimal rollout):** Done. Auth store: getters `abilities` and `can(ability)` (e.g. `auth.can('admin')`). Router: PUBLIC_ROUTES allow-list (`['/login']`), require `can('admin')` for panel routes, `/no-access` route and view. Layout: nav gated by `can('admin')` (full nav for admins, Home only for others). **Users panel:** List (GET `auth/users`), Create (POST `auth/register` with optional abilities), Delete, Revoke tokens; nav "Users" link gated by `can('admin')`. API: docs comments in `config/abilities.php` and `routes/api.php` pointing to ADMIN_PANELS_AND_PERMISSIONS.md for expansion. **Workingdocs:** ADMIN_PANELS_AND_PERMISSIONS.md (pattern), AUTH_PATTERNS.md (rules for agents), PERMISSIONS_MINIMAL_DEPLOY_PLAN.md (rollout). See **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** for full Phase 0 details; Phase 1 (granular abilities, admin vs tenant route groups) is later. Committed on branch `trunks` in pbx3spa and pbx3api.
+
+- **Trunk create:** Done. IAX2 removed from type chooser (deferred; effectively unusable). SIP-only chooser (send/accept/trusted registration) with conditional fields. Marked complete in COMPLEX_CREATE_PLAN.md; IAX2 refinements deferred (see ToDo section).
+
+- **DDI (Inbound routes):** Done. Edit panel simplified: Connection and Advanced sections removed; Identity + Settings only (matches legacy). To-do added: review underlying inbound-route table to decide whether removed columns (host, username, password, peername, register, iaxreg, pjsipreg, callback, callerid, match) should be physically removed from schema or retained. Marked complete in COMPLEX_CREATE_PLAN.md and PROJECT_PLAN.md.
+
+- **Extension create:** User will return to this. Only remaining item in complex create sequence (IVR is deferred). See COMPLEX_CREATE_PLAN.md for requirements: protocol chooser (SIP/WebRTC), pkey, name, tenant dropdown, optional MAC; transport defaults (SIP→UDP, WebRTC→TLS).
+
+### Previous session (field mutability – API-driven schema)
 
 - **Field mutability (API-driven):** Done. API exposes **GET /schemas** (SchemaService + SchemaController) with `read_only`, `updateable`, and `defaults` per resource (extensions, queues, agents, routes, trunks, ivrs, inroutes, tenants). Frontend uses **useSchema** composable (fetch on first use, module-level cache; no Pinia): `ensureFetched()`, `getSchema(resource)`, `applySchemaDefaults(resource, refsByKey)`. All **eight detail views** derive read_only from schema (no hard-coded readonly lists). All **eight create views** preset form fields from `schema.defaults` where the key exists. Fallback when schema is missing was deferred (Occam’s razor). See **FIELD_MUTABILITY_API_PLAN.md** and **pbx3api/docs/SCHEMAS_ENDPOINT.md**. PANEL_PATTERN.md updated: useSchema is required for edit views; schema composable in shared components list.
 
@@ -52,7 +62,7 @@
 
 **Approach:** One create view per resource + type chooser + conditional fields + one polymorphic create API per resource. See **workingdocs/COMPLEX_CREATE_PLAN.md**.
 
-**Status (create exercise):** Tenant, Extension, Trunk, Inbound route, and **IVR** create done. IVR create has Identity (pkey, description, cname, name), Settings (tenant, active, greetnum, listenforext, timeout), and Keystroke options; defaults preset (active YES, greetnum None, timeout operator, listenforext NO). 
+**Status:** **Trunk create: done** (SIP-only chooser; IAX2 deferred). **DDI (Inbound routes): done** (create + edit aligned to legacy; Connection/Advanced removed from edit). **Extension create:** User will return to this (only remaining item; protocol chooser SIP/WebRTC, pkey, name, tenant, optional MAC). **IVR:** Deferred (complex UX; do later). See COMPLEX_CREATE_PLAN.md for details. 
 
 ### Create-panel standardization (PANEL_PATTERN §3 + §8)
 
@@ -93,7 +103,10 @@
 ## References
 
 - **PROJECT_PLAN.md** § Current state — full “next chat” instructions, stack, principles, job steps.
-- **COMPLEX_CREATE_PLAN.md** — complex create flows: approach, trunk-first plan, current state (Trunk frontend + API), wizardnotes refs.
+- **COMPLEX_CREATE_PLAN.md** — complex create flows: Trunk done, DDI done, Extension next (user will return), IVR deferred.
+- **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** — Phase 0 rollout (abilities, can(), route guard, Users panel); Phase 1 later.
+- **ADMIN_PANELS_AND_PERMISSIONS.md** — Pattern: abilities, admin vs tenant areas, row-level scope.
+- **AUTH_PATTERNS.md** — Auth contract and rules for agents (2FA, self-service, centralized auth); follow when touching login/tokens/whoami/guards.
 - **PANEL_PATTERN.md** §8 — reference implementation status; §3 for create-form rules; §2.2 list blocks; §4.1 detail blocks.
 - **BOOLEAN_STANDARDISATION.md** — plan and fixer for standardising boolean columns to YES/NO; migration in pbx3api (run when ready).
 - **pbx3api/docs/TODO_IVR_NAME.md** — IVR ivrmenu `name` field: research usage and decide whether to remove from API/UI (schema marks name deprecated in favour of cname).
