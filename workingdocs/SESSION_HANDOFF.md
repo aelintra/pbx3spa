@@ -2,7 +2,7 @@
 
 **Start here:** Read **PROJECT_PLAN.md** § Current state and **PANEL_PATTERN.md** §8 to see what’s done and what’s left.
 
-**Extension provisioning:** Implemented (create/update, extension type, live IP/Status). See **EXTENSIONS_LIVE_DATA.md** for live data behaviour and gotchas. **Next priorities:** Commit button on every panel (or layout); optional: PJSIP config in Edit, allow changing extension pkey.
+**Extensions:** Complete (create/update, extension type derivation, live IP/Status from Asterisk AMI, SIP password display). Structure is sound; some TODOs remain (regenerate password, allow pkey change, PJSIP config edit). See **EXTENSIONS_LIVE_DATA.md** for live data behaviour and gotchas. **Next priorities:** Commit button on every panel (or layout).
 
 **Repos:** **pbx3-master** is not a git repo; it is a placeholder folder containing the four repos: **pbx3**, **pbx3api**, **pbx3cagi**, **pbx3spa**. Commit in the relevant repo.
 
@@ -31,7 +31,7 @@
 
 - **DDI (Inbound routes):** Done. Edit panel simplified: Connection and Advanced sections removed; Identity + Settings only (matches legacy). To-do added: review underlying inbound-route table to decide whether removed columns (host, username, password, peername, register, iaxreg, pjsipreg, callback, callerid, match) should be physically removed from schema or retained. Marked complete in COMPLEX_CREATE_PLAN.md and PROJECT_PLAN.md.
 
-- **Extension create / provisioning:** Plan finalised; API and frontend for create/update (extensionType, MAC, Device, provision, Save vs Commit) are implemented. **Extension type** is derived from device (no DB column); list/detail show Type and Extension type. **Live IP/Status** from Asterisk AMI (GET extensions/live, runtime ip/latency) are implemented; see **EXTENSIONS_LIVE_DATA.md**.
+- **Extension create / provisioning:** Complete. API and frontend for create/update (extensionType, MAC, Device, provision, Save vs Commit) are implemented. **Extension type** is derived from device (no DB column); list/detail show Type and Extension type. **Live IP/Status** from Asterisk AMI (GET extensions/live, runtime ip/latency) are implemented. **SIP password** displayed in detail view. See **EXTENSIONS_LIVE_DATA.md**.
 
 ### Previous session (field mutability – API-driven schema)
 
@@ -69,7 +69,7 @@
 
 **Approach:** One create view per resource + type chooser + conditional fields + one polymorphic create API per resource. See **workingdocs/COMPLEX_CREATE_PLAN.md**.
 
-**Status:** **Trunk create: done** (SIP-only chooser; IAX2 deferred). **DDI (Inbound routes): done** (create + edit aligned to legacy; Connection/Advanced removed from edit). **Extension create / provisioning: done** (API + frontend; extension type derived from device; live IP/Status from AMI – see EXTENSIONS_LIVE_DATA.md). **IVR:** Deferred (complex UX; do later). See COMPLEX_CREATE_PLAN.md for other create flows. 
+**Status:** **Trunk create: done** (SIP-only chooser; IAX2 deferred). **DDI (Inbound routes): done** (create + edit aligned to legacy; Connection/Advanced removed from edit). **Extensions: complete** (full CRUD, extension type derivation, live IP/Status from AMI, SIP password display; structure sound; some TODOs remain). **IVR:** Deferred (complex UX; do later). See COMPLEX_CREATE_PLAN.md for other create flows. 
 
 ### Create-panel standardization (PANEL_PATTERN §3 + §8)
 
@@ -95,7 +95,7 @@
 
 **Fully implement pattern (read: Identity + Settings/Transport + Advanced; edit: all API-updateable fields):** Trunk, Inbound route only.
 
-**Do not fully implement:** Tenant (edit: 5 of 50+ fields), Extension (edit: 6 of 16), Route (edit: 3 of 9), Agent (no read structure + edit: 3 of 7), Queue (no read structure + edit: 2 of 5). **IVR:** read structure (Identity/Settings/Advanced) and edit now include all API-updateable fields (active, cname, name, description, cluster, greetnum, listenforext, timeout, option/tag/alert 0–11); see TODO_IVR_NAME for name deprecation decision. See full audit in chat history; standardize remaining panels later.
+**Do not fully implement:** Tenant (edit: 5 of 50+ fields), Extension (edit: core fields implemented; structure sound; some advanced fields deferred), Route (edit: 3 of 9), Agent (no read structure + edit: 3 of 7), Queue (no read structure + edit: 2 of 5). **IVR:** read structure (Identity/Settings/Advanced) and edit now include all API-updateable fields (active, cname, name, description, cluster, greetnum, listenforext, timeout, option/tag/alert 0–11); see TODO_IVR_NAME for name deprecation decision. See full audit in chat history; standardize remaining panels later.
 
 ### Layout alternatives (parked)
 
