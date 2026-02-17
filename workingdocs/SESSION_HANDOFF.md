@@ -78,6 +78,7 @@
 
 - **pbx3api – Middleware on remote:** Investigate why `ValidateClusterAccess.php` doesn’t appear on remote after pull (newpanels in use, file tracked); may be from old Sanctum experiment or deploy path.
 
+- **Commit button on every panel:** Save vs Commit is implemented (dirty in globals.mycommit; Commit on Dashboard). **TODO:** Add Commit button (or link) to app layout or to every panel that can save/update the DB (Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound routes, Tenants) so users can commit without going to Home. Reuse GET syscommands/commitstatus and same red/green behaviour.
 - **Extensions:** Allow changing extension number (pkey) — needs API support first.
 - **Phone images:** API hosts library; SPA consumes URLs.
 - **Tenants – Timer status / masteroclo:** API null handling; prefer API fix (e.g. model accessor or DB default).
