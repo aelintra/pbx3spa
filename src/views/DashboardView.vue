@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 
 const runState = ref(null)
+const commitDirty = ref(false)
 const statusLoading = ref(true)
 const statusError = ref('')
 const actionMessage = ref('')
@@ -36,6 +37,15 @@ async function fetchRunState() {
   }
 }
 
+async function fetchCommitStatus() {
+  try {
+    const response = await getApiClient().get('syscommands/commitstatus')
+    commitDirty.value = response?.dirty === true
+  } catch {
+    commitDirty.value = false
+  }
+}
+
 async function runCommand(command, confirmMessage, isDanger = false) {
   if (confirmMessage && !confirm(confirmMessage)) return
   actionError.value = ''
@@ -45,6 +55,7 @@ async function runCommand(command, confirmMessage, isDanger = false) {
     await getApiClient().get(`syscommands/${command}`)
     actionMessage.value = `Command "${command}" completed.`
     await fetchRunState()
+    if (command === 'commit') await fetchCommitStatus()
   } catch (err) {
     actionError.value = err.data?.message || err.message || `Failed to run ${command}`
   } finally {
@@ -72,7 +83,10 @@ function reboot() {
   )
 }
 
-onMounted(fetchRunState)
+onMounted(() => {
+  fetchRunState()
+  fetchCommitStatus()
+})
 </script>
 
 <template>
@@ -99,10 +113,12 @@ onMounted(fetchRunState)
         <button
           type="button"
           class="btn-action"
+          :class="{ 'btn-commit-dirty': commitDirty }"
           :disabled="actionBusy != null"
           @click="commit"
+          :title="commitDirty ? 'Uncommitted changes – run generator and reload' : 'Config is in sync'"
         >
-          {{ actionBusy === 'commit' ? 'Running…' : 'Commit config' }}
+          {{ actionBusy === 'commit' ? 'Running…' : (commitDirty ? 'Commit config (pending)' : 'Commit config') }}
         </button>
         <button
           type="button"
@@ -216,6 +232,12 @@ onMounted(fetchRunState)
 .btn-action:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+.btn-action.btn-commit-dirty {
+  background: #dc2626;
+}
+.btn-action.btn-commit-dirty:hover:not(:disabled) {
+  background: #b91c1c;
 }
 .danger-zone {
   padding-top: 0.75rem;
