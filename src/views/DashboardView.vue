@@ -2,10 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 
-const runState = ref(null)
 const commitDirty = ref(false)
-const statusLoading = ref(true)
-const statusError = ref('')
 const actionMessage = ref('')
 const actionError = ref('')
 const actionBusy = ref(null)
@@ -13,18 +10,6 @@ const actionBusy = ref(null)
 const sysnotes = ref(null)
 const sysnotesLoading = ref(true)
 const sysnotesError = ref('')
-
-function formatRunState(data) {
-  if (data == null) return '—'
-  if (typeof data === 'string') return data
-  if (typeof data === 'object') {
-    const running = data.running ?? data.pbxrunstate
-    if (running !== undefined) return running ? 'Running' : 'Stopped'
-    if (data.state !== undefined) return String(data.state)
-    return JSON.stringify(data)
-  }
-  return String(data)
-}
 
 function display(val) {
   if (val == null || val === '') return '—'
@@ -39,22 +24,6 @@ function displayBytes(val) {
   if (n >= 1048576) return (n / 1048576).toFixed(1) + ' MB'
   if (n >= 1024) return (n / 1024).toFixed(1) + ' KB'
   return n + ' B'
-}
-
-async function fetchRunState() {
-  statusLoading.value = true
-  statusError.value = ''
-  actionMessage.value = ''
-  actionError.value = ''
-  try {
-    const response = await getApiClient().get('syscommands/pbxrunstate')
-    runState.value = response
-  } catch (err) {
-    statusError.value = err.data?.message || err.message || 'Failed to load PBX status'
-    runState.value = null
-  } finally {
-    statusLoading.value = false
-  }
 }
 
 async function fetchCommitStatus() {
@@ -87,7 +56,6 @@ async function runCommand(command, confirmMessage, isDanger = false) {
   try {
     await getApiClient().get(`syscommands/${command}`)
     actionMessage.value = `Command "${command}" completed.`
-    await fetchRunState()
     if (command === 'commit') await fetchCommitStatus()
     await fetchSysnotes()
   } catch (err) {
@@ -118,7 +86,6 @@ function reboot() {
 }
 
 onMounted(() => {
-  fetchRunState()
   fetchCommitStatus()
   fetchSysnotes()
 })
@@ -127,18 +94,6 @@ onMounted(() => {
 <template>
   <div class="dashboard">
     <h1>Home</h1>
-
-    <section class="status-section">
-      <h2 class="detail-heading">PBX status</h2>
-      <p v-if="statusLoading" class="loading">Loading…</p>
-      <p v-else-if="statusError" class="error">{{ statusError }}</p>
-      <div v-else class="status-row">
-        <span class="status-value">{{ formatRunState(runState) }}</span>
-        <button type="button" class="btn-refresh" :disabled="statusLoading" @click="fetchRunState">
-          Refresh
-        </button>
-      </div>
-    </section>
 
     <section class="actions-section">
       <h2 class="detail-heading">Actions</h2>
@@ -254,7 +209,6 @@ onMounted(() => {
   font-size: 1.5rem;
   font-weight: 600;
 }
-.status-section,
 .actions-section,
 .sysnotes-section {
   margin-bottom: 2rem;
@@ -281,32 +235,6 @@ onMounted(() => {
 .message {
   margin: 0 0 0.75rem 0;
   color: #15803d;
-}
-.status-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.status-value {
-  font-size: 1.125rem;
-  font-weight: 500;
-}
-.btn-refresh {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  color: #64748b;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-.btn-refresh:hover:not(:disabled) {
-  color: #0f172a;
-  background: #f1f5f9;
-}
-.btn-refresh:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
 }
 .action-buttons {
   display: flex;
