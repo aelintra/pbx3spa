@@ -293,6 +293,7 @@ async function saveRuntime(e) {
             <FormField v-else id="edit-identity-pkey" :model-value="extension.pkey ?? '—'" label="Ext" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="SIP Identity" :value="extension.shortuid ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-shortuid" :model-value="extension.shortuid ?? '—'" label="SIP Identity" disabled class="readonly-identity" />
+            <FormReadonly id="edit-identity-passwd" label="SIP Password" :value="extension.passwd ?? '—'" class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="extension.id ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-id" :model-value="extension.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('macaddr')" id="edit-identity-macaddr" label="MAC address" :value="extension.macaddr?.trim() || '—'" class="readonly-identity" />
@@ -428,9 +429,9 @@ async function saveRuntime(e) {
             <dl v-if="!editingRuntime" class="detail-list">
               <template v-if="runtime.ip != null || runtime.latency != null">
                 <dt>IP (from Asterisk)</dt>
-                <dd>{{ runtime.ip ?? '—' }}</dd>
+                <dd>{{ runtime.ip ?? 'Unknown' }}</dd>
                 <dt>Status (RTT)</dt>
-                <dd>{{ runtime.latency ?? '—' }}</dd>
+                <dd>{{ runtime.latency ?? 'Unknown' }}</dd>
               </template>
               <dt>cfim</dt>
               <dd>{{ runtime.cfim ?? '—' }}</dd>
