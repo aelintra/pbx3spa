@@ -305,6 +305,7 @@ async function saveRuntime(e) {
               placeholder="12 hex digits or 00:11:22:33:44:55"
               hint="Optional. Add or change to provision device; clear to switch to General SIP."
             />
+            <FormReadonly id="edit-identity-extension-type" label="Extension type" :value="extension.extension_type ?? '—'" class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('device')" id="edit-identity-device" label="Device" :value="extension.device ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-device" :model-value="extension.device ?? '—'" label="Device" disabled class="readonly-identity" />
             <FormSelect
@@ -425,6 +426,12 @@ async function saveRuntime(e) {
               </div>
             </form>
             <dl v-if="!editingRuntime" class="detail-list">
+              <template v-if="runtime.ip != null || runtime.latency != null">
+                <dt>IP (from Asterisk)</dt>
+                <dd>{{ runtime.ip ?? '—' }}</dd>
+                <dt>Status (RTT)</dt>
+                <dd>{{ runtime.latency ?? '—' }}</dd>
+              </template>
               <dt>cfim</dt>
               <dd>{{ runtime.cfim ?? '—' }}</dd>
               <dt>cfbs</dt>

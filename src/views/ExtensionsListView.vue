@@ -17,6 +17,8 @@ const confirmDeletePkey = ref(null)
 const filterText = ref('')
 const sortKey = ref('pkey')
 const sortOrder = ref('asc') // 'asc' | 'desc'
+/** Live PJSIP data keyed by pkey: { ip, latency }. Empty when PBX not running or request failed. */
+const liveData = ref({})
 
 /** Map cluster id, shortuid, or pkey → tenant pkey for display (always show pkey, not shortuid) */
 const clusterToTenantPkey = computed(() => {
@@ -63,6 +65,7 @@ const filteredExtensions = computed(() => {
 function sortValue(e, key) {
   if (key === 'desc') return (e.desc ?? e.cname ?? e.description ?? '').toString()
   if (key === 'cluster') return tenantPkeyDisplay(e)
+  if (key === 'extension_type') return (e.extension_type ?? '').toString()
   const v = e[key]
   return v == null ? '' : String(v)
 }
@@ -106,14 +109,20 @@ async function loadExtensions() {
   loading.value = true
   error.value = ''
   try {
-    const [extResponse, tenantResponse] = await Promise.all([
+    const [extResponse, tenantResponse, liveResponse] = await Promise.all([
       getApiClient().get('extensions'),
-      getApiClient().get('tenants')
+      getApiClient().get('tenants'),
+      getApiClient().get('extensions/live').catch(() => ({}))
     ])
     extensions.value = normalizeList(extResponse)
     tenants.value = normalizeList(tenantResponse, 'tenants')
+    const raw = liveResponse?.data ?? liveResponse
+    liveData.value = typeof raw === 'object' && raw !== null && !Array.isArray(raw)
+      ? raw
+      : {}
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load extensions')
+    liveData.value = {}
   } finally {
     loading.value = false
   }
@@ -187,12 +196,17 @@ onMounted(loadExtensions)
             <th class="th-sortable" title="Click to sort" :class="sortClass('desc')" @click="setSort('desc')">
               User
             </th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('extension_type')" @click="setSort('extension_type')">
+              Type
+            </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('device')" @click="setSort('device')">
               Device
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('macaddr')" @click="setSort('macaddr')">
               MAC
             </th>
+            <th title="From Asterisk">IP</th>
+            <th title="RTT from Asterisk">Status</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('transport')" @click="setSort('transport')">
               Transport
             </th>
@@ -209,8 +223,11 @@ onMounted(loadExtensions)
             <td class="cell-immutable" title="Immutable">{{ sipIdentityDisplay(e) }}</td>
             <td>{{ tenantPkeyDisplay(e) }}</td>
             <td :title="(e.desc ?? e.cname ?? e.description ?? '')">{{ userDisplay(e) }}</td>
+            <td>{{ e.extension_type ?? '—' }}</td>
             <td class="cell-immutable" title="Immutable">{{ e.device ?? e.technology ?? '—' }}</td>
             <td class="cell-immutable" :title="e.macaddr ? 'Immutable' : undefined">{{ e.macaddr ? e.macaddr : 'N/A' }}</td>
+            <td>{{ (e.extension_type === 'SIP' && liveData[e.pkey]) ? liveData[e.pkey].ip : '—' }}</td>
+            <td>{{ (e.extension_type === 'SIP' && liveData[e.pkey]) ? liveData[e.pkey].latency : '—' }}</td>
             <td>{{ e.transport ?? '—' }}</td>
             <td>{{ e.active ?? '—' }}</td>
             <td>
