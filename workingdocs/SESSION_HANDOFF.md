@@ -2,7 +2,7 @@
 
 **Start here:** Read **PROJECT_PLAN.md** § Current state and **PANEL_PATTERN.md** §8 to see what’s done and what’s left.
 
-**Next priority – Extension provisioning:** Plan is **finalised**. User is applying DB changes manually (see **DATABASE_CHANGES_FOR_PROVISIONING.md**). To implement: read **EXTENSION_PROVISIONING_QUICKSTART.md** then **EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md** (§8, §5); implement API then frontend per plan §5.
+**Extension provisioning:** Implemented (create/update, extension type, live IP/Status). See **EXTENSIONS_LIVE_DATA.md** for live data behaviour and gotchas. **Next priorities:** Commit button on every panel (or layout); optional: PJSIP config in Edit, allow changing extension pkey.
 
 **Repos:** **pbx3-master** is not a git repo; it is a placeholder folder containing the four repos: **pbx3**, **pbx3api**, **pbx3cagi**, **pbx3spa**. Commit in the relevant repo.
 
@@ -18,7 +18,12 @@
 - Home dashboard (PBX status, Commit/Start/Stop/Reboot); auth with sessionStorage, route guard, whoami.
 - **Create panels fully aligned with §3:** Tenant, Inbound route (use as reference).
 
-### Latest session (permissions Phase 0 + trunk/DDI completion)
+### Latest session (extension type + live IP/Status)
+
+- **Extension type (no DB column):** We derive **extension_type** (SIP | WebRTC | MAILBOX) from **device** in code. Extension model has `getExtensionTypeAttribute()` and `$appends = ['extension_type']`, so every API response includes it. List has a **Type** column; detail Identity shows readonly **Extension type**. Single source of truth remains `device`; WebRTC ⇒ no vendor/MAC, SIP ⇒ vendor or General SIP. See conversation: no separate DB column needed.
+- **Live IP and Status from Asterisk:** List and detail show **IP** (endpoint address) and **Status** (RTT, e.g. "OK (5 ms)") from Asterisk AMI. **API:** GET **/api/extensions/live** returns an object keyed by pkey `{ "1000": { "ip", "latency" }, ... }`; GET **extensions/{id}/runtime** includes ip/latency for SIP. **Helper** `pjsip_endpoint_live($amiHandle, $pkey)` uses AMI `PJSIPShowEndpoint` and parses Contact/RoundtripUsec; returns "Unknown" when no data. **Ami** `amiQueryUntilBlankLine()` reads until blank line so we don’t block on socket timeout (fixes 504 on extensions/live). **Frontend:** List fetches extensions + extensions/live in parallel; IP/Status columns use `liveValueDisplay()` so that API "—" or empty is shown as **Unknown** (matches old system). Detail Runtime section shows IP and Status when present. **Doc:** **EXTENSIONS_LIVE_DATA.md** (key files, gotchas, API/frontend behaviour).
+
+### Previous session (permissions Phase 0 + trunk/DDI completion)
 
 - **Permissions Phase 0 (minimal rollout):** Done. Auth store: getters `abilities` and `can(ability)` (e.g. `auth.can('admin')`). Router: PUBLIC_ROUTES allow-list (`['/login']`), require `can('admin')` for panel routes, `/no-access` route and view. Layout: nav gated by `can('admin')` (full nav for admins, Home only for others). **Users panel:** List (GET `auth/users`), Create (POST `auth/register` with optional abilities), Delete, Revoke tokens; nav "Users" link gated by `can('admin')`. API: docs comments in `config/abilities.php` and `routes/api.php` pointing to ADMIN_PANELS_AND_PERMISSIONS.md for expansion. **Workingdocs:** ADMIN_PANELS_AND_PERMISSIONS.md (pattern), AUTH_PATTERNS.md (rules for agents), PERMISSIONS_MINIMAL_DEPLOY_PLAN.md (rollout). See **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** for full Phase 0 details; Phase 1 (granular abilities, admin vs tenant route groups) is later. Committed on branch `trunks` in pbx3spa and pbx3api.
 
@@ -26,7 +31,7 @@
 
 - **DDI (Inbound routes):** Done. Edit panel simplified: Connection and Advanced sections removed; Identity + Settings only (matches legacy). To-do added: review underlying inbound-route table to decide whether removed columns (host, username, password, peername, register, iaxreg, pjsipreg, callback, callerid, match) should be physically removed from schema or retained. Marked complete in COMPLEX_CREATE_PLAN.md and PROJECT_PLAN.md.
 
-- **Extension create / provisioning:** Plan finalised. See **EXTENSION_PROVISIONING_QUICKSTART.md** and **EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md**. Scope: extensionType (SIP/WebRTC), optional MAC for SIP (provisioned vs General SIP), Device lookup, provision string, Save vs Commit (no generator on Save; Commit runs genAst + reload). User is doing DB changes manually (DATABASE_CHANGES_FOR_PROVISIONING.md); next agent implements API then frontend per plan §5.
+- **Extension create / provisioning:** Plan finalised; API and frontend for create/update (extensionType, MAC, Device, provision, Save vs Commit) are implemented. **Extension type** is derived from device (no DB column); list/detail show Type and Extension type. **Live IP/Status** from Asterisk AMI (GET extensions/live, runtime ip/latency) are implemented; see **EXTENSIONS_LIVE_DATA.md**.
 
 ### Previous session (field mutability – API-driven schema)
 
@@ -64,7 +69,7 @@
 
 **Approach:** One create view per resource + type chooser + conditional fields + one polymorphic create API per resource. See **workingdocs/COMPLEX_CREATE_PLAN.md**.
 
-**Status:** **Trunk create: done** (SIP-only chooser; IAX2 deferred). **DDI (Inbound routes): done** (create + edit aligned to legacy; Connection/Advanced removed from edit). **Extension create / provisioning: plan finalised** – implement per EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md and EXTENSION_PROVISIONING_QUICKSTART.md (API then frontend; user doing DB changes). **IVR:** Deferred (complex UX; do later). See COMPLEX_CREATE_PLAN.md for other create flows. 
+**Status:** **Trunk create: done** (SIP-only chooser; IAX2 deferred). **DDI (Inbound routes): done** (create + edit aligned to legacy; Connection/Advanced removed from edit). **Extension create / provisioning: done** (API + frontend; extension type derived from device; live IP/Status from AMI – see EXTENSIONS_LIVE_DATA.md). **IVR:** Deferred (complex UX; do later). See COMPLEX_CREATE_PLAN.md for other create flows. 
 
 ### Create-panel standardization (PANEL_PATTERN §3 + §8)
 
@@ -80,6 +85,7 @@
 
 - **Commit button on every panel:** Save vs Commit is implemented (dirty in globals.mycommit; Commit on Dashboard). **TODO:** Add Commit button (or link) to app layout or to every panel that can save/update the DB (Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound routes, Tenants) so users can commit without going to Home. Reuse GET syscommands/commitstatus and same red/green behaviour.
 - **Extensions:** Allow changing extension number (pkey) — needs API support first.
+- **Extensions:** Add "Regenerate SIP password" button — allow users to regenerate passwd (for compromised/periodic refresh) without allowing manual password creation. Low priority.
 - **Phone images:** API hosts library; SPA consumes URLs.
 - **Tenants – Timer status / masteroclo:** API null handling; prefer API fix (e.g. model accessor or DB default).
 - **Field mutability:** Done — API-driven; frontend uses GET /schemas (useSchema composable). See FIELD_MUTABILITY_API_PLAN.md.
@@ -108,6 +114,7 @@
 - **PROJECT_PLAN.md** § Current state — full “next chat” instructions, stack, principles, job steps.
 - **EXTENSION_PROVISIONING_QUICKSTART.md** — start here for extension provisioning (read order, key files, implementation order).
 - **EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md** — full plan; §8 Build readiness, §5 Implementation order.
+- **EXTENSIONS_LIVE_DATA.md** — live IP/Status from Asterisk (extensions/live, runtime, amiQueryUntilBlankLine, frontend Unknown/— handling; gotchas for next agent).
 - **DATABASE_CHANGES_FOR_PROVISIONING.md** — DB changes list (user applies manually; PBX3 has no Laravel migrations).
 - **COMPLEX_CREATE_PLAN.md** — complex create flows: Trunk done, DDI done, Extension (provisioning plan finalised), IVR deferred.
 - **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** — Phase 0 rollout (abilities, can(), route guard, Users panel); Phase 1 later.
