@@ -18,10 +18,14 @@
 - Home dashboard (PBX status, Commit/Start/Stop/Reboot); auth with sessionStorage, route guard, whoami.
 - **Create panels fully aligned with §3:** Tenant, Inbound route (use as reference).
 
-### Latest session (extension type + live IP/Status)
+### Latest session (extensions completion)
 
-- **Extension type (no DB column):** We derive **extension_type** (SIP | WebRTC | MAILBOX) from **device** in code. Extension model has `getExtensionTypeAttribute()` and `$appends = ['extension_type']`, so every API response includes it. List has a **Type** column; detail Identity shows readonly **Extension type**. Single source of truth remains `device`; WebRTC ⇒ no vendor/MAC, SIP ⇒ vendor or General SIP. See conversation: no separate DB column needed.
-- **Live IP and Status from Asterisk:** List and detail show **IP** (endpoint address) and **Status** (RTT, e.g. "OK (5 ms)") from Asterisk AMI. **API:** GET **/api/extensions/live** returns an object keyed by pkey `{ "1000": { "ip", "latency" }, ... }`; GET **extensions/{id}/runtime** includes ip/latency for SIP. **Helper** `pjsip_endpoint_live($amiHandle, $pkey)` uses AMI `PJSIPShowEndpoint` and parses Contact/RoundtripUsec; returns "Unknown" when no data. **Ami** `amiQueryUntilBlankLine()` reads until blank line so we don’t block on socket timeout (fixes 504 on extensions/live). **Frontend:** List fetches extensions + extensions/live in parallel; IP/Status columns use `liveValueDisplay()` so that API "—" or empty is shown as **Unknown** (matches old system). Detail Runtime section shows IP and Status when present. **Doc:** **EXTENSIONS_LIVE_DATA.md** (key files, gotchas, API/frontend behaviour).
+- **Extensions marked complete:** Full CRUD implemented with extension type derivation, live IP/Status from Asterisk AMI, SIP password display, and improved UX (spinner loading state, fixed empty state flash). Structure is sound; some TODOs remain (regenerate password button, allow pkey change, PJSIP config edit) but core functionality is production-ready.
+- **Extension type (no DB column):** We derive **extension_type** (SIP | WebRTC | MAILBOX) from **device** in code. Extension model has `getExtensionTypeAttribute()` and `$appends = ['extension_type']`, so every API response includes it. List has a **Type** column; detail Identity shows readonly **Extension type**. Single source of truth remains `device`; WebRTC ⇒ no vendor/MAC, SIP ⇒ vendor or General SIP.
+- **Live IP and Status from Asterisk:** List and detail show **IP** (endpoint address) and **Status** (RTT, e.g. "OK (5 ms)") from Asterisk AMI. **API:** GET **/api/extensions/live** returns an object keyed by pkey `{ "1000": { "ip", "latency" }, ... }`; GET **extensions/{id}/runtime** includes ip/latency for SIP. **Helper** `pjsip_endpoint_live($amiHandle, $pkey)` uses AMI `PJSIPShowEndpoint` and collects all key-value pairs from multi-event response (matches old system approach); parses URI/Match for IP, RoundtripUsec for latency; returns "Unknown" when no data. **Ami** `amiQueryUntilComplete()` reads until blank line so we don’t block on socket timeout (fixes 504 on extensions/live). **Frontend:** List fetches extensions + extensions/live in parallel; IP/Status columns use `liveValueDisplay()` so that API "—" or empty is shown as **Unknown** (matches old system). Detail Runtime section shows IP and Status when present. Loading state shows spinner + text. **Doc:** **EXTENSIONS_LIVE_DATA.md** (key files, gotchas, API/frontend behaviour).
+- **SIP password display:** Added readonly `passwd` field to extension detail Identity section (after SIP Identity) for manual phone/WebRTC setup. TODO: Add "Regenerate SIP password" button (low priority).
+- **UX improvements:** Added spinner to loading state (replaces text-only); fixed empty state flash (only shows when loading complete).
+- **Branch merge:** All extension work merged to `main` in pbx3api, pbx3spa, and pbx3 repos. Local `extensions` branches deleted.
 
 ### Previous session (permissions Phase 0 + trunk/DDI completion)
 
@@ -114,9 +118,9 @@
 - **PROJECT_PLAN.md** § Current state — full “next chat” instructions, stack, principles, job steps.
 - **EXTENSION_PROVISIONING_QUICKSTART.md** — start here for extension provisioning (read order, key files, implementation order).
 - **EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md** — full plan; §8 Build readiness, §5 Implementation order.
-- **EXTENSIONS_LIVE_DATA.md** — live IP/Status from Asterisk (extensions/live, runtime, amiQueryUntilBlankLine, frontend Unknown/— handling; gotchas for next agent).
+- **EXTENSIONS_LIVE_DATA.md** — live IP/Status from Asterisk (extensions/live, runtime, amiQueryUntilComplete, key-value collection approach matching old system, frontend Unknown/— handling; gotchas for next agent).
 - **DATABASE_CHANGES_FOR_PROVISIONING.md** — DB changes list (user applies manually; PBX3 has no Laravel migrations).
-- **COMPLEX_CREATE_PLAN.md** — complex create flows: Trunk done, DDI done, Extension (provisioning plan finalised), IVR deferred.
+- **COMPLEX_CREATE_PLAN.md** — complex create flows: Trunk done, DDI done, Extensions complete, IVR deferred.
 - **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** — Phase 0 rollout (abilities, can(), route guard, Users panel); Phase 1 later.
 - **ADMIN_PANELS_AND_PERMISSIONS.md** — Pattern: abilities, admin vs tenant areas, row-level scope.
 - **AUTH_PATTERNS.md** — Auth contract and rules for agents (2FA, self-service, centralized auth); follow when touching login/tokens/whoami/guards.
