@@ -10,6 +10,10 @@ const actionMessage = ref('')
 const actionError = ref('')
 const actionBusy = ref(null)
 
+const sysnotes = ref(null)
+const sysnotesLoading = ref(true)
+const sysnotesError = ref('')
+
 function formatRunState(data) {
   if (data == null) return '—'
   if (typeof data === 'string') return data
@@ -20,6 +24,21 @@ function formatRunState(data) {
     return JSON.stringify(data)
   }
   return String(data)
+}
+
+function display(val) {
+  if (val == null || val === '') return '—'
+  return String(val)
+}
+
+function displayBytes(val) {
+  if (val == null) return '—'
+  const n = parseInt(val, 10)
+  if (isNaN(n)) return String(val)
+  if (n >= 1073741824) return (n / 1073741824).toFixed(1) + ' GB'
+  if (n >= 1048576) return (n / 1048576).toFixed(1) + ' MB'
+  if (n >= 1024) return (n / 1024).toFixed(1) + ' KB'
+  return n + ' B'
 }
 
 async function fetchRunState() {
@@ -47,6 +66,19 @@ async function fetchCommitStatus() {
   }
 }
 
+async function fetchSysnotes() {
+  sysnotesLoading.value = true
+  sysnotesError.value = ''
+  try {
+    sysnotes.value = await getApiClient().get('syscommands/sysnotes')
+  } catch (err) {
+    sysnotesError.value = err.data?.message || err.message || 'Failed to load system info'
+    sysnotes.value = null
+  } finally {
+    sysnotesLoading.value = false
+  }
+}
+
 async function runCommand(command, confirmMessage, isDanger = false) {
   if (confirmMessage && !confirm(confirmMessage)) return
   actionError.value = ''
@@ -57,6 +89,7 @@ async function runCommand(command, confirmMessage, isDanger = false) {
     actionMessage.value = `Command "${command}" completed.`
     await fetchRunState()
     if (command === 'commit') await fetchCommitStatus()
+    await fetchSysnotes()
   } catch (err) {
     actionError.value = err.data?.message || err.message || `Failed to run ${command}`
   } finally {
@@ -87,15 +120,16 @@ function reboot() {
 onMounted(() => {
   fetchRunState()
   fetchCommitStatus()
+  fetchSysnotes()
 })
 </script>
 
 <template>
   <div class="dashboard">
-    <h1>Dashboard</h1>
+    <h1>Home</h1>
 
     <section class="status-section">
-      <h2>PBX status</h2>
+      <h2 class="detail-heading">PBX status</h2>
       <p v-if="statusLoading" class="loading">Loading…</p>
       <p v-else-if="statusError" class="error">{{ statusError }}</p>
       <div v-else class="status-row">
@@ -107,7 +141,7 @@ onMounted(() => {
     </section>
 
     <section class="actions-section">
-      <h2>Actions</h2>
+      <h2 class="detail-heading">Actions</h2>
       <p v-if="actionMessage" class="message">{{ actionMessage }}</p>
       <p v-if="actionError" class="error">{{ actionError }}</p>
       <div class="action-buttons">
@@ -149,30 +183,97 @@ onMounted(() => {
         </button>
       </div>
     </section>
+
+    <section class="sysnotes-section">
+      <h2 class="detail-heading">System info</h2>
+      <p v-if="sysnotesLoading" class="loading">Loading system info…</p>
+      <p v-else-if="sysnotesError" class="error">{{ sysnotesError }}</p>
+      <div v-else-if="sysnotes" class="sysnotes-grid">
+        <div class="sysnotes-col">
+          <h3 class="sysnotes-col-heading">System</h3>
+          <dl class="sysnotes-dl">
+            <template v-if="sysnotes.system">
+              <dt>Distro</dt>
+              <dd>{{ display(sysnotes.system.distro) }}</dd>
+              <dt>PBX release</dt>
+              <dd>{{ display(sysnotes.system.pbx_release) }}</dd>
+              <dt>App release</dt>
+              <dd>{{ display(sysnotes.system.app_release) }}</dd>
+              <dt>Endpoints licenced</dt>
+              <dd>{{ display(sysnotes.system.endpoints_licenced) }}</dd>
+              <dt>Endpoints defined</dt>
+              <dd>{{ display(sysnotes.system.endpoints_defined) }}</dd>
+              <dt>Serial</dt>
+              <dd>{{ display(sysnotes.system.serial) }}</dd>
+            </template>
+          </dl>
+        </div>
+        <div class="sysnotes-col">
+          <h3 class="sysnotes-col-heading">Network</h3>
+          <dl class="sysnotes-dl">
+            <template v-if="sysnotes.network">
+              <dt>MAC</dt>
+              <dd>{{ display(sysnotes.network.mac) }}</dd>
+              <dt>Hostname</dt>
+              <dd>{{ display(sysnotes.network.hostname) }}</dd>
+              <dt>Public IP</dt>
+              <dd>{{ display(sysnotes.network.public_ip) }}</dd>
+              <dt>DHCP IP</dt>
+              <dd>{{ display(sysnotes.network.dhcp_ip) }}</dd>
+              <dt>Static IP</dt>
+              <dd>{{ display(sysnotes.network.static_ip) }}</dd>
+            </template>
+          </dl>
+        </div>
+        <div class="sysnotes-col">
+          <h3 class="sysnotes-col-heading">Resource</h3>
+          <dl class="sysnotes-dl">
+            <template v-if="sysnotes.resource">
+              <dt>Disk usage</dt>
+              <dd>{{ display(sysnotes.resource.disk_usage) }}</dd>
+              <dt>RAM size</dt>
+              <dd>{{ displayBytes(sysnotes.resource.ram_total) }}</dd>
+              <dt>RAM free</dt>
+              <dd>{{ displayBytes(sysnotes.resource.ram_free) }}</dd>
+              <dt>PBX</dt>
+              <dd>{{ display(sysnotes.resource.pbx_runstate) }}</dd>
+              <dt>Master timer</dt>
+              <dd>{{ display(sysnotes.resource.masteroclo) }}</dd>
+              <dt>Timer state</dt>
+              <dd>{{ display(sysnotes.resource.timer_state) }}</dd>
+            </template>
+          </dl>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
 .dashboard {
-  max-width: 40rem;
+  max-width: 56rem;
 }
 .dashboard h1 {
-  margin-bottom: 1.25rem;
+  margin: 0 0 1.25rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 .status-section,
-.actions-section {
+.actions-section,
+.sysnotes-section {
   margin-bottom: 2rem;
   padding: 1.25rem;
   background: #f8fafc;
   border-radius: 0.5rem;
   border: 1px solid #e2e8f0;
 }
-.status-section h2,
-.actions-section h2 {
-  margin: 0 0 0.75rem 0;
+.detail-heading {
   font-size: 1rem;
   font-weight: 600;
-  color: #475569;
+  color: #334155;
+  margin: 0 0 0.75rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
 }
 .loading,
 .error {
@@ -260,5 +361,32 @@ onMounted(() => {
 .btn-danger:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+.sysnotes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+.sysnotes-col-heading {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #475569;
+}
+.sysnotes-dl {
+  margin: 0;
+  font-size: 0.875rem;
+}
+.sysnotes-dl dt {
+  margin-top: 0.5rem;
+  color: #64748b;
+  font-weight: 500;
+}
+.sysnotes-dl dt:first-child {
+  margin-top: 0;
+}
+.sysnotes-dl dd {
+  margin: 0.15rem 0 0 0;
+  color: #0f172a;
 }
 </style>
