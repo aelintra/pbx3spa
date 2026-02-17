@@ -14,7 +14,8 @@ function formatRunState(data) {
   if (data == null) return '—'
   if (typeof data === 'string') return data
   if (typeof data === 'object') {
-    if (data.running !== undefined) return data.running ? 'Running' : 'Stopped'
+    const running = data.running ?? data.pbxrunstate
+    if (running !== undefined) return running ? 'Running' : 'Stopped'
     if (data.state !== undefined) return String(data.state)
     return JSON.stringify(data)
   }
