@@ -195,12 +195,10 @@ onMounted(() => {
             <template v-if="sysnotes.system">
               <dt>Distro</dt>
               <dd>{{ display(sysnotes.system.distro) }}</dd>
-              <dt>PBX release</dt>
-              <dd>{{ display(sysnotes.system.pbx_release) }}</dd>
+              <dt>Asterisk release</dt>
+              <dd>{{ display(sysnotes.system.asterisk_release) }}</dd>
               <dt>App release</dt>
               <dd>{{ display(sysnotes.system.app_release) }}</dd>
-              <dt>Endpoints licenced</dt>
-              <dd>{{ display(sysnotes.system.endpoints_licenced) }}</dd>
               <dt>Endpoints defined</dt>
               <dd>{{ display(sysnotes.system.endpoints_defined) }}</dd>
               <dt>Serial</dt>
@@ -216,6 +214,8 @@ onMounted(() => {
               <dd>{{ display(sysnotes.network.mac) }}</dd>
               <dt>Hostname</dt>
               <dd>{{ display(sysnotes.network.hostname) }}</dd>
+              <dt>Local IP</dt>
+              <dd>{{ display(sysnotes.network.local_ip) }}</dd>
               <dt>Public IP</dt>
               <dd>{{ display(sysnotes.network.public_ip) }}</dd>
               <dt>DHCP IP</dt>
