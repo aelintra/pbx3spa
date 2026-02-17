@@ -148,6 +148,8 @@ onMounted(() => {
           <h3 class="sysnotes-col-heading">System</h3>
           <dl class="sysnotes-dl">
             <template v-if="sysnotes.system">
+              <dt>Instance</dt>
+              <dd>{{ display(sysnotes.system.instance) }}</dd>
               <dt>Distro</dt>
               <dd>{{ display(sysnotes.system.distro) }}</dd>
               <dt>Asterisk release</dt>
