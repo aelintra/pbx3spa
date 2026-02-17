@@ -218,10 +218,6 @@ onMounted(() => {
               <dd>{{ display(sysnotes.network.local_ip) }}</dd>
               <dt>Public IP</dt>
               <dd>{{ display(sysnotes.network.public_ip) }}</dd>
-              <dt>DHCP IP</dt>
-              <dd>{{ display(sysnotes.network.dhcp_ip) }}</dd>
-              <dt>Static IP</dt>
-              <dd>{{ display(sysnotes.network.static_ip) }}</dd>
             </template>
           </dl>
         </div>
