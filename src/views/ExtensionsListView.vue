@@ -48,6 +48,27 @@ function userDisplay(e) {
   return s.slice(0, 22) + '…'
 }
 
+/** Treat API "no value" as Unknown (API may send "—" or "Unknown") */
+function liveValueDisplay(val) {
+  const s = (val ?? '').toString().trim()
+  if (!s || s === '—' || s === '\u2014') return 'Unknown'
+  return s
+}
+
+/** Live IP for list: use string pkey for lookup; no data or "—" → Unknown */
+function ipDisplay(e) {
+  const key = String(e.pkey ?? '')
+  const live = liveData.value[key]
+  return liveValueDisplay(live?.ip)
+}
+
+/** Live Status (RTT) for list: use string pkey for lookup; no data or "—" → Unknown */
+function statusDisplay(e) {
+  const key = String(e.pkey ?? '')
+  const live = liveData.value[key]
+  return liveValueDisplay(live?.latency)
+}
+
 const filteredExtensions = computed(() => {
   const list = extensions.value
   const q = (filterText.value || '').trim().toLowerCase()
@@ -172,11 +193,11 @@ onMounted(loadExtensions)
       </p>
     </header>
 
-    <section v-if="loading || error || deleteError || extensions.length === 0" class="list-states">
+    <section v-if="loading || error || deleteError || (!loading && extensions.length === 0)" class="list-states">
       <p v-if="loading" class="loading">Loading extensions from API…</p>
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
-      <div v-else-if="extensions.length === 0" class="empty">No extensions. (API returned an empty list.)</div>
+      <div v-else-if="!loading && extensions.length === 0" class="empty">No extensions. (API returned an empty list.)</div>
     </section>
 
     <section v-else class="list-body">
@@ -226,8 +247,8 @@ onMounted(loadExtensions)
             <td>{{ e.extension_type ?? '—' }}</td>
             <td class="cell-immutable" title="Immutable">{{ e.device ?? e.technology ?? '—' }}</td>
             <td class="cell-immutable" :title="e.macaddr ? 'Immutable' : undefined">{{ e.macaddr ? e.macaddr : 'N/A' }}</td>
-            <td>{{ (e.extension_type === 'SIP' && liveData[e.pkey]) ? liveData[e.pkey].ip : '—' }}</td>
-            <td>{{ (e.extension_type === 'SIP' && liveData[e.pkey]) ? liveData[e.pkey].latency : '—' }}</td>
+            <td>{{ ipDisplay(e) }}</td>
+            <td>{{ statusDisplay(e) }}</td>
             <td>{{ e.transport ?? '—' }}</td>
             <td>{{ e.active ?? '—' }}</td>
             <td>
