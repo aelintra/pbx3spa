@@ -14,13 +14,22 @@
 
 - **Repo rename completed:** frontend repo/component naming is now `pbx3spa` (was `pbx3-frontend`); cross-repo docs in pbx3 and pbx3api were updated accordingly.
 - **Integration test milestone:** frontend sign-in to pbx3api was validated after nginx/php-fpm installer hardening in pbx3api. Current dev workflow uses LAN HTTP temporarily to avoid self-signed cert trust friction; see pbx3 TODO for HTTPS/LE completion before release.
-- Steps 1–17+; full CRUD for Tenants, Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound routes (list/detail/create per PANEL_PATTERN).
+- Steps 1–17+; full CRUD for Tenants, Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound routes, **Custom Apps** (list/detail/create per PANEL_PATTERN).
 - List blocks (§2.2), detail Identity/Settings/Advanced (§4.1), edit-from-list, delete confirmation modal, toasts.
 - Create wording: list toolbar = “Create”, create form submit = “Create” / “Creating…”.
 - Home dashboard (PBX status, Commit/Start/Stop/Reboot); auth with sessionStorage, route guard, whoami.
 - **Create panels fully aligned with §3:** Tenant, Inbound route (use as reference).
 
-### Latest session (Backup/restore panel + single-panel patterns)
+### Latest session (Custom Apps panel + learnings for next agent)
+
+- **Custom Apps CRUD done:** Three-panel (list/create/detail) at `/customapps`, `/customapps/new`, `/customapps/:pkey`. API: CustomAppController (tenant table `appl`); create sets `id` (KSUID) and `shortuid`; update by `id` with fallback to `pkey` for legacy rows. SPA: list filter/sort, create with schema defaults, detail with Identity (pkey/shortuid/id readonly), Settings, Code; v-model for all edit fields; validation for pkey (letters, numbers, underscore, hyphen). Docs updated: general.md, SCHEMAS_ENDPOINT, EDIT_PANEL_FIELD_PARITY_AUDIT, PANEL_PATTERN (customapps + route path), PROJECT_PLAN, TENANT_SCOPED_PATTERN (Controller create + CustomAppController reference).
+- **Learnings for next agent:**
+  1. **Detail view edit fields must use `v-model`.** If you use `:model-value` + `@update:modelValue` on FormField/FormSelect/FormToggle, the ref can be out of sync when building the save payload and the API may receive `null` for changed fields. Use `v-model="editFoo"` (same as Extension detail) so the ref always has the current value when the user clicks Save.
+  2. **Tenant-scoped create must set `id` and `shortuid` before `$model->save()`.** The `appl` (and other tenant) tables have `id` as PRIMARY KEY; if you don’t set them on create, new rows have null `id` and later updates (which use `WHERE id = ?`) won’t persist. Pattern is now explicit in **pbx3api/docs/TENANT_SCOPED_PATTERN.md** (§ Controller create). When adding a new tenant-scoped resource, add the two lines and add the controller to the reference list.
+  3. **Update fallback for legacy rows:** If a tenant-scoped resource has rows created before id/shortuid were set, the update path can fall back to `WHERE pkey = ?` when `id` is null so those rows can still be updated (CustomAppController does this).
+  4. **Single DB:** All tables (instance + tenant) live in one database; no tenant-specific connection switching.
+
+### Previous session (Backup/restore panel + single-panel patterns)
 
 - **Backup/restore panel done:** Single view at `/backup` with two cascaded sections: **Backups** (create, upload, download, restore with options, delete) and **Snapshots** (create, upload, download, restore DB only, delete). View: `BackupView.vue`; nav link "Backup". API: `backups` and `snapshots`; pbx3api uses **syshelper** for all privileged file operations (create, move, delete, chown/chmod). Laravel **Storage disks** `backups` and `snapshots` must be configured in `config/filesystems.php` (root `/opt/pbx3/bkup` and `/opt/pbx3/snap`) or download returns "Disk(backup) does not have a configured driver".
 - **Single-screen patterns (for next agent):**
@@ -50,7 +59,7 @@
 
 ### Previous session (field mutability – API-driven schema)
 
-- **Field mutability (API-driven):** Done. API exposes **GET /schemas** (SchemaService + SchemaController) with `read_only`, `updateable`, and `defaults` per resource (extensions, queues, agents, routes, trunks, ivrs, inroutes, tenants). Frontend uses **useSchema** composable (fetch on first use, module-level cache; no Pinia): `ensureFetched()`, `getSchema(resource)`, `applySchemaDefaults(resource, refsByKey)`. All **eight detail views** derive read_only from schema (no hard-coded readonly lists). All **eight create views** preset form fields from `schema.defaults` where the key exists. Fallback when schema is missing was deferred (Occam’s razor). See **FIELD_MUTABILITY_API_PLAN.md** and **pbx3api/docs/SCHEMAS_ENDPOINT.md**. PANEL_PATTERN.md updated: useSchema is required for edit views; schema composable in shared components list.
+- **Field mutability (API-driven):** Done. API exposes **GET /schemas** (SchemaService + SchemaController) with `read_only`, `updateable`, and `defaults` per resource (extensions, queues, agents, routes, trunks, ivrs, inroutes, tenants, customapps). Frontend uses **useSchema** composable (fetch on first use, module-level cache; no Pinia): `ensureFetched()`, `getSchema(resource)`, `applySchemaDefaults(resource, refsByKey)`. All **nine detail views** (including Custom Apps) derive read_only from schema (no hard-coded readonly lists). All **nine create views** preset form fields from `schema.defaults` where the key exists. Fallback when schema is missing was deferred (Occam’s razor). See **FIELD_MUTABILITY_API_PLAN.md** and **pbx3api/docs/SCHEMAS_ENDPOINT.md**. PANEL_PATTERN.md updated: useSchema is required for edit views; schema composable in shared components list.
 
 ### Previous session (create-panel standardization + UX)
 

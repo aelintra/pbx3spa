@@ -303,7 +303,7 @@ Use the values the **API and schema expect**. For example: `active` and `moh` ar
 - **DeleteConfirmModal**: `src/components/DeleteConfirmModal.vue` — use for delete confirmation in list and detail views (do not copy inline modal markup).
 - **List normalization**: `src/utils/listResponse.js` — export `normalizeList`; use for all list fetches (do not define local normalizeList).
 - **Validation Composable**: `src/composables/useFormValidation.js`
-- **Schema Composable**: `src/composables/useSchema.js` — use in **Edit and Create views**. **(Edit)** Call `ensureFetched()` in onMounted before fetching the resource; use `getSchema('{resource}')` (e.g. `getSchema('extensions')`, `getSchema('ivrs')`) so for each identity/system field, if `getSchema('…').read_only.includes(fieldName)` render **FormReadonly**, else a disabled FormField with the same value. **(Create)** In onMounted, `await ensureFetched()` then `applySchemaDefaults('{resource}', { key: ref, … })` to preset form refs from `schema.defaults` (only non-null/empty defaults are applied). Resource names match the API: `extensions`, `queues`, `agents`, `routes`, `trunks`, `ivrs`, `inroutes`, `tenants`. New resources: add the resource to the API SchemaService mapping and controller `getUpdateableColumns()` so GET /schemas returns it. See `FIELD_MUTABILITY_API_PLAN.md` and `pbx3api/docs/SCHEMAS_ENDPOINT.md`.
+- **Schema Composable**: `src/composables/useSchema.js` — use in **Edit and Create views**. **(Edit)** Call `ensureFetched()` in onMounted before fetching the resource; use `getSchema('{resource}')` (e.g. `getSchema('extensions')`, `getSchema('ivrs')`) so for each identity/system field, if `getSchema('…').read_only.includes(fieldName)` render **FormReadonly**, else a disabled FormField with the same value. **(Create)** In onMounted, `await ensureFetched()` then `applySchemaDefaults('{resource}', { key: ref, … })` to preset form refs from `schema.defaults` (only non-null/empty defaults are applied). Resource names match the API: `extensions`, `queues`, `agents`, `routes`, `trunks`, `ivrs`, `inroutes`, `tenants`, `customapps`. New resources: add the resource to the API SchemaService mapping and controller `getUpdateableColumns()` so GET /schemas returns it. See `FIELD_MUTABILITY_API_PLAN.md` and `pbx3api/docs/SCHEMAS_ENDPOINT.md`.
 - **Validation Rules**: `src/utils/validation.js`
 
 ---
@@ -323,8 +323,9 @@ Use the values the **API and schema expect**. For example: `active` and `moh` ar
 - **Detail**: 
   - **Tenant-scoped resources** (Extension, Queue, Agent, Route, Ivr, Trunk, InboundRoute): `/{resource}s/:shortuid` (e.g., `/extensions/:shortuid`, `/queues/:shortuid`)
   - **Globally unique resources** (Tenant): `/{resource}s/:pkey` (e.g., `/tenants/:pkey`)
+  - **Custom Apps**: `/customapps/:pkey` (pkey = app name; id/shortuid set by API on create)
 
-**Important**: Use `shortuid` (not `pkey`) for tenant-scoped resources because `pkey` is only unique per tenant, not globally. Using `shortuid` ensures correct routing when the same `pkey` exists in multiple tenants.
+**Important**: Use `shortuid` (not `pkey`) for tenant-scoped resources because `pkey` is only unique per tenant, not globally. Using `shortuid` ensures correct routing when the same `pkey` exists in multiple tenants. Custom Apps use `pkey` in the URL for simplicity; the API still sets `id` and `shortuid` on create for updates.
 
 ### Router Configuration
 

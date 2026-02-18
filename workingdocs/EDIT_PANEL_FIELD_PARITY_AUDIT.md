@@ -19,6 +19,7 @@
 | **Agent** | ✅ Complete | **All** updateable fields: cluster, name, passwd, queue1–6. |
 | **Ivr** | ✅ Fixed | **All** updateable fields via form + buildIvrPayload; **greetnum** now sent as string (was integer). |
 | **InboundRoute** | ✅ Complete | **All** user-facing updateable fields: active, alertinfo, closeroute, cluster, description, disa, disapass, inprefix, moh, openroute, swoclip, tag, trunkname (z_updater not in UI). |
+| **Custom App** | ✅ Complete | **All** updateable fields: active, cluster, cname, description, directdial, extcode, span, striptags. Identity (pkey, shortuid, id) read-only. |
 
 ---
 
@@ -32,6 +33,7 @@
 - **Agent:** cluster, name, passwd, queue1–6.
 - **Ivr:** pkey, active, cname, name, alert0–11, description, cluster, greetnum, listenforext, option0–11, tag0–11, timeout, z_updater.
 - **InboundRoute:** active, alertinfo, closeroute, cluster, description, disa, disapass, inprefix, moh, openroute, swoclip, tag, trunkname, z_updater.
+- **Custom App:** active, cluster, cname, description, directdial, extcode, span, striptags.
 
 ---
 
