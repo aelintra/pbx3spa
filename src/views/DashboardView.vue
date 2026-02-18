@@ -204,7 +204,7 @@ onMounted(() => {
 
 <style scoped>
 .dashboard {
-  max-width: 56rem;
+  /* No max-width: single-screen panel fills content area (PANEL_PATTERN: Single-screen panels: use full content width) */
 }
 .dashboard h1 {
   margin: 0 0 1.25rem 0;

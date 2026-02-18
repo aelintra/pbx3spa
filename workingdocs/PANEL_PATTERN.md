@@ -53,6 +53,16 @@ Some resources are **singletons**: exactly one record per instance (e.g. system 
 
 **Reference:** `SysglobalsEditView.vue` (route `/sysglobals`, API `GET`/`PUT` `sysglobals`).
 
+### Single-screen panels: use full content width
+
+**Any panel that is a single screen** (no list → detail/create navigation) **must not set `max-width` on the view root.** Let the content fill the layout’s content area the same way list views do (e.g. Extensions list). This applies to:
+
+- **Singleton / edit-only panels** (e.g. System Globals).
+- **Home (dashboard)** — one view with PBX actions and system info.
+- **Utility / single-screen panels** (e.g. Firewall: one view with table + Raw toggle, no list/detail).
+
+**Requirement:** Do **not** add `max-width: 56rem` (or any other max-width) to the root container of such views. Detail and Create panels use `max-width: 52rem` for form readability; list views and single-screen panels do not, so their content can use the full width. Reference: `ExtensionsListView.vue` (no max-width on `.list-view`), `DashboardView.vue` (Home panel; no max-width on `.dashboard`), `FirewallView.vue` (no max-width on `.firewall-view`).
+
 ### Create panel: heading
 
 The Create panel main heading must be **"Create {resource}"** in singular, lowercase (e.g. **"Create route"**, **"Create tenant"**, **"Create IVR"**). Do not add extra parentheticals (e.g. avoid "Create route (ring group)"); keep it short.
@@ -84,6 +94,23 @@ The list panel main heading is typically the resource name plural (e.g. **"Tenan
 - The **primary key / name column** in the list must **not** be a link. Show the value as plain text (e.g. `{{ item.pkey }}`).
 - **Only the Edit action** (icon or button in the Edit column) must link to the Edit panel (`{resource}-detail`). Do not link the row item name to the edit panel.
 - Reference: `IvrsListView.vue` (name column is plain text; Edit icon is the only link to `ivr-detail`).
+
+### List view: Edit and Delete action icons
+
+**Use icons, not text, for the Edit and Delete columns.** This applies to all list views and to any table that has per-row delete (e.g. Firewall rules table).
+
+- **Edit column:** Pencil icon. Use a `<router-link>` (or `<a>`) with class `cell-link cell-link-icon`, `title="Edit"`, `aria-label="Edit"`, and an inner `<span class="action-icon" aria-hidden="true">` containing the pencil SVG. Reference: `ExtensionsListView.vue`, `IvrsListView.vue`.
+- **Delete column:** **Trash can icon (SVG), not emoji.** Use a `<button>` with class `cell-link cell-link-delete cell-link-icon`, `title="Delete"`, `aria-label="Delete"` (or row-specific e.g. "Delete rule 3"), and an inner `<span class="action-icon" aria-hidden="true">` containing the **standard trash SVG** below. This keeps list views and other tables (e.g. Firewall) consistent.
+
+**Standard trash can SVG** (use this for all Delete actions in list/table rows):
+
+```html
+<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+```
+
+**Header row:** In the Delete column header `<th>`, use `title="Delete"` and the same trash SVG inside `<span class="action-icon" aria-hidden="true">` so the column is clearly a delete action.
+
+**Styles:** Use the same classes so styling is consistent: `.cell-link-delete` (red `#dc2626`, no border, underline on hover), `.cell-link-icon` (padding), `.cell-link-delete:disabled` (opacity, cursor). Reference: `ExtensionsListView.vue`, `TrunksListView.vue`, `FirewallView.vue` (rules table).
 
 ### API field parity (editable fields)
 
@@ -389,6 +416,7 @@ When creating or refactoring a panel for a tenant-scoped resource:
 - [ ] List view links use `shortuid` with null guard: `router-link v-if="item.shortuid" :to="{ name: 'resource-detail', params: { shortuid: item.shortuid } }"`
 - [ ] List view shows placeholder when shortuid is null: `<span v-else class="cell-link cell-link-icon" title="No shortuid - cannot edit" style="opacity: 0.5;">—</span>`
 - [ ] Delete buttons in list views use `shortuid` with null guard: `button v-if="item.shortuid" @click="askConfirmDelete(item.shortuid)"`
+- [ ] Delete column uses **trash can icon (SVG)** and classes `cell-link cell-link-delete cell-link-icon`; see **List view: Edit and Delete action icons** for the standard SVG and header/row markup.
 - [ ] Delete buttons show placeholder when shortuid is null: `<span v-else class="cell-link cell-link-icon" title="No shortuid - cannot delete" style="opacity: 0.5;">—</span>`
 - [ ] Delete functions in list views use `shortuid`: `await getApiClient().delete(\`resources/${encodeURIComponent(shortuid)}\`)`
 - [ ] Detail view API calls use `shortuid`: `await getApiClient().get(\`resources/${encodeURIComponent(shortuid.value)}\`)`
@@ -879,8 +907,8 @@ function syncEditFromResource() {
         <tr>
           <!-- Sortable column headers -->
           <th class="th-sortable" @click="setSort('field')">Column Name</th>
-          <th class="th-actions" title="Edit">...</th>
-          <th class="th-actions" title="Delete">...</th>
+          <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><!-- pencil SVG --></span></th>
+          <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><!-- trash SVG (see List view: Edit and Delete action icons) --></span></th>
         </tr>
       </thead>
       <tbody>
@@ -890,26 +918,28 @@ function syncEditFromResource() {
             <!-- For tenant-scoped resources: -->
             <router-link v-if="item.shortuid" :to="{ name: '{resource}-detail', params: { shortuid: item.shortuid } }"
                          class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
-              <span class="action-icon" aria-hidden="true">✏️</span>
+              <span class="action-icon" aria-hidden="true"><!-- pencil SVG --></span>
             </router-link>
             <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot edit" style="opacity: 0.5;">—</span>
             
             <!-- For globally unique resources: -->
             <router-link :to="{ name: '{resource}-detail', params: { pkey: item.pkey } }" 
-                         class="cell-link cell-link-icon" title="Edit">
-              <!-- Edit icon -->
+                         class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
+              <span class="action-icon" aria-hidden="true"><!-- pencil SVG --></span>
             </router-link>
           </td>
           <td>
-            <!-- For tenant-scoped resources: -->
-            <button v-if="item.shortuid" @click="askConfirmDelete(item.shortuid)" class="cell-link cell-link-delete">
-              <span class="action-icon" aria-hidden="true">🗑️</span>
+            <!-- For tenant-scoped resources: use trash can SVG, class cell-link cell-link-delete cell-link-icon -->
+            <button v-if="item.shortuid" type="button" @click="askConfirmDelete(item.shortuid)"
+                    class="cell-link cell-link-delete cell-link-icon" title="Delete" aria-label="Delete">
+              <span class="action-icon" aria-hidden="true"><!-- standard trash SVG (see List view: Edit and Delete action icons) --></span>
             </button>
             <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot delete" style="opacity: 0.5;">—</span>
             
             <!-- For globally unique resources: -->
-            <button @click="askConfirmDelete(item.pkey)" class="cell-link cell-link-delete">
-              <!-- Delete icon -->
+            <button type="button" @click="askConfirmDelete(item.pkey)"
+                    class="cell-link cell-link-delete cell-link-icon" title="Delete" aria-label="Delete">
+              <span class="action-icon" aria-hidden="true"><!-- standard trash SVG --></span>
             </button>
           </td>
         </tr>
@@ -945,7 +975,7 @@ function syncEditFromResource() {
 - **Every list column** should be **sortable** (use `th-sortable`, `setSort`, `sortClass`).
 - **Include new columns in the filter** so the search box can match them; update the filter computed and the placeholder text (e.g. "Filter by name, Local UID, tenant, description, dialplan, path 1, or active").
 - **Numeric columns** (e.g. timeout, maxlen): implement **numeric sort** in the sort comparator (compare `Number(a[key])` vs `Number(b[key])`, treating NaN as lowest) so "10" sorts after "9". For non-numeric columns, string sort is fine.
-- Edit action (icon), Delete action (icon)
+- **Edit and Delete actions:** Use icons only (pencil for Edit, **trash can SVG** for Delete). See **List view: Edit and Delete action icons** for the standard trash SVG, classes (`cell-link cell-link-delete cell-link-icon`), and header/row markup.
 
 ### Inline edits in list views
 

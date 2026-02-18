@@ -18,11 +18,26 @@ const modalIsError = ref(false)
 
 const PROTO_OPTIONS = ['tcp', 'udp', 'icmp', 'all']
 
-// Shorewall rule: ACTION SOURCE DEST [PROTO ...] [ # comment]. Only treat # as comment when preceded by whitespace (so tokens like zone names aren't split).
-function parseRuleLine(line) {
+// Shorewall rule: ACTION SOURCE DEST [PROTO ...] [ # comment or #comment]. Inline: prefer \s+# (space before #); else if 9+ tokens and 9th is '#', use rest as description.
+function parseRuleLine(line, pendingCommentLine = null) {
+  let rulePart = line.trim()
+  let description = ''
+
   const commentMatch = line.match(/\s+#\s*(.*)$/)
-  const rulePart = commentMatch ? line.slice(0, commentMatch.index).trim() : line.trim()
-  const description = commentMatch ? commentMatch[1].trim() : ''
+  if (commentMatch) {
+    rulePart = line.slice(0, commentMatch.index).trim()
+    description = commentMatch[1].trim()
+  } else {
+    const tokens = rulePart.split(/\s+/).filter(Boolean)
+    if (tokens.length >= 9 && tokens[8] === '#') {
+      rulePart = tokens.slice(0, 8).join(' ')
+      description = tokens.slice(9).join(' ').trim()
+    }
+  }
+  if (description === '' && pendingCommentLine) {
+    description = pendingCommentLine.replace(/^#\s*/, '').trim()
+  }
+
   const tokens = rulePart.split(/\s+/).filter(Boolean)
   if (tokens.length < 3) return null
   const pad = (i) => tokens[i] ?? '-'
@@ -53,21 +68,44 @@ function parseLines(lines) {
   let preamble = []
   let postamble = []
   let seenRule = false
+  let pendingCommentLine = null
   for (const line of lines) {
     const trimmed = line.trimEnd()
-    if (trimmed === '' || trimmed.startsWith('#')) {
+    if (trimmed === '') {
+      if (pendingCommentLine) {
+        if (seenRule) postamble.push(pendingCommentLine)
+        else preamble.push(pendingCommentLine)
+        pendingCommentLine = null
+      }
       if (seenRule) postamble.push(trimmed)
       else preamble.push(trimmed)
       continue
     }
-    const rule = parseRuleLine(trimmed)
+    if (trimmed.startsWith('#')) {
+      if (seenRule) {
+        postamble.push(trimmed)
+      } else {
+        pendingCommentLine = trimmed
+      }
+      continue
+    }
+    const rule = parseRuleLine(trimmed, pendingCommentLine)
     if (rule) {
       seenRule = true
+      pendingCommentLine = null
       rules.push(rule)
     } else {
+      if (pendingCommentLine) {
+        preamble.push(pendingCommentLine)
+        pendingCommentLine = null
+      }
       if (seenRule) postamble.push(trimmed)
       else preamble.push(trimmed)
     }
+  }
+  if (pendingCommentLine) {
+    if (seenRule) postamble.push(pendingCommentLine)
+    else preamble.push(pendingCommentLine)
   }
   parsedRules.value = rules
   preambleLines.value = preamble
@@ -227,33 +265,18 @@ onMounted(load)
           <div class="rules-table-wrap">
           <div class="rules-table">
             <div class="rules-row rules-header">
-              <span class="rule-cell rule-action">Action</span>
               <span class="rule-cell rule-source">Source</span>
-              <span class="rule-cell rule-dest">Dest</span>
               <span class="rule-cell rule-proto">Proto</span>
               <span class="rule-cell rule-destports">Dest ports</span>
-              <span class="rule-cell rule-sport">Sport</span>
-              <span class="rule-cell rule-origdest">Orig dest</span>
               <span class="rule-cell rule-connrate">Conn rate</span>
               <span class="rule-cell rule-desc">Description</span>
-              <span class="rule-cell rule-del"></span>
+              <span class="rule-cell rule-del" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></span>
             </div>
             <div
               v-for="(r, idx) in parsedRules"
               :key="idx"
               class="rules-row rule-row-fields"
             >
-              <div class="rule-cell rule-action">
-                <FormField
-                  :id="'fw-action-' + idx"
-                  v-model="r.action"
-                  label="Action"
-                  type="text"
-                  hide-label
-                  placeholder="ACCEPT"
-                  aria-label="Action"
-                />
-              </div>
               <div class="rule-cell rule-source">
                 <FormField
                   :id="'fw-source-' + idx"
@@ -263,17 +286,6 @@ onMounted(load)
                   hide-label
                   placeholder="e.g. net"
                   aria-label="Source"
-                />
-              </div>
-              <div class="rule-cell rule-dest">
-                <FormField
-                  :id="'fw-dest-' + idx"
-                  v-model="r.dest"
-                  label="Dest"
-                  type="text"
-                  hide-label
-                  placeholder="e.g. $FW"
-                  aria-label="Dest"
                 />
               </div>
               <div class="rule-cell rule-proto">
@@ -295,28 +307,6 @@ onMounted(load)
                   hide-label
                   placeholder="e.g. 5060"
                   aria-label="Dest ports"
-                />
-              </div>
-              <div class="rule-cell rule-sport">
-                <FormField
-                  :id="'fw-sport-' + idx"
-                  v-model="r.sport"
-                  label="Sport"
-                  type="text"
-                  hide-label
-                  placeholder="-"
-                  aria-label="Sport"
-                />
-              </div>
-              <div class="rule-cell rule-origdest">
-                <FormField
-                  :id="'fw-origdest-' + idx"
-                  v-model="r.origdest"
-                  label="Orig dest"
-                  type="text"
-                  hide-label
-                  placeholder="-"
-                  aria-label="Orig dest"
                 />
               </div>
               <div class="rule-cell rule-connrate">
@@ -344,11 +334,12 @@ onMounted(load)
               <div class="rule-cell rule-del">
                 <button
                   type="button"
-                  class="btn-delete-row"
+                  class="cell-link cell-link-delete cell-link-icon"
+                  title="Delete rule"
                   :aria-label="'Delete rule ' + (idx + 1)"
                   @click="removeRule(idx)"
                 >
-                  Delete
+                  <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span>
                 </button>
               </div>
             </div>
@@ -398,7 +389,7 @@ onMounted(load)
 
 <style scoped>
 .firewall-view {
-  max-width: 56rem;
+  /* No max-width: fill content area like ExtensionsListView (list panels don't cap width) */
 }
 .firewall-view h1 {
   margin: 0 0 1rem 0;
@@ -430,6 +421,8 @@ onMounted(load)
   background: #f8fafc;
   border-radius: 0.5rem;
   border: 1px solid #e2e8f0;
+  width: 100%;
+  box-sizing: border-box;
 }
 .firewall-section-head {
   display: flex;
@@ -474,18 +467,23 @@ onMounted(load)
 .rules-table-wrap {
   overflow-x: auto;
   margin-bottom: 0.75rem;
+  width: 100%;
 }
 .rules-table {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  min-width: min-content;
+  width: 100%;
+  min-width: 0;
 }
 .rules-row {
   display: grid;
-  grid-template-columns: 8rem minmax(8rem, 1.5fr) minmax(4rem, 1fr) 5rem 6rem 4.5rem 5.5rem 5rem minmax(10rem, 2fr) 5rem;
+  /* Source fits net:192.168.112.244/32; Proto, Dest ports, Conn rate, Description, Delete */
+  grid-template-columns: minmax(15rem, 2fr) 5rem minmax(9rem, 2fr) minmax(5rem, 1fr) minmax(10rem, 3fr) 4rem;
   gap: 0.5rem 1rem;
   align-items: center;
+  min-width: 0;
+  width: 100%;
 }
 .rules-header {
   font-size: 0.75rem;
@@ -499,25 +497,38 @@ onMounted(load)
 .rule-cell {
   min-width: 0;
 }
+.rule-cell :deep(.form-input),
+.rule-cell :deep(.form-select) {
+  min-width: 0;
+  max-width: 100%;
+}
 .rule-row-fields .rule-cell :deep(.form-field) {
   margin-bottom: 0;
 }
 .rule-row-fields .rule-cell :deep(.form-select) {
   margin-bottom: 0;
 }
-.btn-delete-row {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.8125rem;
-  color: #64748b;
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.25rem;
+.cell-link-icon {
+  padding: 0.25rem;
+}
+.cell-link-icon .action-icon {
+  color: inherit;
+}
+.cell-link-delete {
+  color: #dc2626;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
   cursor: pointer;
 }
-.btn-delete-row:hover {
-  color: #dc2626;
-  border-color: #fecaca;
-  background: #fef2f2;
+.cell-link-delete:hover:not(:disabled) {
+  color: #b91c1c;
+  text-decoration: underline;
+}
+.cell-link-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 .rules-table-actions {
   margin-bottom: 0.5rem;
