@@ -30,7 +30,7 @@ This document defines the standardized pattern for all CRUD panels in the applic
 
 ## Panel structure (three panels only)
 
-Every resource has **exactly three panels**. Use the same structure as the IVR panels unless a resource explicitly overrides.
+Every resource has **exactly three panels** (List, Create, Edit) unless a resource explicitly overrides. Exceptions: **singleton / edit-only** (one panel), **two-panel list + detail** (no Create; e.g. Asterisk Files), and **single-screen** (one view, no list/detail). Use the same structure as the IVR panels for standard CRUD.
 
 ### The three panels
 
@@ -52,6 +52,41 @@ Some resources are **singletons**: exactly one record per instance (e.g. system 
 - **Everything else** follows the pattern: FormField/FormSelect/FormToggle, `form-fields`, section headings, API field parity, `firstErrorMessage`, toast, Escape to go back. Use `.edit-actions` and `.edit-actions-top` for the action row in both positions.
 
 **Reference:** `SysglobalsEditView.vue` (route `/sysglobals`, API `GET`/`PUT` `sysglobals`).
+
+### Two-panel (list + detail) panels (exception)
+
+Some resources have **exactly two panels**: a **list** and a **detail** (view/edit one item). There is **no Create panel** — items are created by the system or elsewhere (e.g. files on disk). Use this pattern when:
+
+- The resource is a fixed set of items (e.g. files in a directory) or list-from-API with view/edit but no create/delete from the UI.
+- Navigation should be **List ↔ Detail** only; no Create, and often no Delete (or delete is out of scope).
+
+**List panel (`{Resource}ListView.vue`):**
+
+- **Heading:** Resource name (e.g. "Asterisk Files").
+- **Toolbar:** Actions that apply to the list or system (e.g. **Commit**), not "Create". Omit Create if items are not user-created.
+- **Table:** Columns that identify each item (e.g. Filename, Read-only). At least one column is a **link to the detail** route (e.g. `router-link` with `name: 'resource-detail', params: { filename: row.filename }`).
+- **No Edit/Delete columns** if the detail view handles edit and there is no delete, or add an Edit link only if it matches your UX.
+- Use **toast** for success/error (e.g. after Commit). Use **firstErrorMessage** for load errors.
+
+**Detail panel (`{Resource}DetailView.vue`):**
+
+- **Back link:** A link at the top back to the list (e.g. "← Asterisk Files" with `router-link` to the list route). Do not rely only on browser back.
+- **Heading:** The current item identifier (e.g. filename, or name from API).
+- **Content:** View and/or edit the single item. For **read-only** items show content in a `<pre>` or disabled textarea and omit Save. For **editable** items show a form or textarea with **Save** and **Cancel** at top and bottom; **Delete** only if the API and product allow it.
+- **Detail view may be view-only for some items** (e.g. read-only files): same route, but no Save button and content not editable. Use API or flags (e.g. `readonly`) to decide.
+- **Max-width:** Use `max-width: 52rem` on the detail view root when the content is form-like (e.g. one large textarea) so it stays readable.
+
+**Routes:**
+
+- **List:** One route (e.g. `/asterisk-files`, name `asterisk-files`).
+- **Detail:** One route with a **param** (e.g. `/asterisk-files/:filename`, name `asterisk-file-detail`). The param identifies the item (filename, id, etc.). Use `encodeURIComponent` when building API URLs from the param if it can contain special characters.
+
+**API:**
+
+- **List:** `GET /resource` returns an array (or array wrapper) of items; each may include a **readonly** or similar flag for the detail view.
+- **Detail:** `GET /resource/{id}` returns the single item (e.g. content + readonly). `PUT /resource/{id}` to save when editable; reject with 403 or 422 for read-only items if the UI allows attempting save.
+
+**Reference:** `AsteriskFilesListView.vue` (list with Commit, table Filename + Read-only, link to detail), `AsteriskFileDetailView.vue` (back link, filename heading, textarea + Save/Cancel or read-only pre). Routes: `asterisk-files`, `asterisk-files/:filename`.
 
 ### Single-screen panels: use full content width
 

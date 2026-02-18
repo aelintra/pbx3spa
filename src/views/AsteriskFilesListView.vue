@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
@@ -9,6 +9,15 @@ const files = ref([])
 const loading = ref(true)
 const error = ref('')
 const committing = ref(false)
+const filterText = ref('')
+const filterInputRef = ref(null)
+
+const filteredFiles = computed(() => {
+  const list = files.value
+  const q = (filterText.value || '').trim().toLowerCase()
+  if (!q) return list
+  return list.filter((f) => (f.filename || '').toLowerCase().includes(q))
+})
 
 async function loadFiles() {
   loading.value = true
@@ -37,14 +46,17 @@ async function doCommit() {
   }
 }
 
-onMounted(loadFiles)
+onMounted(async () => {
+  await loadFiles()
+  filterInputRef.value?.focus()
+})
 </script>
 
 <template>
   <div class="astfiles-list-view">
     <header class="list-header">
-      <h1>Asterisk Files</h1>
-      <p class="toolbar">
+      <div class="list-header-row">
+        <h1>Asterisk Files</h1>
         <button
           type="button"
           class="action-btn action-btn-primary"
@@ -53,6 +65,16 @@ onMounted(loadFiles)
         >
           {{ committing ? 'Committing…' : 'Commit' }}
         </button>
+      </div>
+      <p class="toolbar toolbar-filter">
+        <input
+          ref="filterInputRef"
+          v-model="filterText"
+          type="search"
+          class="filter-input"
+          placeholder="Filter by filename"
+          aria-label="Filter by filename"
+        />
       </p>
     </header>
 
@@ -63,6 +85,7 @@ onMounted(loadFiles)
 
     <section v-else class="list-body">
       <div v-if="files.length === 0" class="empty">No files found in /etc/asterisk.</div>
+      <p v-else-if="filterText && filteredFiles.length === 0" class="empty">No files match the filter.</p>
       <table v-else class="table">
         <thead>
           <tr>
@@ -71,7 +94,7 @@ onMounted(loadFiles)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="f in files" :key="f.filename">
+          <tr v-for="f in filteredFiles" :key="f.filename">
             <td>
               <router-link :to="{ name: 'asterisk-file-detail', params: { filename: f.filename } }" class="cell-link">
                 {{ f.filename }}
@@ -93,8 +116,14 @@ onMounted(loadFiles)
 }
 .list-header {
   display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.list-header-row {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
 }
 .list-header h1 {
@@ -108,6 +137,21 @@ onMounted(loadFiles)
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+.toolbar-filter {
+  margin: 0;
+}
+.filter-input {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  min-width: 12rem;
+}
+.filter-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 .action-btn {
   padding: 0.375rem 0.75rem;
