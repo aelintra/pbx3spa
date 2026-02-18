@@ -221,20 +221,18 @@ async function confirmDelete() {
         <FormField
           v-if="!isReadOnly('cname')"
           id="cname"
+          v-model="editCname"
           label="Display name"
-          :model-value="editCname"
-          @update:modelValue="(v) => (editCname.value = v)"
         />
-        <FormReadonly v-else id="cname" label="Display name" :model-value="app?.cname ?? '—'" />
+        <FormReadonly v-else id="cname" label="Display name" :value="app?.cname ?? '—'" />
 
         <FormField
           v-if="!isReadOnly('description')"
           id="description"
+          v-model="editDescription"
           label="Description"
-          :model-value="editDescription"
-          @update:modelValue="(v) => (editDescription.value = v)"
         />
-        <FormReadonly v-else id="description" label="Description" :model-value="app?.description ?? '—'" />
+        <FormReadonly v-else id="description" label="Description" :value="app?.description ?? '—'" />
       </div>
 
       <h2 class="detail-heading">Settings</h2>
@@ -242,51 +240,46 @@ async function confirmDelete() {
         <FormSelect
           v-if="!isReadOnly('cluster')"
           id="cluster"
+          v-model="editCluster"
           label="Tenant"
-          :model-value="editCluster"
           :options="tenantOptionsForSelect"
           :disabled="tenantsLoading"
-          @update:modelValue="(v) => (editCluster.value = v)"
         />
-        <FormReadonly v-else id="cluster" label="Tenant" :model-value="resolveClusterToTenantPkey(app?.cluster) || '—'" />
+        <FormReadonly v-else id="cluster" label="Tenant" :value="resolveClusterToTenantPkey(app?.cluster) || '—'" />
 
         <FormToggle
           v-if="!isReadOnly('active')"
           id="active"
+          v-model="editActive"
           label="Active?"
-          :model-value="editActive"
-          @update:modelValue="(v) => (editActive.value = v)"
         />
-        <FormReadonly v-else id="active" label="Active?" :model-value="app?.active ?? '—'" />
+        <FormReadonly v-else id="active" label="Active?" :value="app?.active ?? '—'" />
 
         <FormSelect
           v-if="!isReadOnly('span')"
           id="span"
+          v-model="editSpan"
           label="Span"
-          :model-value="editSpan"
           :options="spanOptions"
-          @update:modelValue="(v) => (editSpan.value = v)"
         />
-        <FormReadonly v-else id="span" label="Span" :model-value="app?.span ?? '—'" />
+        <FormReadonly v-else id="span" label="Span" :value="app?.span ?? '—'" />
 
         <FormToggle
           v-if="!isReadOnly('striptags')"
           id="striptags"
+          v-model="editStriptags"
           label="Strip tags?"
-          :model-value="editStriptags"
-          @update:modelValue="(v) => (editStriptags.value = v)"
         />
-        <FormReadonly v-else id="striptags" label="Strip tags?" :model-value="app?.striptags ?? '—'" />
+        <FormReadonly v-else id="striptags" label="Strip tags?" :value="app?.striptags ?? '—'" />
 
         <FormField
           v-if="!isReadOnly('directdial')"
           id="directdial"
+          v-model="editDirectdial"
           label="Direct dial"
           type="number"
-          :model-value="editDirectdial"
-          @update:modelValue="(v) => (editDirectdial.value = v)"
         />
-        <FormReadonly v-else id="directdial" label="Direct dial" :model-value="app?.directdial ?? '—'" />
+        <FormReadonly v-else id="directdial" label="Direct dial" :value="app?.directdial ?? '—'" />
       </div>
 
       <h2 class="detail-heading">Code</h2>
@@ -294,13 +287,12 @@ async function confirmDelete() {
         <FormField
           v-if="!isReadOnly('extcode')"
           id="extcode"
+          v-model="editExtcode"
           label="Extension code"
-          :model-value="editExtcode"
           multiline
           :rows="16"
-          @update:modelValue="(v) => (editExtcode.value = v)"
         />
-        <FormReadonly v-else id="extcode" label="Extension code" :model-value="app?.extcode ?? ''" />
+        <FormReadonly v-else id="extcode" label="Extension code" :value="app?.extcode ?? ''" />
       </div>
 
       <div class="edit-actions">
