@@ -20,6 +20,9 @@ import AgentDetailView from '../views/AgentDetailView.vue'
 import RoutesListView from '../views/RoutesListView.vue'
 import RouteCreateView from '../views/RouteCreateView.vue'
 import RouteDetailView from '../views/RouteDetailView.vue'
+import CustomAppsListView from '../views/CustomAppsListView.vue'
+import CustomAppCreateView from '../views/CustomAppCreateView.vue'
+import CustomAppDetailView from '../views/CustomAppDetailView.vue'
 import IvrsListView from '../views/IvrsListView.vue'
 import IvrCreateView from '../views/IvrCreateView.vue'
 import IvrDetailView from '../views/IvrDetailView.vue'
@@ -72,6 +75,9 @@ const router = createRouter({
         { path: 'routes', name: 'routes', component: RoutesListView },
         { path: 'routes/new', name: 'route-create', component: RouteCreateView },
         { path: 'routes/:shortuid', name: 'route-detail', component: RouteDetailView },
+        { path: 'customapps', name: 'customapps', component: CustomAppsListView },
+        { path: 'customapps/new', name: 'customapp-create', component: CustomAppCreateView },
+        { path: 'customapps/:pkey', name: 'customapp-detail', component: CustomAppDetailView },
         { path: 'ivrs', name: 'ivrs', component: IvrsListView },
         { path: 'ivrs/new', name: 'ivr-create', component: IvrCreateView },
         { path: 'ivrs/:shortuid', name: 'ivr-detail', component: IvrDetailView },

@@ -172,3 +172,18 @@ export function validateGreetnum(value) {
   }
   return null
 }
+
+/**
+ * Validate Custom App name (pkey / context)
+ * alpha_dash: letters, numbers, underscore, hyphen (no spaces)
+ */
+export function validateCustomAppPkey(value) {
+  if (!value || !String(value).trim()) {
+    return 'App name is required'
+  }
+  const trimmed = String(value).trim()
+  if (!/^[0-9a-zA-Z_-]+$/.test(trimmed)) {
+    return 'Must be letters, numbers, underscore, or hyphen (no spaces)'
+  }
+  return null
+}
