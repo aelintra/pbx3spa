@@ -27,6 +27,7 @@ import InboundRoutesListView from '../views/InboundRoutesListView.vue'
 import InboundRouteCreateView from '../views/InboundRouteCreateView.vue'
 import InboundRouteDetailView from '../views/InboundRouteDetailView.vue'
 import SysglobalsEditView from '../views/SysglobalsEditView.vue'
+import FirewallView from '../views/FirewallView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import NoAccessView from '../views/NoAccessView.vue'
 import UsersListView from '../views/UsersListView.vue'
@@ -76,7 +77,8 @@ const router = createRouter({
         { path: 'inbound-routes/:shortuid', name: 'inbound-route-detail', component: InboundRouteDetailView },
         { path: 'users', name: 'users', component: UsersListView },
         { path: 'users/new', name: 'user-create', component: UserCreateView },
-        { path: 'sysglobals', name: 'sysglobals', component: SysglobalsEditView }
+        { path: 'sysglobals', name: 'sysglobals', component: SysglobalsEditView },
+        { path: 'firewall', name: 'firewall', component: FirewallView }
       ]
     }
   ]
