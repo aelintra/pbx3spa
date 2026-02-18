@@ -187,3 +187,18 @@ export function validateCustomAppPkey(value) {
   }
   return null
 }
+
+/**
+ * Validate Device template name (pkey)
+ * letters, numbers, underscore, hyphen (no spaces)
+ */
+export function validateDevicePkey(value) {
+  if (!value || !String(value).trim()) {
+    return 'Template name is required'
+  }
+  const trimmed = String(value).trim()
+  if (!/^[0-9a-zA-Z_-]+$/.test(trimmed)) {
+    return 'Must be letters, numbers, underscore, or hyphen (no spaces)'
+  }
+  return null
+}

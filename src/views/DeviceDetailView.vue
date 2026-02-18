@@ -1,0 +1,419 @@
+<script setup>
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { getApiClient } from '@/api/client'
+import { useSchema } from '@/composables/useSchema'
+import { useToastStore } from '@/stores/toast'
+import { firstErrorMessage } from '@/utils/formErrors'
+import FormField from '@/components/forms/FormField.vue'
+import FormReadonly from '@/components/forms/FormReadonly.vue'
+import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+
+const route = useRoute()
+const router = useRouter()
+const toast = useToastStore()
+const { getSchema, ensureFetched } = useSchema()
+
+function isReadOnly(field) {
+  return getSchema('devices')?.read_only?.includes(field) ?? false
+}
+
+const pkey = computed(() => route.params.pkey)
+const deviceRow = ref(null)
+const loading = ref(true)
+const error = ref('')
+const saving = ref(false)
+const saveError = ref('')
+const deleting = ref(false)
+const deleteError = ref('')
+const confirmDeleteOpen = ref(false)
+
+// Editable fields (v-model so ref stays in sync when building save payload)
+const editDesc = ref('')
+const editDevice = ref('')
+const editTechnology = ref('')
+const editProvision = ref('')
+const editOwner = ref('')
+const editBlfkeyname = ref('')
+const editBlfkeys = ref('')
+const editFkeys = ref('')
+const editPkeys = ref('')
+const editImageurl = ref('')
+const editLegacy = ref('')
+const editNoproxy = ref('')
+const editSipiaxfriend = ref('')
+const editTftpname = ref('')
+const editZapdevfixed = ref('')
+
+function parseIntOrNull(v) {
+  if (v == null) return null
+  const s = String(v).trim()
+  if (s === '') return null
+  const n = parseInt(s, 10)
+  return isNaN(n) ? null : n
+}
+
+async function fetchDevice() {
+  if (!pkey.value) return
+  loading.value = true
+  error.value = ''
+  saveError.value = ''
+  deleteError.value = ''
+  try {
+    deviceRow.value = await getApiClient().get(`devices/${encodeURIComponent(pkey.value)}`)
+    editDesc.value = deviceRow.value?.desc ?? ''
+    editDevice.value = deviceRow.value?.device ?? ''
+    editTechnology.value = deviceRow.value?.technology ?? ''
+    editProvision.value = deviceRow.value?.provision ?? ''
+    editOwner.value = deviceRow.value?.owner ?? ''
+    editBlfkeyname.value = deviceRow.value?.blfkeyname ?? ''
+    editBlfkeys.value = deviceRow.value?.blfkeys != null ? String(deviceRow.value.blfkeys) : ''
+    editFkeys.value = deviceRow.value?.fkeys != null ? String(deviceRow.value.fkeys) : ''
+    editPkeys.value = deviceRow.value?.pkeys != null ? String(deviceRow.value.pkeys) : ''
+    editImageurl.value = deviceRow.value?.imageurl ?? ''
+    editLegacy.value = deviceRow.value?.legacy ?? ''
+    editNoproxy.value = deviceRow.value?.noproxy ?? ''
+    editSipiaxfriend.value = deviceRow.value?.sipiaxfriend ?? ''
+    editTftpname.value = deviceRow.value?.tftpname ?? ''
+    editZapdevfixed.value = deviceRow.value?.zapdevfixed ?? ''
+  } catch (err) {
+    error.value = firstErrorMessage(err, 'Failed to load device')
+    deviceRow.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  await ensureFetched()
+  await fetchDevice()
+})
+watch(pkey, fetchDevice)
+
+function goBack() {
+  router.push({ name: 'devices' })
+}
+
+function cancelEdit() {
+  goBack()
+}
+
+function onKeydown(e) {
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    goBack()
+  }
+}
+
+async function saveEdit(e) {
+  e.preventDefault()
+  if (!pkey.value) return
+  saveError.value = ''
+  saving.value = true
+  try {
+    const body = {}
+    if (!isReadOnly('desc')) body.desc = editDesc.value?.trim() || null
+    if (!isReadOnly('device')) body.device = editDevice.value?.trim() || null
+    if (!isReadOnly('technology')) body.technology = editTechnology.value?.trim() || null
+    if (!isReadOnly('provision')) body.provision = editProvision.value?.trim() || null
+    if (!isReadOnly('owner')) body.owner = editOwner.value?.trim() || null
+    if (!isReadOnly('blfkeyname')) body.blfkeyname = editBlfkeyname.value?.trim() || null
+    if (!isReadOnly('blfkeys')) body.blfkeys = parseIntOrNull(editBlfkeys.value)
+    if (!isReadOnly('fkeys')) body.fkeys = parseIntOrNull(editFkeys.value)
+    if (!isReadOnly('pkeys')) body.pkeys = parseIntOrNull(editPkeys.value)
+    if (!isReadOnly('imageurl')) body.imageurl = editImageurl.value?.trim() || null
+    if (!isReadOnly('legacy')) body.legacy = editLegacy.value?.trim() || null
+    if (!isReadOnly('noproxy')) body.noproxy = editNoproxy.value?.trim() || null
+    if (!isReadOnly('sipiaxfriend')) body.sipiaxfriend = editSipiaxfriend.value?.trim() || null
+    if (!isReadOnly('tftpname')) body.tftpname = editTftpname.value?.trim() || null
+    if (!isReadOnly('zapdevfixed')) body.zapdevfixed = editZapdevfixed.value?.trim() || null
+    const cleaned = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined))
+    await getApiClient().put(`devices/${encodeURIComponent(pkey.value)}`, cleaned)
+    toast.show('Device saved')
+    await fetchDevice()
+  } catch (err) {
+    saveError.value = firstErrorMessage(err, 'Failed to save device')
+  } finally {
+    saving.value = false
+  }
+}
+
+function askDelete() {
+  confirmDeleteOpen.value = true
+}
+
+async function confirmDelete() {
+  if (!pkey.value) return
+  deleting.value = true
+  deleteError.value = ''
+  try {
+    await getApiClient().delete(`devices/${encodeURIComponent(pkey.value)}`)
+    toast.show('Device deleted')
+    confirmDeleteOpen.value = false
+    goBack()
+  } catch (err) {
+    deleteError.value = firstErrorMessage(err, 'Failed to delete device')
+  } finally {
+    deleting.value = false
+  }
+}
+</script>
+
+<template>
+  <div class="detail-view" @keydown="onKeydown">
+    <h1>Edit Device {{ pkey }}</h1>
+
+    <section v-if="loading || error" class="detail-states">
+      <p v-if="loading" class="loading">Loading device…</p>
+      <p v-else-if="error" class="error">{{ error }}</p>
+    </section>
+
+    <form v-else class="form edit-form" @submit="saveEdit">
+      <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>
+      <p v-if="deleteError" class="error" role="alert">{{ deleteError }}</p>
+
+      <div class="edit-actions edit-actions-top">
+        <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+        <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
+        <button type="button" class="action-delete" :disabled="deleting" @click="askDelete">
+          {{ deleting ? 'Deleting…' : 'Delete' }}
+        </button>
+      </div>
+
+      <h2 class="detail-heading">Identity</h2>
+      <div class="form-fields">
+        <FormReadonly id="edit-identity-pkey" label="Template name" :value="deviceRow?.pkey ?? pkey ?? '—'" class="readonly-identity" />
+        <FormField
+          v-if="!isReadOnly('desc')"
+          id="desc"
+          v-model="editDesc"
+          label="Description"
+        />
+        <FormReadonly v-else id="desc" label="Description" :value="deviceRow?.desc ?? '—'" />
+      </div>
+
+      <h2 class="detail-heading">Settings</h2>
+      <div class="form-fields">
+        <FormField
+          v-if="!isReadOnly('device')"
+          id="device"
+          v-model="editDevice"
+          label="Device"
+        />
+        <FormReadonly v-else id="device" label="Device" :value="deviceRow?.device ?? '—'" />
+
+        <FormField
+          v-if="!isReadOnly('technology')"
+          id="technology"
+          v-model="editTechnology"
+          label="Technology"
+        />
+        <FormReadonly v-else id="technology" label="Technology" :value="deviceRow?.technology ?? '—'" />
+
+        <FormField
+          v-if="!isReadOnly('provision')"
+          id="provision"
+          v-model="editProvision"
+          label="Provision"
+        />
+        <FormReadonly v-else id="provision" label="Provision" :value="deviceRow?.provision ?? '—'" />
+
+        <FormField
+          v-if="!isReadOnly('owner')"
+          id="owner"
+          v-model="editOwner"
+          label="Owner"
+        />
+        <FormReadonly v-else id="owner" label="Owner" :value="deviceRow?.owner ?? '—'" />
+      </div>
+
+      <h2 class="detail-heading">Advanced</h2>
+      <div class="form-fields">
+        <FormField
+          v-if="!isReadOnly('blfkeyname')"
+          id="blfkeyname"
+          v-model="editBlfkeyname"
+          label="BLF key name"
+        />
+        <FormReadonly v-else id="blfkeyname" label="BLF key name" :value="deviceRow?.blfkeyname ?? '—'" />
+
+        <FormField
+          v-if="!isReadOnly('blfkeys')"
+          id="blfkeys"
+          v-model="editBlfkeys"
+          label="BLF keys"
+          type="number"
+        />
+        <FormReadonly v-else id="blfkeys" label="BLF keys" :value="deviceRow?.blfkeys ?? '—'" />
+
+        <FormField
+          v-if="!isReadOnly('fkeys')"
+          id="fkeys"
+          v-model="editFkeys"
+          label="F keys"
+          type="number"
+        />
+        <FormReadonly v-else id="fkeys" label="F keys" :value="deviceRow?.fkeys ?? '—'" />
+
+        <FormField
+          v-if="!isReadOnly('pkeys')"
+          id="pkeys"
+          v-model="editPkeys"
+          label="P keys"
+          type="number"
+        />
+        <FormReadonly v-else id="pkeys" label="P keys" :value="deviceRow?.pkeys ?? '—'" />
+
+        <FormField
+          v-if="!isReadOnly('imageurl')"
+          id="imageurl"
+          v-model="editImageurl"
+          label="Image URL"
+        />
+        <FormReadonly v-else id="imageurl" label="Image URL" :value="deviceRow?.imageurl ?? '—'" />
+
+        <FormField
+          v-if="!isReadOnly('legacy')"
+          id="legacy"
+          v-model="editLegacy"
+          label="Legacy"
+        />
+        <FormReadonly v-else id="legacy" label="Legacy" :value="deviceRow?.legacy ?? '—'" />
+
+        <FormField
+          v-if="!isReadOnly('noproxy')"
+          id="noproxy"
+          v-model="editNoproxy"
+          label="No proxy"
+        />
+        <FormReadonly v-else id="noproxy" label="No proxy" :value="deviceRow?.noproxy ?? '—'" />
+
+        <FormField
+          v-if="!isReadOnly('sipiaxfriend')"
+          id="sipiaxfriend"
+          v-model="editSipiaxfriend"
+          label="SIP/IAX friend"
+        />
+        <FormReadonly v-else id="sipiaxfriend" label="SIP/IAX friend" :value="deviceRow?.sipiaxfriend ?? '—'" />
+
+        <FormField
+          v-if="!isReadOnly('tftpname')"
+          id="tftpname"
+          v-model="editTftpname"
+          label="TFTP name"
+        />
+        <FormReadonly v-else id="tftpname" label="TFTP name" :value="deviceRow?.tftpname ?? '—'" />
+
+        <FormField
+          v-if="!isReadOnly('zapdevfixed')"
+          id="zapdevfixed"
+          v-model="editZapdevfixed"
+          label="Zap dev fixed"
+        />
+        <FormReadonly v-else id="zapdevfixed" label="Zap dev fixed" :value="deviceRow?.zapdevfixed ?? '—'" />
+      </div>
+
+      <div class="edit-actions">
+        <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+        <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
+        <button type="button" class="action-delete" :disabled="deleting" @click="askDelete">
+          {{ deleting ? 'Deleting…' : 'Delete' }}
+        </button>
+      </div>
+    </form>
+
+    <DeleteConfirmModal
+      :show="confirmDeleteOpen"
+      title="Delete device template?"
+      :loading="deleting"
+      @confirm="confirmDelete"
+      @cancel="() => (confirmDeleteOpen = false)"
+    >
+      <template #body>
+        <p>Device template <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+      </template>
+    </DeleteConfirmModal>
+  </div>
+</template>
+
+<style scoped>
+.detail-view {
+  max-width: 52rem;
+}
+.loading,
+.error {
+  margin-top: 1rem;
+}
+.error {
+  color: #dc2626;
+}
+.detail-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.detail-heading:first-of-type {
+  margin-top: 0;
+}
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;
+}
+.edit-form {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.edit-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.edit-actions button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.edit-actions button[type="submit"] {
+  color: #fff;
+  background: #2563eb;
+  border: none;
+}
+.edit-actions button[type="submit"]:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.edit-actions button.secondary {
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+}
+.edit-actions button.secondary:hover {
+  background: #f1f5f9;
+}
+.edit-actions button.action-delete {
+  color: #fff;
+  background: #dc2626;
+  border: none;
+}
+.edit-actions button.action-delete:hover:not(:disabled) {
+  background: #b91c1c;
+}
+.edit-actions button.action-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.readonly-identity :deep(.form-field-label),
+.readonly-identity :deep(.form-readonly) {
+  color: #94a3b8;
+}
+.readonly-identity :deep(.form-readonly) {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+}
+</style>
