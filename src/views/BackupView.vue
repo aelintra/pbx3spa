@@ -833,6 +833,9 @@ onMounted(() => {
 .section-header {
   margin-top: 2rem;
   margin-bottom: 1rem;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .section-header:first-of-type {
@@ -844,6 +847,9 @@ onMounted(() => {
   font-weight: 700;
   color: #0f172a;
   margin: 0;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .backup-list {
