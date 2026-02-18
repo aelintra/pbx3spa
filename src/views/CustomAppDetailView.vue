@@ -211,7 +211,13 @@ async function confirmDelete() {
 
       <h2 class="detail-heading">Identity</h2>
       <div class="form-fields">
-        <FormReadonly id="pkey" label="App name" :model-value="String(pkey ?? '')" />
+        <FormReadonly id="edit-identity-pkey" label="App name" :value="app?.pkey ?? pkey ?? '—'" class="readonly-identity" />
+        <template v-if="app?.shortuid != null && app?.shortuid !== ''">
+          <FormReadonly id="edit-identity-shortuid" label="Local UID" :value="app.shortuid ?? '—'" class="readonly-identity" />
+        </template>
+        <template v-if="app?.id != null && app?.id !== ''">
+          <FormReadonly id="edit-identity-id" label="KSUID" :value="app.id ?? '—'" class="readonly-identity" />
+        </template>
         <FormField
           v-if="!isReadOnly('cname')"
           id="cname"
@@ -391,5 +397,13 @@ async function confirmDelete() {
 .edit-actions button.action-delete:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+.readonly-identity :deep(.form-field-label),
+.readonly-identity :deep(.form-readonly) {
+  color: #94a3b8;
+}
+.readonly-identity :deep(.form-readonly) {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
 }
 </style>

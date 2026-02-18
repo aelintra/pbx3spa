@@ -185,13 +185,12 @@ onMounted(async () => {
         <FormField
           id="pkey"
           ref="pkeyInput"
+          v-model="pkey"
           label="App name"
-          :model-value="pkey"
           required
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
           placeholder="e.g. MyApp_1"
-          @update:modelValue="(v) => (pkey.value = v)"
           @blur="pkeyValidation.onBlur"
         />
         <FormField
