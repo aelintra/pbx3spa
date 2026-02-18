@@ -93,7 +93,7 @@ onMounted(() => {
 
 <template>
   <div class="dashboard">
-    <h1>Home</h1>
+    <h1>Home Instance {{ display(sysnotes?.system?.instance) }}</h1>
 
     <section class="actions-section">
       <h2 class="detail-heading">Actions</h2>
@@ -206,7 +206,6 @@ onMounted(() => {
 }
 .dashboard h1 {
   margin: 0 0 1.25rem 0;
-  font-size: 1.5rem;
   font-weight: 600;
 }
 .actions-section,
