@@ -95,6 +95,40 @@ export function createApiClient(baseUrl, token) {
     return res.blob()
   }
 
+  async function postFile(path, formData) {
+    const url = path.startsWith('http') ? path : `${base}/${path.replace(/^\//, '')}`
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+        // Don't set Content-Type - browser will set it with boundary for FormData
+      },
+      body: formData
+    })
+    const text = await res.text()
+    if (!res.ok) {
+      if (res.status === 401) {
+        useAuthStore().clearCredentials()
+        window.location.replace('/login')
+      }
+      const err = new Error(`API POST ${path}: ${res.status} ${res.statusText}`)
+      err.status = res.status
+      err.response = text
+      try {
+        err.data = JSON.parse(text)
+      } catch {
+        err.data = null
+      }
+      throw err
+    }
+    if (!text) return null
+    try {
+      return JSON.parse(text)
+    } catch {
+      return text
+    }
+  }
+
   return {
     get(path, options) {
       return request('GET', path, options?.params)
@@ -104,6 +138,9 @@ export function createApiClient(baseUrl, token) {
     },
     post(path, body) {
       return request('POST', path, body)
+    },
+    postFile(path, formData) {
+      return postFile(path, formData)
     },
     put(path, body) {
       return request('PUT', path, body)

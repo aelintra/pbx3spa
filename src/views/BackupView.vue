@@ -1,0 +1,750 @@
+<template>
+  <div class="backup-view">
+    <h1>Backup/restore</h1>
+
+    <div class="backup-actions">
+      <button
+        type="button"
+        class="action-btn action-btn-primary"
+        :disabled="creatingBackup"
+        @click="createBackup"
+      >
+        {{ creatingBackup ? 'Creating…' : 'Create New Backup' }}
+      </button>
+      <label class="action-btn action-btn-secondary">
+        Upload Backup
+        <input
+          type="file"
+          accept=".zip"
+          style="display: none;"
+          :disabled="uploadingBackup"
+          @change="handleFileUpload"
+        />
+      </label>
+    </div>
+
+    <p v-if="actionMessage" class="action-message">{{ actionMessage }}</p>
+    <p v-if="actionError" class="error">{{ actionError }}</p>
+
+    <section v-if="loading" class="loading">
+      <span class="spinner"></span>
+      <span>Loading backups…</span>
+    </section>
+    <p v-else-if="error" class="error">{{ error }}</p>
+    <div v-else-if="!loading && backups.length === 0" class="empty">No backups found.</div>
+
+    <section v-else class="backup-list">
+      <table class="table">
+        <thead>
+          <tr>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('filename')" @click="setSort('filename')">
+              Filename
+            </th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('date')" @click="setSort('date')">
+              Date
+            </th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('size')" @click="setSort('size')">
+              Size
+            </th>
+            <th class="th-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="backup in sortedBackups" :key="backup.filename">
+            <td>{{ backup.filename }}</td>
+            <td>{{ backup.date }}</td>
+            <td>{{ formatBytes(backup.filesize) }}</td>
+            <td class="cell-actions">
+              <button
+                type="button"
+                class="cell-link cell-link-icon"
+                title="Download"
+                :disabled="downloadingBackup === backup.filename"
+                @click="downloadBackup(backup.filename)"
+              >
+                <span v-if="downloadingBackup === backup.filename" class="action-icon action-icon-spin" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                </span>
+                <span v-else class="action-icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                </span>
+              </button>
+              <button
+                type="button"
+                class="cell-link cell-link-icon"
+                title="Restore"
+                :disabled="restoringBackup === backup.filename"
+                @click="openRestoreModal(backup.filename)"
+              >
+                <span v-if="restoringBackup === backup.filename" class="action-icon action-icon-spin" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                </span>
+                <span v-else class="action-icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                </span>
+              </button>
+              <button
+                type="button"
+                class="cell-link cell-link-delete cell-link-icon"
+                title="Delete"
+                :disabled="deletingBackup === backup.filename"
+                @click="askConfirmDelete(backup.filename)"
+              >
+                <span v-if="deletingBackup === backup.filename" class="action-icon action-icon-spin" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                </span>
+                <span v-else class="action-icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                </span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Restore Modal -->
+    <Teleport to="body">
+      <div v-if="showRestoreModal" class="modal-backdrop" @click.self="closeRestoreModal">
+        <div class="modal modal-restore" role="dialog" aria-modal="true">
+          <h2 class="modal-title">Restore Backup</h2>
+          <div class="modal-body">
+            <p>Select what to restore from <strong>{{ restoreBackupName }}</strong>:</p>
+            <div class="restore-options">
+              <label class="restore-option">
+                <input
+                  type="checkbox"
+                  v-model="restoreOptions.restoredb"
+                />
+                <span>Database</span>
+              </label>
+              <label class="restore-option">
+                <input
+                  type="checkbox"
+                  v-model="restoreOptions.restoreasterisk"
+                />
+                <span>Asterisk files</span>
+              </label>
+              <label class="restore-option">
+                <input
+                  type="checkbox"
+                  v-model="restoreOptions.restoreusergreeting"
+                />
+                <span>User greetings</span>
+              </label>
+              <label class="restore-option">
+                <input
+                  type="checkbox"
+                  v-model="restoreOptions.restorevmail"
+                />
+                <span>Voicemail</span>
+              </label>
+              <label class="restore-option">
+                <input
+                  type="checkbox"
+                  v-model="restoreOptions.restoreldap"
+                />
+                <span>LDAP contacts</span>
+              </label>
+            </div>
+            <p v-if="restoreError" class="error">{{ restoreError }}</p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-cancel" @click="closeRestoreModal">
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="modal-btn modal-btn-primary"
+              :disabled="restoringBackup === restoreBackupName || !hasRestoreOptionSelected"
+              @click="confirmRestore"
+            >
+              {{ restoringBackup === restoreBackupName ? 'Restoring…' : 'Restore' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <DeleteConfirmModal
+      :show="!!confirmDeleteBackup"
+      title="Delete backup?"
+      :loading="deletingBackup === confirmDeleteBackup"
+      @confirm="confirmAndDeleteBackup(confirmDeleteBackup)"
+      @cancel="cancelConfirmDelete"
+    >
+      <template #body>
+        <p>Backup <strong>{{ confirmDeleteBackup }}</strong> will be permanently deleted. This cannot be undone.</p>
+      </template>
+    </DeleteConfirmModal>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
+import { firstErrorMessage } from '@/utils/formErrors'
+import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+
+const toast = useToastStore()
+const backups = ref([])
+const loading = ref(true)
+const error = ref('')
+const actionMessage = ref('')
+const actionError = ref('')
+const creatingBackup = ref(false)
+const uploadingBackup = ref(false)
+const downloadingBackup = ref(null)
+const restoringBackup = ref(null)
+const deletingBackup = ref(null)
+const confirmDeleteBackup = ref(null)
+const restoreError = ref('')
+
+const showRestoreModal = ref(false)
+const restoreBackupName = ref('')
+const restoreOptions = ref({
+  restoredb: false,
+  restoreasterisk: false,
+  restoreusergreeting: false,
+  restorevmail: false,
+  restoreldap: false
+})
+
+const sortKey = ref('date')
+const sortOrder = ref('desc') // 'asc' | 'desc'
+
+const hasRestoreOptionSelected = computed(() => {
+  return Object.values(restoreOptions.value).some(v => v === true)
+})
+
+function formatBytes(bytes) {
+  if (bytes == null) return '—'
+  const n = parseInt(bytes, 10)
+  if (isNaN(n)) return String(bytes)
+  if (n >= 1073741824) return (n / 1073741824).toFixed(1) + ' GB'
+  if (n >= 1048576) return (n / 1048576).toFixed(1) + ' MB'
+  if (n >= 1024) return (n / 1024).toFixed(1) + ' KB'
+  return n + ' B'
+}
+
+function sortValue(backup, key) {
+  if (key === 'filename') return backup.filename || ''
+  if (key === 'date') return backup.date || ''
+  if (key === 'size') return backup.filesize || 0
+  return ''
+}
+
+const sortedBackups = computed(() => {
+  const list = [...backups.value]
+  const key = sortKey.value
+  const order = sortOrder.value
+  list.sort((a, b) => {
+    let va = sortValue(a, key)
+    let vb = sortValue(b, key)
+    let cmp = 0
+    if (typeof va === 'string' && typeof vb === 'string') {
+      va = va.toLowerCase()
+      vb = vb.toLowerCase()
+    }
+    if (va < vb) cmp = -1
+    else if (va > vb) cmp = 1
+    return order === 'asc' ? cmp : -cmp
+  })
+  return list
+})
+
+function setSort(key) {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortOrder.value = 'asc'
+  }
+}
+
+function sortClass(key) {
+  if (sortKey.value !== key) return ''
+  return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
+}
+
+async function loadBackups() {
+  loading.value = true
+  error.value = ''
+  try {
+    const response = await getApiClient().get('backups')
+    // API returns object keyed by filename: { "pbx3bak.1234567890.zip": { filesize: ..., date: ... }, ... }
+    backups.value = Object.entries(response || {}).map(([filename, data]) => ({
+      filename,
+      filesize: data.filesize,
+      date: data.date
+    }))
+  } catch (err) {
+    error.value = firstErrorMessage(err, 'Failed to load backups')
+    backups.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+async function createBackup() {
+  if (!confirm('Create a new backup? This may take a moment.')) return
+  creatingBackup.value = true
+  actionError.value = ''
+  actionMessage.value = ''
+  try {
+    const response = await getApiClient().get('backups/new')
+    actionMessage.value = `Backup created: ${response.newbackupname || 'success'}`
+    toast.show('Backup created successfully')
+    await loadBackups()
+  } catch (err) {
+    const msg = firstErrorMessage(err, 'Failed to create backup')
+    actionError.value = msg
+    toast.show(msg, 'error')
+  } finally {
+    creatingBackup.value = false
+  }
+}
+
+async function handleFileUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  if (!file.name.toLowerCase().endsWith('.zip')) {
+    actionError.value = 'Please select a .zip file'
+    return
+  }
+  uploadingBackup.value = true
+  actionError.value = ''
+  actionMessage.value = ''
+  try {
+    const formData = new FormData()
+    formData.append('uploadzip', file)
+    await getApiClient().postFile('backups', formData)
+    actionMessage.value = `Backup uploaded: ${file.name}`
+    toast.show('Backup uploaded successfully')
+    await loadBackups()
+  } catch (err) {
+    const msg = firstErrorMessage(err, 'Failed to upload backup')
+    actionError.value = msg
+    toast.show(msg, 'error')
+  } finally {
+    uploadingBackup.value = false
+    // Reset file input
+    event.target.value = ''
+  }
+}
+
+async function downloadBackup(filename) {
+  downloadingBackup.value = filename
+  try {
+    const blob = await getApiClient().getBlob(`backups/${filename}`)
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+    toast.show('Backup download started')
+  } catch (err) {
+    const msg = firstErrorMessage(err, 'Failed to download backup')
+    toast.show(msg, 'error')
+  } finally {
+    downloadingBackup.value = null
+  }
+}
+
+function openRestoreModal(filename) {
+  restoreBackupName.value = filename
+  restoreOptions.value = {
+    restoredb: false,
+    restoreasterisk: false,
+    restoreusergreeting: false,
+    restorevmail: false,
+    restoreldap: false
+  }
+  restoreError.value = ''
+  showRestoreModal.value = true
+}
+
+function closeRestoreModal() {
+  showRestoreModal.value = false
+  restoreBackupName.value = ''
+  restoreError.value = ''
+}
+
+async function confirmRestore() {
+  if (!hasRestoreOptionSelected.value) {
+    restoreError.value = 'Please select at least one option to restore'
+    return
+  }
+  if (!confirm(`Restore selected items from ${restoreBackupName.value}? This will overwrite existing data.`)) {
+    return
+  }
+  restoringBackup.value = restoreBackupName.value
+  restoreError.value = ''
+  try {
+    // Convert boolean values to 1/0 for API
+    const payload = {}
+    for (const [key, value] of Object.entries(restoreOptions.value)) {
+      payload[key] = value ? 1 : 0
+    }
+    await getApiClient().put(`backups/${restoreBackupName.value}`, payload)
+    toast.show('Backup restored successfully')
+    closeRestoreModal()
+    await loadBackups()
+  } catch (err) {
+    const msg = firstErrorMessage(err, 'Failed to restore backup')
+    restoreError.value = msg
+    toast.show(msg, 'error')
+  } finally {
+    restoringBackup.value = null
+  }
+}
+
+function askConfirmDelete(filename) {
+  confirmDeleteBackup.value = filename
+}
+
+function cancelConfirmDelete() {
+  confirmDeleteBackup.value = null
+}
+
+async function confirmAndDeleteBackup(filename) {
+  deletingBackup.value = filename
+  try {
+    await getApiClient().delete(`backups/${filename}`)
+    toast.show('Backup deleted successfully')
+    cancelConfirmDelete()
+    await loadBackups()
+  } catch (err) {
+    const msg = firstErrorMessage(err, 'Failed to delete backup')
+    toast.show(msg, 'error')
+    cancelConfirmDelete()
+  } finally {
+    deletingBackup.value = null
+  }
+}
+
+onMounted(() => {
+  loadBackups()
+})
+</script>
+
+<style scoped>
+.backup-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.backup-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #475569;
+  transition: all 0.15s;
+}
+
+.action-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.action-btn-primary {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.action-btn-primary:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.action-btn-secondary {
+  background: white;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.action-message {
+  color: #059669;
+  margin: 0;
+}
+
+.error {
+  color: #dc2626;
+  margin: 0;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.empty {
+  color: #64748b;
+  margin: 0;
+}
+
+.backup-list {
+  margin: 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.table th,
+.table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table th {
+  font-weight: 600;
+  color: #475569;
+  background: #f8fafc;
+}
+
+.cell-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.th-sortable::before {
+  content: '\21C5';
+  font-size: 0.7em;
+  color: #94a3b8;
+  margin-left: 0.2em;
+  font-weight: normal;
+}
+
+.th-sortable.sort-asc::before,
+.th-sortable.sort-desc::before {
+  content: none;
+}
+
+.th-sortable:hover {
+  background: #f1f5f9;
+}
+
+.th-sortable.sort-asc::after {
+  content: ' \2191';
+  font-size: 0.75em;
+  color: #64748b;
+}
+
+.th-sortable.sort-desc::after {
+  content: ' \2193';
+  font-size: 0.75em;
+  color: #64748b;
+}
+
+.th-actions {
+  cursor: default;
+  white-space: nowrap;
+}
+
+.cell-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  text-decoration: none;
+  border-radius: 0.25rem;
+  transition: all 0.15s;
+}
+
+.cell-link:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.cell-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cell-link-delete {
+  color: #dc2626;
+}
+
+.cell-link-delete:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.cell-link-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+}
+
+.action-icon-spin {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Restore Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 1.5rem;
+  max-width: 28rem;
+  width: 100%;
+}
+
+.modal-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.modal-body {
+  margin: 0 0 1.25rem 0;
+  font-size: 0.9375rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.modal-body :deep(strong) {
+  color: #0f172a;
+}
+
+.restore-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.restore-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  transition: background 0.15s;
+}
+
+.restore-option:hover {
+  background: #f8fafc;
+}
+
+.restore-option input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+.restore-option span {
+  flex: 1;
+  user-select: none;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  border: none;
+}
+
+.modal-btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.modal-btn-cancel:hover {
+  background: #e2e8f0;
+}
+
+.modal-btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.modal-btn-primary:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.modal-btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+</style>

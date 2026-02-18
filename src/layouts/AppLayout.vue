@@ -46,6 +46,7 @@ async function logout() {
           <router-link to="/users" class="nav-link" active-class="active">Users</router-link>
           <router-link to="/sysglobals" class="nav-link" active-class="active">System Globals</router-link>
           <router-link to="/firewall" class="nav-link" active-class="active">Firewall</router-link>
+          <router-link to="/backup" class="nav-link" active-class="active">Backup</router-link>
         </template>
         <template v-else>
           <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">Home</router-link>
