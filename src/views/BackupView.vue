@@ -871,6 +871,7 @@ onMounted(() => {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9375rem;
+  table-layout: fixed;
 }
 
 .table th,
@@ -884,6 +885,27 @@ onMounted(() => {
   font-weight: 600;
   color: #475569;
   background: #f8fafc;
+}
+
+/* Fixed column widths to ensure alignment between Backups and Snapshots tables */
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  width: 40%;
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: 30%;
+}
+
+.table th:nth-child(3),
+.table td:nth-child(3) {
+  width: 15%;
+}
+
+.table th:nth-child(4),
+.table td:nth-child(4) {
+  width: 15%;
 }
 
 .cell-actions {
