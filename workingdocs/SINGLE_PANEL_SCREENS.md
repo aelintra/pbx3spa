@@ -6,7 +6,7 @@
 
 ---
 
-## Panel list (10 screens)
+## Panel list (11 screens)
 
 | # | Panel name       | SARK source    | pbx3api status | Notes |
 |---|------------------|----------------|----------------|-------|
@@ -15,11 +15,12 @@
 | 3 | **IPv4 Firewall**| Shorewall UI   | ✅ firewalls/ipv4 (GET, POST, PUT restart) | Single screen: load rules array, edit (e.g. textarea or line-by-line), Save, Restart. |
 | 4 | **IPv6 Firewall**| Shorewall6 UI  | ✅ firewalls/ipv6 (GET, POST, PUT restart) | Same as IPv4, separate endpoint. |
 | 5 | **Backup/restore** | sarkbackup   | ✅ backups + snapshots APIs | **Done.** Single panel with two cascaded sections: Backups (create, upload, download, restore with options, delete) and Snapshots (create, upload, download, restore DB only, delete). Route `/backup`, view `BackupView.vue`. API: backups + snapshots; both use syshelper for privileged file ops. See PANEL_PATTERN § Single-screen panels with cascaded sections. |
-| 6 | **Certificates** | sarkcert       | ❌ No API      | Customer SSL cert install/remove (pem/key). pbx3 owns Let's Encrypt; this is for custom/customer certs. |
-| 7 | **Certs (3rd Party)** | sark3pcerts | ❌ No API   | 3rd-party cert bundle (e.g. /etc/ssl/3pcerts/3pcerts.pem): view, save, remove. |
-| 8 | **Factory Reset** | sarkfreset    | ❌ No API      | Password confirm + checkboxes (reset db, backups, snaps, greets, vmail, cdrs, logs, firewall, dhcp, host, ssh, ldap). Destructive; needs secure API. |
-| 9 | **Logs**         | sarklog        | ⚠️ Partial     | **API:** GET /logs (returns minimal `{ "Log": "Master.csv" }`), GET /logs/cdrs{limit} (CDR CSV download). **SARK:** Table of log files (asterisk/messages, asterisk/full, cdr-csv/Master.csv, queue_log, syslog, shorewall.log, siplog, mail.log, fail2ban.log, auth.log) with View tail + Download. To match SARK: extend API (list log files, tail endpoint, download per file) or ship with CDR only first. |
-| 10| **SIP PCAP logs** | sarkpcap       | ❌ No API      | **SARK:** List files in /var/log/siplog (name, size, modified, Download). SIP capture files. API would need: list siplog files, download file. |
+| 6 | **Asterisk Files** | sarkedit     | ✅ astfiles (GET list, GET show, PUT update) | **Done.** Two-panel: list (table Filename + Read-only, Commit button) and detail (view/edit one file; read-only files view-only, others editable). Routes `/asterisk-files`, `/asterisk-files/:filename`. Hardcoded read-only list in API. See DATA_DRIVEN_LIST_POLICY_PROJECT.md for future data-driven approach. |
+| 7 | **Certificates** | sarkcert       | ❌ No API      | Customer SSL cert install/remove (pem/key). pbx3 owns Let's Encrypt; this is for custom/customer certs. |
+| 8 | **Certs (3rd Party)** | sark3pcerts | ❌ No API   | 3rd-party cert bundle (e.g. /etc/ssl/3pcerts/3pcerts.pem): view, save, remove. |
+| 9 | **Factory Reset** | sarkfreset    | ❌ No API      | Password confirm + checkboxes (reset db, backups, snaps, greets, vmail, cdrs, logs, firewall, dhcp, host, ssh, ldap). Destructive; needs secure API. |
+| 10| **Logs**         | sarklog        | ⚠️ Partial     | **API:** GET /logs (returns minimal `{ "Log": "Master.csv" }`), GET /logs/cdrs{limit} (CDR CSV download). **SARK:** Table of log files (asterisk/messages, asterisk/full, cdr-csv/Master.csv, queue_log, syslog, shorewall.log, siplog, mail.log, fail2ban.log, auth.log) with View tail + Download. To match SARK: extend API (list log files, tail endpoint, download per file) or ship with CDR only first. |
+| 11| **SIP PCAP logs** | sarkpcap       | ❌ No API      | **SARK:** List files in /var/log/siplog (name, size, modified, Download). SIP capture files. API would need: list siplog files, download file. |
 
 ---
 
@@ -39,6 +40,7 @@
 | Home / Globals | `sarkglobal/view.php` |
 | Network / IP  | `sarknetwork/view.php` |
 | Backup/restore| `sarkbackup/view.php` |
+| Asterisk Files | `sarkedit/view.php` |
 | Certificates  | `sarkcert/view.php` |
 | 3rd Party Certs | `sark3pcerts/view.php` |
 | Factory Reset | `sarkfreset/view.php` |
@@ -53,7 +55,7 @@ Firewall: SARK uses Shorewall config files; pbx3api FirewallController reads/wri
 
 - **Home:** `/` (DashboardView) — already default.
 - **Single panels** (suggested paths):  
-  `/ip-settings`, `/firewall/ipv4`, `/firewall/ipv6`, `/backup`, `/certificates`, `/certificates/3rd-party`, `/factory-reset`, `/logs`, `/logs/sip-pcap`.
+  `/ip-settings`, `/firewall/ipv4`, `/firewall/ipv6`, `/asterisk-files`, `/backup`, `/certificates`, `/certificates/3rd-party`, `/factory-reset`, `/logs`, `/logs/sip-pcap`.
 
 Nav: Either group under "System" or "Single panels" in the sidebar, or add each to the main nav. Current nav has Home, Tenants, Extensions, … System Globals; we can add a subsection or separate links for Firewall, Backup, Logs, etc.
 

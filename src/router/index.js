@@ -29,6 +29,8 @@ import InboundRouteDetailView from '../views/InboundRouteDetailView.vue'
 import SysglobalsEditView from '../views/SysglobalsEditView.vue'
 import FirewallView from '../views/FirewallView.vue'
 import BackupView from '../views/BackupView.vue'
+import AsteriskFilesListView from '../views/AsteriskFilesListView.vue'
+import AsteriskFileDetailView from '../views/AsteriskFileDetailView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import NoAccessView from '../views/NoAccessView.vue'
 import UsersListView from '../views/UsersListView.vue'
@@ -80,7 +82,9 @@ const router = createRouter({
         { path: 'users/new', name: 'user-create', component: UserCreateView },
         { path: 'sysglobals', name: 'sysglobals', component: SysglobalsEditView },
         { path: 'firewall', name: 'firewall', component: FirewallView },
-        { path: 'backup', name: 'backup', component: BackupView }
+        { path: 'backup', name: 'backup', component: BackupView },
+        { path: 'asterisk-files', name: 'asterisk-files', component: AsteriskFilesListView },
+        { path: 'asterisk-files/:filename', name: 'asterisk-file-detail', component: AsteriskFileDetailView }
       ]
     }
   ]
