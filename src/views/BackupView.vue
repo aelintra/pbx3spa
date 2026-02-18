@@ -3,215 +3,219 @@
     <h1>Backup/restore</h1>
 
     <!-- Backups Section -->
-    <div class="section-header">
-      <h2>Backups</h2>
-    </div>
+    <section class="backup-section">
+      <div class="section-header">
+        <h2>Backups</h2>
+      </div>
 
-    <div class="backup-actions">
-      <button
-        type="button"
-        class="action-btn action-btn-primary"
-        :disabled="creatingBackup"
-        @click="createBackup"
-      >
-        {{ creatingBackup ? 'Creating…' : 'Create New Backup' }}
-      </button>
-      <label class="action-btn action-btn-secondary">
-        Upload Backup
-        <input
-          type="file"
-          accept=".zip"
-          style="display: none;"
-          :disabled="uploadingBackup"
-          @change="handleFileUpload"
-        />
-      </label>
-    </div>
+      <div class="backup-actions">
+        <button
+          type="button"
+          class="action-btn action-btn-primary"
+          :disabled="creatingBackup"
+          @click="createBackup"
+        >
+          {{ creatingBackup ? 'Creating…' : 'Create New Backup' }}
+        </button>
+        <label class="action-btn action-btn-secondary">
+          Upload Backup
+          <input
+            type="file"
+            accept=".zip"
+            style="display: none;"
+            :disabled="uploadingBackup"
+            @change="handleFileUpload"
+          />
+        </label>
+      </div>
 
-    <p v-if="actionMessage" class="action-message">{{ actionMessage }}</p>
-    <p v-if="actionError" class="error">{{ actionError }}</p>
+      <p v-if="actionMessage" class="action-message">{{ actionMessage }}</p>
+      <p v-if="actionError" class="error">{{ actionError }}</p>
 
-    <section v-if="loading" class="loading">
-      <span class="spinner"></span>
-      <span>Loading backups…</span>
-    </section>
-    <p v-else-if="error" class="error">{{ error }}</p>
-    <div v-else-if="!loading && backups.length === 0" class="empty">No backups found.</div>
+      <div v-if="loading" class="loading">
+        <span class="spinner"></span>
+        <span>Loading backups…</span>
+      </div>
+      <p v-else-if="error" class="error">{{ error }}</p>
+      <div v-else-if="!loading && backups.length === 0" class="empty">No backups found.</div>
 
-    <section v-else class="backup-list">
-      <table class="table">
-        <thead>
-          <tr>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('filename')" @click="setSort('filename')">
-              Filename
-            </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('date')" @click="setSort('date')">
-              Date
-            </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('size')" @click="setSort('size')">
-              Size
-            </th>
-            <th class="th-actions">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="backup in sortedBackups" :key="backup.filename">
-            <td>{{ backup.filename }}</td>
-            <td>{{ backup.date }}</td>
-            <td>{{ formatBytes(backup.filesize) }}</td>
-            <td class="cell-actions">
-              <button
-                type="button"
-                class="cell-link cell-link-icon"
-                title="Download"
-                :disabled="downloadingBackup === backup.filename"
-                @click="downloadBackup(backup.filename)"
-              >
-                <span v-if="downloadingBackup === backup.filename" class="action-icon action-icon-spin" aria-hidden="true">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
-                </span>
-                <span v-else class="action-icon" aria-hidden="true">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                </span>
-              </button>
-              <button
-                type="button"
-                class="cell-link cell-link-icon"
-                title="Restore"
-                :disabled="restoringBackup === backup.filename"
-                @click="openRestoreModal(backup.filename)"
-              >
-                <span v-if="restoringBackup === backup.filename" class="action-icon action-icon-spin" aria-hidden="true">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
-                </span>
-                <span v-else class="action-icon" aria-hidden="true">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                </span>
-              </button>
-              <button
-                type="button"
-                class="cell-link cell-link-delete cell-link-icon"
-                title="Delete"
-                :disabled="deletingBackup === backup.filename"
-                @click="askConfirmDelete(backup.filename)"
-              >
-                <span v-if="deletingBackup === backup.filename" class="action-icon action-icon-spin" aria-hidden="true">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
-                </span>
-                <span v-else class="action-icon" aria-hidden="true">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                </span>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else class="backup-list">
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="th-sortable" title="Click to sort" :class="sortClass('filename')" @click="setSort('filename')">
+                Filename
+              </th>
+              <th class="th-sortable" title="Click to sort" :class="sortClass('date')" @click="setSort('date')">
+                Date
+              </th>
+              <th class="th-sortable" title="Click to sort" :class="sortClass('size')" @click="setSort('size')">
+                Size
+              </th>
+              <th class="th-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="backup in sortedBackups" :key="backup.filename">
+              <td>{{ backup.filename }}</td>
+              <td>{{ backup.date }}</td>
+              <td>{{ formatBytes(backup.filesize) }}</td>
+              <td class="cell-actions">
+                <button
+                  type="button"
+                  class="cell-link cell-link-icon"
+                  title="Download"
+                  :disabled="downloadingBackup === backup.filename"
+                  @click="downloadBackup(backup.filename)"
+                >
+                  <span v-if="downloadingBackup === backup.filename" class="action-icon action-icon-spin" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                  </span>
+                  <span v-else class="action-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="cell-link cell-link-icon"
+                  title="Restore"
+                  :disabled="restoringBackup === backup.filename"
+                  @click="openRestoreModal(backup.filename)"
+                >
+                  <span v-if="restoringBackup === backup.filename" class="action-icon action-icon-spin" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                  </span>
+                  <span v-else class="action-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="cell-link cell-link-delete cell-link-icon"
+                  title="Delete"
+                  :disabled="deletingBackup === backup.filename"
+                  @click="askConfirmDelete(backup.filename)"
+                >
+                  <span v-if="deletingBackup === backup.filename" class="action-icon action-icon-spin" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                  </span>
+                  <span v-else class="action-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                  </span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <!-- Snapshots Section -->
-    <div class="section-header">
-      <h2>Snapshots</h2>
-    </div>
+    <section class="backup-section">
+      <div class="section-header">
+        <h2>Snapshots</h2>
+      </div>
 
-    <div class="backup-actions">
-      <button
-        type="button"
-        class="action-btn action-btn-primary"
-        :disabled="creatingSnapshot"
-        @click="createSnapshot"
-      >
-        {{ creatingSnapshot ? 'Creating…' : 'Create New Snapshot' }}
-      </button>
-      <label class="action-btn action-btn-secondary">
-        Upload Snapshot
-        <input
-          type="file"
-          accept=".db"
-          style="display: none;"
-          :disabled="uploadingSnapshot"
-          @change="handleSnapshotUpload"
-        />
-      </label>
-    </div>
+      <div class="backup-actions">
+        <button
+          type="button"
+          class="action-btn action-btn-primary"
+          :disabled="creatingSnapshot"
+          @click="createSnapshot"
+        >
+          {{ creatingSnapshot ? 'Creating…' : 'Create New Snapshot' }}
+        </button>
+        <label class="action-btn action-btn-secondary">
+          Upload Snapshot
+          <input
+            type="file"
+            accept=".db"
+            style="display: none;"
+            :disabled="uploadingSnapshot"
+            @change="handleSnapshotUpload"
+          />
+        </label>
+      </div>
 
-    <p v-if="snapshotActionMessage" class="action-message">{{ snapshotActionMessage }}</p>
-    <p v-if="snapshotActionError" class="error">{{ snapshotActionError }}</p>
+      <p v-if="snapshotActionMessage" class="action-message">{{ snapshotActionMessage }}</p>
+      <p v-if="snapshotActionError" class="error">{{ snapshotActionError }}</p>
 
-    <section v-if="snapshotsLoading" class="loading">
-      <span class="spinner"></span>
-      <span>Loading snapshots…</span>
-    </section>
-    <p v-else-if="snapshotsError" class="error">{{ snapshotsError }}</p>
-    <div v-else-if="!snapshotsLoading && snapshots.length === 0" class="empty">No snapshots found.</div>
+      <div v-if="snapshotsLoading" class="loading">
+        <span class="spinner"></span>
+        <span>Loading snapshots…</span>
+      </div>
+      <p v-else-if="snapshotsError" class="error">{{ snapshotsError }}</p>
+      <div v-else-if="!snapshotsLoading && snapshots.length === 0" class="empty">No snapshots found.</div>
 
-    <section v-else class="backup-list">
-      <table class="table">
-        <thead>
-          <tr>
-            <th class="th-sortable" title="Click to sort" :class="snapshotSortClass('filename')" @click="setSnapshotSort('filename')">
-              Filename
-            </th>
-            <th class="th-sortable" title="Click to sort" :class="snapshotSortClass('date')" @click="setSnapshotSort('date')">
-              Date
-            </th>
-            <th class="th-sortable" title="Click to sort" :class="snapshotSortClass('size')" @click="setSnapshotSort('size')">
-              Size
-            </th>
-            <th class="th-actions">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="snapshot in sortedSnapshots" :key="snapshot.filename">
-            <td>{{ snapshot.filename }}</td>
-            <td>{{ snapshot.date }}</td>
-            <td>{{ formatBytes(snapshot.filesize) }}</td>
-            <td class="cell-actions">
-              <button
-                type="button"
-                class="cell-link cell-link-icon"
-                title="Download"
-                :disabled="downloadingSnapshot === snapshot.filename"
-                @click="downloadSnapshot(snapshot.filename)"
-              >
-                <span v-if="downloadingSnapshot === snapshot.filename" class="action-icon action-icon-spin" aria-hidden="true">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
-                </span>
-                <span v-else class="action-icon" aria-hidden="true">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                </span>
-              </button>
-              <button
-                type="button"
-                class="cell-link cell-link-icon"
-                title="Restore"
-                :disabled="restoringSnapshot === snapshot.filename"
-                @click="restoreSnapshot(snapshot.filename)"
-              >
-                <span v-if="restoringSnapshot === snapshot.filename" class="action-icon action-icon-spin" aria-hidden="true">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
-                </span>
-                <span v-else class="action-icon" aria-hidden="true">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                </span>
-              </button>
-              <button
-                type="button"
-                class="cell-link cell-link-delete cell-link-icon"
-                title="Delete"
-                :disabled="deletingSnapshot === snapshot.filename"
-                @click="askConfirmDeleteSnapshot(snapshot.filename)"
-              >
-                <span v-if="deletingSnapshot === snapshot.filename" class="action-icon action-icon-spin" aria-hidden="true">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
-                </span>
-                <span v-else class="action-icon" aria-hidden="true">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                </span>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else class="backup-list">
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="th-sortable" title="Click to sort" :class="snapshotSortClass('filename')" @click="setSnapshotSort('filename')">
+                Filename
+              </th>
+              <th class="th-sortable" title="Click to sort" :class="snapshotSortClass('date')" @click="setSnapshotSort('date')">
+                Date
+              </th>
+              <th class="th-sortable" title="Click to sort" :class="snapshotSortClass('size')" @click="setSnapshotSort('size')">
+                Size
+              </th>
+              <th class="th-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="snapshot in sortedSnapshots" :key="snapshot.filename">
+              <td>{{ snapshot.filename }}</td>
+              <td>{{ snapshot.date }}</td>
+              <td>{{ formatBytes(snapshot.filesize) }}</td>
+              <td class="cell-actions">
+                <button
+                  type="button"
+                  class="cell-link cell-link-icon"
+                  title="Download"
+                  :disabled="downloadingSnapshot === snapshot.filename"
+                  @click="downloadSnapshot(snapshot.filename)"
+                >
+                  <span v-if="downloadingSnapshot === snapshot.filename" class="action-icon action-icon-spin" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                  </span>
+                  <span v-else class="action-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="cell-link cell-link-icon"
+                  title="Restore"
+                  :disabled="restoringSnapshot === snapshot.filename"
+                  @click="restoreSnapshot(snapshot.filename)"
+                >
+                  <span v-if="restoringSnapshot === snapshot.filename" class="action-icon action-icon-spin" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                  </span>
+                  <span v-else class="action-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="cell-link cell-link-delete cell-link-icon"
+                  title="Delete"
+                  :disabled="deletingSnapshot === snapshot.filename"
+                  @click="askConfirmDeleteSnapshot(snapshot.filename)"
+                >
+                  <span v-if="deletingSnapshot === snapshot.filename" class="action-icon action-icon-spin" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                  </span>
+                  <span v-else class="action-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                  </span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
     <!-- Restore Modal -->
@@ -830,16 +834,23 @@ onMounted(() => {
   margin: 0;
 }
 
-.section-header {
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  padding: 0;
+.backup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   width: 100%;
   box-sizing: border-box;
 }
 
-.section-header:first-of-type {
-  margin-top: 0;
+.backup-section:not(:first-of-type) {
+  margin-top: 2rem;
+}
+
+.section-header {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .section-header h2 {
