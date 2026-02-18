@@ -158,8 +158,6 @@ onMounted(() => {
               <dd>{{ display(sysnotes.system.app_release) }}</dd>
               <dt>Endpoints defined</dt>
               <dd>{{ display(sysnotes.system.endpoints_defined) }}</dd>
-              <dt>Serial</dt>
-              <dd>{{ display(sysnotes.system.serial) }}</dd>
             </template>
           </dl>
         </div>
