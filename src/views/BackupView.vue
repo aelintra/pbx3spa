@@ -2,6 +2,11 @@
   <div class="backup-view">
     <h1>Backup/restore</h1>
 
+    <!-- Backups Section -->
+    <div class="section-header">
+      <h2>Backups</h2>
+    </div>
+
     <div class="backup-actions">
       <button
         type="button"
@@ -25,11 +30,6 @@
 
     <p v-if="actionMessage" class="action-message">{{ actionMessage }}</p>
     <p v-if="actionError" class="error">{{ actionError }}</p>
-
-    <!-- Backups Section -->
-    <div class="section-header">
-      <h2>Backups</h2>
-    </div>
 
     <section v-if="loading" class="loading">
       <span class="spinner"></span>
