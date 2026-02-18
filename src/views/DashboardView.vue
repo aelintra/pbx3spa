@@ -59,7 +59,9 @@ async function runCommand(command, confirmMessage, isDanger = false) {
     if (command === 'commit') await fetchCommitStatus()
     await fetchSysnotes()
   } catch (err) {
-    actionError.value = err.data?.message || err.message || `Failed to run ${command}`
+    const msg = err.data?.message || err.message || `Failed to run ${command}`
+    const detail = err.data?.detail
+    actionError.value = detail ? `${msg}: ${detail}` : msg
   } finally {
     actionBusy.value = null
   }
