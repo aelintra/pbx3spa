@@ -1,8 +1,10 @@
 # Session handoff — where we left off
 
-**Start here:** Read **PROJECT_PLAN.md** § Current state and **PANEL_PATTERN.md** §8 to see what’s done and what’s left.
+**Start here:** Read **PROJECT_PLAN.md** § Current state and **PANEL_PATTERN.md** (single-screen panels, cascaded sections, table alignment, toast API) to see what’s done and what’s left.
 
-**Extensions:** Complete (create/update, extension type derivation, live IP/Status from Asterisk AMI, SIP password display). Structure is sound; some TODOs remain (regenerate password, allow pkey change, PJSIP config edit). See **EXTENSIONS_LIVE_DATA.md** for live data behaviour and gotchas. **Next priorities:** Commit button on every panel (or layout).
+**Extensions:** Complete (create/update, extension type derivation, live IP/Status from Asterisk AMI, SIP password display). Structure is sound; some TODOs remain (regenerate password, allow pkey change, PJSIP config edit). See **EXTENSIONS_LIVE_DATA.md** for live data behaviour and gotchas.
+
+**Single-screen panels:** Firewall (IPv4 + IPv6) and **Backup/restore (Backups + Snapshots)** are complete. See **SINGLE_PANEL_SCREENS.md** for the full list; **PANEL_PATTERN.md** § Single-screen panels with cascaded sections and § Table column alignment for layout rules.
 
 **Repos:** **pbx3-master** is not a git repo; it is a placeholder folder containing the four repos: **pbx3**, **pbx3api**, **pbx3cagi**, **pbx3spa**. Commit in the relevant repo.
 
@@ -18,7 +20,16 @@
 - Home dashboard (PBX status, Commit/Start/Stop/Reboot); auth with sessionStorage, route guard, whoami.
 - **Create panels fully aligned with §3:** Tenant, Inbound route (use as reference).
 
-### Latest session (extensions completion)
+### Latest session (Backup/restore panel + single-panel patterns)
+
+- **Backup/restore panel done:** Single view at `/backup` with two cascaded sections: **Backups** (create, upload, download, restore with options, delete) and **Snapshots** (create, upload, download, restore DB only, delete). View: `BackupView.vue`; nav link "Backup". API: `backups` and `snapshots`; pbx3api uses **syshelper** for all privileged file operations (create, move, delete, chown/chmod). Laravel **Storage disks** `backups` and `snapshots` must be configured in `config/filesystems.php` (root `/opt/pbx3/bkup` and `/opt/pbx3/snap`) or download returns "Disk(backup) does not have a configured driver".
+- **Single-screen patterns (for next agent):**
+  - **Cascaded sections:** When a panel has two sub-sections (e.g. Backups + Snapshots), wrap each in the same container class (e.g. `<section class="backup-section">`) and keep structure identical (header → buttons → messages → table). See PANEL_PATTERN.md § Single-screen panels with cascaded sections.
+  - **Table alignment:** If two tables must align (e.g. Backups and Snapshots tables), use `table-layout: fixed` and explicit column widths (e.g. `:nth-child(1)` width 40%, etc.). Otherwise the Filename column width differs by content and Date/Size columns misalign. See PANEL_PATTERN.md § Single-screen panels: table column alignment.
+  - **Toast API:** Use `toast.show(message, variant)` with `variant` `'success'` or `'error'`. Do not use `toast.success()` or `toast.error()` — they do not exist. See PANEL_PATTERN.md § Toast API.
+- **File uploads (SPA):** API client has `postFile(path, formData)` for multipart uploads (e.g. backup/snapshot upload). Use `FormData` and append the file under the key the API expects (e.g. `uploadzip`, `uploadsnap`).
+
+### Previous session (extensions completion)
 
 - **Extensions marked complete:** Full CRUD implemented with extension type derivation, live IP/Status from Asterisk AMI, SIP password display, and improved UX (spinner loading state, fixed empty state flash). Structure is sound; some TODOs remain (regenerate password button, allow pkey change, PJSIP config edit) but core functionality is production-ready.
 - **Extension type (no DB column):** We derive **extension_type** (SIP | WebRTC | MAILBOX) from **device** in code. Extension model has `getExtensionTypeAttribute()` and `$appends = ['extension_type']`, so every API response includes it. List has a **Type** column; detail Identity shows readonly **Extension type**. Single source of truth remains `device`; WebRTC ⇒ no vendor/MAC, SIP ⇒ vendor or General SIP.

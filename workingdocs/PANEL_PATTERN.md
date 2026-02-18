@@ -61,7 +61,36 @@ Some resources are **singletons**: exactly one record per instance (e.g. system 
 - **Home (dashboard)** — one view with PBX actions and system info.
 - **Utility / single-screen panels** (e.g. Firewall: one view with table + Raw toggle, no list/detail).
 
-**Requirement:** Do **not** add `max-width: 56rem` (or any other max-width) to the root container of such views. Detail and Create panels use `max-width: 52rem` for form readability; list views and single-screen panels do not, so their content can use the full width. Reference: `ExtensionsListView.vue` (no max-width on `.list-view`), `DashboardView.vue` (Home panel; no max-width on `.dashboard`), `FirewallView.vue` (no max-width on `.firewall-view`).
+**Requirement:** Do **not** add `max-width: 56rem` (or any other max-width) to the root container of such views. Detail and Create panels use `max-width: 52rem` for form readability; list views and single-screen panels do not, so their content can use the full width. Reference: `ExtensionsListView.vue` (no max-width on `.list-view`), `DashboardView.vue` (Home panel; no max-width on `.dashboard`), `FirewallView.vue` (no max-width on `.firewall-view`), `BackupView.vue` (Backup/restore panel).
+
+### Single-screen panels with cascaded sections
+
+When a single-screen panel has **two or more sub-sections** (e.g. Backups + Snapshots, or IPv4 + IPv6 firewall), use **identical structure and styling** so headings and content align:
+
+- **Wrap each sub-section** in a container with the same class (e.g. `<section class="backup-section">`). Do not mix wrapped and unwrapped sections.
+- **Same order inside each section:** section header (e.g. `<div class="section-header"><h2>…</h2></div>`), then action buttons, then messages, then table/content.
+- **Section header styling:** Use consistent font-size (e.g. 1.5rem), font-weight (700), color (#0f172a). Reference: `FirewallView.vue` (IPv4 / IPv6), `BackupView.vue` (Backups / Snapshots).
+
+**Reference:** `BackupView.vue` (Backups and Snapshots sections), `FirewallView.vue` (IPv4 and IPv6 sections).
+
+### Single-screen panels: table column alignment
+
+When a panel has **two or more tables** that should align vertically (e.g. Backups table and Snapshots table), column widths must be identical or the Date/Size/etc. columns will misalign:
+
+- Use **`table-layout: fixed`** on the table.
+- Set **explicit column widths** (e.g. percentage or min-width) on `th` and `td` using `:nth-child(n)` so both tables use the same widths. Example: Filename 40%, Date 30%, Size 15%, Actions 15%.
+- Without this, the first column (e.g. Filename) will size to content and the other columns will shift.
+
+**Reference:** `BackupView.vue` (`.table` with `table-layout: fixed` and column width rules).
+
+### Toast API (success and error messages)
+
+Use the **toast store** for short-lived success/error feedback. The API is **`toast.show(message, variant)`** where `variant` is `'success'` (default) or `'error'`. Do **not** use `toast.success()` or `toast.error()` — those do not exist.
+
+- Success: `toast.show('Backup created successfully')` or `toast.show('Item saved')`.
+- Error: `toast.show(errorMessage, 'error')`.
+
+**Reference:** `BackupView.vue`, `UsersListView.vue`, `TenantCreateView.vue`.
 
 ### Create panel: heading
 

@@ -14,7 +14,7 @@
 | 2 | **IP Settings**  | sarknetwork    | ❌ No API      | Network: FQDN, bindaddr/bindport, static IP, DHCP, SSH port, SMTP, ICMP, etc. sysglobals has some (bindaddr, bindport, fqdn, staticipv4, edomain, sendedomain). May need dedicated network endpoint or extend sysglobals. |
 | 3 | **IPv4 Firewall**| Shorewall UI   | ✅ firewalls/ipv4 (GET, POST, PUT restart) | Single screen: load rules array, edit (e.g. textarea or line-by-line), Save, Restart. |
 | 4 | **IPv6 Firewall**| Shorewall6 UI  | ✅ firewalls/ipv6 (GET, POST, PUT restart) | Same as IPv4, separate endpoint. |
-| 5 | **Backup/restore** | sarkbackup   | ✅ backups (index, new, download, save, update, delete) | List backups, Create new, Download, Upload, Restore (PUT with options). API exists; SPA was parked — un-park and build view. |
+| 5 | **Backup/restore** | sarkbackup   | ✅ backups + snapshots APIs | **Done.** Single panel with two cascaded sections: Backups (create, upload, download, restore with options, delete) and Snapshots (create, upload, download, restore DB only, delete). Route `/backup`, view `BackupView.vue`. API: backups + snapshots; both use syshelper for privileged file ops. See PANEL_PATTERN § Single-screen panels with cascaded sections. |
 | 6 | **Certificates** | sarkcert       | ❌ No API      | Customer SSL cert install/remove (pem/key). pbx3 owns Let's Encrypt; this is for custom/customer certs. |
 | 7 | **Certs (3rd Party)** | sark3pcerts | ❌ No API   | 3rd-party cert bundle (e.g. /etc/ssl/3pcerts/3pcerts.pem): view, save, remove. |
 | 8 | **Factory Reset** | sarkfreset    | ❌ No API      | Password confirm + checkboxes (reset db, backups, snaps, greets, vmail, cdrs, logs, firewall, dhcp, host, ssh, ldap). Destructive; needs secure API. |
