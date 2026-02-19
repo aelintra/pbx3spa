@@ -17,7 +17,7 @@
 
 - **Edit coverage:** Many edit panels expose only a subset of API-updateable fields (SESSION_HANDOFF audit: Tenant 5 of 50+, Extension 6 of 16, Route 3 of 9, etc.). So “fitness for purpose” is high for the common path but incomplete for power users who need every field. Filling these in is a known, incremental task.
 - **Commit affordance:** The Commit button (green/red, run generator + reload) is designed but not yet implemented in the SPA. Until it is, users have no in-UI way to “apply” config changes; that’s a UX gap for the intended workflow.
-- **Help and guidance:** tt_help_core (and any in-context help) is not yet exposed in the API/UI. First-time or occasional users get little inline guidance beyond labels and structure.
+- **Help and guidance:** tt_help_core is now exposed via the API (helpcore resource) and has a full admin CRUD panel (Help messages) for editing. In-context hints/tooltips in other panels (e.g. IVR field hints from helpcore) are an optional future step.
 
 **Verdict:** UX is **fit for purpose** for the primary use case (CRUD on tenants, extensions, trunks, routes, queues, IVRs, inbound routes) and is consistent and predictable. It is **not yet complete** for “every field editable” and “Commit in the UI”; both are on the plan.
 

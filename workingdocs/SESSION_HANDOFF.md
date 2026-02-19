@@ -134,7 +134,10 @@
 
 - **Backups** — review after first CRUD set.
 - **Admin user management** — API needs stronger user/privilege support first.
-- **Help messages (tt_help_core)** — API to expose, then frontend consumes.
+
+### Done (this session or recent)
+
+- **Help messages (tt_help_core)** — API (HelpCore model, HelpCoreController, GET/POST /helpcore, GET/PUT/DELETE /helpcore/{pkey}), schema, and SPA panel (list/create/detail, router, nav, sticky filter, validateHelpCorePkey). Fields: pkey, displayname, cname, htext (name deprecated, not exposed).
 
 ---
 

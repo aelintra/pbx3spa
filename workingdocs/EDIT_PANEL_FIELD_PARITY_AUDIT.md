@@ -3,7 +3,7 @@
 **Purpose:** Ensure every edit (detail) panel exposes and sends all API-updateable fields.  
 **Source:** API controller `updateableColumns` (and create-only/read-only decisions per PANEL_PATTERN.md).
 
-**Last run:** 2026-02-12
+**Last run:** 2026-02-18
 
 ---
 
@@ -20,6 +20,7 @@
 | **Ivr** | ✅ Fixed | **All** updateable fields via form + buildIvrPayload; **greetnum** now sent as string (was integer). |
 | **InboundRoute** | ✅ Complete | **All** user-facing updateable fields: active, alertinfo, closeroute, cluster, description, disa, disapass, inprefix, moh, openroute, swoclip, tag, trunkname (z_updater not in UI). |
 | **Custom App** | ✅ Complete | **All** updateable fields: active, cluster, cname, description, directdial, extcode, span, striptags. Identity (pkey, shortuid, id) read-only. |
+| **Help messages (Help Core)** | ✅ Complete | **All** updateable fields: displayname, htext, cname. Identity (pkey) read-only on detail. |
 
 ---
 
@@ -34,6 +35,7 @@
 - **Ivr:** pkey, active, cname, name, alert0–11, description, cluster, greetnum, listenforext, option0–11, tag0–11, timeout, z_updater.
 - **InboundRoute:** active, alertinfo, closeroute, cluster, description, disa, disapass, inprefix, moh, openroute, swoclip, tag, trunkname, z_updater.
 - **Custom App:** active, cluster, cname, description, directdial, extcode, span, striptags.
+- **Help Core:** displayname, htext, cname.
 
 ---
 

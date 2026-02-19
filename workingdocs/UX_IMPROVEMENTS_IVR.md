@@ -70,7 +70,7 @@
 
 **Description:** Expand hints with more context, add examples where helpful, explain "Timeout" dropdown behavior, clarify "Listen for extension dial" behavior, add tooltips for technical terms, provide examples for Tag and Alert fields.
 
-**Note:** Help texts exist in database table `tt_help_core` but there is currently no API endpoint to access them. This task should proceed with hardcoded hints initially. See "Help Text API & Internationalization" section below for future integration.
+**Note:** Help texts are stored in `tt_help_core` and are now editable via the **Help messages** admin panel (API: helpcore resource). A per-field hint API (e.g. GET /help/{resource}/{field}) for in-context tooltips in IVR and other panels is still optional; see "Help Text API & Internationalization" below.
 
 **Implementation Steps:**
 - [ ] **Step 4.1**: Expand hint for "Timeout" field (explain what happens on timeout)
@@ -183,8 +183,8 @@ Creating a help text API exposes the need for:
 - **Trade-off**: Not scalable long-term, but gets improvements to users quickly
 
 #### Phase 2: Help Text API (Separate Project)
-- **Action**: Build API endpoint to access `tt_help_core` table
-- **Design**: `GET /help/{resource}/{field}?lang={lang}` (start with English only)
+- **Status:** Admin CRUD for tt_help_core is **done** (helpcore API + Help messages panel). Optional next step: per-field hint API for in-context tooltips.
+- **Action** (optional): Build per-field hint endpoint, e.g. `GET /help/{resource}/{field}?lang={lang}` (start with English only)
 - **Structure**: Design response format to support future i18n:
   ```json
   {
