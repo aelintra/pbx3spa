@@ -67,12 +67,14 @@ function closeLogModal() {
 async function downloadLog(path, e) {
   e.stopPropagation()
   try {
-    const url = `logs/${encodeURIComponent(path)}/download`
+    // path is now a symbolic name (e.g., astmessages) - no encoding needed
+    const url = `logs/${path}/download`
     const blob = await getApiClient().getBlob(url)
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    link.download = path.split('/').pop() || 'log'
+    // Extract filename from path (symbolic names don't have slashes, so just use the name)
+    link.download = path.includes('/') ? path.split('/').pop() : `${path}.log`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

@@ -35,7 +35,8 @@ async function loadLog(loadOffset = 0) {
   error.value = ''
 
   try {
-    const res = await getApiClient().get(`logs/${encodeURIComponent(props.logPath)}`, {
+    // logPath is now a symbolic name (e.g., astmessages) - no encoding needed
+    const res = await getApiClient().get(`logs/${props.logPath}`, {
       params: {
         offset: loadOffset,
         limit: limit.value,
@@ -98,12 +99,14 @@ async function refresh() {
 
 async function download() {
   try {
-    const url = `logs/${encodeURIComponent(props.logPath)}/download`
+    // logPath is now a symbolic name (e.g., astmessages) - no encoding needed
+    const url = `logs/${props.logPath}/download`
     const blob = await getApiClient().getBlob(url)
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    link.download = props.logPath.split('/').pop() || 'log'
+    // Symbolic names don't have slashes, so use the name with .log extension
+    link.download = props.logPath.includes('/') ? props.logPath.split('/').pop() : `${props.logPath}.log`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
