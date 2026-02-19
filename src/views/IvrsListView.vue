@@ -2,9 +2,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useStickyFilter } from '@/composables/useStickyFilter'
 import { normalizeList } from '@/utils/listResponse'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
+const { filterText } = useStickyFilter('ivrs')
 const toast = useToastStore()
 const ivrs = ref([])
 const tenants = ref([])
@@ -13,7 +15,6 @@ const error = ref('')
 const deleteError = ref('')
 const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
-const filterText = ref('')
 const sortKey = ref('pkey')
 const sortOrder = ref('asc')
 

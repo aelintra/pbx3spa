@@ -2,9 +2,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useStickyFilter } from '@/composables/useStickyFilter'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+
+const { filterText } = useStickyFilter('devices')
 
 const toast = useToastStore()
 const devices = ref([])
@@ -13,7 +16,6 @@ const error = ref('')
 const deleteError = ref('')
 const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
-const filterText = ref('')
 const sortKey = ref('pkey')
 const sortOrder = ref('asc')
 
@@ -27,11 +29,9 @@ const filteredDevices = computed(() => {
   if (!q) return list
   return list.filter((d) => {
     const pkey = str(d.pkey).toLowerCase()
-    const device = str(d.device).toLowerCase()
     const technology = str(d.technology).toLowerCase()
-    const provision = str(d.provision).toLowerCase()
     const desc = str(d.desc).toLowerCase()
-    return pkey.includes(q) || device.includes(q) || technology.includes(q) || provision.includes(q) || desc.includes(q)
+    return pkey.includes(q) || technology.includes(q) || desc.includes(q)
   })
 })
 
@@ -123,7 +123,7 @@ onMounted(loadDevices)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, device, technology, provision, or description"
+          placeholder="Filter by name, technology, or description"
           aria-label="Filter devices"
         />
       </p>
@@ -144,14 +144,8 @@ onMounted(loadDevices)
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">
               Template name
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('device')" @click="setSort('device')">
-              Device
-            </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('technology')" @click="setSort('technology')">
               Technology
-            </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('provision')" @click="setSort('provision')">
-              Provision
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('desc')" @click="setSort('desc')">
               Description
@@ -171,9 +165,7 @@ onMounted(loadDevices)
         <tbody>
           <tr v-for="d in sortedDevices" :key="d.pkey">
             <td class="cell-immutable" title="Immutable">{{ d.pkey }}</td>
-            <td>{{ d.device ?? '—' }}</td>
             <td>{{ d.technology ?? '—' }}</td>
-            <td>{{ d.provision ?? '—' }}</td>
             <td>{{ d.desc ?? '—' }}</td>
             <td>
               <router-link :to="{ name: 'device-detail', params: { pkey: d.pkey } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">

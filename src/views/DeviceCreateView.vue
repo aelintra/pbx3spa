@@ -15,20 +15,9 @@ const { ensureFetched, applySchemaDefaults } = useSchema()
 
 const pkey = ref('')
 const desc = ref('')
-const device = ref('')
 const technology = ref('')
 const provision = ref('')
 const owner = ref('system')
-const blfkeyname = ref('')
-const blfkeys = ref('')
-const fkeys = ref('')
-const pkeys = ref('')
-const imageurl = ref('')
-const legacy = ref('')
-const noproxy = ref('')
-const sipiaxfriend = ref('')
-const tftpname = ref('')
-const zapdevfixed = ref('')
 
 const error = ref('')
 const loading = ref(false)
@@ -36,31 +25,12 @@ const pkeyInput = ref(null)
 
 const pkeyValidation = useFormValidation(pkey, validateDevicePkey)
 
-function parseIntOrNull(v) {
-  if (v == null) return null
-  const s = String(v).trim()
-  if (s === '') return null
-  const n = parseInt(s, 10)
-  return isNaN(n) ? null : n
-}
-
 function resetForm() {
   pkey.value = ''
   desc.value = ''
-  device.value = ''
   technology.value = ''
   provision.value = ''
   owner.value = 'system'
-  blfkeyname.value = ''
-  blfkeys.value = ''
-  fkeys.value = ''
-  pkeys.value = ''
-  imageurl.value = ''
-  legacy.value = ''
-  noproxy.value = ''
-  sipiaxfriend.value = ''
-  tftpname.value = ''
-  zapdevfixed.value = ''
   error.value = ''
   pkeyValidation.reset()
 }
@@ -84,20 +54,9 @@ async function onSubmit(e) {
     const body = {
       pkey: pkey.value.trim(),
       ...(desc.value.trim() && { desc: desc.value.trim() }),
-      ...(device.value.trim() && { device: device.value.trim() }),
       ...(technology.value.trim() && { technology: technology.value.trim() }),
       ...(provision.value.trim() && { provision: provision.value.trim() }),
-      ...(owner.value.trim() && { owner: owner.value.trim() }),
-      ...(blfkeyname.value.trim() && { blfkeyname: blfkeyname.value.trim() }),
-      ...(parseIntOrNull(blfkeys.value) !== null && { blfkeys: parseIntOrNull(blfkeys.value) }),
-      ...(parseIntOrNull(fkeys.value) !== null && { fkeys: parseIntOrNull(fkeys.value) }),
-      ...(parseIntOrNull(pkeys.value) !== null && { pkeys: parseIntOrNull(pkeys.value) }),
-      ...(imageurl.value.trim() && { imageurl: imageurl.value.trim() }),
-      ...(legacy.value.trim() && { legacy: legacy.value.trim() }),
-      ...(noproxy.value.trim() && { noproxy: noproxy.value.trim() }),
-      ...(sipiaxfriend.value.trim() && { sipiaxfriend: sipiaxfriend.value.trim() }),
-      ...(tftpname.value.trim() && { tftpname: tftpname.value.trim() }),
-      ...(zapdevfixed.value.trim() && { zapdevfixed: zapdevfixed.value.trim() })
+      ...(owner.value.trim() && { owner: owner.value.trim() })
     }
     const cleaned = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined))
     await getApiClient().post('devices', cleaned)
@@ -136,20 +95,9 @@ function onKeydown(e) {
 const refsByKey = {
   pkey,
   desc,
-  device,
   technology,
   provision,
-  owner,
-  blfkeyname,
-  blfkeys,
-  fkeys,
-  pkeys,
-  imageurl,
-  legacy,
-  noproxy,
-  sipiaxfriend,
-  tftpname,
-  zapdevfixed
+  owner
 }
 
 onMounted(async () => {
@@ -197,21 +145,9 @@ onMounted(async () => {
       <h2 class="detail-heading">Settings</h2>
       <div class="form-fields">
         <FormField
-          id="device"
-          v-model="device"
-          label="Device"
-          placeholder="Optional"
-        />
-        <FormField
           id="technology"
           v-model="technology"
           label="Technology"
-          placeholder="Optional"
-        />
-        <FormField
-          id="provision"
-          v-model="provision"
-          label="Provision"
           placeholder="Optional"
         />
         <FormField
@@ -222,71 +158,17 @@ onMounted(async () => {
         />
       </div>
 
-      <h2 class="detail-heading">Advanced</h2>
-      <div class="form-fields">
-        <FormField
-          id="blfkeyname"
-          v-model="blfkeyname"
-          label="BLF key name"
-          placeholder="Optional"
-        />
-        <FormField
-          id="blfkeys"
-          v-model="blfkeys"
-          label="BLF keys"
-          type="number"
-          placeholder="Optional"
-        />
-        <FormField
-          id="fkeys"
-          v-model="fkeys"
-          label="F keys"
-          type="number"
-          placeholder="Optional"
-        />
-        <FormField
-          id="pkeys"
-          v-model="pkeys"
-          label="P keys"
-          type="number"
-          placeholder="Optional"
-        />
-        <FormField
-          id="imageurl"
-          v-model="imageurl"
-          label="Image URL"
-          placeholder="Optional"
-        />
-        <FormField
-          id="legacy"
-          v-model="legacy"
-          label="Legacy"
-          placeholder="Optional"
-        />
-        <FormField
-          id="noproxy"
-          v-model="noproxy"
-          label="No proxy"
-          placeholder="Optional"
-        />
-        <FormField
-          id="sipiaxfriend"
-          v-model="sipiaxfriend"
-          label="SIP/IAX friend"
-          placeholder="Optional"
-        />
-        <FormField
-          id="tftpname"
-          v-model="tftpname"
-          label="TFTP name"
-          placeholder="Optional"
-        />
-        <FormField
-          id="zapdevfixed"
-          v-model="zapdevfixed"
-          label="Zap dev fixed"
-          placeholder="Optional"
-        />
+      <div class="longtext-section">
+        <div class="form-fields provision-section">
+          <FormField
+            id="provision"
+            v-model="provision"
+            label="Provision"
+            multiline
+            :rows="16"
+            placeholder="Provisioning template / config"
+          />
+        </div>
       </div>
 
       <div class="actions">
@@ -360,5 +242,9 @@ onMounted(async () => {
 }
 .actions button.secondary:hover {
   background: #f1f5f9;
+}
+
+.longtext-section .provision-section :deep(.form-input-textarea) {
+  min-width: 80ch;
 }
 </style>

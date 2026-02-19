@@ -3,9 +3,11 @@ import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
+import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
+const { filterText } = useStickyFilter('extensions')
 const toast = useToastStore()
 const extensions = ref([])
 const tenants = ref([])
@@ -14,7 +16,6 @@ const error = ref('')
 const deleteError = ref('')
 const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
-const filterText = ref('')
 const sortKey = ref('pkey')
 const sortOrder = ref('asc') // 'asc' | 'desc'
 /** Live PJSIP data keyed by pkey: { ip, latency }. Empty when PBX not running or request failed. */

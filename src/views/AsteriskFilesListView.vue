@@ -2,14 +2,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 
+const { filterText } = useStickyFilter('asterisk-files')
 const toast = useToastStore()
 const files = ref([])
 const loading = ref(true)
 const error = ref('')
 const committing = ref(false)
-const filterText = ref('')
 const filterInputRef = ref(null)
 
 const filteredFiles = computed(() => {

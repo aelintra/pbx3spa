@@ -118,6 +118,7 @@
 - **Tenants – Timer status / masteroclo:** API null handling; prefer API fix (e.g. model accessor or DB default).
 - **Field mutability:** Done — API-driven; frontend uses GET /schemas (useSchema composable). See FIELD_MUTABILITY_API_PLAN.md.
 - **Review later (UX):** Inline edit for list rows — revisit when main pattern is stable.
+- **Sticky list filter/sort:** Composable `useStickyFilter(listId)` with 5-min expiry (refreshed on re-enter). Rolled out to all list panels with a filter. **ToDo:** Sticky sort (persist sortKey/sortOrder) — see **STICKY_LIST_UI.md**.
 
 ### Panel pattern audit (for when we come back)
 

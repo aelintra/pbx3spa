@@ -30,28 +30,9 @@ const confirmDeleteOpen = ref(false)
 
 // Editable fields (v-model so ref stays in sync when building save payload)
 const editDesc = ref('')
-const editDevice = ref('')
 const editTechnology = ref('')
 const editProvision = ref('')
 const editOwner = ref('')
-const editBlfkeyname = ref('')
-const editBlfkeys = ref('')
-const editFkeys = ref('')
-const editPkeys = ref('')
-const editImageurl = ref('')
-const editLegacy = ref('')
-const editNoproxy = ref('')
-const editSipiaxfriend = ref('')
-const editTftpname = ref('')
-const editZapdevfixed = ref('')
-
-function parseIntOrNull(v) {
-  if (v == null) return null
-  const s = String(v).trim()
-  if (s === '') return null
-  const n = parseInt(s, 10)
-  return isNaN(n) ? null : n
-}
 
 async function fetchDevice() {
   if (!pkey.value) return
@@ -62,20 +43,9 @@ async function fetchDevice() {
   try {
     deviceRow.value = await getApiClient().get(`devices/${encodeURIComponent(pkey.value)}`)
     editDesc.value = deviceRow.value?.desc ?? ''
-    editDevice.value = deviceRow.value?.device ?? ''
     editTechnology.value = deviceRow.value?.technology ?? ''
     editProvision.value = deviceRow.value?.provision ?? ''
     editOwner.value = deviceRow.value?.owner ?? ''
-    editBlfkeyname.value = deviceRow.value?.blfkeyname ?? ''
-    editBlfkeys.value = deviceRow.value?.blfkeys != null ? String(deviceRow.value.blfkeys) : ''
-    editFkeys.value = deviceRow.value?.fkeys != null ? String(deviceRow.value.fkeys) : ''
-    editPkeys.value = deviceRow.value?.pkeys != null ? String(deviceRow.value.pkeys) : ''
-    editImageurl.value = deviceRow.value?.imageurl ?? ''
-    editLegacy.value = deviceRow.value?.legacy ?? ''
-    editNoproxy.value = deviceRow.value?.noproxy ?? ''
-    editSipiaxfriend.value = deviceRow.value?.sipiaxfriend ?? ''
-    editTftpname.value = deviceRow.value?.tftpname ?? ''
-    editZapdevfixed.value = deviceRow.value?.zapdevfixed ?? ''
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load device')
     deviceRow.value = null
@@ -113,20 +83,9 @@ async function saveEdit(e) {
   try {
     const body = {}
     if (!isReadOnly('desc')) body.desc = editDesc.value?.trim() || null
-    if (!isReadOnly('device')) body.device = editDevice.value?.trim() || null
     if (!isReadOnly('technology')) body.technology = editTechnology.value?.trim() || null
     if (!isReadOnly('provision')) body.provision = editProvision.value?.trim() || null
     if (!isReadOnly('owner')) body.owner = editOwner.value?.trim() || null
-    if (!isReadOnly('blfkeyname')) body.blfkeyname = editBlfkeyname.value?.trim() || null
-    if (!isReadOnly('blfkeys')) body.blfkeys = parseIntOrNull(editBlfkeys.value)
-    if (!isReadOnly('fkeys')) body.fkeys = parseIntOrNull(editFkeys.value)
-    if (!isReadOnly('pkeys')) body.pkeys = parseIntOrNull(editPkeys.value)
-    if (!isReadOnly('imageurl')) body.imageurl = editImageurl.value?.trim() || null
-    if (!isReadOnly('legacy')) body.legacy = editLegacy.value?.trim() || null
-    if (!isReadOnly('noproxy')) body.noproxy = editNoproxy.value?.trim() || null
-    if (!isReadOnly('sipiaxfriend')) body.sipiaxfriend = editSipiaxfriend.value?.trim() || null
-    if (!isReadOnly('tftpname')) body.tftpname = editTftpname.value?.trim() || null
-    if (!isReadOnly('zapdevfixed')) body.zapdevfixed = editZapdevfixed.value?.trim() || null
     const cleaned = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined))
     await getApiClient().put(`devices/${encodeURIComponent(pkey.value)}`, cleaned)
     toast.show('Device saved')
@@ -195,28 +154,12 @@ async function confirmDelete() {
       <h2 class="detail-heading">Settings</h2>
       <div class="form-fields">
         <FormField
-          v-if="!isReadOnly('device')"
-          id="device"
-          v-model="editDevice"
-          label="Device"
-        />
-        <FormReadonly v-else id="device" label="Device" :value="deviceRow?.device ?? '—'" />
-
-        <FormField
           v-if="!isReadOnly('technology')"
           id="technology"
           v-model="editTechnology"
           label="Technology"
         />
         <FormReadonly v-else id="technology" label="Technology" :value="deviceRow?.technology ?? '—'" />
-
-        <FormField
-          v-if="!isReadOnly('provision')"
-          id="provision"
-          v-model="editProvision"
-          label="Provision"
-        />
-        <FormReadonly v-else id="provision" label="Provision" :value="deviceRow?.provision ?? '—'" />
 
         <FormField
           v-if="!isReadOnly('owner')"
@@ -227,90 +170,18 @@ async function confirmDelete() {
         <FormReadonly v-else id="owner" label="Owner" :value="deviceRow?.owner ?? '—'" />
       </div>
 
-      <h2 class="detail-heading">Advanced</h2>
-      <div class="form-fields">
-        <FormField
-          v-if="!isReadOnly('blfkeyname')"
-          id="blfkeyname"
-          v-model="editBlfkeyname"
-          label="BLF key name"
-        />
-        <FormReadonly v-else id="blfkeyname" label="BLF key name" :value="deviceRow?.blfkeyname ?? '—'" />
-
-        <FormField
-          v-if="!isReadOnly('blfkeys')"
-          id="blfkeys"
-          v-model="editBlfkeys"
-          label="BLF keys"
-          type="number"
-        />
-        <FormReadonly v-else id="blfkeys" label="BLF keys" :value="deviceRow?.blfkeys ?? '—'" />
-
-        <FormField
-          v-if="!isReadOnly('fkeys')"
-          id="fkeys"
-          v-model="editFkeys"
-          label="F keys"
-          type="number"
-        />
-        <FormReadonly v-else id="fkeys" label="F keys" :value="deviceRow?.fkeys ?? '—'" />
-
-        <FormField
-          v-if="!isReadOnly('pkeys')"
-          id="pkeys"
-          v-model="editPkeys"
-          label="P keys"
-          type="number"
-        />
-        <FormReadonly v-else id="pkeys" label="P keys" :value="deviceRow?.pkeys ?? '—'" />
-
-        <FormField
-          v-if="!isReadOnly('imageurl')"
-          id="imageurl"
-          v-model="editImageurl"
-          label="Image URL"
-        />
-        <FormReadonly v-else id="imageurl" label="Image URL" :value="deviceRow?.imageurl ?? '—'" />
-
-        <FormField
-          v-if="!isReadOnly('legacy')"
-          id="legacy"
-          v-model="editLegacy"
-          label="Legacy"
-        />
-        <FormReadonly v-else id="legacy" label="Legacy" :value="deviceRow?.legacy ?? '—'" />
-
-        <FormField
-          v-if="!isReadOnly('noproxy')"
-          id="noproxy"
-          v-model="editNoproxy"
-          label="No proxy"
-        />
-        <FormReadonly v-else id="noproxy" label="No proxy" :value="deviceRow?.noproxy ?? '—'" />
-
-        <FormField
-          v-if="!isReadOnly('sipiaxfriend')"
-          id="sipiaxfriend"
-          v-model="editSipiaxfriend"
-          label="SIP/IAX friend"
-        />
-        <FormReadonly v-else id="sipiaxfriend" label="SIP/IAX friend" :value="deviceRow?.sipiaxfriend ?? '—'" />
-
-        <FormField
-          v-if="!isReadOnly('tftpname')"
-          id="tftpname"
-          v-model="editTftpname"
-          label="TFTP name"
-        />
-        <FormReadonly v-else id="tftpname" label="TFTP name" :value="deviceRow?.tftpname ?? '—'" />
-
-        <FormField
-          v-if="!isReadOnly('zapdevfixed')"
-          id="zapdevfixed"
-          v-model="editZapdevfixed"
-          label="Zap dev fixed"
-        />
-        <FormReadonly v-else id="zapdevfixed" label="Zap dev fixed" :value="deviceRow?.zapdevfixed ?? '—'" />
+      <div class="longtext-section">
+        <div class="form-fields provision-section">
+          <FormField
+            v-if="!isReadOnly('provision')"
+            id="provision"
+            v-model="editProvision"
+            label="Provision"
+            multiline
+            :rows="16"
+          />
+          <FormReadonly v-else id="provision" label="Provision" :value="deviceRow?.provision ?? ''" />
+        </div>
       </div>
 
       <div class="edit-actions">
@@ -415,5 +286,9 @@ async function confirmDelete() {
 .readonly-identity :deep(.form-readonly) {
   background-color: #f1f5f9;
   border-color: #e2e8f0;
+}
+
+.longtext-section .provision-section :deep(.form-input-textarea) {
+  min-width: 80ch;
 }
 </style>
