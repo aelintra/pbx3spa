@@ -6,7 +6,10 @@ import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
+import FormSelect from '@/components/forms/FormSelect.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
+
+const TECHNOLOGY_OPTIONS = ['SIP', 'Descriptor', 'BLF Template']
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const route = useRoute()
@@ -34,6 +37,12 @@ const editTechnology = ref('')
 const editProvision = ref('')
 const editOwner = ref('')
 
+const technologyOptionsForSelect = computed(() => {
+  const cur = editTechnology.value
+  if (cur && !TECHNOLOGY_OPTIONS.includes(cur)) return [cur, ...TECHNOLOGY_OPTIONS]
+  return TECHNOLOGY_OPTIONS
+})
+
 async function fetchDevice() {
   if (!pkey.value) return
   loading.value = true
@@ -43,7 +52,7 @@ async function fetchDevice() {
   try {
     deviceRow.value = await getApiClient().get(`devices/${encodeURIComponent(pkey.value)}`)
     editDesc.value = deviceRow.value?.desc ?? ''
-    editTechnology.value = deviceRow.value?.technology ?? ''
+    editTechnology.value = deviceRow.value?.technology ?? 'SIP'
     editProvision.value = deviceRow.value?.provision ?? ''
     editOwner.value = deviceRow.value?.owner ?? ''
   } catch (err) {
@@ -153,11 +162,12 @@ async function confirmDelete() {
 
       <h2 class="detail-heading">Settings</h2>
       <div class="form-fields">
-        <FormField
+        <FormSelect
           v-if="!isReadOnly('technology')"
           id="technology"
           v-model="editTechnology"
           label="Technology"
+          :options="technologyOptionsForSelect"
         />
         <FormReadonly v-else id="technology" label="Technology" :value="deviceRow?.technology ?? '—'" />
 

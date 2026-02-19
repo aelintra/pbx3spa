@@ -8,6 +8,9 @@ import { useFormValidation, validateAll, focusFirstError } from '@/composables/u
 import { validateDevicePkey } from '@/utils/validation'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
+import FormSelect from '@/components/forms/FormSelect.vue'
+
+const TECHNOLOGY_OPTIONS = ['SIP', 'Descriptor', 'BLF Template']
 
 const router = useRouter()
 const toast = useToastStore()
@@ -15,7 +18,7 @@ const { ensureFetched, applySchemaDefaults } = useSchema()
 
 const pkey = ref('')
 const desc = ref('')
-const technology = ref('')
+const technology = ref('SIP')
 const provision = ref('')
 const owner = ref('system')
 
@@ -28,7 +31,7 @@ const pkeyValidation = useFormValidation(pkey, validateDevicePkey)
 function resetForm() {
   pkey.value = ''
   desc.value = ''
-  technology.value = ''
+  technology.value = 'SIP'
   provision.value = ''
   owner.value = 'system'
   error.value = ''
@@ -144,11 +147,11 @@ onMounted(async () => {
 
       <h2 class="detail-heading">Settings</h2>
       <div class="form-fields">
-        <FormField
+        <FormSelect
           id="technology"
           v-model="technology"
           label="Technology"
-          placeholder="Optional"
+          :options="TECHNOLOGY_OPTIONS"
         />
         <FormField
           id="owner"
