@@ -95,7 +95,7 @@ onMounted(async () => {
   <div class="logs-list-view">
     <header class="list-header">
       <h1>System Logs</h1>
-      <p class="toolbar toolbar-filter">
+      <p class="toolbar">
         <input
           ref="filterInputRef"
           v-model="filterText"
@@ -168,47 +168,27 @@ onMounted(async () => {
   gap: 1rem;
 }
 .list-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.list-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-.toolbar {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.toolbar-filter {
   margin: 0;
 }
-.filter-input {
-  padding: 0.375rem 0.75rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-  min-width: 12rem;
-}
-.filter-input:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-}
-.list-states .loading,
-.list-states .error {
+.list-states {
   margin: 0;
 }
-.loading { color: #64748b; }
-.error { color: #b91c1c; }
-.empty { color: #64748b; }
+.list-body {
+  margin: 0;
+}
+.loading,
+.error,
+.empty {
+  margin-top: 0;
+}
+.error {
+  color: #dc2626;
+}
 .table {
+  margin-top: 0;
   width: 100%;
   border-collapse: collapse;
+  font-size: 1rem;
 }
 .table th,
 .table td {
@@ -218,7 +198,8 @@ onMounted(async () => {
 }
 .table th {
   font-weight: 600;
-  color: #0f172a;
+  color: #475569;
+  background: #f8fafc;
 }
 .size-col {
   width: 8rem;
@@ -242,7 +223,6 @@ onMounted(async () => {
   background: transparent;
 }
 .log-path {
-  font-family: 'Courier New', monospace;
   color: #2563eb;
 }
 .missing-badge {
@@ -255,8 +235,9 @@ onMounted(async () => {
   color: #94a3b8;
 }
 .download-btn {
-  padding: 0.25rem 0.5rem;
+  padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
+  font-weight: 500;
   border: 1px solid #cbd5e1;
   border-radius: 0.375rem;
   background: #f8fafc;
@@ -265,5 +246,24 @@ onMounted(async () => {
 }
 .download-btn:hover {
   background: #e2e8f0;
+}
+.toolbar {
+  margin: 0.75rem 0 0 0;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.filter-input {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  min-width: 16rem;
+}
+.filter-input:focus {
+  outline: none;
+  border-color: #2563eb;
 }
 </style>

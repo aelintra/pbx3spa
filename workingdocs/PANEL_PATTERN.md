@@ -1669,6 +1669,13 @@ catch (err) {
 
 ## Styling Conventions
 
+### Typography
+
+- **Table font size**: 
+  - Standard tables (black text): `0.9375rem` (15px) — used in most list views (Extensions, Devices, etc.)
+  - Tables with blue selectable/clickable fields: `1rem` (16px) — used in Logs and Asterisk Files panels where links/selectable items use `#2563eb` (blue). The larger size improves readability with blue text.
+- **Filter input font size**: Matches the table font size for the panel (`0.9375rem` or `1rem`)
+
 ### Colors
 
 - **Headings**: `#334155` (slate-700)
@@ -1677,6 +1684,7 @@ catch (err) {
 - **Error text**: `#dc2626` (red-600)
 - **Valid border**: `#16a34a` (green-600)
 - **Immutable fields**: `#64748b` (slate-500) with `#f8fafc` background
+- **Links/Selectable items**: `#2563eb` (blue-600)
 
 ### Typography
 
@@ -1684,7 +1692,10 @@ catch (err) {
 - **Section heading (h2)**: `1rem`, `font-weight: 600`
 - **Field labels**: `font-weight: 500`
 - **Hint text**: `0.8125rem` (13px)
-- **Table text**: `0.9375rem` (15px)
+- **Table text**: 
+  - Standard tables (black text): `0.9375rem` (15px) — used in most list views (Extensions, Devices, etc.)
+  - Tables with blue selectable/clickable fields: `1rem` (16px) — used in Logs and Asterisk Files panels where links/selectable items use `#2563eb` (blue). The larger size improves readability with blue text.
+- **Filter input font size**: Matches the table font size for the panel (`0.9375rem` or `1rem`)
 
 ### Borders & Shadows
 

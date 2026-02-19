@@ -246,7 +246,6 @@ watch(() => props.logPath, () => {
   font-size: 1.125rem;
   font-weight: 600;
   color: #0f172a;
-  font-family: 'Courier New', monospace;
 }
 
 .close-btn {
@@ -276,7 +275,7 @@ watch(() => props.logPath, () => {
 }
 
 .modal-error {
-  color: #b91c1c;
+  color: #dc2626;
 }
 
 .log-content {
@@ -360,12 +359,12 @@ watch(() => props.logPath, () => {
 }
 
 .action-btn-primary {
-  background: #0f172a;
+  background: #2563eb;
   color: #fff;
-  border-color: #0f172a;
+  border-color: #2563eb;
 }
 
 .action-btn-primary:hover:not(:disabled) {
-  background: #1e293b;
+  background: #1d4ed8;
 }
 </style>
