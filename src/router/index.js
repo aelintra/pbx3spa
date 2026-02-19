@@ -40,6 +40,7 @@ import FirewallView from '../views/FirewallView.vue'
 import BackupView from '../views/BackupView.vue'
 import AsteriskFilesListView from '../views/AsteriskFilesListView.vue'
 import AsteriskFileDetailView from '../views/AsteriskFileDetailView.vue'
+import LogsListView from '../views/LogsListView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import NoAccessView from '../views/NoAccessView.vue'
 import UsersListView from '../views/UsersListView.vue'
@@ -102,7 +103,8 @@ const router = createRouter({
         { path: 'firewall', name: 'firewall', component: FirewallView },
         { path: 'backup', name: 'backup', component: BackupView },
         { path: 'asterisk-files', name: 'asterisk-files', component: AsteriskFilesListView },
-        { path: 'asterisk-files/:filename', name: 'asterisk-file-detail', component: AsteriskFileDetailView }
+        { path: 'asterisk-files/:filename', name: 'asterisk-file-detail', component: AsteriskFileDetailView },
+        { path: 'logs', name: 'logs', component: LogsListView }
       ]
     }
   ]
