@@ -1,6 +1,6 @@
 # Session handoff — where we left off
 
-**Start here:** Read **PROJECT_PLAN.md** § Current state and **PANEL_PATTERN.md** (single-screen panels, cascaded sections, table alignment, toast API) to see what’s done and what’s left.
+**Start here:** Read **PROJECT_PLAN.md** § Current state and **PANEL_PATTERN.md** (single-screen panels, cascaded sections, table alignment, toast API) to see what’s done and what’s left. **Branch:** `spanel` (pbx3spa, pbx3api).
 
 **Extensions:** Complete (create/update, extension type derivation, live IP/Status from Asterisk AMI, SIP password display). Structure is sound; some TODOs remain (regenerate password, allow pkey change, PJSIP config edit). See **EXTENSIONS_LIVE_DATA.md** for live data behaviour and gotchas.
 
@@ -20,7 +20,13 @@
 - Home dashboard (PBX status, Commit/Start/Stop/Reboot); auth with sessionStorage, route guard, whoami.
 - **Create panels fully aligned with §3:** Tenant, Inbound route (use as reference).
 
-### Latest session (Custom Apps panel + learnings for next agent)
+### Latest session (Help messages panel + docs for next agent)
+
+- **Help messages (tt_help_core) CRUD done:** API: HelpCore model, HelpCoreController (index, show, save, update, delete), routes GET/POST /helpcore, GET/PUT/DELETE /helpcore/{pkey}, schema entry for `helpcore`. SPA: HelpMessagesListView, HelpMessageCreateView, HelpMessageDetailView at `/help-messages`, `/help-messages/new`, `/help-messages/:pkey`; nav "Help messages"; sticky filter `useStickyFilter('help-messages')`; validation `validateHelpCorePkey`. Instance-scoped, pkey-only (no id/shortuid). Fields: pkey, displayname, cname, htext (name deprecated, not exposed).
+- **Docs updated:** SESSION_HANDOFF, PROJECT_PLAN, EDIT_PANEL_FIELD_PARITY_AUDIT, HOLISTIC_ASSESSMENT, UX_IMPROVEMENTS_IVR — Help messages marked done; per-field hint To-do and help-text UX approach added.
+- **For next agent:** Optional later phase: per-field hint API (e.g. GET /help/{resource}/{field}) for in-context hints in IVR/Extension etc. UX approach is in PROJECT_PLAN To-do: prefer **always-visible short hints** (one line under field) for 2–3 non-obvious fields; **on-demand** (tooltip / “?”) for long text. See **PROJECT_PLAN.md** To-do “Help text – per-field hints” and **UX_IMPROVEMENTS_IVR.md** § Help Text API & Internationalization.
+
+### Previous session (Custom Apps panel + learnings for next agent)
 
 - **Custom Apps CRUD done:** Three-panel (list/create/detail) at `/customapps`, `/customapps/new`, `/customapps/:pkey`. API: CustomAppController (tenant table `appl`); create sets `id` (KSUID) and `shortuid`; update by `id` with fallback to `pkey` for legacy rows. SPA: list filter/sort, create with schema defaults, detail with Identity (pkey/shortuid/id readonly), Settings, Code; v-model for all edit fields; validation for pkey (letters, numbers, underscore, hyphen). Docs updated: general.md, SCHEMAS_ENDPOINT, EDIT_PANEL_FIELD_PARITY_AUDIT, PANEL_PATTERN (customapps + route path), PROJECT_PLAN, TENANT_SCOPED_PATTERN (Controller create + CustomAppController reference).
 - **Learnings for next agent:**
@@ -119,6 +125,7 @@
 - **Field mutability:** Done — API-driven; frontend uses GET /schemas (useSchema composable). See FIELD_MUTABILITY_API_PLAN.md.
 - **Review later (UX):** Inline edit for list rows — revisit when main pattern is stable.
 - **Sticky list filter/sort:** Composable `useStickyFilter(listId)` with 5-min expiry (refreshed on re-enter). Rolled out to all list panels with a filter. **ToDo:** Sticky sort (persist sortKey/sortOrder) — see **STICKY_LIST_UI.md**.
+- **Help text (per-field hints – later phase):** To-do in PROJECT_PLAN: add per-field hint API so panels can show inline/tooltip help from tt_help_core. UX: always-visible short hint for key fields; on-demand for long text. See PROJECT_PLAN § To-do and **UX_IMPROVEMENTS_IVR.md**.
 
 ### Panel pattern audit (for when we come back)
 
@@ -134,10 +141,6 @@
 
 - **Backups** — review after first CRUD set.
 - **Admin user management** — API needs stronger user/privilege support first.
-
-### Done (this session or recent)
-
-- **Help messages (tt_help_core)** — API (HelpCore model, HelpCoreController, GET/POST /helpcore, GET/PUT/DELETE /helpcore/{pkey}), schema, and SPA panel (list/create/detail, router, nav, sticky filter, validateHelpCorePkey). Fields: pkey, displayname, cname, htext (name deprecated, not exposed).
 
 ---
 

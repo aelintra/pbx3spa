@@ -4,7 +4,7 @@
 
 **Repo:** All work below is in **`pbx3spa`**. This is its own git repo (root is `pbx3spa/`, not the parent `pbx3-master/`).
 
-**Last updated:** 2026-02-03
+**Last updated:** 2026-02-18
 
 ---
 
@@ -59,9 +59,9 @@ The plan is in **`workingdocs/PANEL_REFACTOR_STRATEGY.md`**. Summary:
 
 **Reference implementations (already on pattern):**
 
-- **List:** `src/views/IvrsListView.vue`, `src/views/TenantsListView.vue`, `src/views/RoutesListView.vue`, `src/views/InboundRoutesListView.vue`, `src/views/TrunksListView.vue`, `src/views/ExtensionsListView.vue`, `src/views/AgentsListView.vue`, `src/views/QueuesListView.vue`
-- **Create:** `src/views/IvrCreateView.vue`, `src/views/TenantCreateView.vue`, `src/views/RouteCreateView.vue`, `src/views/InboundRouteCreateView.vue`, `src/views/TrunkCreateView.vue`, `src/views/ExtensionCreateView.vue`, `src/views/AgentCreateView.vue`, `src/views/QueueCreateView.vue`
-- **Edit:** `src/views/IvrDetailView.vue`, `src/views/TenantDetailView.vue`, `src/views/RouteDetailView.vue`, `src/views/InboundRouteDetailView.vue`, `src/views/TrunkDetailView.vue`, `src/views/ExtensionDetailView.vue`, `src/views/AgentDetailView.vue`, `src/views/QueueDetailView.vue`
+- **List:** `src/views/IvrsListView.vue`, `src/views/TenantsListView.vue`, `src/views/RoutesListView.vue`, `src/views/InboundRoutesListView.vue`, `src/views/TrunksListView.vue`, `src/views/ExtensionsListView.vue`, `src/views/AgentsListView.vue`, `src/views/QueuesListView.vue`, `src/views/CustomAppsListView.vue`, `src/views/DevicesListView.vue`, `src/views/HelpMessagesListView.vue`
+- **Create:** `src/views/IvrCreateView.vue`, `src/views/TenantCreateView.vue`, `src/views/RouteCreateView.vue`, `src/views/InboundRouteCreateView.vue`, `src/views/TrunkCreateView.vue`, `src/views/ExtensionCreateView.vue`, `src/views/AgentCreateView.vue`, `src/views/QueueCreateView.vue`, `src/views/CustomAppCreateView.vue`, `src/views/DeviceCreateView.vue`, `src/views/HelpMessageCreateView.vue`
+- **Edit:** `src/views/IvrDetailView.vue`, `src/views/TenantDetailView.vue`, `src/views/RouteDetailView.vue`, `src/views/InboundRouteDetailView.vue`, `src/views/TrunkDetailView.vue`, `src/views/ExtensionDetailView.vue`, `src/views/AgentDetailView.vue`, `src/views/QueueDetailView.vue`, `src/views/CustomAppDetailView.vue`, `src/views/DeviceDetailView.vue`, `src/views/HelpMessageDetailView.vue`
 
 ### Shared `normalizeList` (from `@/utils/listResponse.js`)
 
@@ -85,6 +85,7 @@ None. (Backups panel was removed/parked; no BackupsListView in codebase.)
 - **Extensions:** List/Create/Edit refactored; shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; always-edit Detail with Save/Cancel/Delete; validation (validateExtensionPkey, validateTenant); Detail exposes all API updateable fields (Identity, Transport, Advanced, Runtime).
 - **Agents:** List/Create/Edit refactored; shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; always-edit Detail with Save/Cancel/Delete; validation (validateAgentPkey, validateTenant, validateAgentName, validateAgentPasswd); Detail exposes cluster, name, passwd, queue1–6.
 - **Queues:** List/Create/Edit refactored; use shared normalizeList, form components, DeleteConfirmModal, firstErrorMessage; schema compliance (no `conf` field).
+- **Custom Apps, Devices, Help messages:** List/Create/Edit on pattern; pkey-only identity (no id/shortuid for Devices and Help messages). Help messages: helpcore API, sticky filter, validateHelpCorePkey.
 - **Backups:** Removed/parked — no Backups view or route in codebase. See PROJECT_PLAN.md (Parked).
 
 ---
