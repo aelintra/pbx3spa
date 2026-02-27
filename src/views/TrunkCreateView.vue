@@ -13,7 +13,7 @@ import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
-const trunkType = ref('SIP (send registration)')
+const technology = ref('SIP')
 const pkey = ref('')
 const cluster = ref('default')
 const host = ref('')
@@ -25,32 +25,12 @@ const pkeyInput = ref(null)
 
 const pkeyValidation = useFormValidation(pkey, validateTrunkPkey)
 
-const carrier = computed(() => {
-  if (trunkType.value.startsWith('SIP')) return 'GeneralSIP'
-  return ''
-})
-const sipRegistration = computed(() => {
-  if (trunkType.value === 'SIP (send registration)') return 'SND'
-  if (trunkType.value === 'SIP (accept registration)') return 'RCV'
-  if (trunkType.value === 'SIP (trusted peer)') return 'NONE'
-  return ''
-})
-const typeChosen = computed(() => !!carrier.value)
-const isSIPSendReg = computed(() => trunkType.value === 'SIP (send registration)')
-const isSIPAcceptReg = computed(() => trunkType.value === 'SIP (accept registration)')
-const isSIPTrustedPeer = computed(() => trunkType.value === 'SIP (trusted peer)')
-const isSIP = computed(() => carrier.value === 'GeneralSIP')
-const showHost = computed(() => isSIPSendReg.value || isSIPTrustedPeer.value)
-const passwordRequired = computed(() => isSIPSendReg.value || isSIPAcceptReg.value)
-
-const trunkTypeOptions = [
-  'SIP (send registration)',
-  'SIP (accept registration)',
-  'SIP (trusted peer)'
-]
+const technologyOptions = ['SIP', 'IAX2']
+const isSIP = computed(() => technology.value === 'SIP')
+const typeChosen = computed(() => !!technology.value)
 
 function resetForm() {
-  trunkType.value = 'SIP (send registration)'
+  technology.value = 'SIP'
   pkey.value = ''
   cluster.value = 'default'
   host.value = ''
@@ -69,7 +49,7 @@ async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
   if (!typeChosen.value) {
-    error.value = 'Please choose a trunk type'
+    error.value = 'Please choose a technology'
     return
   }
   const validations = [{ ...pkeyValidation, fieldId: 'pkey' }]
@@ -81,31 +61,21 @@ async function onSubmit(e) {
     })
     return
   }
-  if (showHost.value && !host.value.trim()) {
-    error.value = 'Host is required for this trunk type'
-    return
-  }
-  if (passwordRequired.value && !password.value) {
-    error.value = 'Password is required for this trunk type'
+  if (!host.value.trim()) {
+    error.value = 'Host is required (use "dynamic" for accept-registration trunks)'
     return
   }
   loading.value = true
   try {
     const body = {
       pkey: pkey.value.trim(),
-      carrier: carrier.value,
+      technology: technology.value,
       cluster: cluster.value.trim(),
-      username: pkey.value.trim()
+      username: pkey.value.trim(),
+      host: host.value.trim(),
     }
     if (isSIP.value) {
-      if (isSIPAcceptReg.value) {
-        body.host = 'dynamic'
-        body.password = password.value || ''
-      } else {
-        body.host = host.value.trim()
-        if (password.value) body.password = password.value
-      }
-      if (sipRegistration.value) body.sipRegistration = sipRegistration.value
+      body.password = password.value || ''
       body.transport = transport.value
     }
     await getApiClient().post('trunks', body)
@@ -158,15 +128,15 @@ function onKeydown(e) {
         <button type="button" class="secondary" @click="goBack">Cancel</button>
       </div>
 
-      <h2 class="detail-heading">Type</h2>
+      <h2 class="detail-heading">Technology</h2>
       <div class="form-fields">
         <FormSelect
-          id="trunk-type"
-          v-model="trunkType"
-          label="Trunk type"
-          :options="trunkTypeOptions"
-          hint="SIP (send/accept/trusted)."
-          aria-label="Choose trunk type"
+          id="trunk-technology"
+          v-model="technology"
+          label="Technology"
+          :options="technologyOptions"
+          hint="SIP or IAX2."
+          aria-label="Choose technology"
         />
       </div>
 
@@ -190,16 +160,14 @@ function onKeydown(e) {
         <h2 class="detail-heading">Connection</h2>
         <div class="form-fields">
           <FormField
-            v-if="showHost"
             id="host"
             v-model="host"
             label="Host"
             type="text"
-            placeholder="e.g. sip.example.com or IP"
-            :required="showHost"
+            placeholder="e.g. sip.example.com, IP, or dynamic"
+            :required="true"
           />
-          <p v-if="isSIPAcceptReg" class="form-hint">This trunk accepts registration from the provider; host is set to &quot;dynamic&quot; by the system.</p>
-          <p v-if="isSIPTrustedPeer" class="form-hint">Trusted peer: no registration; use when the peer has a static IP.</p>
+          <p v-if="isSIP" class="form-hint">Use &quot;dynamic&quot; for trunks that accept registration from the provider.</p>
           <FormSelect
             v-if="isSIP"
             id="transport"
@@ -214,8 +182,7 @@ function onKeydown(e) {
             v-model="password"
             label="Password"
             type="password"
-            :placeholder="passwordRequired ? 'Required' : 'Optional'"
-            :required="passwordRequired"
+            placeholder="Required for send/accept registration; optional for trusted peer"
             autocomplete="new-password"
           />
         </div>
