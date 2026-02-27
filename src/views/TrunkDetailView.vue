@@ -29,8 +29,8 @@ const editUsername = ref('')
 const editPeername = ref('')
 const editTrunkname = ref('')
 const editPassword = ref('')
-const editMoh = ref('OFF')
-const editCallprogress = ref('OFF')
+const editMoh = ref('NO')
+const editCallprogress = ref('NO')
 const editSwoclip = ref('YES')
 const editAlertinfo = ref('')
 const editCallerid = ref('')
@@ -44,6 +44,14 @@ function normalizeDevicerec(s) {
   if (s == null || s === '') return 'None'
   const v = String(s).trim()
   return devicerecOptions.includes(v) ? v : 'None'
+}
+
+/** Normalize ON/OFF or YES/NO to YES/NO for API (moh, callprogress). */
+function normalizeYesNo(val) {
+  if (val == null || val === '') return 'NO'
+  const v = String(val).trim().toUpperCase()
+  if (v === 'ON' || v === 'YES') return 'YES'
+  return 'NO'
 }
 
 const editDevicerec = ref('None')
@@ -71,8 +79,8 @@ async function fetchTrunk() {
     editPeername.value = trunk.value?.peername ?? ''
     editTrunkname.value = trunk.value?.trunkname ?? ''
     editPassword.value = '' // never re-fill password
-    editMoh.value = trunk.value?.moh ?? 'OFF'
-    editCallprogress.value = trunk.value?.callprogress ?? 'OFF'
+    editMoh.value = normalizeYesNo(trunk.value?.moh)
+    editCallprogress.value = normalizeYesNo(trunk.value?.callprogress)
     editSwoclip.value = trunk.value?.swoclip ?? 'YES'
     editAlertinfo.value = trunk.value?.alertinfo ?? ''
     editCallerid.value = trunk.value?.callerid ?? ''
@@ -249,8 +257,8 @@ async function confirmAndDelete() {
               placeholder="Leave blank to keep current"
               autocomplete="new-password"
             />
-            <FormToggle id="edit-moh" v-model="editMoh" label="MOH" yes-value="ON" no-value="OFF" />
-            <FormToggle id="edit-callprogress" v-model="editCallprogress" label="Call progress" yes-value="ON" no-value="OFF" />
+            <FormToggle id="edit-moh" v-model="editMoh" label="MOH" yes-value="YES" no-value="NO" />
+            <FormToggle id="edit-callprogress" v-model="editCallprogress" label="Call progress" yes-value="YES" no-value="NO" />
             <FormToggle id="edit-swoclip" v-model="editSwoclip" label="SWOCLIP" yes-value="YES" no-value="NO" />
           </div>
 
