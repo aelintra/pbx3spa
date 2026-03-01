@@ -53,11 +53,11 @@ const filteredRoutes = computed(() => {
     const pkey = (r.pkey ?? '').toString().toLowerCase()
     const shortuid = (r.shortuid ?? '').toString().toLowerCase()
     const tenantPkey = (r.tenant_pkey ?? map.get(String(r.cluster)) ?? r.cluster ?? '').toString().toLowerCase()
-    const desc = (r.desc ?? r.description ?? '').toString().toLowerCase()
+    const description = (r.description ?? '').toString().toLowerCase()
     const dialplan = (r.dialplan ?? '').toString().toLowerCase()
     const path1 = (r.path1 ?? '').toString().toLowerCase()
     const active = (r.active ?? '').toString().toLowerCase()
-    return pkey.includes(q) || shortuid.includes(q) || tenantPkey.includes(q) || desc.includes(q) || dialplan.includes(q) || path1.includes(q) || active.includes(q)
+    return pkey.includes(q) || shortuid.includes(q) || tenantPkey.includes(q) || description.includes(q) || dialplan.includes(q) || path1.includes(q) || active.includes(q)
   })
 })
 
@@ -178,8 +178,8 @@ onMounted(loadRoutes)
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">
               Tenant
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('desc')" @click="setSort('desc')">
-              desc
+            <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">
+              Description
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('dialplan')" @click="setSort('dialplan')">
               Dialplan
@@ -199,10 +199,10 @@ onMounted(loadRoutes)
             <td>{{ r.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(r) }}</td>
             <td>{{ tenantPkeyDisplay(r) }}</td>
-            <td>{{ r.desc ?? r.description ?? '—' }}</td>
-            <td>{{ r.dialplan ?? '—' }}</td>
-            <td>{{ r.path1 ?? '—' }}</td>
-            <td>{{ r.active ?? '—' }}</td>
+            <td>{{ (r.description ?? '').toString().trim() || 'None' }}</td>
+            <td>{{ (r.dialplan ?? '').toString().trim() || 'None' }}</td>
+            <td>{{ (r.path1 ?? '').toString().trim() || 'None' }}</td>
+            <td>{{ (r.active ?? '').toString().trim() || 'None' }}</td>
             <td>
               <router-link v-if="r.shortuid" :to="{ name: 'route-detail', params: { shortuid: r.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
