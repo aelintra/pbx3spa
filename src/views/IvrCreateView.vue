@@ -20,7 +20,6 @@ const pkey = ref('')
 const cluster = ref('default')
 const active = ref('YES')
 const cname = ref('')
-const name = ref('')
 const description = ref('')
 const tenants = ref([])
 const tenantsLoading = ref(true)
@@ -151,7 +150,6 @@ function resetForm() {
   cluster.value = 'default'
   active.value = 'YES'
   cname.value = ''
-  name.value = ''
   description.value = ''
   greetnum.value = 'None'
   timeout.value = 'operator'
@@ -214,7 +212,6 @@ async function onSubmit(e) {
       listenforext: listenforext.value
     }
     if (cname.value.trim()) body.cname = cname.value.trim()
-    if (name.value.trim()) body.name = name.value.trim()
     if (description.value.trim()) body.description = description.value.trim()
     if (greetnum.value && greetnum.value !== 'None') body.greetnum = parseInt(greetnum.value, 10)
     await getApiClient().post('ivrs', body)
@@ -263,7 +260,7 @@ function onKeydown(e) {
 
 onMounted(async () => {
   await ensureFetched()
-  applySchemaDefaults('ivrs', { cluster, active, cname, name, description, greetnum, timeout, listenforext })
+  applySchemaDefaults('ivrs', { cluster, active, cname, description, greetnum, timeout, listenforext })
   await loadTenants()
   await loadDestinations()
   await loadGreetings()
@@ -318,14 +315,6 @@ onMounted(async () => {
           type="text"
           placeholder="Common name / label"
           hint="Optional label for this IVR."
-        />
-        <FormField
-          id="name"
-          v-model="name"
-          label="Name (optional)"
-          type="text"
-          placeholder="Legacy name field"
-          hint="Legacy name field; prefer Display name (cname) for new IVRs."
         />
       </div>
 

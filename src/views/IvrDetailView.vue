@@ -5,7 +5,7 @@ import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
-import { validateTenant, validateGreetnum } from '@/utils/validation'
+import { validateTenant, validateGreetnum, validateIvrPkey } from '@/utils/validation'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
@@ -27,10 +27,10 @@ const tenants = ref([])
 const loading = ref(true)
 const error = ref('')
 const editing = ref(false)
+const editPkey = ref('')
 const editCluster = ref('default')
 const editActive = ref('YES')
 const editCname = ref('')
-const editName = ref('')
 const editDescription = ref('')
 const editGreetnum = ref('None')
 const editListenforext = ref('NO')
@@ -159,9 +159,9 @@ function syncEditFromIvr() {
   const clusterRaw = r.cluster ?? 'default'
   // IVR cluster may be stored as shortuid; resolve to pkey so dropdown displays pkey
   editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
+  editPkey.value = r.pkey ?? ''
   editActive.value = r.active ?? 'YES'
   editCname.value = r.cname ?? ''
-  editName.value = r.name ?? ''
   editDescription.value = r.description ?? ''
   editGreetnum.value = r.greetnum != null ? String(r.greetnum) : 'None'
   editListenforext.value = r.listenforext ?? 'NO'
@@ -249,9 +249,15 @@ async function saveEdit(e) {
     return
   }
   
+  const pkeyErr = validateIvrPkey(editPkey.value)
+  if (pkeyErr) {
+    saveError.value = pkeyErr
+    return
+  }
   saving.value = true
   try {
     const body = {
+      pkey: editPkey.value.trim(),
       cluster: editCluster.value.trim(),
       active: editActive.value,
       ...buildIvrPayload(options.value, tags.value, alerts.value, editTimeout.value),
@@ -259,8 +265,6 @@ async function saveEdit(e) {
     }
     if (editCname.value.trim()) body.cname = editCname.value.trim()
     else body.cname = null
-    if (editName.value.trim()) body.name = editName.value.trim()
-    else body.name = null
     if (editDescription.value.trim()) body.description = editDescription.value.trim()
     if (editGreetnum.value && editGreetnum.value !== 'None') body.greetnum = parseInt(editGreetnum.value, 10)
     await getApiClient().put(`ivrs/${encodeURIComponent(shortuid.value)}`, body)
@@ -338,7 +342,15 @@ async function confirmAndDelete() {
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
             <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="IVR Direct Dial" :value="ivr.pkey ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" :model-value="ivr.pkey ?? '—'" label="IVR Direct Dial" disabled class="readonly-identity" />
+            <FormField
+              v-else
+              id="edit-identity-pkey"
+              v-model="editPkey"
+              label="IVR Direct Dial"
+              type="text"
+              placeholder="3-5 digits"
+              hint="3-5 digits, unique per tenant."
+            />
             <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="ivr.shortuid ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-shortuid" :model-value="ivr.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="ivr.id ?? '—'" class="readonly-identity" />
@@ -368,13 +380,6 @@ async function confirmAndDelete() {
               label="Display name (optional)"
               type="text"
               placeholder="Common name / label"
-            />
-            <FormField
-              id="edit-name"
-              v-model="editName"
-              label="Name (optional)"
-              type="text"
-              placeholder="Legacy name field"
             />
           </div>
 
