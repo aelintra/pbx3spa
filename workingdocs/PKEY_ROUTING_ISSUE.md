@@ -267,12 +267,12 @@ The following API elements may need updates to fully support shortuid-based rout
 
 ### Controllers - Resource Relationships (Class of Service)
 
-**Current Issue**: CosOpenController and CosCloseController reference extensions by `IPphone_pkey` (extension pkey) in relationships, which may be ambiguous when same `pkey` exists in multiple tenants.
+**Current Issue**: CosOpenController and CosCloseController reference extensions by `ipphone_pkey` (extension pkey) in relationships, which may be ambiguous when same `pkey` exists in multiple tenants.
 
 **Affected Controllers**:
-- `CosOpenController` - Uses `IPphone_pkey` (extension pkey) in relationships
-  - Line 17: `'IPphone_pkey' => 'exists:ipphone,pkey'`
-  - Line 61-62: Checks for duplicate relationship using `IPphone_pkey`
+- `CosOpenController` - Uses `ipphone_pkey` (extension pkey) in relationships
+  - updateableColumns: `'ipphone_pkey' => 'exists:ipphone,pkey'`
+  - Checks for duplicate relationship using `ipphone_pkey` and `cos_pkey`
   - **Impact**: If extension "1001" exists in multiple tenants, relationship lookup may be ambiguous
 - `CosCloseController` - Same as CosOpenController
 

@@ -5,7 +5,7 @@ import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
-import { validateAgentPkey, validateTenant, validateAgentPasswd, validateAgentName } from '@/utils/validation'
+import { validateAgentPkey, validateTenant, validateAgentPasswd } from '@/utils/validation'
 import { normalizeList } from '@/utils/listResponse'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
@@ -16,11 +16,9 @@ const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
 const pkey = ref('')
 const cluster = ref('default')
-const name = ref('')
 const passwd = ref('')
 const cname = ref('')
 const description = ref('')
-const extlen = ref('')
 const queue1 = ref('None')
 const queue2 = ref('None')
 const queue3 = ref('None')
@@ -37,7 +35,6 @@ const pkeyInput = ref(null)
 
 const pkeyValidation = useFormValidation(pkey, validateAgentPkey)
 const clusterValidation = useFormValidation(cluster, validateTenant)
-const nameValidation = useFormValidation(name, validateAgentName)
 const passwdValidation = useFormValidation(passwd, validateAgentPasswd)
 
 const tenantOptions = computed(() => {
@@ -106,7 +103,7 @@ async function loadQueues() {
 
 onMounted(async () => {
   await ensureFetched()
-  applySchemaDefaults('agents', { cluster, name, cname, description })
+  applySchemaDefaults('agents', { cluster, cname, description })
   await loadTenants()
   await loadQueues()
 })
@@ -123,11 +120,9 @@ watch(cluster, () => {
 function resetForm() {
   pkey.value = ''
   cluster.value = 'default'
-  name.value = ''
   passwd.value = ''
   cname.value = ''
   description.value = ''
-  extlen.value = ''
   queue1.value = 'None'
   queue2.value = 'None'
   queue3.value = 'None'
@@ -136,7 +131,6 @@ function resetForm() {
   queue6.value = 'None'
   pkeyValidation.reset()
   clusterValidation.reset()
-  nameValidation.reset()
   passwdValidation.reset()
   error.value = ''
 }
@@ -152,12 +146,6 @@ function onKeydown(e) {
   }
 }
 
-function parseNum(v) {
-  if (v === '' || v == null) return undefined
-  const n = Number(v)
-  return isNaN(n) ? undefined : n
-}
-
 async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
@@ -165,7 +153,6 @@ async function onSubmit(e) {
   const validations = [
     { ...pkeyValidation, fieldId: 'pkey' },
     { ...clusterValidation, fieldId: 'cluster' },
-    { ...nameValidation, fieldId: 'name' },
     { ...passwdValidation, fieldId: 'passwd' }
   ]
   if (!validateAll(validations)) {
@@ -184,13 +171,10 @@ async function onSubmit(e) {
     const body = {
       pkey: pkeyNum,
       cluster: String(cluster.value).trim(),
-      name: name.value.trim(),
       passwd: passwdNum
     }
     if (cname.value.trim()) body.cname = cname.value.trim()
     if (description.value.trim()) body.description = description.value.trim()
-    const extlenNum = parseNum(extlen.value)
-    if (extlenNum !== undefined) body.extlen = extlenNum
     body.queue1 = queue1.value && queue1.value !== 'None' ? queue1.value.trim() : null
     body.queue2 = queue2.value && queue2.value !== 'None' ? queue2.value.trim() : null
     body.queue3 = queue3.value && queue3.value !== 'None' ? queue3.value.trim() : null
@@ -213,10 +197,6 @@ async function onSubmit(e) {
       if (errors.cluster) {
         clusterValidation.touched.value = true
         clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
-      }
-      if (errors.name) {
-        nameValidation.touched.value = true
-        nameValidation.error.value = Array.isArray(errors.name) ? errors.name[0] : errors.name
       }
       if (errors.passwd) {
         passwdValidation.touched.value = true
@@ -263,20 +243,8 @@ async function onSubmit(e) {
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
           :required="true"
-          hint="1000–9999."
+          hint="1000–9999, unique per tenant."
           @blur="pkeyValidation.onBlur"
-        />
-        <FormField
-          id="name"
-          v-model="name"
-          label="Name"
-          type="text"
-          placeholder="e.g. agent_name"
-          :error="nameValidation.error.value"
-          :touched="nameValidation.touched.value"
-          :required="true"
-          hint="Letters, numbers, underscore, hyphen (alpha_dash)."
-          @blur="nameValidation.onBlur"
         />
         <FormField
           id="passwd"
@@ -289,7 +257,7 @@ async function onSubmit(e) {
           :error="passwdValidation.error.value"
           :touched="passwdValidation.touched.value"
           :required="true"
-          hint="1001–9999."
+          hint="1001–9999 (agent PIN)."
           @blur="passwdValidation.onBlur"
         />
         <FormField
@@ -297,7 +265,7 @@ async function onSubmit(e) {
           v-model="cname"
           label="Common name"
           type="text"
-          placeholder="Display name"
+          placeholder="Display name (optional)"
         />
         <FormField
           id="description"
@@ -305,15 +273,6 @@ async function onSubmit(e) {
           label="Description"
           type="text"
           placeholder="Short description"
-        />
-        <FormField
-          id="extlen"
-          v-model="extlen"
-          label="Extension length"
-          type="text"
-          inputmode="numeric"
-          placeholder="e.g. 4"
-          hint="Extension length for this agent."
         />
       </div>
 

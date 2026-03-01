@@ -12,6 +12,15 @@
 
 ## Done
 
+### Latest session (Queue audit + SPA/API alignment + move_request_to_model)
+
+- **Queue audit (pbx3api):** Queue model uses `$fillable` (no `$guarded`); controller `updateableColumns` include pkey, cname, outcome; pkey = **Queue Dial**, **3–5 digits**, unique per tenant; create sets id/shortuid; update uses Validator + `validator->after()` for pkey uniqueness when changed; update by `id` only (tenant-safe). Same pattern as Trunk/Extension. **pbx3api/workingdocs/QUEUE_AUDIT_PROTOTYPE.md** has the column audit.
+- **Queue SPA (pbx3spa):** Create and detail use label **"Queue Dial"**; validation 3–5 digits (frontend + API); cname (Common name) always sent in create/update body (null when empty). Detail has editable pkey, cname, outcome; create has cname. All updateable fields from audit are in the panels.
+- **Extension & Trunk SPA aligned with audits:** Extension detail/create: cname, description, callmax, extalert, provision, provisionwith, pjsipuser, technology, dvrvmail added where applicable. Trunk detail: editable pkey, cname, callback, closeroute, openroute, privileged, technology, iaxreg, pjsipreg; create: cname, description. See **EXTENSION_AUDIT_PROTOTYPE.md**, **TRUNK_AUDIT_PROTOTYPE.md** in pbx3api/workingdocs.
+- **move_request_to_model (pbx3api Helper.php):** No longer iterates `$request->all()`; now iterates **updateable column keys** and sets each from `$request->input($key)`. So every updateable field is applied the same way and JSON PUT body is read correctly (fixes cname and other fields that were missing when `all()` didn’t include body on some configs). All controllers using this helper benefit.
+- **Plan (pbx3api):** **PLAN_MODELS_AND_VALIDATION_HARMONISATION.md** updated: when converting each table (audit → fix), **you must update both the API and the SPA** so create/detail views follow the schema; no field left out of scope.
+- **For next agent:** Continue table-by-table audit per plan (Agent, Route, IVR, Inbound route, etc.); for each, update API (model, controller, validation) and SPA (create + detail views) in the same pass. Branch: `spanel` (pbx3api, pbx3spa).
+
 - **Repo rename completed:** frontend repo/component naming is now `pbx3spa` (was `pbx3-frontend`); cross-repo docs in pbx3 and pbx3api were updated accordingly.
 - **Integration test milestone:** frontend sign-in to pbx3api was validated after nginx/php-fpm installer hardening in pbx3api. Current dev workflow uses LAN HTTP temporarily to avoid self-signed cert trust friction; see pbx3 TODO for HTTPS/LE completion before release.
 - Steps 1–17+; full CRUD for Tenants, Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound routes, **Custom Apps** (list/detail/create per PANEL_PATTERN).

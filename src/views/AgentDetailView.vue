@@ -6,6 +6,7 @@ import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { validateAgentPkey } from '@/utils/validation'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
@@ -23,8 +24,10 @@ const tenants = ref([])
 const queues = ref([])
 const loading = ref(true)
 const error = ref('')
+const editPkey = ref('')
 const editCluster = ref('default')
-const editName = ref('')
+const editCname = ref('')
+const editDescription = ref('')
 const editPasswd = ref('')
 const editQueue1 = ref('None')
 const editQueue2 = ref('None')
@@ -132,16 +135,19 @@ async function fetchAgent() {
   error.value = ''
   try {
     agent.value = await getApiClient().get(`agents/${encodeURIComponent(shortuid.value)}`)
-    const clusterRaw = agent.value?.cluster ?? 'default'
+    const a = agent.value
+    const clusterRaw = a?.cluster ?? 'default'
     editCluster.value = clusterToTenantPkey.value.get(String(clusterRaw)) ?? clusterRaw
-    editName.value = agent.value?.name ?? ''
-    editPasswd.value = agent.value?.passwd != null ? String(agent.value.passwd) : ''
-    editQueue1.value = normalizeQueueFromApi(agent.value?.queue1)
-    editQueue2.value = normalizeQueueFromApi(agent.value?.queue2)
-    editQueue3.value = normalizeQueueFromApi(agent.value?.queue3)
-    editQueue4.value = normalizeQueueFromApi(agent.value?.queue4)
-    editQueue5.value = normalizeQueueFromApi(agent.value?.queue5)
-    editQueue6.value = normalizeQueueFromApi(agent.value?.queue6)
+    editPkey.value = a?.pkey != null ? String(a.pkey) : ''
+    editCname.value = a?.cname ?? ''
+    editDescription.value = a?.description ?? ''
+    editPasswd.value = a?.passwd != null ? String(a.passwd) : ''
+    editQueue1.value = normalizeQueueFromApi(a?.queue1)
+    editQueue2.value = normalizeQueueFromApi(a?.queue2)
+    editQueue3.value = normalizeQueueFromApi(a?.queue3)
+    editQueue4.value = normalizeQueueFromApi(a?.queue4)
+    editQueue5.value = normalizeQueueFromApi(a?.queue5)
+    editQueue6.value = normalizeQueueFromApi(a?.queue6)
     clearQueuesNotInTenant()
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load agent')
@@ -178,6 +184,11 @@ function onKeydown(e) {
 async function saveEdit(e) {
   e.preventDefault()
   saveError.value = ''
+  const pkeyErr = validateAgentPkey(editPkey.value)
+  if (pkeyErr) {
+    saveError.value = pkeyErr
+    return
+  }
   const passwdNum = editPasswd.value.trim() !== '' ? parseInt(editPasswd.value, 10) : undefined
   if (passwdNum !== undefined && (isNaN(passwdNum) || passwdNum < 1001 || passwdNum > 9999)) {
     saveError.value = 'Password must be 1001–9999'
@@ -186,8 +197,10 @@ async function saveEdit(e) {
   saving.value = true
   try {
     const body = {
+      pkey: parseInt(editPkey.value, 10),
       cluster: editCluster.value.trim(),
-      name: editName.value.trim(),
+      cname: editCname.value.trim() || null,
+      description: editDescription.value.trim() || null,
       passwd: passwdNum ?? (agent.value?.passwd != null ? parseInt(agent.value.passwd, 10) : 1001)
     }
     body.queue1 = normalizeQueueForSave(editQueue1.value)
@@ -260,7 +273,17 @@ async function confirmAndDelete() {
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
             <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Agent number" :value="agent.pkey ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" :model-value="agent.pkey ?? '—'" label="Agent number" disabled class="readonly-identity" />
+            <FormField
+              v-else
+              id="edit-identity-pkey"
+              v-model="editPkey"
+              label="Agent number"
+              type="number"
+              min="1000"
+              max="9999"
+              placeholder="1000–9999"
+              hint="1000–9999, unique per tenant."
+            />
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"
@@ -269,12 +292,18 @@ async function confirmAndDelete() {
               :required="true"
             />
             <FormField
-              id="edit-name"
-              v-model="editName"
-              label="Name"
+              id="edit-cname"
+              v-model="editCname"
+              label="Common name"
               type="text"
-              placeholder="e.g. agent_name"
-              :required="true"
+              placeholder="Display name"
+            />
+            <FormField
+              id="edit-description"
+              v-model="editDescription"
+              label="Description"
+              type="text"
+              placeholder="Short description"
             />
             <FormField
               id="edit-passwd"
@@ -285,7 +314,7 @@ async function confirmAndDelete() {
               max="9999"
               placeholder="1001–9999"
               :required="true"
-              hint="1001–9999. Required on save."
+              hint="1001–9999 (agent PIN)."
             />
           </div>
 
