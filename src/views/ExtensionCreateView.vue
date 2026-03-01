@@ -21,8 +21,11 @@ const extensionType = ref('SIP')
 const pkey = ref('')
 const cluster = ref('default')
 const desc = ref('')
+const cname = ref('')
+const description = ref('')
 const macaddr = ref('')
 const active = ref('YES')
+const dvrvmail = ref('')
 const transport = ref('udp')
 const callbackto = ref('desk')
 const callerid = ref('')
@@ -69,8 +72,11 @@ function resetForm() {
   pkey.value = ''
   cluster.value = 'default'
   desc.value = ''
+  cname.value = ''
+  description.value = ''
   macaddr.value = ''
   active.value = 'YES'
+  dvrvmail.value = ''
   transport.value = 'udp'
   callbackto.value = 'desk'
   callerid.value = ''
@@ -109,6 +115,8 @@ onMounted(async () => {
     celltwin,
     devicerec,
     desc,
+    cname,
+    description,
     protocol
   })
   const deviceDefault = getSchema('extensions')?.defaults?.device
@@ -153,6 +161,9 @@ async function onSubmit(e) {
       protocol: protocol.value
     }
     if (desc.value.trim()) body.desc = desc.value.trim()
+    if (cname.value.trim()) body.cname = cname.value.trim()
+    if (description.value.trim()) body.description = description.value.trim()
+    if (dvrvmail.value.trim()) body.dvrvmail = dvrvmail.value.trim()
     if (extensionType.value === 'SIP' && macaddr.value.trim()) {
       body.macaddr = macaddr.value.trim().replace(/[^0-9a-fA-F]/g, '')
     }
@@ -245,6 +256,20 @@ function onKeydown(e) {
           type="text"
           placeholder="Short description or display name"
         />
+        <FormField
+          id="cname"
+          v-model="cname"
+          label="Common name"
+          type="text"
+          placeholder="Display name"
+        />
+        <FormField
+          id="description"
+          v-model="description"
+          label="Description"
+          type="text"
+          placeholder="Freeform description"
+        />
         <FormSegmentedPill
           id="extensionType"
           v-model="extensionType"
@@ -319,6 +344,13 @@ function onKeydown(e) {
           v-model="devicerec"
           label="Devicerec"
           :options="['default', 'None', 'Inbound', 'Outbound', 'Both']"
+        />
+        <FormField
+          id="dvrvmail"
+          v-model="dvrvmail"
+          label="DVR voicemail"
+          type="text"
+          placeholder="Extension pkey for voicemail"
         />
         <FormSegmentedPill
           id="protocol"

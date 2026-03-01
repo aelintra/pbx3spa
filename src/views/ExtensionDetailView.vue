@@ -30,6 +30,9 @@ const loading = ref(true)
 const error = ref('')
 const editCluster = ref('')
 const editDesc = ref('')
+const editCname = ref('')
+const editDescription = ref('')
+const editCallmax = ref('')
 const editActive = ref('YES')
 const editTransport = ref('udp')
 const editCallbackto = ref('desk')
@@ -38,8 +41,13 @@ const editCellphone = ref('')
 const editCelltwin = ref('OFF')
 const editDevicerec = ref('None')
 const editDvrvmail = ref('')
+const editExtalert = ref('')
 const editMacaddr = ref('')
 const editProtocol = ref('IPV4')
+const editProvision = ref('')
+const editProvisionwith = ref('IP')
+const editPjsipuser = ref('')
+const editTechnology = ref('SIP')
 const editVmailfwd = ref('')
 const saveError = ref('')
 const saving = ref(false)
@@ -104,6 +112,9 @@ async function fetchExtension() {
     const tenantPkey = ext?.tenant_pkey ?? tenantPkeyDisplay(ext?.cluster)
     editCluster.value = tenantPkey ?? 'default'
     editDesc.value = ext?.desc ?? ext?.description ?? ''
+    editCname.value = ext?.cname ?? ''
+    editDescription.value = ext?.description ?? ''
+    editCallmax.value = ext?.callmax != null && ext?.callmax !== '' ? String(ext.callmax) : ''
     editActive.value = ext?.active ?? 'YES'
     editTransport.value = ext?.transport ?? 'udp'
     editCallbackto.value = ext?.callbackto ?? 'desk'
@@ -113,8 +124,13 @@ async function fetchExtension() {
     const rawDevicerec = ext?.devicerec
     editDevicerec.value = (rawDevicerec === 'OTR' || rawDevicerec === 'OTRR') ? 'Both' : (rawDevicerec ?? 'None')
     editDvrvmail.value = ext?.dvrvmail ?? ''
+    editExtalert.value = ext?.extalert ?? ''
     editMacaddr.value = ext?.macaddr != null ? String(ext.macaddr).trim() : ''
     editProtocol.value = ext?.protocol ?? 'IPV4'
+    editProvision.value = ext?.provision ?? ''
+    editProvisionwith.value = (ext?.provisionwith === 'FQDN') ? 'FQDN' : 'IP'
+    editPjsipuser.value = ext?.pjsipuser ?? ''
+    editTechnology.value = ext?.technology ?? 'SIP'
     editVmailfwd.value = ext?.vmailfwd ?? ''
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load extension')
@@ -175,6 +191,9 @@ async function saveEdit(e) {
       cluster: editCluster.value.trim(),
       device: extension.value?.device ?? 'General SIP',
       desc: editDesc.value.trim() || undefined,
+      cname: editCname.value.trim() || undefined,
+      description: editDescription.value.trim() || undefined,
+      callmax: editCallmax.value.trim() ? parseInt(editCallmax.value, 10) : undefined,
       active: editActive.value,
       transport: editTransport.value,
       callbackto: editCallbackto.value,
@@ -183,10 +202,16 @@ async function saveEdit(e) {
       celltwin: editCelltwin.value,
       devicerec: editDevicerec.value,
       dvrvmail: editDvrvmail.value.trim() || undefined,
+      extalert: editExtalert.value.trim() || undefined,
       macaddr: editMacaddr.value.trim() ? editMacaddr.value.trim().replace(/[^0-9a-fA-F]/g, '') : null,
       protocol: editProtocol.value,
+      provision: editProvision.value.trim() || undefined,
+      provisionwith: editProvisionwith.value,
+      pjsipuser: editPjsipuser.value.trim() || undefined,
+      technology: editTechnology.value || undefined,
       vmailfwd: editVmailfwd.value.trim() || undefined
     }
+    if (body.callmax !== undefined && Number.isNaN(body.callmax)) delete body.callmax
     await getApiClient().put(`extensions/${encodeURIComponent(shortuid.value)}`, body)
     await fetchExtension()
     toast.show(`Extension saved`)
@@ -323,6 +348,20 @@ async function saveRuntime(e) {
               type="text"
               placeholder="e.g. John Doe"
             />
+            <FormField
+              id="edit-cname"
+              v-model="editCname"
+              label="Common name"
+              type="text"
+              placeholder="Display name"
+            />
+            <FormField
+              id="edit-description"
+              v-model="editDescription"
+              label="Description"
+              type="text"
+              placeholder="Freeform description"
+            />
             <FormToggle
               id="edit-active"
               v-model="editActive"
@@ -334,6 +373,13 @@ async function saveRuntime(e) {
 
           <h2 class="detail-heading">Transport</h2>
           <div class="form-fields">
+            <FormSelect
+              id="edit-technology"
+              v-model="editTechnology"
+              label="Technology"
+              :options="['SIP', 'IAX2', 'DiD', 'CLiD', 'Class']"
+              hint="SIP, IAX2, or class."
+            />
             <FormSelect
               id="edit-transport"
               v-model="editTransport"
@@ -367,6 +413,8 @@ async function saveRuntime(e) {
               :options="['default', 'None', 'Inbound', 'Outbound', 'Both']"
             />
             <FormField id="edit-dvrvmail" v-model="editDvrvmail" label="DVR voicemail" type="text" />
+            <FormField id="edit-callmax" v-model="editCallmax" label="Call max" type="text" inputmode="numeric" placeholder="e.g. 3" />
+            <FormField id="edit-extalert" v-model="editExtalert" label="Ext alert" type="text" />
             <FormSegmentedPill
               id="edit-protocol"
               v-model="editProtocol"
@@ -374,6 +422,14 @@ async function saveRuntime(e) {
               :options="['IPV4', 'IPV6']"
             />
             <FormField id="edit-vmailfwd" v-model="editVmailfwd" label="Voicemail forward (email)" type="email" />
+            <FormField id="edit-provision" v-model="editProvision" label="Provision" type="text" placeholder="Provisioning string" />
+            <FormSelect
+              id="edit-provisionwith"
+              v-model="editProvisionwith"
+              label="Provision with"
+              :options="['IP', 'FQDN']"
+            />
+            <FormField id="edit-pjsipuser" v-model="editPjsipuser" label="PJSIP user" type="text" />
           </div>
 
           <div class="edit-actions">

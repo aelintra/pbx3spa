@@ -40,12 +40,16 @@ export function validateTenantPkey(value) {
 }
 
 /**
- * Validate Queue name (pkey) for create
- * Required, non-empty
+ * Validate Queue number (pkey) for create/edit
+ * Required, 3-5 digits, unique per tenant (uniqueness enforced by API)
  */
 export function validateQueuePkey(value) {
   if (!value || !value.trim()) {
-    return 'Queue name is required'
+    return 'Queue number is required'
+  }
+  const trimmed = value.trim()
+  if (!/^\d{3,5}$/.test(trimmed)) {
+    return 'Must be 3-5 digits'
   }
   return null
 }

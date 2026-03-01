@@ -18,8 +18,10 @@ const { ensureFetched, applySchemaDefaults } = useSchema()
 const pkey = ref('')
 const cluster = ref('default')
 const active = ref('YES')
+const cname = ref('')
 const description = ref('')
 const devicerec = ref('None')
+const outcome = ref('')
 const strategy = ref('ringall')
 const greetnum = ref('')
 const greeting = ref('')
@@ -77,8 +79,10 @@ onMounted(async () => {
   applySchemaDefaults('queues', {
     cluster,
     active,
+    cname,
     description,
     devicerec,
+    outcome,
     strategy,
     timeout,
     retry,
@@ -92,8 +96,10 @@ function resetForm() {
   pkey.value = ''
   cluster.value = 'default'
   active.value = 'YES'
+  cname.value = ''
   description.value = ''
   devicerec.value = 'None'
+  outcome.value = ''
   strategy.value = 'ringall'
   greetnum.value = ''
   greeting.value = ''
@@ -151,10 +157,12 @@ async function onSubmit(e) {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
       active: active.value,
+      cname: cname.value.trim() || null,
       devicerec: devicerec.value || 'None',
       strategy: strategy.value
     }
     if (description.value.trim()) body.description = description.value.trim()
+    if (outcome.value.trim()) body.outcome = outcome.value.trim()
     if (greetnum.value.trim()) body.greetnum = greetnum.value.trim()
     if (greeting.value.trim()) body.greeting = greeting.value.trim()
     if (options.value.trim()) body.options = options.value.trim()
@@ -221,14 +229,22 @@ async function onSubmit(e) {
           id="pkey"
           ref="pkeyInput"
           v-model="pkey"
-          label="Queue name"
+          label="Queue Dial"
           type="text"
-          placeholder="e.g. sales"
+          inputmode="numeric"
+          placeholder="e.g. 100"
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
           :required="true"
-          hint="Unique queue identifier."
+          hint="Unique per tenant. 3-5 digits."
           @blur="pkeyValidation.onBlur"
+        />
+        <FormField
+          id="cname"
+          v-model="cname"
+          label="Common name"
+          type="text"
+          placeholder="Display name"
         />
         <FormField
           id="description"
@@ -372,6 +388,13 @@ async function onSubmit(e) {
           label="Alert info"
           type="text"
           hint="Distinctive ring information."
+        />
+        <FormField
+          id="outcome"
+          v-model="outcome"
+          label="Outcome"
+          type="text"
+          placeholder="e.g. None"
         />
       </div>
 

@@ -16,6 +16,8 @@ const { ensureFetched, applySchemaDefaults } = useSchema()
 const technology = ref('SIP')
 const pkey = ref('')
 const cluster = ref('default')
+const cname = ref('')
+const description = ref('')
 const host = ref('')
 const password = ref('')
 const transport = ref('udp')
@@ -33,6 +35,8 @@ function resetForm() {
   technology.value = 'SIP'
   pkey.value = ''
   cluster.value = 'default'
+  cname.value = ''
+  description.value = ''
   host.value = ''
   password.value = ''
   transport.value = 'udp'
@@ -42,7 +46,7 @@ function resetForm() {
 
 onMounted(async () => {
   await ensureFetched()
-  applySchemaDefaults('trunks', { cluster, transport })
+  applySchemaDefaults('trunks', { cluster, transport, cname, description })
 })
 
 async function onSubmit(e) {
@@ -74,6 +78,8 @@ async function onSubmit(e) {
       username: pkey.value.trim(),
       host: host.value.trim(),
     }
+    if (cname.value.trim()) body.cname = cname.value.trim()
+    if (description.value.trim()) body.description = description.value.trim()
     if (isSIP.value) {
       body.password = password.value || ''
       body.transport = transport.value
@@ -154,6 +160,20 @@ function onKeydown(e) {
             :touched="pkeyValidation.touched.value"
             :required="true"
             @blur="pkeyValidation.onBlur"
+          />
+          <FormField
+            id="cname"
+            v-model="cname"
+            label="Common name"
+            type="text"
+            placeholder="Display name"
+          />
+          <FormField
+            id="description"
+            v-model="description"
+            label="Description"
+            type="text"
+            placeholder="Optional description"
           />
         </div>
 

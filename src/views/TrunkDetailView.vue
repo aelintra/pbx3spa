@@ -22,6 +22,8 @@ function isReadOnly(field) {
 const trunk = ref(null)
 const loading = ref(true)
 const error = ref('')
+const editPkey = ref('')
+const editCname = ref('')
 const editDescription = ref('')
 const editActive = ref('YES')
 const editHost = ref('')
@@ -38,6 +40,13 @@ const editInprefix = ref('')
 const editMatch = ref('')
 const editRegister = ref('')
 const editTag = ref('')
+const editCallback = ref('')
+const editCloseroute = ref('')
+const editOpenroute = ref('')
+const editPrivileged = ref('')
+const editTechnology = ref('SIP')
+const editIaxreg = ref('')
+const editPjsipreg = ref('')
 const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'Outbound', 'Both']
 
 function normalizeDevicerec(s) {
@@ -72,6 +81,8 @@ async function fetchTrunk() {
   error.value = ''
   try {
     trunk.value = await getApiClient().get(`trunks/${encodeURIComponent(shortuid.value)}`)
+    editPkey.value = trunk.value?.pkey ?? ''
+    editCname.value = trunk.value?.cname ?? ''
     editDescription.value = trunk.value?.description ?? ''
     editActive.value = trunk.value?.active ?? 'YES'
     editHost.value = trunk.value?.host ?? ''
@@ -88,6 +99,13 @@ async function fetchTrunk() {
     editMatch.value = trunk.value?.match ?? ''
     editRegister.value = trunk.value?.register ?? ''
     editTag.value = trunk.value?.tag ?? ''
+    editCallback.value = trunk.value?.callback ?? ''
+    editCloseroute.value = trunk.value?.closeroute ?? ''
+    editOpenroute.value = trunk.value?.openroute ?? ''
+    editPrivileged.value = trunk.value?.privileged ?? ''
+    editTechnology.value = trunk.value?.technology ?? 'SIP'
+    editIaxreg.value = trunk.value?.iaxreg ?? ''
+    editPjsipreg.value = trunk.value?.pjsipreg ?? ''
     editDevicerec.value = normalizeDevicerec(trunk.value?.devicerec)
     editDisa.value = trunk.value?.disa?.trim() || 'None'
     editDisapass.value = trunk.value?.disapass ?? ''
@@ -127,6 +145,8 @@ async function saveEdit(e) {
   saving.value = true
   try {
     const body = {
+      pkey: editPkey.value.trim() || undefined,
+      cname: editCname.value.trim() || undefined,
       description: editDescription.value.trim() || undefined,
       active: editActive.value,
       cluster: 'default', // TRUNK_ROUTE_MULTITENANCY: trunks are default-tenant only, not changeable
@@ -143,6 +163,13 @@ async function saveEdit(e) {
       match: editMatch.value.trim() || undefined,
       register: editRegister.value.trim() || undefined,
       tag: editTag.value.trim() || undefined,
+      callback: editCallback.value.trim() || undefined,
+      closeroute: editCloseroute.value.trim() || undefined,
+      openroute: editOpenroute.value.trim() || undefined,
+      privileged: editPrivileged.value.trim() || undefined,
+      technology: editTechnology.value || undefined,
+      iaxreg: editIaxreg.value.trim() || undefined,
+      pjsipreg: editPjsipreg.value.trim() || undefined,
       devicerec: editDevicerec.value || 'None',
       disa: (editDisa.value.trim() && editDisa.value.trim() !== 'None') ? editDisa.value.trim() : undefined,
       disapass: editDisapass.value.trim() || undefined,
@@ -213,14 +240,17 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Name" :value="trunk.pkey ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" :model-value="trunk.pkey ?? '—'" label="Name" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Name" :value="editPkey || '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-pkey" v-model="editPkey" label="Name" type="text" placeholder="e.g. mytrunk" hint="Unique per tenant." />
+            <FormField id="edit-cname" v-model="editCname" label="Common name" type="text" placeholder="Display name" />
             <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="trunk.shortuid ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-shortuid" :model-value="trunk.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="trunk.id ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-id" :model-value="trunk.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('transport')" id="edit-identity-transport" label="Transport" :value="trunk.transport ?? 'udp'" class="readonly-identity" />
             <FormField v-else id="edit-identity-transport" :model-value="trunk.transport ?? 'udp'" label="Transport" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('technology')" id="edit-identity-technology" label="Technology" :value="editTechnology || '—'" class="readonly-identity" />
+            <FormSelect v-else id="edit-technology" v-model="editTechnology" label="Technology" :options="['SIP', 'IAX2']" />
             <FormField
               id="edit-description"
               v-model="editDescription"
@@ -270,6 +300,12 @@ async function confirmAndDelete() {
             <FormField id="edit-match" v-model="editMatch" label="Match" type="text" />
             <FormField id="edit-register" v-model="editRegister" label="Register" type="text" />
             <FormField id="edit-tag" v-model="editTag" label="Tag" type="text" />
+            <FormField id="edit-callback" v-model="editCallback" label="Callback" type="text" />
+            <FormField id="edit-closeroute" v-model="editCloseroute" label="Close route" type="text" />
+            <FormField id="edit-openroute" v-model="editOpenroute" label="Open route" type="text" />
+            <FormField id="edit-privileged" v-model="editPrivileged" label="Privileged" type="text" />
+            <FormField id="edit-iaxreg" v-model="editIaxreg" label="IAX reg" type="text" />
+            <FormField id="edit-pjsipreg" v-model="editPjsipreg" label="PJSIP reg" type="text" />
             <FormSelect
               id="edit-devicerec"
               v-model="editDevicerec"

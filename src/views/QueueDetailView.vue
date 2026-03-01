@@ -6,6 +6,7 @@ import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { validateQueuePkey } from '@/utils/validation'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
@@ -23,10 +24,13 @@ const queue = ref(null)
 const tenants = ref([])
 const loading = ref(true)
 const error = ref('')
+const editPkey = ref('')
 const editActive = ref('YES')
 const editCluster = ref('default')
+const editCname = ref('')
 const editDescription = ref('')
 const editDevicerec = ref('None')
+const editOutcome = ref('')
 const editDivert = ref('')
 const editGreetnum = ref('')
 const editGreeting = ref('')
@@ -97,8 +101,11 @@ async function fetchQueue() {
     const q = queue.value
     const clusterRaw = q?.cluster ?? 'default'
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
+    editPkey.value = q?.pkey ?? ''
     editActive.value = (q?.active === 'NO') ? 'NO' : 'YES'
+    editCname.value = q?.cname ?? ''
     editDescription.value = q?.description ?? ''
+    editOutcome.value = q?.outcome ?? ''
     editDevicerec.value = normalizeDevicerec(q?.devicerec)
     editAlertinfo.value = q?.alertinfo ?? ''
     editDivert.value = q?.divert != null && q?.divert !== '' ? String(q.divert) : ''
@@ -147,11 +154,18 @@ function onKeydown(e) {
 async function saveEdit(e) {
   e.preventDefault()
   saveError.value = ''
+  const pkeyErr = validateQueuePkey(editPkey.value)
+  if (pkeyErr) {
+    saveError.value = pkeyErr
+    return
+  }
   saving.value = true
   try {
     const body = {
+      pkey: editPkey.value.trim() || undefined,
       active: editActive.value,
       cluster: editCluster.value.trim(),
+      cname: editCname.value.trim() === '' ? null : editCname.value.trim(),
       description: editDescription.value.trim() || undefined,
       devicerec: editDevicerec.value || 'None',
       alertinfo: editAlertinfo.value.trim() || undefined,
@@ -160,6 +174,7 @@ async function saveEdit(e) {
       members: editMembers.value.trim() || undefined,
       musicclass: editMusicclass.value.trim() || undefined,
       options: editOptions.value.trim() || undefined,
+      outcome: editOutcome.value.trim() || undefined,
       strategy: editStrategy.value,
       maxlen: parseInt(editMaxlen.value, 10),
       retry: parseInt(editRetry.value, 10),
@@ -238,8 +253,9 @@ const displayName = computed(() => queue.value?.pkey ?? '')
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Queue name" :value="queue.pkey ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" :model-value="queue.pkey ?? '—'" label="Queue name" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Queue Dial" :value="editPkey || '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-pkey" v-model="editPkey" label="Queue Dial" type="text" inputmode="numeric" placeholder="e.g. 100" hint="Unique per tenant. 3-5 digits." />
+            <FormField id="edit-cname" v-model="editCname" label="Common name" type="text" placeholder="Display name" />
             <template v-if="queue.shortuid != null && queue.shortuid !== ''">
               <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="queue.shortuid ?? '—'" class="readonly-identity" />
               <FormField v-else id="edit-identity-shortuid" :model-value="queue.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
@@ -371,6 +387,13 @@ const displayName = computed(() => queue.value?.pkey ?? '')
               v-model="editAlertinfo"
               label="Alert info"
               type="text"
+            />
+            <FormField
+              id="edit-outcome"
+              v-model="editOutcome"
+              label="Outcome"
+              type="text"
+              placeholder="e.g. None"
             />
           </div>
 
