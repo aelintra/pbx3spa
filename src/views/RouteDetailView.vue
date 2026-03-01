@@ -6,6 +6,7 @@ import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { validateRoutePkey } from '@/utils/validation'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
@@ -25,8 +26,10 @@ const tenants = ref([])
 const trunks = ref([])
 const loading = ref(true)
 const error = ref('')
+const editPkey = ref('')
 const editCluster = ref('default')
-const editDesc = ref('')
+const editCname = ref('')
+const editDescription = ref('')
 const editActive = ref('YES')
 const editAuth = ref('NO')
 const editDialplan = ref('')
@@ -108,7 +111,9 @@ function syncEditFromRoute() {
   const r = routeData.value
   const tenantPkey = r.tenant_pkey ?? tenantPkeyDisplay(r.cluster)
   editCluster.value = tenantPkey ?? 'default'
-  editDesc.value = r.description ?? ''
+  editPkey.value = r.pkey ?? ''
+  editCname.value = r.cname ?? ''
+  editDescription.value = r.description ?? ''
   editActive.value = r.active ?? 'YES'
   editAuth.value = r.auth ?? 'NO'
   editDialplan.value = r.dialplan ?? ''
@@ -159,6 +164,11 @@ function onKeydown(e) {
 async function saveEdit(e) {
   e.preventDefault()
   saveError.value = ''
+  const pkeyErr = validateRoutePkey(editPkey.value)
+  if (pkeyErr) {
+    saveError.value = pkeyErr
+    return
+  }
   const dialplanTrimmed = editDialplan.value.trim()
   if (!dialplanTrimmed) {
     saveError.value = 'Dialplan is required (e.g. _XXXXXX)'
@@ -167,8 +177,10 @@ async function saveEdit(e) {
   saving.value = true
   try {
     await getApiClient().put(`routes/${encodeURIComponent(shortuid.value)}`, {
+      pkey: editPkey.value.trim(),
       cluster: editCluster.value.trim(),
-      description: editDesc.value.trim() || undefined,
+      cname: editCname.value.trim() || null,
+      description: editDescription.value.trim() || null,
       active: editActive.value,
       auth: editAuth.value,
       dialplan: dialplanTrimmed,
@@ -241,15 +253,28 @@ async function confirmAndDelete() {
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
             <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Route name" :value="routeData.pkey ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" :model-value="routeData.pkey ?? '—'" label="Route name" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="routeData.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="routeData.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="routeData.id ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-id" :model-value="routeData.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormField
-              id="edit-desc"
-              v-model="editDesc"
-              label="Description (optional)"
+              v-else
+              id="edit-identity-pkey"
+              v-model="editPkey"
+              label="Route name"
+              type="text"
+              placeholder="e.g. _XXXXXX"
+              hint="Unique per tenant."
+            />
+            <FormReadonly id="edit-identity-shortuid" label="Local UID" :value="routeData.shortuid ?? '—'" class="readonly-identity" />
+            <FormReadonly id="edit-identity-id" label="KSUID" :value="routeData.id ?? '—'" class="readonly-identity" />
+            <FormField
+              id="edit-cname"
+              v-model="editCname"
+              label="Common name"
+              type="text"
+              placeholder="Display name"
+            />
+            <FormField
+              id="edit-description"
+              v-model="editDescription"
+              label="Description"
               type="text"
               placeholder="Freeform description"
             />

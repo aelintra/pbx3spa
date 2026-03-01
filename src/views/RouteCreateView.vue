@@ -18,7 +18,7 @@ const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
 const pkey = ref('')
 const cluster = ref('default')
-const desc = ref('')
+const description = ref('')
 const cname = ref('')
 const active = ref('YES')
 const auth = ref('NO')
@@ -88,7 +88,7 @@ async function loadTrunks() {
 function resetForm() {
   pkey.value = ''
   cluster.value = 'default'
-  desc.value = ''
+  description.value = ''
   cname.value = ''
   active.value = 'YES'
   auth.value = 'NO'
@@ -130,7 +130,7 @@ async function onSubmit(e) {
       dialplan: dialplan.value.trim(),
       strategy: strategy.value
     }
-    if (desc.value.trim()) body.description = desc.value.trim()
+    if (description.value.trim()) body.description = description.value.trim()
     if (cname.value.trim()) body.cname = cname.value.trim()
     body.path1 = path1.value && path1.value !== 'None' ? path1.value.trim() : null
     body.path2 = path2.value && path2.value !== 'None' ? path2.value.trim() : null
@@ -185,7 +185,7 @@ function onKeydown(e) {
 
 onMounted(async () => {
   await ensureFetched()
-  applySchemaDefaults('routes', { cluster, desc, active, auth, strategy })
+  applySchemaDefaults('routes', { cluster, description, cname, active, auth, strategy })
   await loadTenants()
   await loadTrunks()
 })
@@ -221,8 +221,8 @@ onMounted(async () => {
           @blur="pkeyValidation.onBlur"
         />
         <FormField
-          id="desc"
-          v-model="desc"
+          id="description"
+          v-model="description"
           label="Description"
           type="text"
           placeholder="Freeform description"
