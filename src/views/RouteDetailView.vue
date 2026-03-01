@@ -172,10 +172,10 @@ async function saveEdit(e) {
       active: editActive.value,
       auth: editAuth.value,
       dialplan: dialplanTrimmed,
-      path1: editPath1.value !== 'None' && editPath1.value.trim() ? editPath1.value.trim() : undefined,
-      path2: editPath2.value !== 'None' && editPath2.value.trim() ? editPath2.value.trim() : undefined,
-      path3: editPath3.value !== 'None' && editPath3.value.trim() ? editPath3.value.trim() : undefined,
-      path4: editPath4.value !== 'None' && editPath4.value.trim() ? editPath4.value.trim() : undefined,
+      path1: editPath1.value !== 'None' && editPath1.value.trim() ? editPath1.value.trim() : null,
+      path2: editPath2.value !== 'None' && editPath2.value.trim() ? editPath2.value.trim() : null,
+      path3: editPath3.value !== 'None' && editPath3.value.trim() ? editPath3.value.trim() : null,
+      path4: editPath4.value !== 'None' && editPath4.value.trim() ? editPath4.value.trim() : null,
       strategy: editStrategy.value
     })
     await fetchRoute()

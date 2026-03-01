@@ -132,10 +132,10 @@ async function onSubmit(e) {
     }
     if (desc.value.trim()) body.description = desc.value.trim()
     if (cname.value.trim()) body.cname = cname.value.trim()
-    if (path1.value && path1.value !== 'None') body.path1 = path1.value.trim()
-    if (path2.value && path2.value !== 'None') body.path2 = path2.value.trim()
-    if (path3.value && path3.value !== 'None') body.path3 = path3.value.trim()
-    if (path4.value && path4.value !== 'None') body.path4 = path4.value.trim()
+    body.path1 = path1.value && path1.value !== 'None' ? path1.value.trim() : null
+    body.path2 = path2.value && path2.value !== 'None' ? path2.value.trim() : null
+    body.path3 = path3.value && path3.value !== 'None' ? path3.value.trim() : null
+    body.path4 = path4.value && path4.value !== 'None' ? path4.value.trim() : null
     await getApiClient().post('routes', body)
     toast.show(`Route ${pkey.value.trim()} created`)
     resetForm()
