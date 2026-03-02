@@ -213,7 +213,7 @@ async function onSubmit(e) {
     }
     if (cname.value.trim()) body.cname = cname.value.trim()
     if (description.value.trim()) body.description = description.value.trim()
-    if (greetnum.value && greetnum.value !== 'None') body.greetnum = parseInt(greetnum.value, 10)
+    if (greetnum.value && greetnum.value !== 'None') body.greetnum = String(greetnum.value).trim()
     await getApiClient().post('ivrs', body)
     toast.show(`IVR ${pkey.value.trim()} created`, 'success')
     resetForm()

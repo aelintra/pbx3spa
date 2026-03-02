@@ -266,7 +266,7 @@ async function saveEdit(e) {
     if (editCname.value.trim()) body.cname = editCname.value.trim()
     else body.cname = null
     if (editDescription.value.trim()) body.description = editDescription.value.trim()
-    if (editGreetnum.value && editGreetnum.value !== 'None') body.greetnum = parseInt(editGreetnum.value, 10)
+    if (editGreetnum.value && editGreetnum.value !== 'None') body.greetnum = String(editGreetnum.value).trim()
     await getApiClient().put(`ivrs/${encodeURIComponent(shortuid.value)}`, body)
     await fetchIvr()
     editing.value = false

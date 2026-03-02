@@ -170,9 +170,9 @@ export function validateGreetnum(value) {
   if (value === 'None' || !value || value === '') {
     return null // Optional field
   }
-  const num = parseInt(value, 10)
-  if (isNaN(num) || num < 0) {
-    return 'Must be a valid greeting number'
+  const trimmed = String(value).trim()
+  if (!/^\d{4}$/.test(trimmed)) {
+    return 'Must be a 4-digit greeting number'
   }
   return null
 }
