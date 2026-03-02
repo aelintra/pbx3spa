@@ -15,7 +15,6 @@ const { ensureFetched, applySchemaDefaults } = useSchema()
 
 const pkey = ref('')
 const displayname = ref('')
-const cname = ref('')
 const htext = ref('')
 
 const error = ref('')
@@ -27,7 +26,6 @@ const pkeyValidation = useFormValidation(pkey, validateHelpCorePkey)
 function resetForm() {
   pkey.value = ''
   displayname.value = ''
-  cname.value = ''
   htext.value = ''
   error.value = ''
   pkeyValidation.reset()
@@ -52,7 +50,6 @@ async function onSubmit(e) {
     const body = {
       pkey: pkey.value.trim(),
       ...(displayname.value.trim() && { displayname: displayname.value.trim() }),
-      ...(cname.value.trim() && { cname: cname.value.trim() }),
       ...(htext.value.trim() && { htext: htext.value.trim() })
     }
     const cleaned = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined))
@@ -92,7 +89,6 @@ function onKeydown(e) {
 const refsByKey = {
   pkey,
   displayname,
-  cname,
   htext
 }
 
@@ -134,12 +130,6 @@ onMounted(async () => {
           id="displayname"
           v-model="displayname"
           label="Display name"
-          placeholder="Optional"
-        />
-        <FormField
-          id="cname"
-          v-model="cname"
-          label="Common name"
           placeholder="Optional"
         />
       </div>

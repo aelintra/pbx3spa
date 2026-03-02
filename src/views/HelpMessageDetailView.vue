@@ -29,7 +29,6 @@ const deleteError = ref('')
 const confirmDeleteOpen = ref(false)
 
 const editDisplayname = ref('')
-const editCname = ref('')
 const editHtext = ref('')
 
 async function fetchMessage() {
@@ -41,7 +40,6 @@ async function fetchMessage() {
   try {
     messageRow.value = await getApiClient().get(`helpcore/${encodeURIComponent(pkey.value)}`)
     editDisplayname.value = messageRow.value?.displayname ?? ''
-    editCname.value = messageRow.value?.cname ?? ''
     editHtext.value = messageRow.value?.htext ?? ''
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load help message')
@@ -80,7 +78,6 @@ async function saveEdit(e) {
   try {
     const body = {}
     if (!isReadOnly('displayname')) body.displayname = editDisplayname.value?.trim() || null
-    if (!isReadOnly('cname')) body.cname = editCname.value?.trim() || null
     if (!isReadOnly('htext')) body.htext = editHtext.value?.trim() || null
     const cleaned = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined))
     await getApiClient().put(`helpcore/${encodeURIComponent(pkey.value)}`, cleaned)
@@ -145,14 +142,13 @@ async function confirmDelete() {
           label="Display name"
         />
         <FormReadonly v-else id="displayname" label="Display name" :value="messageRow?.displayname ?? '—'" />
+      </div>
 
-        <FormField
-          v-if="!isReadOnly('cname')"
-          id="cname"
-          v-model="editCname"
-          label="Common name"
-        />
-        <FormReadonly v-else id="cname" label="Common name" :value="messageRow?.cname ?? '—'" />
+      <h2 class="detail-heading">System</h2>
+      <div class="form-fields">
+        <FormReadonly id="z_created" label="Created" :value="messageRow?.z_created ?? '—'" />
+        <FormReadonly id="z_updated" label="Updated" :value="messageRow?.z_updated ?? '—'" />
+        <FormReadonly id="z_updater" label="Updater" :value="messageRow?.z_updater ?? '—'" />
       </div>
 
       <h2 class="detail-heading">Help text</h2>

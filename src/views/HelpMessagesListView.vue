@@ -30,8 +30,7 @@ const filteredMessages = computed(() => {
   return list.filter((m) => {
     const pkey = str(m.pkey).toLowerCase()
     const displayname = str(m.displayname).toLowerCase()
-    const cname = str(m.cname).toLowerCase()
-    return pkey.includes(q) || displayname.includes(q) || cname.includes(q)
+    return pkey.includes(q) || displayname.includes(q)
   })
 })
 
@@ -123,7 +122,7 @@ onMounted(loadMessages)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by key, display name, or common name"
+          placeholder="Filter by key or display name"
           aria-label="Filter help messages"
         />
       </p>
@@ -147,9 +146,6 @@ onMounted(loadMessages)
             <th class="th-sortable" title="Click to sort" :class="sortClass('displayname')" @click="setSort('displayname')">
               Display name
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('cname')" @click="setSort('cname')">
-              Common name
-            </th>
             <th class="th-actions" title="Edit">
               <span class="action-icon" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
@@ -166,7 +162,6 @@ onMounted(loadMessages)
           <tr v-for="m in sortedMessages" :key="m.pkey">
             <td class="cell-immutable" title="Immutable">{{ m.pkey }}</td>
             <td>{{ m.displayname ?? '—' }}</td>
-            <td>{{ m.cname ?? '—' }}</td>
             <td>
               <router-link :to="{ name: 'help-message-detail', params: { pkey: m.pkey } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true">

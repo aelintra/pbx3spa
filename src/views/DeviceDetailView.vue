@@ -180,6 +180,13 @@ async function confirmDelete() {
         <FormReadonly v-else id="owner" label="Owner" :value="deviceRow?.owner ?? '—'" />
       </div>
 
+      <h2 class="detail-heading">System</h2>
+      <div class="form-fields">
+        <FormReadonly id="z_created" label="Created" :value="deviceRow?.z_created ?? '—'" />
+        <FormReadonly id="z_updated" label="Updated" :value="deviceRow?.z_updated ?? '—'" />
+        <FormReadonly id="z_updater" label="Updater" :value="deviceRow?.z_updater ?? '—'" />
+      </div>
+
       <div class="longtext-section">
         <div class="form-fields provision-section">
           <FormField
