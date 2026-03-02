@@ -27,14 +27,14 @@ const loading = ref(true)
 const error = ref('')
 const editCluster = ref('default')
 const editDescription = ref('')
-const editTrunkname = ref('')
+const editPkey = ref('')
+const editTechnology = ref('DiD')
 const editActive = ref('YES')
 const editOpenroute = ref('None')
 const editCloseroute = ref('None')
 const destinations = ref(null)
 const destinationsLoading = ref(false)
 const editAlertinfo = ref('')
-const editCallprogress = ref('YES')
 const editCname = ref('')
 const editDevicerec = ref('None')
 const editMoh = ref('NO')
@@ -80,6 +80,7 @@ const tenantOptionsForSelect = computed(() => {
 })
 
 const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'Outbound', 'Both']
+const technologyOptions = ['DiD', 'CLiD', 'Class']
 
 function normalizeDevicerec(v) {
   if (v == null || String(v).trim() === '') return 'None'
@@ -153,13 +154,13 @@ function syncEditFromRoute() {
   const r = inboundRoute.value
   const tenantPkey = r.tenant_pkey ?? tenantPkeyDisplay(r.cluster)
   editCluster.value = tenantPkey ?? 'default'
+  editPkey.value = r.pkey ?? ''
+  editTechnology.value = (r.technology && technologyOptions.includes(r.technology)) ? r.technology : 'DiD'
   editDescription.value = r.description ?? r.desc ?? ''
-  editTrunkname.value = r.trunkname ?? ''
   editActive.value = r.active ?? 'YES'
   editOpenroute.value = r.openroute ?? 'None'
   editCloseroute.value = r.closeroute ?? 'None'
   editAlertinfo.value = r.alertinfo ?? ''
-  editCallprogress.value = (r.callprogress === 'NO') ? 'NO' : 'YES'
   editCname.value = r.cname ?? ''
   editDevicerec.value = normalizeDevicerec(r.devicerec)
   editMoh.value = (r.moh === 'YES') ? 'YES' : 'NO'
@@ -218,14 +219,14 @@ async function saveEdit(e) {
   try {
     const inprefixVal = editInprefix.value.trim() === '' ? undefined : parseInt(editInprefix.value, 10)
     const body = {
+      pkey: editPkey.value.trim(),
       active: editActive.value,
       cluster: editCluster.value.trim(),
+      technology: editTechnology.value,
       description: editDescription.value.trim() || undefined,
-      trunkname: editTrunkname.value.trim() || undefined,
-      openroute: editOpenroute.value || 'None',
-      closeroute: editCloseroute.value || 'None',
+      openroute: (editOpenroute.value && editOpenroute.value !== 'None') ? editOpenroute.value : 'None',
+      closeroute: (editCloseroute.value && editCloseroute.value !== 'None') ? editCloseroute.value : 'None',
       alertinfo: editAlertinfo.value.trim() || undefined,
-      callprogress: editCallprogress.value,
       cname: editCname.value.trim() || undefined,
       devicerec: editDevicerec.value || 'None',
       moh: editMoh.value,
@@ -298,12 +299,27 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="DiD/CLiD" :value="inboundRoute.pkey ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" :model-value="inboundRoute.pkey ?? '—'" label="DiD/CLiD" disabled class="readonly-identity" />
+            <FormField
+              v-if="!isReadOnly('pkey')"
+              id="edit-identity-pkey"
+              v-model="editPkey"
+              label="Number (DiD/CLiD)"
+              type="text"
+              placeholder="e.g. 0123456789 or _2XXX"
+              hint="Digits, pattern _XZN.! (e.g. _2XXX), or special s/i/t. Cannot be single 0."
+            />
+            <FormReadonly v-else id="edit-identity-pkey" label="DiD/CLiD" :value="inboundRoute.pkey ?? '—'" class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="inboundRoute.shortuid ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-shortuid" :model-value="inboundRoute.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="inboundRoute.id ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-id" :model-value="inboundRoute.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
+            <FormSelect
+              id="edit-technology"
+              v-model="editTechnology"
+              label="DDI type"
+              :options="technologyOptions"
+              hint="DiD, CLiD, or Class."
+            />
             <FormField
               id="edit-description"
               v-model="editDescription"
@@ -322,13 +338,6 @@ async function confirmAndDelete() {
               :options="tenantOptionsForSelect"
               :required="true"
               hint="The tenant this inbound route belongs to."
-            />
-            <FormField
-              id="edit-trunkname"
-              v-model="editTrunkname"
-              label="Name"
-              type="text"
-              placeholder="Trunk name"
             />
             <FormToggle
               id="edit-active"
@@ -362,13 +371,6 @@ async function confirmAndDelete() {
               id="edit-moh"
               v-model="editMoh"
               label="MOH"
-              yes-value="YES"
-              no-value="NO"
-            />
-            <FormToggle
-              id="edit-callprogress"
-              v-model="editCallprogress"
-              label="Call progress"
               yes-value="YES"
               no-value="NO"
             />

@@ -18,7 +18,6 @@ const { ensureFetched, applySchemaDefaults } = useSchema()
 const cluster = ref('')
 const carrier = ref('')
 const pkey = ref('')
-const trunkname = ref('')
 const openroute = ref('None')
 const closeroute = ref('None')
 const tenants = ref([])
@@ -118,7 +117,6 @@ function resetForm() {
   cluster.value = ''
   carrier.value = ''
   pkey.value = ''
-  trunkname.value = ''
   openroute.value = 'None'
   closeroute.value = 'None'
   pkeyValidation.reset()
@@ -161,10 +159,9 @@ async function onSubmit(e) {
     const body = {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
-      carrier: carrier.value.trim(),
-      trunkname: trunkname.value.trim() || undefined,
-      openroute: openroute.value && openroute.value !== 'None' ? openroute.value : undefined,
-      closeroute: closeroute.value && closeroute.value !== 'None' ? closeroute.value : undefined
+      technology: carrier.value.trim(),
+      openroute: (openroute.value && openroute.value !== 'None') ? openroute.value : 'None',
+      closeroute: (closeroute.value && closeroute.value !== 'None') ? closeroute.value : 'None'
     }
     await getApiClient().post('inboundroutes', body)
     toast.show(`Inbound route ${pkey.value.trim()} created`)
@@ -182,9 +179,9 @@ async function onSubmit(e) {
         clusterValidation.touched.value = true
         clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
       }
-      if (errors.carrier) {
+      if (errors.technology || errors.carrier) {
         carrierValidation.touched.value = true
-        carrierValidation.error.value = Array.isArray(errors.carrier) ? errors.carrier[0] : errors.carrier
+        carrierValidation.error.value = Array.isArray(errors.technology) ? errors.technology[0] : (errors.technology || (Array.isArray(errors.carrier) ? errors.carrier[0] : errors.carrier))
       }
       await nextTick()
       focusFirstError(
@@ -222,7 +219,7 @@ function onKeydown(e) {
       <p v-if="error" id="inbound-route-create-error" class="error" role="alert">{{ error }}</p>
 
       <div class="actions actions-top">
-        <button type="submit" :disabled="loading || tenantsLoading || carriersLoading">
+        <button type="submit" :disabled="loading || tenantsLoading">
           {{ loading ? 'Creating…' : 'Create' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
@@ -246,11 +243,11 @@ function onKeydown(e) {
           id="carrier"
           v-model="carrier"
           label="DDI type"
-          :options="['DiD', 'CLID']"
+          :options="['DiD', 'CLiD', 'Class']"
           :error="carrierValidation.error.value"
           :touched="carrierValidation.touched.value"
           :required="true"
-          hint="DiD or CLID."
+          hint="DiD, CLiD, or Class."
           aria-label="Choose type"
           @blur="carrierValidation.onBlur"
         />
@@ -266,13 +263,6 @@ function onKeydown(e) {
           :required="true"
           hint="Digits, pattern _XZN.! (e.g. _2XXX), or special s/i/t. Cannot be single 0."
           @blur="pkeyValidation.onBlur"
-        />
-        <FormField
-          id="trunkname"
-          v-model="trunkname"
-          label="Name (optional)"
-          type="text"
-          placeholder="Defaults to number"
         />
       </div>
 

@@ -148,16 +148,16 @@ export function validateInboundRoutePkey(value) {
 }
 
 /**
- * Validate Inbound Route DDI type (carrier)
- * Must be DiD or CLID
+ * Validate Inbound Route DDI type (carrier / technology)
+ * Must be DiD, CLiD, or Class
  */
 export function validateInboundCarrier(value) {
   if (!value || !String(value).trim()) {
     return 'DDI type is required'
   }
   const v = String(value).trim()
-  if (v !== 'DiD' && v !== 'CLID') {
-    return 'Must be DiD or CLID'
+  if (v !== 'DiD' && v !== 'CLiD' && v !== 'Class') {
+    return 'Must be DiD, CLiD, or Class'
   }
   return null
 }
