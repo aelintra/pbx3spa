@@ -258,8 +258,9 @@ onMounted(async () => {
           label="Extension code"
           :model-value="extcode"
           multiline
-          :rows="16"
-          placeholder="Dialplan / Asterisk code"
+          :rows="20"
+          placeholder="Asterisk extensions.conf code"
+          hint="Asterisk extensions.conf dialplan code (long text)."
           @update:modelValue="(v) => (extcode.value = v)"
         />
       </div>

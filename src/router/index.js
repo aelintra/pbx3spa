@@ -84,7 +84,7 @@ const router = createRouter({
         { path: 'routes/:shortuid', name: 'route-detail', component: RouteDetailView },
         { path: 'customapps', name: 'customapps', component: CustomAppsListView },
         { path: 'customapps/new', name: 'customapp-create', component: CustomAppCreateView },
-        { path: 'customapps/:pkey', name: 'customapp-detail', component: CustomAppDetailView },
+        { path: 'customapps/:shortuid', name: 'customapp-detail', component: CustomAppDetailView },
         { path: 'devices', name: 'devices', component: DevicesListView },
         { path: 'devices/new', name: 'device-create', component: DeviceCreateView },
         { path: 'devices/:pkey', name: 'device-detail', component: DeviceDetailView },

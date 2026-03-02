@@ -21,7 +21,7 @@ function isReadOnly(field) {
   return getSchema('customapps')?.read_only?.includes(field) ?? false
 }
 
-const pkey = computed(() => route.params.pkey)
+const shortuid = computed(() => route.params.shortuid)
 const app = ref(null)
 const tenants = ref([])
 const tenantsLoading = ref(true)
@@ -35,6 +35,7 @@ const deleteError = ref('')
 const confirmDeleteOpen = ref(false)
 
 // Editable fields
+const editPkey = ref('')
 const editCluster = ref('')
 const editCname = ref('')
 const editDescription = ref('')
@@ -96,13 +97,14 @@ async function loadTenants() {
 }
 
 async function fetchApp() {
-  if (!pkey.value) return
+  if (!shortuid.value) return
   loading.value = true
   error.value = ''
   saveError.value = ''
   deleteError.value = ''
   try {
-    app.value = await getApiClient().get(`customapps/${encodeURIComponent(pkey.value)}`)
+    app.value = await getApiClient().get(`customapps/${encodeURIComponent(shortuid.value)}`)
+    editPkey.value = app.value?.pkey ?? ''
     editCluster.value = resolveClusterToTenantPkey(app.value?.cluster ?? '')
     editCname.value = app.value?.cname ?? ''
     editDescription.value = app.value?.description ?? ''
@@ -124,7 +126,7 @@ onMounted(async () => {
   await loadTenants()
   await fetchApp()
 })
-watch(pkey, fetchApp)
+watch(shortuid, fetchApp)
 
 function goBack() {
   router.push({ name: 'customapps' })
@@ -143,11 +145,12 @@ function onKeydown(e) {
 
 async function saveEdit(e) {
   e.preventDefault()
-  if (!pkey.value) return
+  if (!shortuid.value) return
   saveError.value = ''
   saving.value = true
   try {
     const body = {
+      ...(isReadOnly('pkey') ? {} : { pkey: editPkey.value.trim() }),
       ...(isReadOnly('cluster') ? {} : { cluster: editCluster.value }),
       ...(isReadOnly('cname') ? {} : { cname: editCname.value }),
       ...(isReadOnly('description') ? {} : { description: editDescription.value }),
@@ -157,7 +160,7 @@ async function saveEdit(e) {
       ...(isReadOnly('directdial') ? {} : { directdial: parseIntOrNull(editDirectdial.value) }),
       ...(isReadOnly('extcode') ? {} : { extcode: editExtcode.value })
     }
-    await getApiClient().put(`customapps/${encodeURIComponent(pkey.value)}`, body)
+    await getApiClient().put(`customapps/${encodeURIComponent(shortuid.value)}`, body)
     toast.show('Custom app saved')
     await fetchApp()
   } catch (err) {
@@ -172,11 +175,11 @@ function askDelete() {
 }
 
 async function confirmDelete() {
-  if (!pkey.value) return
+  if (!shortuid.value) return
   deleting.value = true
   deleteError.value = ''
   try {
-    await getApiClient().delete(`customapps/${encodeURIComponent(pkey.value)}`)
+    await getApiClient().delete(`customapps/${encodeURIComponent(shortuid.value)}`)
     toast.show('Custom app deleted')
     confirmDeleteOpen.value = false
     goBack()
@@ -190,7 +193,7 @@ async function confirmDelete() {
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
-    <h1>Edit Custom App {{ pkey }}</h1>
+    <h1>Edit Custom App {{ app?.pkey ?? shortuid }}</h1>
 
     <section v-if="loading || error" class="detail-states">
       <p v-if="loading" class="loading">Loading custom app…</p>
@@ -211,7 +214,15 @@ async function confirmDelete() {
 
       <h2 class="detail-heading">Identity</h2>
       <div class="form-fields">
-        <FormReadonly id="edit-identity-pkey" label="App name" :value="app?.pkey ?? pkey ?? '—'" class="readonly-identity" />
+        <FormField
+          v-if="!isReadOnly('pkey')"
+          id="edit-pkey"
+          v-model="editPkey"
+          label="App name"
+          type="text"
+          placeholder="e.g. MyApp_1"
+        />
+        <FormReadonly v-else id="edit-identity-pkey" label="App name" :value="app?.pkey ?? '—'" class="readonly-identity" />
         <template v-if="app?.shortuid != null && app?.shortuid !== ''">
           <FormReadonly id="edit-identity-shortuid" label="Local UID" :value="app.shortuid ?? '—'" class="readonly-identity" />
         </template>
@@ -290,7 +301,9 @@ async function confirmDelete() {
           v-model="editExtcode"
           label="Extension code"
           multiline
-          :rows="16"
+          :rows="20"
+          placeholder="Asterisk extensions.conf code"
+          hint="Asterisk extensions.conf dialplan code (long text)."
         />
         <FormReadonly v-else id="extcode" label="Extension code" :value="app?.extcode ?? ''" />
       </div>
@@ -312,7 +325,7 @@ async function confirmDelete() {
       @cancel="() => (confirmDeleteOpen.value = false)"
     >
       <template #body>
-        <p>Custom app <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>Custom app <strong>{{ app?.pkey ?? shortuid }}</strong> will be permanently deleted. This cannot be undone.</p>
       </template>
     </DeleteConfirmModal>
   </div>

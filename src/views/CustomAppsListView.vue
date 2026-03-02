@@ -14,8 +14,8 @@ const tenants = ref([])
 const loading = ref(true)
 const error = ref('')
 const deleteError = ref('')
-const deletingPkey = ref(null)
-const confirmDeletePkey = ref(null)
+const deletingShortuid = ref(null)
+const confirmDeleteShortuid = ref(null)
 const sortKey = ref('pkey')
 const sortOrder = ref('asc') // 'asc' | 'desc'
 
@@ -115,27 +115,27 @@ async function loadApps() {
   }
 }
 
-function askConfirmDelete(pkey) {
-  confirmDeletePkey.value = pkey
+function askConfirmDelete(shortuid) {
+  confirmDeleteShortuid.value = shortuid
 }
 
 function cancelConfirmDelete() {
-  confirmDeletePkey.value = null
+  confirmDeleteShortuid.value = null
 }
 
-async function confirmAndDelete(pkey) {
-  if (!pkey) return
+async function confirmAndDelete(shortuid) {
+  if (!shortuid) return
   deleteError.value = ''
-  deletingPkey.value = pkey
+  deletingShortuid.value = shortuid
   try {
-    await getApiClient().delete(`customapps/${encodeURIComponent(pkey)}`)
+    await getApiClient().delete(`customapps/${encodeURIComponent(shortuid)}`)
     toast.show('Custom app deleted')
     await loadApps()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete custom app')
   } finally {
-    deletingPkey.value = null
-    confirmDeletePkey.value = null
+    deletingShortuid.value = null
+    confirmDeleteShortuid.value = null
   }
 }
 
@@ -201,7 +201,7 @@ onMounted(loadApps)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="a in sortedApps" :key="a.pkey">
+          <tr v-for="a in sortedApps" :key="a.shortuid ?? a.id ?? a.pkey">
             <td class="cell-immutable" title="Immutable">{{ a.pkey }}</td>
             <td>{{ a.cname ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(a) }}</td>
@@ -209,7 +209,7 @@ onMounted(loadApps)
             <td>{{ a.span ?? '—' }}</td>
             <td>{{ a.active ?? '—' }}</td>
             <td>
-              <router-link :to="{ name: 'customapp-detail', params: { pkey: a.pkey } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
+              <router-link :to="{ name: 'customapp-detail', params: { shortuid: a.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true">
                   <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                 </span>
@@ -219,12 +219,12 @@ onMounted(loadApps)
               <button
                 type="button"
                 class="cell-link cell-link-delete cell-link-icon"
-                :title="deletingPkey === a.pkey ? 'Deleting…' : 'Delete'"
-                :aria-label="deletingPkey === a.pkey ? 'Deleting…' : 'Delete'"
-                :disabled="deletingPkey === a.pkey"
-                @click="askConfirmDelete(a.pkey)"
+                :title="deletingShortuid === a.shortuid ? 'Deleting…' : 'Delete'"
+                :aria-label="deletingShortuid === a.shortuid ? 'Deleting…' : 'Delete'"
+                :disabled="deletingShortuid === a.shortuid"
+                @click="askConfirmDelete(a.shortuid)"
               >
-                <span v-if="deletingPkey === a.pkey" class="action-icon action-icon-spin" aria-hidden="true">
+                <span v-if="deletingShortuid === a.shortuid" class="action-icon action-icon-spin" aria-hidden="true">
                   <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
                 </span>
                 <span v-else class="action-icon" aria-hidden="true">
@@ -238,14 +238,14 @@ onMounted(loadApps)
     </section>
 
     <DeleteConfirmModal
-      :show="!!confirmDeletePkey"
+      :show="!!confirmDeleteShortuid"
       title="Delete custom app?"
-      :loading="deletingPkey === confirmDeletePkey"
-      @confirm="confirmAndDelete(confirmDeletePkey)"
+      :loading="deletingShortuid === confirmDeleteShortuid"
+      @confirm="confirmAndDelete(confirmDeleteShortuid)"
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Custom app <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>Custom app <strong>{{ apps.find((a) => a.shortuid === confirmDeleteShortuid)?.pkey ?? confirmDeleteShortuid }}</strong> will be permanently deleted. This cannot be undone.</p>
       </template>
     </DeleteConfirmModal>
   </div>
