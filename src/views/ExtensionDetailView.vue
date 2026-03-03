@@ -429,7 +429,7 @@ async function saveRuntime(e) {
               label="Provision with"
               :options="['IP', 'FQDN']"
             />
-            <FormField id="edit-pjsipuser" v-model="editPjsipuser" label="PJSIP user" type="text" />
+            <FormField id="edit-pjsipuser" v-model="editPjsipuser" label="PJSIP user" type="text" :multiline="true" :rows="8" />
           </div>
 
           <div class="edit-actions">
