@@ -12,7 +12,15 @@
 
 ## Done
 
-### Latest session (Queue audit + SPA/API alignment + move_request_to_model)
+### Latest session (Extension harmonisation + SIP password + docs)
+
+- **Extension harmonisation (pbx3api):** ExtensionController::update uses **Request + Validator** only; ExtensionRequest deprecated. Validation and pkey-uniqueness (per cluster when pkey changed) run in the controller. Same pattern as Trunk. **PLAN_MODELS_AND_VALIDATION_HARMONISATION.md** Task 2 deliverables marked done; TENANT_SCOPED_PATTERN.md and .cursor/rules/tenant-scoped-panels.mdc updated.
+- **Extension create – SIP password (pbx3api):** On every extension create (save, mailbox, unprovisioned, webrtc, provisioned), **passwd** is set to a 12-char auto-generated value via **ret_password(12)** (Helper.php). Not returned after create. **Extension detail only:** GET extensions/{id} includes passwd (show() returns makeVisible('passwd')); list/index do not. SPA ExtensionDetailView already had read-only "SIP Password" in the edit form; it now displays the value from the API.
+- **Extension edit (pbx3spa):** PJSIP user field is a **textarea** (multiline, 8 rows) in ExtensionDetailView.
+- **API docs (pbx3api docs/general.md):** Removed **carrier**, **sipiaxpeer**, **sipiaxuser** from trunk and inbound-route request examples. Trunk create uses **technology** (SIP or IAX2) only.
+- **Branch:** `spanel` (pbx3api, pbx3spa). Commit from each repo separately (pbx3-master is not a git repo).
+
+### Previous session (Queue audit + SPA/API alignment + move_request_to_model)
 
 - **Queue audit (pbx3api):** Queue model uses `$fillable` (no `$guarded`); controller `updateableColumns` include pkey, cname, outcome; pkey = **Queue Dial**, **3–5 digits**, unique per tenant; create sets id/shortuid; update uses Validator + `validator->after()` for pkey uniqueness when changed; update by `id` only (tenant-safe). Same pattern as Trunk/Extension. **pbx3api/workingdocs/QUEUE_AUDIT_PROTOTYPE.md** has the column audit.
 - **Queue SPA (pbx3spa):** Create and detail use label **"Queue Dial"**; validation 3–5 digits (frontend + API); cname (Common name) always sent in create/update body (null when empty). Detail has editable pkey, cname, outcome; create has cname. All updateable fields from audit are in the panels.
