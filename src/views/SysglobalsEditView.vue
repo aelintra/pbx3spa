@@ -7,7 +7,10 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
+
+const NATDEFAULT_OPTIONS = ['local', 'remote']
 
 const router = useRouter()
 const toast = useToastStore()
@@ -51,7 +54,6 @@ const editSitename = ref('')
 const editSysop = ref('')
 const editSyspass = ref('')
 const editTlsport = ref('')
-const editUserotp = ref('')
 const editVoipmax = ref('')
 
 function syncEditFromSysglobal() {
@@ -75,7 +77,7 @@ function syncEditFromSysglobal() {
   editLogsipfilesize.value = g.logsipfilesize != null ? String(g.logsipfilesize) : ''
   editMaxin.value = g.maxin != null ? String(g.maxin) : ''
   editMaxout.value = g.maxout != null ? String(g.maxout) : ''
-  editNatdefault.value = g.natdefault ?? ''
+  editNatdefault.value = NATDEFAULT_OPTIONS.includes(g.natdefault) ? g.natdefault : 'remote'
   editNatparams.value = g.natparams ?? ''
   editOperator.value = g.operator != null ? String(g.operator) : ''
   editPwdlen.value = g.pwdlen != null ? String(g.pwdlen) : ''
@@ -92,7 +94,6 @@ function syncEditFromSysglobal() {
   editSysop.value = g.sysop != null ? String(g.sysop) : ''
   editSyspass.value = g.syspass != null ? String(g.syspass) : ''
   editTlsport.value = g.tlsport != null ? String(g.tlsport) : ''
-  editUserotp.value = g.userotp ?? ''
   editVoipmax.value = g.voipmax != null ? String(g.voipmax) : ''
 }
 
@@ -164,7 +165,6 @@ async function saveEdit(e) {
     body.sysop = editSysop.value !== '' && editSysop.value != null ? parseInt(editSysop.value, 10) : null
     body.syspass = editSyspass.value !== '' && editSyspass.value != null ? parseInt(editSyspass.value, 10) : null
     body.tlsport = editTlsport.value !== '' && editTlsport.value != null ? parseInt(editTlsport.value, 10) : null
-    body.userotp = editUserotp.value && editUserotp.value.trim() !== '' ? editUserotp.value.trim() : null
     body.voipmax = editVoipmax.value !== '' && editVoipmax.value != null ? parseInt(editVoipmax.value, 10) : null
     
     await getApiClient().put('sysglobals', body)
@@ -299,11 +299,12 @@ onMounted(fetchSysglobal)
 
         <h2 class="section-heading">NAT</h2>
         
-        <FormField
+        <FormSegmentedPill
           id="edit-natdefault"
           v-model="editNatdefault"
           label="NAT Default"
-          hint="Default NAT settings"
+          :options="NATDEFAULT_OPTIONS"
+          hint="local or remote"
         />
         
         <FormField
@@ -425,13 +426,6 @@ onMounted(fetchSysglobal)
           hint="Operator ID"
         />
         
-        <FormField
-          id="edit-userotp"
-          v-model="editUserotp"
-          label="User OTP"
-          hint="User OTP settings"
-        />
-
         <h2 class="section-heading">Timeouts & Limits</h2>
         
         <FormField
