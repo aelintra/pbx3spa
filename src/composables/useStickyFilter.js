@@ -9,7 +9,7 @@
  * Use a stable listId per panel: devices, extensions, tenants, trunks, queues, agents,
  * routes, customapps, ivrs, inbound-routes, users.
  *
- * Rollout: Used on all list panels that have a filter (tenants, extensions, trunks, queues, agents, routes, customapps, ivrs, inbound-routes, devices, asterisk-files).
+ * Rollout: Used on all list panels that have a filter (tenants, extensions, trunks, queues, conferences, agents, routes, customapps, ivrs, inbound-routes, devices, asterisk-files).
  *
  * TODO: Sticky sort — consider useStickySort(listId) that persists sortKey + sortOrder
  * in sessionStorage the same way, so column sort survives navigation. Decide after

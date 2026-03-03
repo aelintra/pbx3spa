@@ -14,6 +14,9 @@ import TrunkDetailView from '../views/TrunkDetailView.vue'
 import QueuesListView from '../views/QueuesListView.vue'
 import QueueCreateView from '../views/QueueCreateView.vue'
 import QueueDetailView from '../views/QueueDetailView.vue'
+import ConferencesListView from '../views/ConferencesListView.vue'
+import ConferenceCreateView from '../views/ConferenceCreateView.vue'
+import ConferenceDetailView from '../views/ConferenceDetailView.vue'
 import AgentsListView from '../views/AgentsListView.vue'
 import AgentCreateView from '../views/AgentCreateView.vue'
 import AgentDetailView from '../views/AgentDetailView.vue'
@@ -76,6 +79,9 @@ const router = createRouter({
         { path: 'queues', name: 'queues', component: QueuesListView },
         { path: 'queues/new', name: 'queue-create', component: QueueCreateView },
         { path: 'queues/:shortuid', name: 'queue-detail', component: QueueDetailView },
+        { path: 'conferences', name: 'conferences', component: ConferencesListView },
+        { path: 'conferences/new', name: 'conference-create', component: ConferenceCreateView },
+        { path: 'conferences/:shortuid', name: 'conference-detail', component: ConferenceDetailView },
         { path: 'agents', name: 'agents', component: AgentsListView },
         { path: 'agents/new', name: 'agent-create', component: AgentCreateView },
         { path: 'agents/:shortuid', name: 'agent-detail', component: AgentDetailView },
