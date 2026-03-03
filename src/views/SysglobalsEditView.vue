@@ -5,6 +5,7 @@ import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
+import FormReadonly from '@/components/forms/FormReadonly.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 
@@ -16,7 +17,7 @@ const error = ref('')
 const saving = ref(false)
 const saveError = ref('')
 
-// All 41 updateable fields from SysglobalController
+// Editable and display-only (read-only) fields
 const editAbstimeout = ref('')
 const editBindaddr = ref('')
 const editBindport = ref('')
@@ -24,8 +25,6 @@ const editCosstart = ref('')
 const editEdomain = ref('')
 const editEmergency = ref('')
 const editFqdn = ref('')
-const editFqdninspect = ref('')
-const editFqdnprov = ref('')
 const editLanguage = ref('')
 const editLocalip = ref('')
 const editLoglevel = ref('')
@@ -35,7 +34,6 @@ const editLogsipnumfiles = ref('')
 const editLogsipfilesize = ref('')
 const editMaxin = ref('')
 const editMaxout = ref('')
-const editMycommit = ref('')
 const editNatdefault = ref('')
 const editNatparams = ref('')
 const editOperator = ref('')
@@ -50,12 +48,10 @@ const editSendedomain = ref('')
 const editSipflood = ref('')
 const editSipdriver = ref('')
 const editSitename = ref('')
-const editStaticipv4 = ref('')
 const editSysop = ref('')
 const editSyspass = ref('')
 const editTlsport = ref('')
 const editUserotp = ref('')
-const editVcl = ref('')
 const editVoipmax = ref('')
 
 function syncEditFromSysglobal() {
@@ -70,8 +66,6 @@ function syncEditFromSysglobal() {
   editEdomain.value = g.edomain ?? ''
   editEmergency.value = g.emergency ?? ''
   editFqdn.value = g.fqdn ?? ''
-  editFqdninspect.value = g.fqdninspect ?? ''
-  editFqdnprov.value = g.fqdnprov ?? ''
   editLanguage.value = g.language ?? ''
   editLocalip.value = g.localip ?? ''
   editLoglevel.value = g.loglevel != null ? String(g.loglevel) : ''
@@ -81,7 +75,6 @@ function syncEditFromSysglobal() {
   editLogsipfilesize.value = g.logsipfilesize != null ? String(g.logsipfilesize) : ''
   editMaxin.value = g.maxin != null ? String(g.maxin) : ''
   editMaxout.value = g.maxout != null ? String(g.maxout) : ''
-  editMycommit.value = g.mycommit ?? ''
   editNatdefault.value = g.natdefault ?? ''
   editNatparams.value = g.natparams ?? ''
   editOperator.value = g.operator != null ? String(g.operator) : ''
@@ -96,12 +89,10 @@ function syncEditFromSysglobal() {
   editSipflood.value = g.sipflood ?? ''
   editSipdriver.value = g.sipdriver ?? ''
   editSitename.value = g.sitename ?? ''
-  editStaticipv4.value = g.staticipv4 ?? ''
   editSysop.value = g.sysop != null ? String(g.sysop) : ''
   editSyspass.value = g.syspass != null ? String(g.syspass) : ''
   editTlsport.value = g.tlsport != null ? String(g.tlsport) : ''
   editUserotp.value = g.userotp ?? ''
-  editVcl.value = g.vcl ?? ''
   editVoipmax.value = g.voipmax != null ? String(g.voipmax) : ''
 }
 
@@ -147,13 +138,9 @@ async function saveEdit(e) {
     body.bindaddr = editBindaddr.value && editBindaddr.value.trim() !== '' ? editBindaddr.value.trim() : null
     body.bindport = editBindport.value && editBindport.value.trim() !== '' ? editBindport.value.trim() : null
     body.cosstart = editCosstart.value && editCosstart.value.trim() !== '' ? editCosstart.value.trim() : null
-    body.edomain = editEdomain.value && editEdomain.value.trim() !== '' ? editEdomain.value.trim() : null
     body.emergency = editEmergency.value && editEmergency.value.trim() !== '' ? editEmergency.value.trim() : null
     body.fqdn = editFqdn.value && editFqdn.value.trim() !== '' ? editFqdn.value.trim() : null
-    body.fqdninspect = editFqdninspect.value && editFqdninspect.value.trim() !== '' ? editFqdninspect.value.trim() : null
-    body.fqdnprov = editFqdnprov.value && editFqdnprov.value.trim() !== '' ? editFqdnprov.value.trim() : null
     body.language = editLanguage.value && editLanguage.value.trim() !== '' ? editLanguage.value.trim() : null
-    body.localip = editLocalip.value && editLocalip.value.trim() !== '' ? editLocalip.value.trim() : null
     body.loglevel = editLoglevel.value !== '' && editLoglevel.value != null ? parseInt(editLoglevel.value, 10) : null
     body.logopts = editLogopts.value && editLogopts.value.trim() !== '' ? editLogopts.value.trim() : null
     body.logsipdispsize = editLogsipdispsize.value !== '' && editLogsipdispsize.value != null ? parseInt(editLogsipdispsize.value, 10) : null
@@ -161,7 +148,6 @@ async function saveEdit(e) {
     body.logsipfilesize = editLogsipfilesize.value !== '' && editLogsipfilesize.value != null ? parseInt(editLogsipfilesize.value, 10) : null
     body.maxin = editMaxin.value !== '' && editMaxin.value != null ? parseInt(editMaxin.value, 10) : null
     body.maxout = editMaxout.value !== '' && editMaxout.value != null ? parseInt(editMaxout.value, 10) : null
-    body.mycommit = editMycommit.value && editMycommit.value.trim() !== '' ? editMycommit.value.trim() : null
     body.natdefault = editNatdefault.value && editNatdefault.value.trim() !== '' ? editNatdefault.value.trim() : null
     body.natparams = editNatparams.value && editNatparams.value.trim() !== '' ? editNatparams.value.trim() : null
     body.operator = editOperator.value !== '' && editOperator.value != null ? parseInt(editOperator.value, 10) : null
@@ -174,14 +160,11 @@ async function saveEdit(e) {
     body.sessiontimout = editSessiontimout.value !== '' && editSessiontimout.value != null ? parseInt(editSessiontimout.value, 10) : null
     body.sendedomain = editSendedomain.value && editSendedomain.value.trim() !== '' ? editSendedomain.value.trim() : null
     body.sipflood = editSipflood.value && editSipflood.value.trim() !== '' ? editSipflood.value.trim() : null
-    body.sipdriver = editSipdriver.value && editSipdriver.value.trim() !== '' ? editSipdriver.value.trim() : null
     body.sitename = editSitename.value && editSitename.value.trim() !== '' ? editSitename.value.trim() : null
-    body.staticipv4 = editStaticipv4.value && editStaticipv4.value.trim() !== '' ? editStaticipv4.value.trim() : null
     body.sysop = editSysop.value !== '' && editSysop.value != null ? parseInt(editSysop.value, 10) : null
     body.syspass = editSyspass.value !== '' && editSyspass.value != null ? parseInt(editSyspass.value, 10) : null
     body.tlsport = editTlsport.value !== '' && editTlsport.value != null ? parseInt(editTlsport.value, 10) : null
     body.userotp = editUserotp.value && editUserotp.value.trim() !== '' ? editUserotp.value.trim() : null
-    body.vcl = editVcl.value && editVcl.value.trim() !== '' ? editVcl.value.trim() : null
     body.voipmax = editVoipmax.value !== '' && editVoipmax.value != null ? parseInt(editVoipmax.value, 10) : null
     
     await getApiClient().put('sysglobals', body)
@@ -239,18 +222,10 @@ onMounted(fetchSysglobal)
           hint="Port for SIP server"
         />
         
-        <FormField
+        <FormReadonly
           id="edit-localip"
-          v-model="editLocalip"
           label="Local IP"
-          hint="Local IP address"
-        />
-        
-        <FormField
-          id="edit-staticipv4"
-          v-model="editStaticipv4"
-          label="Static IPv4"
-          hint="Static IPv4 address"
+          :value="sysglobal?.localip ?? '—'"
         />
         
         <FormField
@@ -263,11 +238,10 @@ onMounted(fetchSysglobal)
 
         <h2 class="section-heading">SIP</h2>
         
-        <FormField
+        <FormReadonly
           id="edit-sipdriver"
-          v-model="editSipdriver"
           label="SIP Driver"
-          hint="SIP driver configuration"
+          :value="sysglobal?.sipdriver ?? '—'"
         />
         
         <FormField
@@ -303,11 +277,10 @@ onMounted(fetchSysglobal)
 
         <h2 class="section-heading">Domain & FQDN</h2>
         
-        <FormField
+        <FormReadonly
           id="edit-edomain"
-          v-model="editEdomain"
           label="Email Domain"
-          hint="Email domain"
+          :value="sysglobal?.edomain ?? '—'"
         />
         
         <FormField
@@ -315,20 +288,6 @@ onMounted(fetchSysglobal)
           v-model="editFqdn"
           label="FQDN"
           hint="Fully Qualified Domain Name"
-        />
-        
-        <FormField
-          id="edit-fqdninspect"
-          v-model="editFqdninspect"
-          label="FQDN Inspect"
-          hint="FQDN inspection settings"
-        />
-        
-        <FormField
-          id="edit-fqdnprov"
-          v-model="editFqdnprov"
-          label="FQDN Provision"
-          hint="FQDN provisioning settings"
         />
         
         <FormField
@@ -521,18 +480,22 @@ onMounted(fetchSysglobal)
           hint="Emergency number"
         />
         
-        <FormField
-          id="edit-mycommit"
-          v-model="editMycommit"
-          label="My Commit"
-          hint="Commit identifier"
-        />
+        <h2 class="section-heading">System</h2>
         
-        <FormField
-          id="edit-vcl"
-          v-model="editVcl"
-          label="VCL"
-          hint="VCL configuration"
+        <FormReadonly
+          id="edit-z_created"
+          label="Created"
+          :value="sysglobal?.z_created ?? '—'"
+        />
+        <FormReadonly
+          id="edit-z_updated"
+          label="Updated"
+          :value="sysglobal?.z_updated ?? '—'"
+        />
+        <FormReadonly
+          id="edit-z_updater"
+          label="Updater"
+          :value="sysglobal?.z_updater ?? '—'"
         />
       </div>
 
