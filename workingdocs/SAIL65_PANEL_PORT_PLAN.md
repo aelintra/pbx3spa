@@ -6,7 +6,7 @@
 
 **Data source of truth:** The **pbx3** database schema is the authority for what tables and columns exist. Sail65 is reference only for UI and behaviour; schema may have changed in the new system. When planning or implementing a panel port, **begin by reading the pbx3 SQL files** in `pbx3/pbx3-1/opt/pbx3/db/db_sql/` to establish the data model. See § **Source of truth: pbx3 DB schema** below.
 
-**Not porting:** **sarkcallback** (Callback) will not be ported. It is excluded from the candidate list.
+**Not porting:** Panels that will not be ported (e.g. sarkcallback, sarkreception, sarkphone) are excluded from the candidate list in §6; they remain in the full panel list (§4) marked as excluded for reference.
 
 ---
 
@@ -105,7 +105,7 @@ From `php/` in sail65 (sail-6/opt/sark/php):
 | sarkpasswd      | main, view                 | Password change                  |
 | sarkpcap        | main, view                 | Packet capture                   |
 | sarkpci         | main, view                  | PCI/DAHDI (conditional)          |
-| sarkphone       | main, view, update, etc.  | Phone / BLF                      |
+| sarkphone       | main, view, update, etc.  | **Not porting** (excluded)        |
 | sarkqueue       | main, view, update, delete | Queues                           |
 | sarkreception   | main, view, search         | Reception (search)               |
 | sarkrecordings  | main, view                 | Recordings                       |
@@ -155,7 +155,6 @@ These sail65 panels do **not** currently have a full SPA + API CRUD (or single-s
 **Higher value / common features**
 
 - **sarkconference** – Conference rooms (list + create/edit/delete). Confirm table in pbx3: `sqlite_create_tenant.sql` has `meetme` (conference). API/SPA to be added or confirmed.
-- **sarkreception** – Reception (search-oriented UI). Define as list+detail or single-screen; confirm any reception-specific table in pbx3 SQL.
 - **sarkrecordings** – Recordings list/browse/play. May be read-only list + detail or single-screen; origrecs in www is separate app.
 - **sarkreport** – Reports. Likely single-screen or list of report types + output.
 
@@ -170,26 +169,15 @@ These sail65 panels do **not** currently have a full SPA + API CRUD (or single-s
 
 - **sarkcert** – Certificates (TLS). Overlap with pbx3 LETSENCRYPT_PLAN; may be single-screen or list+detail.
 - **sark3pcerts** – 3rd-party certs. Similar.
-- **sarkipblacklist** – IP blacklist (firewall-related). May extend Firewall panel or separate.
-- **sarkfqdnwlist** – FQDN whitelist.
 - **sarknetwork** – Network config. Single-screen; may overlap with pbx3 setip/globals.
 
 **Operational / Niche**
 
 - **sarkwallboard** – Wallboard (channels/status). Real-time or polling; may need new API endpoints.
-- **sarkphone** – Phone/BLF. May align with extension/device; clarify scope.
 - **sarkshell** – Shell access. High risk; optional or admin-only single-screen.
-- **sarksupt** – Support. Info/links; single-screen.
-- **sarkpasswd** – Password change. May be part of User/Profile in SPA.
 - **sarkldap** – LDAP. Single-screen or list+detail; see AGENT_HANDOFF LDAP note (globals vs tenant).
-- **sarkmcast** – Multicast. Conditional (e.g. not in VCL); lower priority.
-- **sarkcallgroup** – Call groups. Confirm in pbx3 SQL (instance/tenant) whether a call-group table exists.
 - **sarkpcap** – Packet capture. Niche; single-screen.
-- **sarkpci** – PCI/DAHDI. Hardware-specific; conditional.
-- **sarkdiscover** – Discovery. Conditional; lower priority.
-- **sarkedsw / sarkedsw6** – EDSW. Hardware-specific.
 - **sarkfreset** – Factory reset. Dangerous; single-screen, guarded.
-- **sarkedit** – Generic edit. Likely skip or fold into another panel.
 
 ---
 
@@ -209,7 +197,7 @@ For each chosen sail65 panel:
 
 ## 8. Next step
 
-**Decide which panels to port first** (e.g. Conferences, Callback, CoS SPA, Day/Holiday timers SPA, Greetings SPA, Recordings, or Certificates). Then for each:
+**Decide which panels to port first** (e.g. Conferences, CoS SPA, Day/Holiday timers SPA, Greetings SPA, Recordings, or Certificates). Then for each:
 
 - Open the corresponding sail65 `view.php` (and related files).
 - Confirm or add pbx3 DB + API.
