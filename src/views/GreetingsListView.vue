@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
@@ -19,6 +19,16 @@ const confirmDeleteShortuid = ref(null)
 const downloadingShortuid = ref(null)
 const sortKey = ref('pkey')
 const sortOrder = ref('asc')
+
+// Playback: one shared Audio element; which row is loaded/playing
+const audioRef = ref(null)
+const playbackShortuid = ref(null)  // which greeting is loaded (blob URL set)
+const loadingPlaybackShortuid = ref(null)
+const playbackObjectUrl = ref(null)
+const isPlaying = ref(false)
+const playbackCurrentTime = ref(0)
+const playbackDuration = ref(0)
+const REWIND_SECS = 10
 
 const clusterToTenantPkey = computed(() => {
   const map = new Map()
@@ -148,11 +158,104 @@ async function downloadGreeting(shortuid, pkey) {
   }
 }
 
+function formatTime(sec) {
+  if (sec == null || !Number.isFinite(sec) || sec < 0) return '0:00'
+  const m = Math.floor(sec / 60)
+  const s = Math.floor(sec % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function revokePlaybackUrl() {
+  if (playbackObjectUrl.value) {
+    window.URL.revokeObjectURL(playbackObjectUrl.value)
+    playbackObjectUrl.value = null
+  }
+}
+
+async function playPause(g) {
+  const shortuid = g?.shortuid
+  if (!shortuid) return
+  const audio = audioRef.value
+  if (!audio) return
+
+  if (playbackShortuid.value === shortuid) {
+    if (isPlaying.value) {
+      audio.pause()
+      isPlaying.value = false
+    } else {
+      audio.play().catch(() => {})
+      isPlaying.value = true
+    }
+    return
+  }
+
+  loadingPlaybackShortuid.value = shortuid
+  revokePlaybackUrl()
+  try {
+    const blob = await getApiClient().getBlob(`greetingrecords/${encodeURIComponent(shortuid)}/download`)
+    const url = window.URL.createObjectURL(blob)
+    playbackObjectUrl.value = url
+    playbackShortuid.value = shortuid
+    audio.src = url
+    playbackDuration.value = 0
+    playbackCurrentTime.value = 0
+    await audio.play()
+    isPlaying.value = true
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Failed to load audio'), 'error')
+    playbackShortuid.value = null
+    revokePlaybackUrl()
+  } finally {
+    loadingPlaybackShortuid.value = null
+  }
+}
+
+function onPlaybackTimeUpdate() {
+  const a = audioRef.value
+  if (a) playbackCurrentTime.value = a.currentTime
+}
+
+function onPlaybackLoadedMetadata() {
+  const a = audioRef.value
+  if (a) playbackDuration.value = a.duration
+}
+
+function onPlaybackEnded() {
+  isPlaying.value = false
+  playbackCurrentTime.value = playbackDuration.value
+}
+
+function rewind() {
+  const a = audioRef.value
+  if (!a) return
+  a.currentTime = Math.max(0, a.currentTime - REWIND_SECS)
+}
+
+function seek(seconds) {
+  const a = audioRef.value
+  if (!a) return
+  a.currentTime = Math.max(0, Math.min(seconds, a.duration || 0))
+}
+
 onMounted(loadGreetings)
+onUnmounted(() => {
+  if (audioRef.value) {
+    audioRef.value.pause()
+    audioRef.value.src = ''
+  }
+  revokePlaybackUrl()
+})
 </script>
 
 <template>
   <div class="list-view">
+    <audio
+      ref="audioRef"
+      class="sr-only"
+      @timeupdate="onPlaybackTimeUpdate"
+      @loadedmetadata="onPlaybackLoadedMetadata"
+      @ended="onPlaybackEnded"
+    />
     <header class="list-header">
       <h1>Greetings</h1>
       <p class="toolbar">
@@ -185,6 +288,7 @@ onMounted(loadGreetings)
             <th class="th-sortable" title="Click to sort" :class="sortClass('cname')" @click="setSort('cname')">Name</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('filename')" @click="setSort('filename')">Original filename</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('type')" @click="setSort('type')">Type</th>
+            <th class="th-actions" title="Play">Play</th>
             <th class="th-actions" title="Download"><span class="action-icon" aria-hidden="true">⬇️</span></th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true">✏️</span></th>
             <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true">🗑️</span></th>
@@ -195,9 +299,49 @@ onMounted(loadGreetings)
             <td>{{ g.pkey }}</td>
             <td>{{ g.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(g) }}</td>
-            <td>{{ g.cname ?? '—' }}</td>
+            <td>{{ g.cname ?? '' }}</td>
             <td>{{ g.filename ?? '—' }}</td>
             <td>{{ g.type ?? '—' }}</td>
+            <td class="play-cell">
+              <template v-if="g.shortuid">
+                <span v-if="loadingPlaybackShortuid === g.shortuid" class="play-loading">Loading…</span>
+                <template v-else>
+                  <button
+                    type="button"
+                    class="cell-link cell-link-icon play-btn"
+                    :title="playbackShortuid === g.shortuid && isPlaying ? 'Pause' : 'Play'"
+                    :aria-label="playbackShortuid === g.shortuid && isPlaying ? 'Pause' : 'Play'"
+                    @click="playPause(g)"
+                  >
+                    <span class="action-icon" aria-hidden="true">{{ playbackShortuid === g.shortuid && isPlaying ? '⏸' : '▶' }}</span>
+                  </button>
+                  <button
+                    v-if="playbackShortuid === g.shortuid"
+                    type="button"
+                    class="cell-link cell-link-icon rewind-btn"
+                    title="Rewind 10 seconds"
+                    aria-label="Rewind 10 seconds"
+                    @click="rewind()"
+                  >
+                    <span class="action-icon" aria-hidden="true">⏪</span>
+                  </button>
+                  <div v-if="playbackShortuid === g.shortuid && playbackDuration > 0" class="seek-row">
+                    <input
+                      type="range"
+                      class="seek-slider"
+                      min="0"
+                      :max="playbackDuration"
+                      step="0.1"
+                      :value="playbackCurrentTime"
+                      @input="seek(parseFloat($event.target.value))"
+                      aria-label="Seek"
+                    />
+                    <span class="seek-time">{{ formatTime(playbackCurrentTime) }} / {{ formatTime(playbackDuration) }}</span>
+                  </div>
+                </template>
+              </template>
+              <span v-else style="opacity: 0.5;">—</span>
+            </td>
             <td>
               <button
                 v-if="g.shortuid"
@@ -272,6 +416,14 @@ onMounted(loadGreetings)
 .cell-link:hover { text-decoration: underline; }
 .cell-link-delete { color: #dc2626; }
 .cell-link:disabled { opacity: 0.7; cursor: not-allowed; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.play-cell { white-space: nowrap; }
+.play-cell .play-btn { margin-right: 0.25rem; }
+.play-cell .rewind-btn { margin-right: 0.5rem; }
+.play-loading { font-size: 0.875rem; color: #64748b; }
+.seek-row { display: inline-flex; align-items: center; gap: 0.5rem; vertical-align: middle; }
+.seek-slider { width: 5rem; height: 0.5rem; accent-color: #2563eb; }
+.seek-time { font-size: 0.75rem; color: #64748b; min-width: 4.5rem; }
 .toolbar { margin: 0.75rem 0 0 0; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
 .add-btn { display: inline-block; padding: 0.5rem 1rem; font-size: 0.9375rem; font-weight: 500; color: #fff; background: #2563eb; border-radius: 0.375rem; text-decoration: none; }
 .add-btn:hover { background: #1d4ed8; }

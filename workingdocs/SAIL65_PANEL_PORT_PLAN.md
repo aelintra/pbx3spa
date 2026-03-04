@@ -133,7 +133,7 @@ From `php/` in sail65 (sail-6/opt/sark/php):
 | sarkdevice     | Devices                  | devices            | ✓ |
 | sarkextension  | Extensions               | extensions         | ✓ |
 | sarkglobal     | System Globals           | sysglobals         | ✓ |
-| sarkgreeting   | —                        | greetings          | API only |
+| sarkgreeting   | Greetings (list/create/detail) | greetingrecords    | ✓ Done  |
 | sarkholiday    | —                        | holidaytimers      | API only |
 | sarkivr        | IVRs                     | ivrs               | ✓ |
 | sarklog        | Logs                     | (logs)            | ✓ |
@@ -158,12 +158,12 @@ These sail65 panels do **not** currently have a full SPA + API CRUD (or single-s
 - **sarkrecordings** – Recordings list/browse/play. May be read-only list + detail or single-screen; origrecs in www is separate app.
 - **sarkreport** – Reports. Likely single-screen or list of report types + output.
 
-**CoS / Timers / Greetings (API exists, SPA missing)**
+**CoS / Timers (API exists, SPA missing); Greetings done**
 
 - **sarkcos** – Class of Service: cosrules + cosopens + coscloses. API exists; add SPA list/create/detail for each or one combined view.
 - **sarktimer** – Day timers. API: daytimers. Add DayTimersListView, Create, Detail.
 - **sarkholiday** – Holiday timers. API: holidaytimers. Add HolidayTimersListView, Create, Detail.
-- **sarkgreeting** – Greetings. API: greetings (list, save, delete, download). Add Greetings list + upload/delete (and optionally edit) to match.
+- ~~**sarkgreeting**~~ – **Done.** Greetings panel: list/create/detail using greetingrecords API; tenant-scoped, wav/mp3 upload, download, replace, delete.
 
 **Certificates / Security / Network**
 
