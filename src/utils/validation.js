@@ -219,6 +219,17 @@ export function validateConferencePkey(value) {
 }
 
 /**
+ * Validate Greeting number (pkey)
+ * Required, positive integer, unique per tenant (uniqueness enforced by API)
+ */
+export function validateGreetingPkey(value) {
+  if (value === '' || value == null) return 'Greeting number is required'
+  const num = parseInt(value, 10)
+  if (isNaN(num) || num < 1) return 'Must be a positive number'
+  return null
+}
+
+/**
  * Validate Help message key (pkey) for tt_help_core
  * letters, numbers, underscore, hyphen (no spaces)
  */
