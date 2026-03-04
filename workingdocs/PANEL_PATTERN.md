@@ -17,6 +17,7 @@
 - **Use shared delete modal:** Use the `<DeleteConfirmModal>` component from `@/components/DeleteConfirmModal.vue` for delete confirmation in list and detail views. Do **not** copy inline Teleport + modal markup and modal CSS into the view.
 - **Tenant (cluster) dropdown:** Do **not** assume the API returns tenant pkey. The API may return `cluster` as tenant **shortuid**. Follow the **Tenant Resolution Pattern** (see Common Patterns & Helpers): (1) options = tenant **pkey** only; (2) in **Edit** view when loading the resource, **resolve** `resource.cluster` to tenant pkey via a shortuid→pkey map before setting the form value; (3) in **List** view resolve cluster to pkey for display. No assumptions.
 - **No selectable "—" or "-" in dropdowns:** Every FormSelect must have a concrete default (e.g. first option or "None"). For optional fields, include "None" (or the appropriate sentinel) in the **options** array and default the model to that value; do **not** use `empty-text` to add a selectable dash. The user must never be able to choose "-" or "—" as a value. On submit, map the sentinel (e.g. "None") to omit or null for the API when the field is optional.
+- **List action icons (Edit, Delete, Play, Download, etc.): Use SVG only.** Do **not** use emoji (e.g. ✏️ 🗑️ ▶ ⬇️) for table action columns. Use inline SVG icons with `stroke="currentColor"`, `stroke-width="2"`, and `stroke-linecap="round"` / `stroke-linejoin="round"` so icons match the app’s stroke style and inherit link/button color. For loading states (e.g. delete or download in progress), show a spinner SVG with the same stroke style and the `.action-icon-spin` CSS animation. Reference: `AgentsListView.vue`, `CustomAppsListView.vue`, `GreetingsListView.vue` (Edit, Delete, Play, Pause, Rewind, Download).
 
 ---
 
@@ -34,7 +35,7 @@ Every resource has **exactly three panels** (List, Create, Edit) unless a resour
 
 ### The three panels
 
-1. **Main list** (`{Resource}ListView.vue`) – Table (or list) of all items. Toolbar: Create button, filter. Rows: columns + Edit action + Delete action.
+1. **Main list** (`{Resource}ListView.vue`) – Table (or list) of all items. Toolbar: Create button, filter. Rows: columns + Edit action + Delete action. **Action column icons (Edit, Delete, Play, Download, etc.) must be SVG only** — see “List action icons” in the Important section; do not use emoji.
 2. **Create** (`{Resource}CreateView.vue`) – Single form to create one item. No top-level back link; use Cancel in the form to return to the list. **Action buttons (Create, Cancel) must appear at both the top and bottom of the form.**
 3. **Edit** (`{Resource}DetailView.vue`) – Single form to view and edit one item (immutable fields with FormReadonly, editable with FormField/FormSelect/FormToggle). **All edit panels must have three buttons (Save, Cancel, Delete) at both the top and bottom of the form.** Delete is placed alongside Save and Cancel in `.edit-actions`, not in a toolbar at the top. No separate "view" panel; no link from the list that goes to a different "item list" panel.
 

@@ -182,8 +182,8 @@ onMounted(loadDaytimers)
             <th class="th-sortable" title="Click to sort" :class="sortClass('dayofweek')" @click="setSort('dayofweek')">Day of week</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">Description</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('state')" @click="setSort('state')">State</th>
-            <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true">✏️</span></th>
-            <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true">🗑️</span></th>
+            <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
+            <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></th>
           </tr>
         </thead>
         <tbody>
@@ -196,7 +196,7 @@ onMounted(loadDaytimers)
             <td>{{ d.state ?? '—' }}</td>
             <td>
               <router-link v-if="d.shortuid" :to="{ name: 'daytimer-detail', params: { shortuid: d.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
-                <span class="action-icon" aria-hidden="true">✏️</span>
+                <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
               </router-link>
               <span v-else style="opacity: 0.5;">—</span>
             </td>
@@ -209,7 +209,8 @@ onMounted(loadDaytimers)
                 :title="deletingShortuid === d.shortuid ? 'Deleting…' : 'Delete'"
                 @click="askConfirmDelete(d.shortuid)"
               >
-                <span class="action-icon" aria-hidden="true">🗑️</span>
+                <span v-if="deletingShortuid === d.shortuid" class="action-icon action-icon-spin" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg></span>
+                <span v-else class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span>
               </button>
               <span v-else style="opacity: 0.5;">—</span>
             </td>
@@ -249,6 +250,8 @@ onMounted(loadDaytimers)
 .th-sortable.sort-desc::after { content: ' \2193'; font-size: 0.75em; color: #64748b; }
 .th-actions { cursor: default; white-space: nowrap; }
 .action-icon { display: inline-flex; align-items: center; justify-content: center; }
+.action-icon-spin { animation: action-icon-spin 0.8s linear infinite; }
+@keyframes action-icon-spin { to { transform: rotate(360deg); } }
 .cell-link-icon { padding: 0.25rem; }
 .table tbody tr:hover { background: #f8fafc; }
 .cell-link { color: #2563eb; text-decoration: none; background: none; border: none; padding: 0; font: inherit; cursor: pointer; }

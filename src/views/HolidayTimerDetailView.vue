@@ -21,15 +21,17 @@ function isReadOnly(field) {
 
 const holidaytimer = ref(null)
 const tenants = ref([])
-const routes = ref([])
-const routesLoading = ref(false)
+const destinations = ref(null)
+const destinationsLoading = ref(false)
 const loading = ref(true)
 const error = ref('')
 const editCluster = ref('default')
 const editDescription = ref('')
 const editRoute = ref('')
-const startDateTime = ref('')
-const endDateTime = ref('')
+const startDate = ref('')
+const startTime = ref('')
+const endDate = ref('')
+const endTime = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -59,37 +61,44 @@ const tenantOptionsForSelect = computed(() => {
   return list
 })
 
-/** Route select options: None (empty) + route pkeys from GET /routes */
-const routeOptions = computed(() => {
-  const list = (routes.value || []).map((r) => r.pkey).filter(Boolean)
-  const uniq = [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
-  return ['', ...uniq]
-})
+/** Internal destinations for route dropdown (Queues, Extensions, IVRs, CustomApps) — same shape as Inbound Route. */
+function toDestArrays(d) {
+  if (!d || typeof d !== 'object') return {}
+  return {
+    Queues: Array.isArray(d.Queues) ? d.Queues : (Array.isArray(d.queues) ? d.queues : []),
+    Extensions: Array.isArray(d.Extensions) ? d.Extensions : (Array.isArray(d.extensions) ? d.extensions : []),
+    IVRs: Array.isArray(d.IVRs) ? d.IVRs : (Array.isArray(d.ivrs) ? d.ivrs : []),
+    CustomApps: Array.isArray(d.CustomApps) ? d.CustomApps : (Array.isArray(d.customApps) ? d.customApps : [])
+  }
+}
 
-const routeOptionsForSelect = computed(() => {
-  const list = routeOptions.value
-  const cur = editRoute.value
-  if (cur && !list.includes(cur)) return [cur, ...list].filter(Boolean)
-  return list
-})
+const destinationGroups = computed(() => toDestArrays(destinations.value))
 
-/** Epoch seconds → datetime-local value (YYYY-MM-DDTHH:mm) in local time */
-function epochToDatetimeLocal(epoch) {
+/** Epoch seconds → date input value (YYYY-MM-DD) in local time */
+function epochToDate(epoch) {
   if (epoch == null || epoch === '') return ''
   const d = new Date(Number(epoch) * 1000)
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
-  const h = String(d.getHours()).padStart(2, '0')
-  const min = String(d.getMinutes()).padStart(2, '0')
-  return `${y}-${m}-${day}T${h}:${min}`
+  return `${y}-${m}-${day}`
 }
 
-/** datetime-local value (YYYY-MM-DDTHH:mm) → epoch seconds (local time interpreted) */
-function datetimeLocalToEpoch(value) {
-  if (value == null || String(value).trim() === '') return null
-  const s = String(value).trim()
-  const d = new Date(s)
+/** Epoch seconds → time input value (HH:mm) in local time */
+function epochToTime(epoch) {
+  if (epoch == null || epoch === '') return ''
+  const d = new Date(Number(epoch) * 1000)
+  const h = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  return `${h}:${min}`
+}
+
+/** Date (YYYY-MM-DD) + time (HH:mm) in local time → epoch seconds */
+function dateAndTimeToEpoch(dateStr, timeStr) {
+  if (dateStr == null || String(dateStr).trim() === '') return null
+  const datePart = String(dateStr).trim()
+  const timePart = (timeStr != null && String(timeStr).trim() !== '') ? String(timeStr).trim() : '00:00'
+  const d = new Date(`${datePart}T${timePart}`)
   if (Number.isNaN(d.getTime())) return null
   return Math.floor(d.getTime() / 1000)
 }
@@ -103,15 +112,21 @@ function stateDisplay(item) {
   return now >= stime && now < etime ? '*INUSE*' : 'IDLE'
 }
 
-async function loadRoutes() {
-  routesLoading.value = true
+async function loadDestinations() {
+  const c = editCluster.value
+  if (!c) {
+    destinations.value = null
+    return
+  }
+  destinationsLoading.value = true
   try {
-    const response = await getApiClient().get('routes')
-    routes.value = normalizeList(response, 'routes')
+    const response = await getApiClient().get('destinations', { params: { cluster: c } })
+    const body = response && typeof response === 'object' ? (response.data ?? response) : null
+    destinations.value = body && typeof body === 'object' ? body : null
   } catch {
-    routes.value = []
+    destinations.value = null
   } finally {
-    routesLoading.value = false
+    destinationsLoading.value = false
   }
 }
 
@@ -135,8 +150,10 @@ async function fetchHolidaytimer() {
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
     editDescription.value = h?.description ?? ''
     editRoute.value = (h?.route && String(h.route).trim() !== '') ? String(h.route).trim() : ''
-    startDateTime.value = epochToDatetimeLocal(h?.stime)
-    endDateTime.value = epochToDatetimeLocal(h?.etime)
+    startDate.value = epochToDate(h?.stime)
+    startTime.value = epochToTime(h?.stime)
+    endDate.value = epochToDate(h?.etime)
+    endTime.value = epochToTime(h?.etime)
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load Holiday timer')
     holidaytimer.value = null
@@ -148,10 +165,13 @@ async function fetchHolidaytimer() {
 onMounted(async () => {
   await ensureFetched()
   await fetchTenants()
-  await loadRoutes()
   await fetchHolidaytimer()
+  if (editCluster.value) loadDestinations()
 })
 watch(shortuid, fetchHolidaytimer)
+watch(editCluster, () => {
+  loadDestinations()
+})
 
 function goBack() {
   router.push({ name: 'holidaytimers' })
@@ -169,8 +189,8 @@ function onKeydown(e) {
 }
 
 function validateDateTime() {
-  const stime = datetimeLocalToEpoch(startDateTime.value)
-  const etime = datetimeLocalToEpoch(endDateTime.value)
+  const stime = dateAndTimeToEpoch(startDate.value, startTime.value)
+  const etime = dateAndTimeToEpoch(endDate.value, endTime.value)
   if (stime != null && etime != null && etime < stime) {
     return 'End date/time must be after start date/time.'
   }
@@ -187,8 +207,8 @@ async function saveEdit(e) {
   }
   saving.value = true
   try {
-    const stime = datetimeLocalToEpoch(startDateTime.value)
-    const etime = datetimeLocalToEpoch(endDateTime.value)
+    const stime = dateAndTimeToEpoch(startDate.value, startTime.value)
+    const etime = dateAndTimeToEpoch(endDate.value, endTime.value)
     const body = {
       cluster: editCluster.value.trim(),
       description: editDescription.value.trim() || null,
@@ -286,24 +306,39 @@ const displayName = computed(() => holidaytimer.value?.description || holidaytim
               id="edit-route"
               v-model="editRoute"
               label="Route"
-              :options="routeOptionsForSelect"
-              :loading="routesLoading"
+              :options="['Operator']"
+              :option-groups="destinationGroups"
+              :loading="destinationsLoading"
               empty-text="None"
-              hint="Override route when this holiday is active. Leave empty for none."
+              hint="Internal destination when this holiday is active (queue, extension, IVR, custom app). Leave empty for none."
             />
             <FormField
-              id="edit-start"
-              v-model="startDateTime"
-              label="Start date & time"
-              type="datetime-local"
+              id="edit-start-date"
+              v-model="startDate"
+              label="Start date"
+              type="date"
               hint="Start of holiday period (local time)"
             />
             <FormField
-              id="edit-end"
-              v-model="endDateTime"
-              label="End date & time"
-              type="datetime-local"
+              id="edit-start-time"
+              v-model="startTime"
+              label="Start time"
+              type="time"
+              hint="Start time (local)"
+            />
+            <FormField
+              id="edit-end-date"
+              v-model="endDate"
+              label="End date"
+              type="date"
               hint="End of holiday period (local time)"
+            />
+            <FormField
+              id="edit-end-time"
+              v-model="endTime"
+              label="End time"
+              type="time"
+              hint="End time (local)"
             />
           </div>
 
