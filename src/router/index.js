@@ -20,6 +20,9 @@ import ConferenceDetailView from '../views/ConferenceDetailView.vue'
 import ClassOfServiceListView from '../views/ClassOfServiceListView.vue'
 import ClassOfServiceCreateView from '../views/ClassOfServiceCreateView.vue'
 import ClassOfServiceDetailView from '../views/ClassOfServiceDetailView.vue'
+import DayTimersListView from '../views/DayTimersListView.vue'
+import DayTimerCreateView from '../views/DayTimerCreateView.vue'
+import DayTimerDetailView from '../views/DayTimerDetailView.vue'
 import GreetingsListView from '../views/GreetingsListView.vue'
 import GreetingCreateView from '../views/GreetingCreateView.vue'
 import GreetingDetailView from '../views/GreetingDetailView.vue'
@@ -91,6 +94,9 @@ const router = createRouter({
         { path: 'cosrules', name: 'cosrules', component: ClassOfServiceListView },
         { path: 'cosrules/new', name: 'cosrule-create', component: ClassOfServiceCreateView },
         { path: 'cosrules/:shortuid', name: 'cosrule-detail', component: ClassOfServiceDetailView },
+        { path: 'daytimers', name: 'daytimers', component: DayTimersListView },
+        { path: 'daytimers/new', name: 'daytimer-create', component: DayTimerCreateView },
+        { path: 'daytimers/:shortuid', name: 'daytimer-detail', component: DayTimerDetailView },
         { path: 'greetings', name: 'greetings', component: GreetingsListView },
         { path: 'greetings/new', name: 'greeting-create', component: GreetingCreateView },
         { path: 'greetings/:shortuid', name: 'greeting-detail', component: GreetingDetailView },
