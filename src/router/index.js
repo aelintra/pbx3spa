@@ -23,6 +23,9 @@ import ClassOfServiceDetailView from '../views/ClassOfServiceDetailView.vue'
 import DayTimersListView from '../views/DayTimersListView.vue'
 import DayTimerCreateView from '../views/DayTimerCreateView.vue'
 import DayTimerDetailView from '../views/DayTimerDetailView.vue'
+import HolidayTimersListView from '../views/HolidayTimersListView.vue'
+import HolidayTimerCreateView from '../views/HolidayTimerCreateView.vue'
+import HolidayTimerDetailView from '../views/HolidayTimerDetailView.vue'
 import GreetingsListView from '../views/GreetingsListView.vue'
 import GreetingCreateView from '../views/GreetingCreateView.vue'
 import GreetingDetailView from '../views/GreetingDetailView.vue'
@@ -97,6 +100,9 @@ const router = createRouter({
         { path: 'daytimers', name: 'daytimers', component: DayTimersListView },
         { path: 'daytimers/new', name: 'daytimer-create', component: DayTimerCreateView },
         { path: 'daytimers/:shortuid', name: 'daytimer-detail', component: DayTimerDetailView },
+        { path: 'holidaytimers', name: 'holidaytimers', component: HolidayTimersListView },
+        { path: 'holidaytimers/new', name: 'holidaytimer-create', component: HolidayTimerCreateView },
+        { path: 'holidaytimers/:shortuid', name: 'holidaytimer-detail', component: HolidayTimerDetailView },
         { path: 'greetings', name: 'greetings', component: GreetingsListView },
         { path: 'greetings/new', name: 'greeting-create', component: GreetingCreateView },
         { path: 'greetings/:shortuid', name: 'greeting-detail', component: GreetingDetailView },
