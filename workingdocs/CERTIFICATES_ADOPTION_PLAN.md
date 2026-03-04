@@ -1,0 +1,238 @@
+# Certificates adoption plan — new Certificates panel
+
+**Purpose:** Plan how we adopt certificates across pbx3 (backend), pbx3api (API), and pbx3spa (Certificates panel). This document drives the new **Certificates** panel and any API/backend work needed to support it.
+
+**Out of scope for this panel:** **3rd-party cert bundles** are manufacturer CA certs (e.g. Snom, Yealink) used to verify that provisioning requests come from real phones, not bad actors. They are **not** part of the Certificates panel; they will be handled in a **separate panel** (e.g. Certs 3rd Party / provisioning verification). This document covers only **TLS server certificates** (Let's Encrypt and purchased cert) for API and Asterisk.
+
+**References:**
+- **pbx3/workingdocs/LETSENCRYPT_PLAN.md** — Let's Encrypt: wildcard DNS-01, Name.com, cert paths, deploy hook, installer.
+- **pbx3/workingdocs/APACHE_CONFIG_TO_PBX3API.md** §3 — TLS ownership: pbx3 acquires/renews; nginx (pbx3api) only references cert paths.
+- **SINGLE_PANEL_SCREENS.md** — Certificates (#7) and Certs 3rd Party (#8); routes `/certificates`, `/certificates/3rd-party`; status: ❌ No API.
+
+---
+
+## 1. Two first-class options: purchased cert vs Let's Encrypt
+
+**Users must be able to choose either:**
+
+- **Purchased (custom) certificate** — Some users will upload their own certificate (e.g. from a commercial CA). They install cert + key via the panel; nginx and Asterisk use it for TLS until they remove it.
+- **Wildcard Let's Encrypt** — Others will prefer automatic, free **wildcard** certs per **LETSENCRYPT_PLAN.md** (covers your domain and all subdomains, e.g. `*.example.com`; issued via DNS-01, no port 80; renewal is automatic).
+
+Both are supported. The system must **handle both** and make it clear which source is currently in use. There is no “primary” or “secondary” path: either a user has set up Let's Encrypt (via the pbx3 installer) or they have uploaded a purchased cert (via the panel), or neither (snakeoil fallback). The panel should present both options neutrally and show **Currently in use: Purchased certificate** or **Currently in use: Wildcard Let's Encrypt** (or **Snakeoil** when neither is active).
+
+---
+
+## 2. Scope: two certificate areas (this panel only)
+
+| Area | Owner | Purpose | Panel section |
+|------|--------|---------|----------------|
+| **Wildcard Let's Encrypt** | pbx3 | Wildcard cert for API (nginx) + Asterisk (WSS/TLS). For users who prefer automatic certs. Acquired/renewed by pbx3 (certbot or lego); lives in `/etc/letsencrypt/live/<domain>/`. | **Status** (domain, expiry, issuer); **Renew now**. When in use, show "Currently in use: Wildcard Let's Encrypt".
+| **Purchased / custom cert** | User, via API | User-supplied PEM + key (e.g. purchased cert). For users who prefer their own CA. Install = upload cert + key; remove = revert to LE or snakeoil. | **Install** (upload cert + key), **Remove**; show “Currently in use: Purchased certificate” when active. |
+
+**Not in this panel:** 3rd-party cert bundles (manufacturer certs for provisioning verification — Snom, Yealink, etc.) are handled in a **separate panel**. See SINGLE_PANEL_SCREENS.md Certs 3rd Party (#8).
+
+**Panel type:** Single-screen with **two cascaded sections** (same pattern as Backup). One view at `/certificates`: **Wildcard Let's Encrypt** and **Purchased certificate** only.
+
+---
+
+## 3. Active certificate selection (which cert nginx/Asterisk use)
+
+One TLS identity is active at a time. **Selection order** (fallback):
+
+1. **Purchased (custom) cert** — If custom cert files exist and are valid at `/opt/pbx3/etc/ssl/custom/`, nginx and Asterisk use them.
+2. **Wildcard Let's Encrypt** — Else if LE is configured (`le-domain` exists and fullchain.pem exists), use LE.
+3. **Snakeoil** — Else use the system snakeoil cert.
+
+Custom takes precedence when present; removing the custom cert reverts to LE or snakeoil. No "mode" toggle: file presence defines which is active.
+
+---
+
+## 4. Data and source of truth
+
+- **No DB table for certs.** Certificates are file-based. Metadata (which cert is “in use” for nginx/Asterisk) can be inferred from nginx config or from a small state file under `/opt/pbx3/etc/` if we need to remember “use custom” vs “use LE”.
+- **LE:** Domain name from `/opt/pbx3/etc/identity/le-domain`. Cert files: `/etc/letsencrypt/live/<domain>/fullchain.pem`, `privkey.pem`. Expiry: read via `openssl x509 -enddate -noout -in fullchain.pem`.
+- **Custom cert:** Define a single path pair, e.g. `/opt/pbx3/etc/ssl/custom/fullchain.pem` and `privkey.pem`. Nginx (and optionally Asterisk) can be pointed at these when present; otherwise use LE or snakeoil. API + syshelper write here on “Install”; “Remove” = delete or rename so nginx falls back.
+- **3rd-party bundles:** Out of scope for this panel; see separate panel.
+
+---
+
+## 5. API design (pbx3api)
+
+All cert endpoints require **auth:sanctum** and **abilities:admin** (same as other system panels). Privileged file access via **syshelper** (no sudo from API).
+
+### 5.1 Active certificate (which source is in use)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/certificates/active` | Returns `{ "source": "custom" | "letsencrypt" | "snakeoil" }`. Derive from files: if custom fullchain.pem (and privkey.pem) exist and valid → `custom`; else if LE domain + fullchain exist → `letsencrypt`; else `snakeoil`. Panel uses this to show “Currently in use: …” |
+
+### 5.2 Let's Encrypt
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/certificates/letsencrypt` | Returns status: `{ "configured": bool, "domain": string|null, "expires_at": "YYYY-MM-DD"|null, "issuer": string|null }`. If `le-domain` exists and fullchain.pem exists, read domain from file, run `openssl x509 -enddate -noout -in ...` via syshelper, parse date; else `configured: false`. |
+| POST | `/certificates/letsencrypt/renew` | (Optional.) Trigger renewal: syshelper runs certbot renew (or lego renew) then deploy hook (reload nginx + Asterisk). Returns 200 when started or 503 if renewal not applicable. |
+
+**Implementation:** Controller reads `/opt/pbx3/etc/identity/le-domain` via syshelper (`cat le-domain`); then `openssl x509 -enddate -noout -in /etc/letsencrypt/live/<domain>/fullchain.pem` via syshelper; parse `notAfter` to ISO date. Never return private key or cert body.
+
+### 5.3 Purchased / custom cert
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/certificates/custom` | Returns `{ "installed": bool }`. Installed = custom fullchain.pem and privkey.pem exist and are valid. When installed, this cert is the active one (see §3). |
+| POST | `/certificates/custom` | **Install (upload purchased cert):** Request body: multipart or JSON with two PEM bodies (e.g. `cert`, `key`). Validate: PEM format, key matches cert. Write to `/opt/pbx3/etc/ssl/custom/fullchain.pem` and `privkey.pem` via syshelper; nginx/Asterisk will use them automatically (custom takes precedence); reload nginx and Asterisk. |
+| DELETE | `/certificates/custom` | **Remove:** Delete custom cert files via syshelper; system falls back to LE (if configured) or snakeoil; reload nginx and Asterisk. |
+
+**Security:** Never return private key in GET. Validate cert/key pair server-side before writing. Return **422** with a clear message when validation fails (e.g. "Certificate and private key do not match", "Invalid PEM format") so the panel can show a helpful error.
+
+**Not in this API:** 3rd-party cert bundles (manufacturer CA certs for provisioning verification) are served by a separate panel and API; not part of the Certificates panel scope.
+
+---
+
+## 6. pbx3 (backend) responsibilities
+
+- **Let's Encrypt:** pbx3 owns LE acquisition and renewal (LETSENCRYPT_PLAN.md). Users who prefer LE use this path. Installer prompts for FQDN and DNS credentials; certbot or lego writes to `/etc/letsencrypt/live/<domain>/`; deploy hook reloads nginx + Asterisk.
+- **Purchased (custom) cert:** Define paths `/opt/pbx3/etc/ssl/custom/fullchain.pem` and `privkey.pem`. Nginx (and Asterisk) config must use **selection order** (§3): if custom cert exists and is valid, use it; else if LE exists, use LE; else snakeoil. Nginx config (or snippet) checks custom path first, then LE path, then snakeoil. No "mode" flag: file presence defines which is active. Optionally: script or config snippet that nginx includes — “if custom cert exists, use it; else use LE; else snakeoil.”
+- **3rd-party bundle:** Out of scope for this panel. Manufacturer cert bundles (provisioning verification) are defined and used in the separate 3rd-party / provisioning panel.
+
+---
+
+## 7. Certificates panel (pbx3spa)
+
+- **Route:** `/certificates` (single view). 3rd-party cert bundle has its own panel (separate route; see SINGLE_PANEL_SCREENS.md).
+- **View:** `CertificatesView.vue` — single-screen with **two** cascaded sections (same structure as BackupView: section header, actions, message area, content).
+
+**At the top:** One line showing **Currently in use: Purchased certificate** | **Wildcard Let's Encrypt** | **Snakeoil** (from GET `/certificates/active`). Use the label "Wildcard Let's Encrypt" (not just "Let's Encrypt") so users know we use a wildcard cert. Makes it explicit which option is active; both purchased and LE are first-class.
+
+- **Section 1 — Wildcard Let's Encrypt** (for users who prefer automatic certs):  
+  - **User-facing explanation:** Add a short line so users understand: e.g. "A wildcard certificate covers your domain and all subdomains (e.g. `*.yourdomain.com`). It is issued and renewed automatically via DNS; no need to open port 80."  
+  - **Domain / DNS setup for Wildcard LE:** We must either **explain in the panel** what the user needs (domain, DNS API credentials for a supported provider, e.g. Name.com; instance FQDN; that the installer will prompt for these), or **point them to a URL** that gives a full explanation. Choose one: (a) Inline: a short "What you need" list or expandable section in the Wildcard Let's Encrypt section (domain, DNS provider with API, credentials, running the pbx3 installer). (b) Link: a "Learn how to set up Wildcard Let's Encrypt" link to an internal doc (e.g. a user-facing summary derived from LETSENCRYPT_PLAN) or to an external URL (e.g. Let's Encrypt DNS-01 / wildcard docs). Ensure the chosen doc or URL covers domain ownership, DNS-01, and that the user must run the pbx3 installer (not this panel) to perform the initial setup.  
+  - Display: Domain, Expires, Issuer (from GET `/certificates/letsencrypt`).  
+  - If not configured: message "Wildcard Let's Encrypt is not configured. Use the pbx3 installer to set up the host certificate (you will need DNS API credentials for your domain)."  
+  - Button: **Renew now** (POST `/certificates/letsencrypt/renew`), then toast and refetch status. If renewal fails (e.g. LE rate limit, DNS API error), show the API error message in the panel so the user knows why (e.g. "Renewal failed: rate limit exceeded; try again in 1 hour").
+- **Section 2 — Purchased certificate** (for users who prefer their own cert):  
+  - Display: “Customer certificate: In use” or “Not installed.”  
+  - Buttons: **Install** (upload cert + key; POST `/certificates/custom`), **Remove** (DELETE with confirmation). When the user removes the purchased cert, the system reverts to Let's Encrypt (if configured) or snakeoil.
+  - Use toast for success/error; firstErrorMessage for load errors.
+- **Nav:** Add “Certificates” under System (or single panels) in the sidebar, linking to `/certificates`. 3rd-party bundle is a separate panel (e.g. "Certs 3rd Party" / provisioning verification).
+- **Pattern:** Follow PANEL_PATTERN.md § Single-screen panels with cascaded sections; No list/detail/create; one screen only. Copy should treat both "purchased" and "Wildcard Let's Encrypt" as equal choices. Always use "Wildcard Let's Encrypt" in user-facing text so it is clear we use wildcard certs (not single-hostname).
+
+---
+
+## 8. Security
+
+- **Admin only:** All cert endpoints behind `abilities:admin`.
+- **No private key in API responses:** GET endpoints never return private keys.
+- **Validation:** Custom cert install must validate PEM format and that key matches cert (e.g. `openssl x509 -noout -modulus -in cert.pem` and `openssl rsa -noout -modulus -in key.pem`; hashes must match).
+- **Privileged writes:** All file writes (custom cert install, and any “renew” trigger) go through **syshelper** (pbx3_request_syscmd). No direct file_put_contents to system paths from API.
+
+---
+
+## 9. Implementation order
+
+1. **API: Active source (GET /certificates/active)**  
+   - Returns `source`: `custom` | `letsencrypt` | `snakeoil` from file presence (custom first, then LE, then snakeoil). Panel uses this for “Currently in use: …”.
+2. **API: LE status (GET /certificates/letsencrypt)**  
+   - CertificateController; read le-domain + fullchain.pem via syshelper; parse expiry; return JSON. No renew yet.
+3. **SPA: Certificates view shell + top line + LE section**  
+   - CertificatesView.vue, route `/certificates`, nav link. Top: “Currently in use: …” from `/certificates/active`. Section 1: Wildcard Let's Encrypt status (domain, expires, issuer). Message when not configured.
+4. **API: LE renew (POST /certificates/letsencrypt/renew)**  
+   - Syshelper runs certbot renew (or lego) and deploy hook. Return 200/503.
+5. **SPA: Renew now button**  
+   - Call renew endpoint; toast; refetch status and active.
+6. **pbx3: Custom cert paths and nginx selection order**  
+   - Define `/opt/pbx3/etc/ssl/custom/`. Nginx (pbx3api) config or snippet: use custom if present and valid, else LE, else snakeoil (§3). Document in pbx3/pbx3api.
+7. **API: Custom cert GET/POST/DELETE**  
+   - GET `installed`; POST validate + write via syshelper; reload nginx + Asterisk. DELETE remove files; reload; fallback to LE or snakeoil.
+8. **SPA: Purchased certificate section**  
+   - Install (upload cert + key), Remove with confirmation. Show “Installed” and that it’s in use when active.
+9. **Docs and handoff**  
+    - Update SINGLE_PANEL_SCREENS.md (Certificates ✅). Handoff: “Certificates panel: both purchased cert and Let's Encrypt supported; active source shown; LE status + renew, custom install/remove. 3rd-party bundles (provisioning verification) are a separate panel.”
+
+---
+
+## 10. Existing code to change
+
+This section lists **existing** files that must be modified (not new files like CertificateController or CertificatesView).
+
+### 10.1 pbx3api
+
+| File | Current state | Change |
+|------|----------------|--------|
+| **`config/nginx/pbx3-api.conf`** | Hardcoded snakeoil + commented LE paths (lines 6–10). | Stop hardcoding cert paths. Use an **include** for the active cert (e.g. `include snippets/pbx3-ssl-active.conf;`) and have the API/syshelper (or a script) **write** that snippet with the chosen paths (custom → LE → snakeoil). Alternatively, the same script could rewrite this server block's `ssl_certificate` / `ssl_certificate_key` lines. |
+| **`routes/api.php`** | No certificate routes. | In the existing `Route::middleware(['auth:sanctum', 'abilities:admin'])->group(...)` (the one that wraps backups, firewall, syscommands, etc.), **add** routes for `certificates/active`, `certificates/letsencrypt`, `certificates/custom`, and `use` the new CertificateController. |
+
+### 10.2 pbx3spa
+
+| File | Current state | Change |
+|------|----------------|--------|
+| **`src/router/index.js`** | No certificates route. | **Add** a child route under AppLayout, e.g. `{ path: 'certificates', name: 'certificates', component: CertificatesView }`, and **import** CertificatesView. |
+| **`src/layouts/AppLayout.vue`** | Nav has Firewall, Asterisk Files, Logs, Backup, etc. | **Add** a nav link for Certificates (e.g. `<router-link to="/certificates" ...>Certificates</router-link>`) inside the `auth.can('admin')` block, in a sensible place (e.g. near Firewall/Backup). |
+
+### 10.3 pbx3 (backend / Asterisk)
+
+| File | Current state | Change |
+|------|----------------|--------|
+| **`pbx3-1/opt/pbx3/scripts/installer.sh`** | Only adds `asterisk`/`www-data` to `ssl-cert` (lines 62–65). No LE or custom cert dirs. | **Extend** so it creates `/opt/pbx3/etc/identity/` and `/opt/pbx3/etc/ssl/custom/` (or equivalent) if you want them at install time. **Add** the LE block from LETSENCRYPT_PLAN (prompt FQDN/DNS/email, run lego/certbot, write `le-domain`, etc.). |
+| **`pbx3-1/opt/pbx3/etc/asterisk/configs/http.conf`** | Static file with fixed snakeoil paths (lines 15–16). | Either **(a)** turn it into a **generated** file from a template that gets the "active" cert path (custom → LE → snakeoil), or **(b)** keep the file and have a **new** "cert-apply" script (and LE deploy hook) **rewrite** only the `tlscertfile` / `tlsprivatekey` lines so Asterisk follows the same selection order. |
+| **`pbx3-1/opt/pbx3/etc/asterisk/templates/pjsip_transport.tmpl`** | Contains commented TLS block with snakeoil paths (lines 25–26). `[transport-wss]` has no cert lines. | If WSS is to use the same active cert, **add** (or uncomment and parameterise) `cert_file` / `priv_key_file` in the WSS section and use a placeholder (e.g. `$cert_file`, `$priv_key_file`) that the generator fills. |
+| **`pbx3-1/opt/pbx3/php/classes/GenClass`** | `genPjsipTransport()` (around 334–368) only substitutes `$externip`; there's a ToDo to "deal with cert/key location". | **Implement** that: read the active cert path (from a small file written by API/syshelper, or from existing identity/le-domain + custom logic), and substitute cert/key paths into the template so generated `pjsip_transport.conf` uses the selected cert. |
+
+### 10.4 pbx3 nginx reference (docs/deploy)
+
+| File | Current state | Change |
+|------|----------------|--------|
+| **`pbx3/workingdocs/nginx-api-site-reference.conf`** | Same snakeoil + commented LE as pbx3api. | **Update** to match the chosen pattern (e.g. include for active cert or note that the real config is generated), so deploy/docs stay in sync with `pbx3-api.conf`. |
+
+**Summary:** pbx3api = nginx config + api.php. pbx3spa = router + AppLayout. pbx3 = installer.sh, http.conf (or its generator), pjsip_transport.tmpl + GenClass, and the nginx reference doc. New code (CertificateController, CertificatesView, syshelper calls, cert-apply/reload scripts, LE deploy hook) is separate; this list is only existing code that must be changed.
+
+---
+
+## 11. What else to consider
+
+- **Nginx config mechanics:** Nginx cannot conditionally choose cert paths by "if file exists" in config. So **selection order** (custom → LE → snakeoil) must be implemented by something that **writes** the active paths into the config (or an include file) when certs change. Options: (a) API (or a small script) writes an include snippet with `ssl_certificate` / `ssl_certificate_key` pointing at the chosen path after custom install/remove or LE deploy hook; (b) pbx3 installer / deploy hook always rewrites the snippet. Define who writes the snippet and where it lives (e.g. `/etc/nginx/snippets/pbx3-ssl.conf` or under pbx3api).
+
+- **Asterisk config when custom cert changes:** When the user installs or removes the purchased cert via the API, **Asterisk** (http.conf, pjsip TLS) must be updated to use the same selection order. LETSENCRYPT_PLAN has `update-asterisk-le-certs.sh`. The API (via syshelper) should call an equivalent step after custom install/remove so Asterisk points at custom or LE paths. Otherwise only nginx would switch and Asterisk would still use the old cert.
+
+- **Creating the custom cert directory:** On first custom install, `/opt/pbx3/etc/ssl/custom/` may not exist (installer might not create it). The API or syshelper should run `mkdir -p` for that path before writing fullchain.pem and privkey.pem.
+
+- **Permissions after custom install:** After writing custom cert files, syshelper should set safe permissions (e.g. fullchain 644, privkey 600) and ownership so nginx and Asterisk can read. Document the chosen ownership (e.g. root:root with world-read for fullchain, root-only for key, or a shared group).
+
+- **Purchased cert = fullchain:** Many CAs provide cert + chain (intermediates). Accept a single **fullchain** PEM (cert + intermediates concatenated) so TLS works correctly. UX: "Upload fullchain.pem (certificate + chain) and privkey.pem."
+
+- **Custom cert expiry in the panel:** Optionally return `expires_at` for the installed custom cert (via `openssl x509 -enddate -noout`) in GET `/certificates/custom` so the panel can show "Expires: YYYY-MM-DD" and remind users to renew.
+
+- **How the API gets PEM content to disk:** API receives multipart or JSON with cert/key. Laravel writes to a temp path (e.g. `storage_path('app/temp/')` or `/tmp`) then syshelper **moves** (and chowns) to the final path — same pattern as Firewall (temp file, syshelper mv). Do not stream content to syshelper; use temp file + mv.
+
+- **Reload failure after install/remove:** If nginx or Asterisk reload fails after writing or removing the custom cert, report the error to the user and leave the files as-is (do not auto-revert). Admin can fix config or remove the cert manually.
+
+- **Backup/restore:** Ensure instance backup (and restore) includes `/opt/pbx3/etc/ssl/custom/` and `/opt/pbx3/etc/identity/le-domain` so restored systems get the same cert state. May already be covered if backup includes `/opt/pbx3/etc/`; confirm and document.
+
+- **Rate limiting (optional):** POST `/certificates/letsencrypt/renew` could be rate-limited (e.g. once per 10 minutes) to avoid abuse. Lower priority.
+
+- **Verification after implementation:** Confirm (a) active source is correct for each state (snakeoil, LE only, custom only, after custom remove); (b) browser shows the expected cert over HTTPS; (c) invalid custom cert returns 422 with clear message; (d) renew failure is shown in the panel.
+
+- **Firewall and port 80 for Let's Encrypt:** We use **DNS-01 only** for wildcard certs (LETSENCRYPT_PLAN.md). **Port 80 is not used** for ACME issuance or renewal. So **no firewall change is needed for LE**: you can leave port 80 closed. Do not add a permanent "open port 80 for Let's Encrypt" rule. If we ever support **HTTP-01** (e.g. for a non-wildcard cert), we would need a defined approach: e.g. temporarily open 80 only during the ACME challenge (script or manual), then close it again — but that is out of scope for the current DNS-01 design.
+
+- **Domain / DNS setup documentation for LE:** Decide where the "full explanation" lives: (1) Internal: a user-facing doc (e.g. in pbx3 or pbx3api docs, or a dedicated "Setting up Wildcard Let's Encrypt" page) that explains domain, DNS provider, API credentials, and running the pbx3 installer. (2) External: link to e.g. https://letsencrypt.org/docs/challenge-types/#dns-01-challenge and https://letsencrypt.org/docs/faq/#does-lets-encrypt-issue-wildcard-certificates — plus a short internal note that "you must run the pbx3 installer and provide DNS API credentials." The panel should then either embed the key requirements or link to the chosen URL/doc so users are not left guessing how to set domain entries and DNS for LE.
+
+---
+
+## 12. Open decisions
+
+- **LE domain/DNS help URL or inline text:** Decide whether to (a) show inline in the panel a short "What you need" for Wildcard LE (domain, DNS API credentials, run pbx3 installer), or (b) link to a full explanation (internal doc or external e.g. Let's Encrypt DNS-01 / wildcard docs). Document the chosen URL or text so implementers know what to link to or display.
+
+- **Custom cert path:** Confirm `/opt/pbx3/etc/ssl/custom/` and that pbx3api nginx config (or snippet) implements selection order: custom → LE → snakeoil (no “mode” file; file presence only).
+- **Renew now:** Blocking (wait for certbot to finish) vs async (start and return; frontend polls status). Simpler: blocking with a 60s timeout; if certbot hangs, return 504.
+- **Multiple custom certs:** Out of scope for v1; one purchased cert only. Future: multiple named certs for different services.
+
+---
+
+## 13. References
+
+- **pbx3/workingdocs/LETSENCRYPT_PLAN.md** — Technical plan (Name.com, DNS-01, installer steps). May be used as the basis for a user-facing "Setting up Wildcard Let's Encrypt" doc; or link users to Let's Encrypt DNS-01 / wildcard docs and keep LETSENCRYPT_PLAN as implementer-only.
+- **External (candidates for user link):** https://letsencrypt.org/docs/challenge-types/#dns-01-challenge , https://letsencrypt.org/docs/faq/#does-lets-encrypt-issue-wildcard-certificates — if we point users to a URL instead of inline text, these explain domain/DNS requirements; we still need to state that setup is done via the pbx3 installer and DNS API credentials.
+- **pbx3/workingdocs/APACHE_CONFIG_TO_PBX3API.md** — TLS ownership (pbx3 = acquire/renew; pbx3api = reference paths).
+- **SINGLE_PANEL_SCREENS.md** — Certificates (#7), Certs 3rd Party (#8); routes.
+- **PANEL_PATTERN.md** — Single-screen panels, cascaded sections, toast API.
+- **pbx3api/docs/SYSCOMMANDS_VIA_SYSHELPER.md** — Use syshelper for all privileged commands.

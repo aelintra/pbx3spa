@@ -187,3 +187,4 @@
 - **TRUNK_ROUTE_MULTITENANCY.md** — Trunk/route ownership (collective vs private), allocation, migration mechanics; read when working on trunks, outbound routes, or tenant migration.
 - **wizardnotes/** — add-wizard.md, agent-brief-spa.md per resource (DDI, extension, trunk, ivr).
 - **SYSTEM_CONTEXT.md**, **README.md** — context and setup.
+- **CERTIFICATES_ADOPTION_PLAN.md** — Certificates panel: LE status + optional renew, custom cert install/remove, 3rd-party bundle; API design, SPA sections, implementation order.
