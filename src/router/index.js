@@ -17,6 +17,9 @@ import QueueDetailView from '../views/QueueDetailView.vue'
 import ConferencesListView from '../views/ConferencesListView.vue'
 import ConferenceCreateView from '../views/ConferenceCreateView.vue'
 import ConferenceDetailView from '../views/ConferenceDetailView.vue'
+import ClassOfServiceListView from '../views/ClassOfServiceListView.vue'
+import ClassOfServiceCreateView from '../views/ClassOfServiceCreateView.vue'
+import ClassOfServiceDetailView from '../views/ClassOfServiceDetailView.vue'
 import GreetingsListView from '../views/GreetingsListView.vue'
 import GreetingCreateView from '../views/GreetingCreateView.vue'
 import GreetingDetailView from '../views/GreetingDetailView.vue'
@@ -85,6 +88,9 @@ const router = createRouter({
         { path: 'conferences', name: 'conferences', component: ConferencesListView },
         { path: 'conferences/new', name: 'conference-create', component: ConferenceCreateView },
         { path: 'conferences/:shortuid', name: 'conference-detail', component: ConferenceDetailView },
+        { path: 'cosrules', name: 'cosrules', component: ClassOfServiceListView },
+        { path: 'cosrules/new', name: 'cosrule-create', component: ClassOfServiceCreateView },
+        { path: 'cosrules/:shortuid', name: 'cosrule-detail', component: ClassOfServiceDetailView },
         { path: 'greetings', name: 'greetings', component: GreetingsListView },
         { path: 'greetings/new', name: 'greeting-create', component: GreetingCreateView },
         { path: 'greetings/:shortuid', name: 'greeting-detail', component: GreetingDetailView },

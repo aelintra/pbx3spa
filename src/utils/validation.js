@@ -219,6 +219,18 @@ export function validateConferencePkey(value) {
 }
 
 /**
+ * Validate Class of Service key (pkey) - letters, numbers, underscore, hyphen
+ * Required, unique per tenant (uniqueness enforced by API)
+ */
+export function validateCosPkey(value) {
+  if (value === '' || value == null) return 'CoS key is required'
+  const s = String(value).trim()
+  if (!s) return 'CoS key is required'
+  if (!/^[a-zA-Z0-9_-]+$/.test(s)) return 'Must be letters, numbers, underscore, or hyphen (no spaces)'
+  return null
+}
+
+/**
  * Validate Greeting number (pkey)
  * Required, positive integer, unique per tenant (uniqueness enforced by API)
  */
