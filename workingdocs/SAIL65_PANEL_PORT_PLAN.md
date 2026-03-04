@@ -129,6 +129,7 @@ From `php/` in sail65 (sail-6/opt/sark/php):
 | sarkapp        | Custom Apps              | customapps         | ✓ |
 | sarkbackup     | Backup                   | backups            | ✓ |
 | sarkcluster    | Tenants                  | tenants            | ✓ |
+| sarkconference | Conferences (list/create/detail) | conferences (meetme) | ✓ Done  |
 | sarkcos        | —                        | cosrules, cosopens, coscloses | API only; no SPA panels yet |
 | sarkdevice     | Devices                  | devices            | ✓ |
 | sarkextension  | Extensions               | extensions         | ✓ |
@@ -154,9 +155,9 @@ These sail65 panels do **not** currently have a full SPA + API CRUD (or single-s
 
 **Higher value / common features**
 
-- **sarkconference** – Conference rooms (list + create/edit/delete). Confirm table in pbx3: `sqlite_create_tenant.sql` has `meetme` (conference). API/SPA to be added or confirmed.
-- **sarkrecordings** – Recordings list/browse/play. May be read-only list + detail or single-screen; origrecs in www is separate app.
-- **sarkreport** – Reports. Likely single-screen or list of report types + output.
+- ~~**sarkconference**~~ – **Done.** Conference rooms (meetme): list/create/detail, tenant-scoped; API + SPA implemented.
+- **sarkrecordings** – Recordings list/browse/search-by-time-date/play/download. May be read-only list + detail or single-screen; origrecs in www is separate app. 
+- **sarkreport** – Reports. These will be PDF reports for each table. probably an option on the main list panel rather than a separate oanel of its own.
 
 **CoS / Timers (API exists, SPA missing); Greetings done**
 
@@ -168,14 +169,14 @@ These sail65 panels do **not** currently have a full SPA + API CRUD (or single-s
 **Certificates / Security / Network**
 
 - **sarkcert** – Certificates (TLS). Overlap with pbx3 LETSENCRYPT_PLAN; may be single-screen or list+detail.
-- **sark3pcerts** – 3rd-party certs. Similar.
+- **sark3pcerts** – 3rd-party certs. Similar (only necessary for provisioning).   Create a mini project for provisioning
 - **sarknetwork** – Network config. Single-screen; may overlap with pbx3 setip/globals.
 
 **Operational / Niche**
 
 - **sarkwallboard** – Wallboard (channels/status). Real-time or polling; may need new API endpoints.
 - **sarkshell** – Shell access. High risk; optional or admin-only single-screen.
-- **sarkldap** – LDAP. Single-screen or list+detail; see AGENT_HANDOFF LDAP note (globals vs tenant).
+- **sarkldap** – LDAP. Single-screen or list+detail; see AGENT_HANDOFF LDAP note (globals vs tenant). Move to a  mini project.
 - **sarkpcap** – Packet capture. Niche; single-screen.
 - **sarkfreset** – Factory reset. Dangerous; single-screen, guarded.
 
