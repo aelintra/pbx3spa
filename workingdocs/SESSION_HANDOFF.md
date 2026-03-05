@@ -12,7 +12,15 @@
 
 ## Done
 
-### Latest session (Holiday Timers + UX)
+### Latest session (Certificates panel + Let's Encrypt)
+
+- **Certificates panel (pbx3spa):** Single view at `/certificates` with two sections: **Let's Encrypt** and **Purchased certificate**. When LE not configured: form **Hostname (FQDN)** + **Email (Let's Encrypt)** and button **Get certificate** (POST `/certificates/letsencrypt/setup`). When configured: Hostname, Expires, Issuer + **Renew now** (POST `/certificates/letsencrypt/renew`). Help text: A record + port 80 reachable; we open 80 only during issuance/renewal. Purchased: upload cert/key, Install, Remove. See **CERTIFICATES_ADOPTION_PLAN.md**, **SINGLE_PANEL_SCREENS.md**.
+- **Certificates API (pbx3api):** GET active, GET letsencrypt, POST letsencrypt/setup (fqdn, email → le-first-cert.sh), POST letsencrypt/renew (le-renew-with-80.sh), GET/POST/DELETE custom. Setup and renew need PBX3_SYSCMD_TIMEOUT ≥ 90.
+- **pbx3 scripts:** le-port80-open.sh, le-port80-close.sh (Shorewall managed rule); le-renew-with-80.sh (open 80, certbot renew, close 80); le-first-cert.sh (first-time: open 80, certonly --standalone, write le-domain, apply-active-cert, close 80). Cron: twice daily LE renewal when le-domain exists. apply-active-cert.sh unchanged (custom → LE → snakeoil for nginx + Asterisk).
+- **Docs:** LETSENCRYPT_PLAN.md (panel setup, port 80 control, scripts), CERTIFICATES_ADOPTION_PLAN.md (API table, panel behaviour). Branch: `spanel` (pbx3, pbx3api, pbx3spa).
+- **For next agent:** Certificates panel and LE flow are complete. Deploy: ensure scripts are executable (chmod +x le-*.sh); set PBX3_SYSCMD_TIMEOUT=90 for setup/renew from panel. Local test: don't create le-domain so no LE renewal runs.
+
+### Previous session (Holiday Timers + UX)
 
 - **Holiday Timers (pbx3api):** HolidayTimer model (fillable, resolveRouteBinding); HolidayTimerController (cluster required, stime/etime defaults, overlap validation, getUpdateableColumns, update by id); SchemaService holidaytimers entry. **pbx3api/workingdocs/HOLIDAYTIMERS_AUDIT_PROTOTYPE.md** documents the audit and decisions.
 - **Holiday Timers (pbx3spa):** List (Start, End, Cluster, Description, Route, State IDLE/*INUSE*, filter, sort, SVG icons), Create (description + cluster), Detail (description, cluster, route select, **separate** Start date, Start time, End date, End time). **Route** dropdown uses **internal destinations** from GET /destinations?cluster= (Queues, Extensions, IVRs, CustomApps grouped; "None", "Operator") — not GET /routes (outbound trunks). Router: holidaytimers, holidaytimers/new, holidaytimers/:shortuid. Nav: "Holiday timers".
@@ -187,4 +195,4 @@
 - **TRUNK_ROUTE_MULTITENANCY.md** — Trunk/route ownership (collective vs private), allocation, migration mechanics; read when working on trunks, outbound routes, or tenant migration.
 - **wizardnotes/** — add-wizard.md, agent-brief-spa.md per resource (DDI, extension, trunk, ivr).
 - **SYSTEM_CONTEXT.md**, **README.md** — context and setup.
-- **CERTIFICATES_ADOPTION_PLAN.md** — Certificates panel: LE status + optional renew, custom cert install/remove, 3rd-party bundle; API design, SPA sections, implementation order.
+- **CERTIFICATES_ADOPTION_PLAN.md** — Certificates panel: LE setup (FQDN + email, Get certificate), status, Renew now, custom cert install/remove; API design (setup, renew, custom), SPA sections, port 80 control.
