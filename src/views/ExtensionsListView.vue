@@ -5,6 +5,7 @@ import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const { filterText } = useStickyFilter('extensions')
@@ -16,6 +17,7 @@ const error = ref('')
 const deleteError = ref('')
 const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
+const exportPdfLoading = ref(false)
 const sortKey = ref('pkey')
 const sortOrder = ref('asc') // 'asc' | 'desc'
 /** Live PJSIP data keyed by pkey: { ip, latency }. Empty when PBX not running or request failed. */
@@ -127,6 +129,44 @@ function sortClass(key) {
   return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
 }
 
+/** Column defs for CSV export (match list columns; getValue uses current display helpers). */
+const extensionExportColumns = computed(() => [
+  { key: 'pkey', label: 'Ext' },
+  { key: 'shortuid', label: 'SIP Identity', getValue: (e) => sipIdentityDisplay(e) },
+  { key: 'cluster', label: 'Tenant', getValue: (e) => tenantPkeyDisplay(e) },
+  { key: 'desc', label: 'User', getValue: (e) => userDisplay(e) },
+  { key: 'extension_type', label: 'Type' },
+  { key: 'device', label: 'Device', getValue: (e) => (e.device ?? e.technology ?? '—') },
+  { key: 'macaddr', label: 'MAC', getValue: (e) => (e.macaddr ? e.macaddr : 'N/A') },
+  { key: 'ip', label: 'IP', getValue: (e) => ipDisplay(e) },
+  { key: 'status', label: 'Status', getValue: (e) => statusDisplay(e) },
+  { key: 'transport', label: 'Transport' },
+  { key: 'active', label: 'Active' }
+])
+
+function doExportCsv() {
+  exportListToCsv(sortedExtensions.value, extensionExportColumns.value, 'extensions.csv')
+  toast.show('CSV downloaded')
+}
+
+async function doExportPdf() {
+  exportPdfLoading.value = true
+  try {
+    const blob = await getApiClient().getBlob('extensions/export/pdf')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'extensions.pdf'
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.show('PDF downloaded')
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Export failed'), 'error')
+  } finally {
+    exportPdfLoading.value = false
+  }
+}
+
 async function loadExtensions() {
   loading.value = true
   error.value = ''
@@ -184,6 +224,12 @@ onMounted(loadExtensions)
       <h1>Extensions</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'extension-create' }" class="add-btn">Create</router-link>
+        <button type="button" class="export-btn" :disabled="sortedExtensions.length === 0" @click="doExportCsv">
+          Export CSV
+        </button>
+        <button type="button" class="export-btn" :disabled="sortedExtensions.length === 0 || exportPdfLoading" @click="doExportPdf">
+          {{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}
+        </button>
         <input
           v-model="filterText"
           type="search"
@@ -461,6 +507,25 @@ onMounted(loadExtensions)
 }
 .add-btn:hover {
   background: #1d4ed8;
+}
+.export-btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.export-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .filter-input {
   padding: 0.5rem 0.75rem;
