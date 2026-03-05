@@ -4,6 +4,8 @@ import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { useStickyFilter } from '@/composables/useStickyFilter'
 import { normalizeList } from '@/utils/listResponse'
+import { firstErrorMessage } from '@/utils/formErrors'
+import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const { filterText } = useStickyFilter('routes')
@@ -15,6 +17,7 @@ const error = ref('')
 const deleteError = ref('')
 const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
+const exportPdfLoading = ref(false)
 const sortKey = ref('pkey')
 const sortOrder = ref('asc') // 'asc' | 'desc'
 
@@ -96,6 +99,39 @@ function sortClass(key) {
   return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
 }
 
+const routeExportColumns = computed(() => [
+  { key: 'pkey', label: 'Name' },
+  { key: 'shortuid', label: 'Local UID', getValue: (r) => localUidDisplay(r) },
+  { key: 'cluster', label: 'Tenant', getValue: (r) => tenantPkeyDisplay(r) },
+  { key: 'description', label: 'Description', getValue: (r) => (r.description ?? '').toString().trim() || 'None' },
+  { key: 'dialplan', label: 'Dialplan', getValue: (r) => (r.dialplan ?? '').toString().trim() || 'None' },
+  { key: 'path1', label: 'Path 1', getValue: (r) => (r.path1 ?? '').toString().trim() || 'None' },
+  { key: 'active', label: 'Active', getValue: (r) => (r.active ?? '').toString().trim() || 'None' }
+])
+
+function doExportCsv() {
+  exportListToCsv(sortedRoutes.value, routeExportColumns.value, 'routes.csv')
+  toast.show('CSV downloaded')
+}
+
+async function doExportPdf() {
+  exportPdfLoading.value = true
+  try {
+    const blob = await getApiClient().getBlob('routes/export/pdf')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'routes.pdf'
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.show('PDF downloaded')
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Export failed'), 'error')
+  } finally {
+    exportPdfLoading.value = false
+  }
+}
+
 async function loadRoutes() {
   loading.value = true
   error.value = ''
@@ -147,6 +183,8 @@ onMounted(loadRoutes)
       <h1>Routes (Outbound)</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'route-create' }" class="add-btn">Create</router-link>
+        <button type="button" class="export-btn" :disabled="sortedRoutes.length === 0" @click="doExportCsv">Export CSV</button>
+        <button type="button" class="export-btn" :disabled="sortedRoutes.length === 0 || exportPdfLoading" @click="doExportPdf">{{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}</button>
         <input
           v-model="filterText"
           type="search"
@@ -390,6 +428,24 @@ onMounted(loadRoutes)
 }
 .add-btn:hover {
   background: #1d4ed8;
+}
+.export-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.export-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .filter-input {
   padding: 0.5rem 0.75rem;

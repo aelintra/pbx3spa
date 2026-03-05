@@ -5,6 +5,7 @@ import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const { filterText } = useStickyFilter('inbound-routes')
@@ -16,6 +17,7 @@ const error = ref('')
 const deleteError = ref('')
 const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
+const exportPdfLoading = ref(false)
 const sortKey = ref('pkey')
 const sortOrder = ref('asc')
 
@@ -96,6 +98,40 @@ function sortClass(key) {
   return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
 }
 
+const inboundRouteExportColumns = computed(() => [
+  { key: 'pkey', label: 'DiD/CLiD' },
+  { key: 'shortuid', label: 'Local UID', getValue: (r) => localUidDisplay(r) },
+  { key: 'cluster', label: 'Tenant', getValue: (r) => tenantPkeyDisplay(r) },
+  { key: 'trunkname', label: 'Name' },
+  { key: 'openroute', label: 'Open' },
+  { key: 'closeroute', label: 'Closed' },
+  { key: 'technology', label: 'Type' },
+  { key: 'active', label: 'Active' }
+])
+
+function doExportCsv() {
+  exportListToCsv(sortedRoutes.value, inboundRouteExportColumns.value, 'inbound-routes.csv')
+  toast.show('CSV downloaded')
+}
+
+async function doExportPdf() {
+  exportPdfLoading.value = true
+  try {
+    const blob = await getApiClient().getBlob('inboundroutes/export/pdf')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'inbound-routes.pdf'
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.show('PDF downloaded')
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Export failed'), 'error')
+  } finally {
+    exportPdfLoading.value = false
+  }
+}
+
 async function loadInboundRoutes() {
   loading.value = true
   error.value = ''
@@ -147,6 +183,8 @@ onMounted(loadInboundRoutes)
       <h1>Inbound routes</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'inbound-route-create' }" class="add-btn">Create</router-link>
+        <button type="button" class="export-btn" :disabled="sortedRoutes.length === 0" @click="doExportCsv">Export CSV</button>
+        <button type="button" class="export-btn" :disabled="sortedRoutes.length === 0 || exportPdfLoading" @click="doExportPdf">{{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}</button>
         <input
           v-model="filterText"
           type="search"
@@ -378,6 +416,24 @@ onMounted(loadInboundRoutes)
 }
 .add-btn:hover {
   background: #1d4ed8;
+}
+.export-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.export-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .filter-input {
   padding: 0.5rem 0.75rem;

@@ -4,6 +4,8 @@ import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { useStickyFilter } from '@/composables/useStickyFilter'
 import { normalizeList } from '@/utils/listResponse'
+import { firstErrorMessage } from '@/utils/formErrors'
+import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const { filterText } = useStickyFilter('tenants')
@@ -14,6 +16,7 @@ const error = ref('')
 const deleteError = ref('')
 const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
+const exportPdfLoading = ref(false)
 const sortKey = ref('pkey')
 const sortOrder = ref('asc') // 'asc' | 'desc'
 
@@ -82,6 +85,39 @@ function sortClass(key) {
   return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
 }
 
+const tenantExportColumns = computed(() => [
+  { key: 'pkey', label: 'Pkey' },
+  { key: 'shortuid', label: 'Local UID', getValue: (t) => localUidDisplay(t) },
+  { key: 'description', label: 'Description' },
+  { key: 'clusterclid', label: 'CLID' },
+  { key: 'abstimeout', label: 'Abstimeout' },
+  { key: 'chanmax', label: 'Chanmax' },
+  { key: 'masteroclo', label: 'Timer', getValue: (t) => timerStatusDisplay(t) }
+])
+
+function doExportCsv() {
+  exportListToCsv(sortedTenants.value, tenantExportColumns.value, 'tenants.csv')
+  toast.show('CSV downloaded')
+}
+
+async function doExportPdf() {
+  exportPdfLoading.value = true
+  try {
+    const blob = await getApiClient().getBlob('tenants/export/pdf')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'tenants.pdf'
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.show('PDF downloaded')
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Export failed'), 'error')
+  } finally {
+    exportPdfLoading.value = false
+  }
+}
+
 // --- Load ---
 async function loadTenants() {
   loading.value = true
@@ -132,6 +168,8 @@ onMounted(loadTenants)
       <h1>Tenants</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'tenant-create' }" class="add-btn">Create</router-link>
+        <button type="button" class="export-btn" :disabled="sortedTenants.length === 0" @click="doExportCsv">Export CSV</button>
+        <button type="button" class="export-btn" :disabled="sortedTenants.length === 0 || exportPdfLoading" @click="doExportPdf">{{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}</button>
         <input
           v-model="filterText"
           type="search"
@@ -383,6 +421,24 @@ onMounted(loadTenants)
 }
 .add-btn:hover {
   background: #1d4ed8;
+}
+.export-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.export-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .filter-input {
   padding: 0.5rem 0.75rem;

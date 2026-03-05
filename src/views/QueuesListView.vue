@@ -5,6 +5,7 @@ import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const { filterText } = useStickyFilter('queues')
@@ -16,6 +17,7 @@ const error = ref('')
 const deleteError = ref('')
 const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
+const exportPdfLoading = ref(false)
 const sortKey = ref('pkey')
 const sortOrder = ref('asc')
 
@@ -91,6 +93,39 @@ function sortClass(k) {
   return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
 }
 
+const queueExportColumns = computed(() => [
+  { key: 'pkey', label: 'Queue' },
+  { key: 'shortuid', label: 'Local UID' },
+  { key: 'cluster', label: 'Tenant', getValue: (q) => tenantPkeyDisplay(q) },
+  { key: 'cname', label: 'Name', getValue: (q) => q.cname ?? q.name ?? '—' },
+  { key: 'active', label: 'Active' },
+  { key: 'strategy', label: 'Strategy' },
+  { key: 'timeout', label: 'Timeout', getValue: (q) => (q.timeout != null && q.timeout !== '' ? q.timeout : '—') }
+])
+
+function doExportCsv() {
+  exportListToCsv(sortedQueues.value, queueExportColumns.value, 'queues.csv')
+  toast.show('CSV downloaded')
+}
+
+async function doExportPdf() {
+  exportPdfLoading.value = true
+  try {
+    const blob = await getApiClient().getBlob('queues/export/pdf')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'queues.pdf'
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.show('PDF downloaded')
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Export failed'), 'error')
+  } finally {
+    exportPdfLoading.value = false
+  }
+}
+
 async function loadQueues() {
   loading.value = true
   error.value = ''
@@ -142,6 +177,8 @@ onMounted(loadQueues)
       <h1>Queues / Ring groups</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'queue-create' }" class="add-btn">Create</router-link>
+        <button type="button" class="export-btn" :disabled="sortedQueues.length === 0" @click="doExportCsv">Export CSV</button>
+        <button type="button" class="export-btn" :disabled="sortedQueues.length === 0 || exportPdfLoading" @click="doExportPdf">{{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}</button>
         <input
           v-model="filterText"
           type="search"
@@ -253,6 +290,9 @@ onMounted(loadQueues)
 .toolbar { margin: 0.75rem 0 0 0; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
 .add-btn { display: inline-block; padding: 0.5rem 1rem; font-size: 0.9375rem; font-weight: 500; color: #fff; background: #2563eb; border-radius: 0.375rem; text-decoration: none; }
 .add-btn:hover { background: #1d4ed8; }
+.export-btn { padding: 0.5rem 1rem; font-size: 0.9375rem; font-weight: 500; color: #475569; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.375rem; cursor: pointer; }
+.export-btn:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; }
+.export-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .filter-input { padding: 0.5rem 0.75rem; font-size: 0.9375rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; min-width: 16rem; }
 .filter-input:focus { outline: none; border-color: #2563eb; }
 </style>
