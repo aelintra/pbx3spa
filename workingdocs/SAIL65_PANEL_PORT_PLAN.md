@@ -8,6 +8,11 @@
 
 **Not porting:** Panels that will not be ported (e.g. sarkcallback, sarkreception, sarkphone) are excluded from the candidate list in §6; they remain in the full panel list (§4) marked as excluded for reference.
 
+**Status summary**
+
+- **Done (from candidate list):** sarkconference, sarkgreeting, **sarkcert** (Certificates – LE setup + renew + purchased cert; single-screen at `/certificates`). Holiday timers (API + SPA) also complete.
+- **Left to do (candidates):** sarkrecordings, sarkreport, sarkcos (SPA), sarktimer (Day timers SPA), sark3pcerts (3rd-party/provisioning), sarknetwork, sarkwallboard, sarkshell, sarkldap, sarkpcap, sarkfreset. See §6 for details and §8 for next-step workflow.
+
 ---
 
 ## 1. Sail65 (old system) – how panels work
@@ -146,6 +151,7 @@ From `php/` in sail65 (sail-6/opt/sark/php):
 | sarktrunk      | Trunks                   | trunks             | ✓ |
 | sarkuser       | Users                    | auth/users         | ✓ |
 | sarkddi        | Inbound routes           | inboundroutes      | ✓ (likely) |
+| sarkcert       | Certificates             | certificates (active, letsencrypt, letsencrypt/setup, letsencrypt/renew, custom) | ✓ **Done** – single-screen: LE setup (FQDN + email, Get certificate), status, Renew now; purchased cert install/remove. See CERTIFICATES_ADOPTION_PLAN.md, LETSENCRYPT_PLAN.md. |
 
 ---
 
@@ -168,8 +174,8 @@ These sail65 panels do **not** currently have a full SPA + API CRUD (or single-s
 
 **Certificates / Security / Network**
 
-- **sarkcert** – Certificates (TLS). Overlap with pbx3 LETSENCRYPT_PLAN; may be single-screen or list+detail.
-- **sark3pcerts** – 3rd-party certs. Similar (only necessary for provisioning).   Create a mini project for provisioning
+- ~~**sarkcert**~~ – **Done.** Certificates panel: single-screen at `/certificates` with two sections. **Let's Encrypt:** when not configured, form (Hostname FQDN + Email) + “Get certificate” (POST setup → le-first-cert.sh); when configured, status + “Renew now” (le-renew-with-80.sh). **Purchased certificate:** upload cert/key, Install, Remove. Port 80 opened only during issuance/renewal (pbx3 scripts). API: certificates/active, letsencrypt, letsencrypt/setup, letsencrypt/renew, custom (GET/POST/DELETE). See CERTIFICATES_ADOPTION_PLAN.md, LETSENCRYPT_PLAN.md.
+- **sark3pcerts** – 3rd-party certs (provisioning verification – Snom, Yealink, etc.). Separate panel/route from main Certificates; create a mini project for provisioning.
 - **sarknetwork** – Network config. Single-screen; may overlap with pbx3 setip/globals.
 
 **Operational / Niche**
@@ -198,7 +204,9 @@ For each chosen sail65 panel:
 
 ## 8. Next step
 
-**Decide which panels to port first** (e.g. Conferences, CoS SPA, Day/Holiday timers SPA, Greetings SPA, Recordings, or Certificates). Then for each:
+**Done so far (from candidate list):** Conferences, Greetings, **Certificates** (sarkcert). Holiday timers SPA + API complete.
+
+**Remaining candidates to port** (pick next): CoS SPA, Day timers SPA, Recordings, 3rd-party certs (sark3pcerts), Network, Wallboard, Shell, LDAP, Packet capture, Factory reset. For each:
 
 - Open the corresponding sail65 `view.php` (and related files).
 - Confirm or add pbx3 DB + API.
