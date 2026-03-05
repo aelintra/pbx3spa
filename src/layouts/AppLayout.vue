@@ -55,6 +55,7 @@ async function logout() {
           <router-link to="/sysglobals" class="nav-link" active-class="active">System Globals</router-link>
           <router-link to="/firewall" class="nav-link" active-class="active">Firewall</router-link>
           <router-link to="/certificates" class="nav-link" active-class="active">Certificates</router-link>
+          <router-link to="/ip-settings" class="nav-link" active-class="active">IP Settings</router-link>
           <router-link to="/asterisk-files" class="nav-link" active-class="active">Asterisk Files</router-link>
           <router-link to="/logs" class="nav-link" active-class="active">Logs</router-link>
           <router-link to="/backup" class="nav-link" active-class="active">Backup</router-link>

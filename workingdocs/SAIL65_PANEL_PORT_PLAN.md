@@ -10,8 +10,8 @@
 
 **Status summary**
 
-- **Done (from candidate list):** sarkconference, sarkgreeting, **sarkcert** (Certificates), **sarkcos** (Class of Service), **sarktimer** (Day timers), **sarkholiday** (Holiday timers). All have API + SPA.
-- **Left to do (candidates):** sarkrecordings, sarkreport, sark3pcerts (3rd-party/provisioning), sarknetwork, sarkwallboard, sarkshell, sarkldap, sarkpcap, sarkfreset. See §6 for details and §8 for next-step workflow.
+- **Done (from candidate list):** sarkconference, sarkgreeting, **sarkcert** (Certificates), **sarkcos** (Class of Service), **sarktimer** (Day timers), **sarkholiday** (Holiday timers), **sarknetwork** (IP Settings). All have API + SPA.
+- **Left to do (candidates):** sarkrecordings, sarkreport, sark3pcerts (3rd-party/provisioning), sarkwallboard, sarkshell, sarkldap, sarkpcap, sarkfreset. See §6 for details and §8 for next-step workflow.
 
 ---
 
@@ -176,7 +176,7 @@ These sail65 panels do **not** currently have a full SPA + API CRUD (or single-s
 
 - ~~**sarkcert**~~ – **Done.** Certificates panel: single-screen at `/certificates` with two sections. **Let's Encrypt:** when not configured, form (Hostname FQDN + Email) + “Get certificate” (POST setup → le-first-cert.sh); when configured, status + “Renew now” (le-renew-with-80.sh). **Purchased certificate:** upload cert/key, Install, Remove. Port 80 opened only during issuance/renewal (pbx3 scripts). API: certificates/active, letsencrypt, letsencrypt/setup, letsencrypt/renew, custom (GET/POST/DELETE). See CERTIFICATES_ADOPTION_PLAN.md, LETSENCRYPT_PLAN.md.
 - **sark3pcerts** – 3rd-party certs (provisioning verification – Snom, Yealink, etc.). Separate panel/route from main Certificates; create a mini project for provisioning.
-- **sarknetwork** – Network config. Single-screen; may overlap with pbx3 setip/globals.
+- ~~**sarknetwork**~~ – **Done.** IP Settings panel at `/ip-settings`: Binding, NAT, Site, System read-only. No FQDN/fqdninspect/fqdnprov (moving elsewhere). Audit: pbx3api/workingdocs/NETWORK_AUDIT_PROTOTYPE.md.
 
 **Operational / Niche**
 
@@ -204,7 +204,7 @@ For each chosen sail65 panel:
 
 ## 8. Next step
 
-**Done so far (from candidate list):** Conferences, Greetings, **Certificates** (sarkcert), **Class of Service** (sarkcos), **Day timers** (sarktimer), **Holiday timers** (sarkholiday). All have API + SPA.
+**Done so far (from candidate list):** Conferences, Greetings, **Certificates** (sarkcert), **Class of Service** (sarkcos), **Day timers** (sarktimer), **Holiday timers** (sarkholiday), **Network** (sarknetwork → IP Settings). All have API + SPA.
 
 **Remaining candidates to port** (pick next): Recordings, 3rd-party certs (sark3pcerts), Network, Wallboard, Shell, LDAP, Packet capture, Factory reset. For each:
 

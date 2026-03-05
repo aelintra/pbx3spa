@@ -11,7 +11,7 @@
 | # | Panel name       | SARK source    | pbx3api status | Notes |
 |---|------------------|----------------|----------------|-------|
 | 1 | **Home**         | sarkglobal (part) | ✅ syscommands (pbxrunstate, commitstatus, commit, start, stop, reboot) | DashboardView exists; build out as hub with links to other single panels + Commit/Start/Stop/Reboot. |
-| 2 | **IP Settings**  | sarknetwork    | ❌ No API      | Network: FQDN, bindaddr/bindport, static IP, DHCP, SSH port, SMTP, ICMP, etc. sysglobals has some (bindaddr, bindport, fqdn, staticipv4, edomain, sendedomain). May need dedicated network endpoint or extend sysglobals. |
+| 2 | **IP Settings**  | sarknetwork    | ✅ API + panel | **Done.** Single-screen at `/ip-settings`. Binding (bindaddr, bindport, tlsport, staticipv4), NAT (natdefault, natparams), Site (sitename), System read-only (hostname, local_ip, public_ip, mac from sysnotes). No FQDN/fqdninspect/fqdnprov (moving elsewhere). See NETWORK_AUDIT_PROTOTYPE.md. |
 | 3 | **IPv4 Firewall**| Shorewall UI   | ✅ firewalls/ipv4 (GET, POST, PUT restart) | Single screen: load rules array, edit (e.g. textarea or line-by-line), Save, Restart. |
 | 4 | **IPv6 Firewall**| Shorewall6 UI  | ✅ firewalls/ipv6 (GET, POST, PUT restart) | Same as IPv4, separate endpoint. |
 | 5 | **Backup/restore** | sarkbackup   | ✅ backups + snapshots APIs | **Done.** Single panel with two cascaded sections: Backups (create, upload, download, restore with options, delete) and Snapshots (create, upload, download, restore DB only, delete). Route `/backup`, view `BackupView.vue`. API: backups + snapshots; both use syshelper for privileged file ops. See PANEL_PATTERN § Single-screen panels with cascaded sections. |
