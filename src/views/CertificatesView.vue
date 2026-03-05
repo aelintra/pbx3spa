@@ -7,18 +7,18 @@
     </p>
     <p v-else-if="loadError" class="error">{{ loadError }}</p>
 
-    <!-- Section 1: Wildcard Let's Encrypt -->
+    <!-- Section 1: Let's Encrypt (individual cert per hostname) -->
     <section class="cert-section">
       <div class="section-header">
-        <h2>Wildcard Let's Encrypt</h2>
+        <h2>Let's Encrypt</h2>
       </div>
       <p class="section-explanation">
-        A wildcard certificate covers your domain and all subdomains (e.g. <code>*.yourdomain.com</code>).
-        It is issued and renewed automatically via DNS; no need to open port 80.
+        A certificate for this host's hostname (e.g. <code>myhost.mydomain.com</code>) is issued and renewed automatically via HTTP-01.
+        Port 80 must be reachable from the internet only during issuance or renewal (a few minutes); you can leave it closed the rest of the time. No DNS API — just an A record for this host's FQDN.
       </p>
       <p class="section-help">
-        <a href="https://letsencrypt.org/docs/challenge-types/#dns-01-challenge" target="_blank" rel="noopener noreferrer">Learn about DNS-01 challenge</a>
-        — Set up is done via the pbx3 installer with DNS API credentials for your domain.
+        <strong>Before getting a certificate:</strong> Create an A record (and optionally AAAA) for this host's hostname pointing to this server's IP. Ensure port 80 can reach this server from the internet (we open it only during issuance and renewal).
+        <a href="https://letsencrypt.org/docs/challenge-types/#http-01-challenge" target="_blank" rel="noopener noreferrer">Learn about HTTP-01</a>.
       </p>
 
       <div v-if="leLoading" class="loading">
@@ -28,7 +28,7 @@
       <p v-else-if="leError" class="error">{{ leError }}</p>
       <template v-else-if="leStatus?.configured">
         <dl class="cert-dl">
-          <dt>Domain</dt>
+          <dt>Hostname</dt>
           <dd>{{ leStatus.domain }}</dd>
           <dt>Expires</dt>
           <dd>{{ leStatus.expires_at ?? '—' }}</dd>
@@ -48,10 +48,43 @@
         <p v-if="renewMessage" class="action-message">{{ renewMessage }}</p>
         <p v-if="renewError" class="error">{{ renewError }}</p>
       </template>
-      <p v-else class="not-configured">
-        Wildcard Let's Encrypt is not configured. Use the pbx3 installer to set up the host certificate
-        (you will need DNS API credentials for your domain).
-      </p>
+      <template v-else>
+        <p class="not-configured">Enable Let's Encrypt by entering this host's hostname (FQDN) and an email for expiry notices.</p>
+        <div class="le-setup-form">
+          <label class="form-label">
+            Hostname (FQDN)
+            <input
+              v-model.trim="leSetupFqdn"
+              type="text"
+              class="form-input"
+              placeholder="e.g. pbx.example.com"
+              :disabled="settingUp"
+            />
+          </label>
+          <label class="form-label">
+            Email (Let's Encrypt)
+            <input
+              v-model.trim="leSetupEmail"
+              type="email"
+              class="form-input"
+              placeholder="admin@example.com"
+              :disabled="settingUp"
+            />
+          </label>
+          <div class="section-actions">
+            <button
+              type="button"
+              class="action-btn action-btn-primary"
+              :disabled="settingUp || !leSetupFqdn || !leSetupEmail"
+              @click="setupLetsEncrypt"
+            >
+              {{ settingUp ? 'Getting certificate…' : 'Get certificate' }}
+            </button>
+          </div>
+          <p v-if="setupError" class="error">{{ setupError }}</p>
+          <p v-if="setupSuccess" class="action-message">{{ setupSuccess }}</p>
+        </div>
+      </template>
     </section>
 
     <!-- Section 2: Purchased certificate -->
@@ -127,7 +160,7 @@
       @cancel="showRemoveConfirm = false"
     >
       <template #body>
-        <p>The purchased certificate will be removed. The system will use Wildcard Let's Encrypt (if configured) or the default snakeoil certificate.</p>
+        <p>The purchased certificate will be removed. The system will use Let's Encrypt (if configured) or the default snakeoil certificate.</p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -152,6 +185,11 @@ const leError = ref('')
 const renewing = ref(false)
 const renewMessage = ref('')
 const renewError = ref('')
+const leSetupFqdn = ref('')
+const leSetupEmail = ref('')
+const settingUp = ref(false)
+const setupError = ref('')
+const setupSuccess = ref('')
 
 const customInstalled = ref(false)
 const customLoading = ref(true)
@@ -167,7 +205,7 @@ const keyFile = ref(null)
 
 const activeLabel = computed(() => {
   if (activeSource.value === 'custom') return 'Purchased certificate'
-  if (activeSource.value === 'letsencrypt') return "Wildcard Let's Encrypt"
+  if (activeSource.value === 'letsencrypt') return "Let's Encrypt"
   if (activeSource.value === 'snakeoil') return 'Snakeoil'
   return ''
 })
@@ -219,6 +257,28 @@ function refetchAll() {
   fetchActive()
   fetchLetsEncrypt()
   fetchCustom()
+}
+
+async function setupLetsEncrypt() {
+  if (!leSetupFqdn.value || !leSetupEmail.value) return
+  settingUp.value = true
+  setupError.value = ''
+  setupSuccess.value = ''
+  try {
+    const data = await getApiClient().post('certificates/letsencrypt/setup', {
+      fqdn: leSetupFqdn.value,
+      email: leSetupEmail.value,
+    })
+    setupSuccess.value = data?.message ?? 'Certificate obtained.'
+    toast.show(setupSuccess.value)
+    refetchAll()
+  } catch (err) {
+    const msg = err?.data?.message ?? firstErrorMessage(err, 'Setup failed')
+    setupError.value = err?.data?.detail ?? msg
+    toast.show(msg, 'error')
+  } finally {
+    settingUp.value = false
+  }
 }
 
 async function renewNow() {
@@ -398,6 +458,28 @@ onMounted(() => {
 .installed-msg {
   margin: 0.5rem 0;
   color: #475569;
+}
+.le-setup-form {
+  max-width: 28rem;
+}
+.le-setup-form .form-label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+  color: #334155;
+}
+.le-setup-form .form-input {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+.le-setup-form .form-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 .installed-msg {
   color: #059669;
