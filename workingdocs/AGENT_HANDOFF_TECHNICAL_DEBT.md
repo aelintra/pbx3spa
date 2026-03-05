@@ -120,6 +120,7 @@ None. (Backups panel was removed/parked; no BackupsListView in codebase.)
 ## 5a. To debug / TODO
 
 - **Extension runtime (API):** Extension detail panel’s Runtime section (GET/PUT `extensions/{pkey}/runtime` for cfim, cfbs, ringdelay) is not working; issue appears to be in the API. Debug and fix later.
+Now Fixed
 
 ---
 
