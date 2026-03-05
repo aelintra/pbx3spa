@@ -9,6 +9,8 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 
 const NATDEFAULT_OPTIONS = ['local', 'remote']
+const YESNO_OPTIONS = ['YES', 'NO']
+const ICMP_OPTIONS = ['YES', 'NO'] // YES = allow ping
 
 const router = useRouter()
 const toast = useToastStore()
@@ -19,18 +21,25 @@ const error = ref('')
 const saving = ref(false)
 const saveError = ref('')
 
-const editBindaddr = ref('')
+const editHostname = ref('')
+const editDns = ref('')
 const editBindport = ref('')
 const editStaticipv4 = ref('')
 const editTlsport = ref('')
 const editNatdefault = ref('remote')
 const editNatparams = ref('')
 const editSitename = ref('')
+const editSmtpMailhub = ref('')
+const editSmtpUser = ref('')
+const editSmtpPass = ref('')
+const editSmtpUseTls = ref('NO')
+const editSmtpUseStarttls = ref('NO')
+const editTimezone = ref('')
+const editIcmp = ref('NO')
 
 function syncEditFromSysglobal() {
   if (!sysglobal.value) return
   const g = sysglobal.value
-  editBindaddr.value = g.bindaddr ?? ''
   editBindport.value = g.bindport ?? ''
   editStaticipv4.value = g.staticipv4 ?? ''
   editTlsport.value = g.tlsport != null ? String(g.tlsport) : ''
@@ -50,6 +59,24 @@ async function fetchData() {
     sysglobal.value = globalsRes
     sysnotes.value = notesRes
     syncEditFromSysglobal()
+    editHostname.value = notesRes?.network?.hostname ?? ''
+    editDns.value = Array.isArray(notesRes?.dns) ? notesRes.dns.join('\n') : ''
+    const s = notesRes?.smtp
+    if (s) {
+      editSmtpMailhub.value = s.mailhub ?? ''
+      editSmtpUser.value = s.auth_user ?? ''
+      editSmtpPass.value = s.auth_pass ?? ''
+      editSmtpUseTls.value = (s.use_tls === 'YES') ? 'YES' : 'NO'
+      editSmtpUseStarttls.value = (s.use_starttls === 'YES') ? 'YES' : 'NO'
+    } else {
+      editSmtpMailhub.value = ''
+      editSmtpUser.value = ''
+      editSmtpPass.value = ''
+      editSmtpUseTls.value = 'NO'
+      editSmtpUseStarttls.value = 'NO'
+    }
+    editTimezone.value = notesRes?.timezone ?? ''
+    editIcmp.value = notesRes?.icmp === true ? 'YES' : 'NO'
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load IP settings')
     sysglobal.value = null
@@ -75,12 +102,51 @@ async function saveEdit(e) {
   saveError.value = ''
   saving.value = true
   try {
+    const newHostname = editHostname.value?.trim() ?? ''
+    const currentHostname = network.value?.hostname ?? ''
+    if (newHostname && newHostname !== currentHostname) {
+      await getApiClient().put('syscommands/hostname', { hostname: newHostname })
+    }
+    const newDnsList = (editDns.value ?? '')
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean)
+    const currentDns = sysnotes.value?.dns ?? []
+    const dnsChanged = newDnsList.length !== currentDns.length ||
+      newDnsList.some((ip, i) => ip !== currentDns[i])
+    if (dnsChanged && newDnsList.length > 0) {
+      await getApiClient().put('syscommands/dns', { nameservers: newDnsList })
+    }
+    if (sysnotes.value?.smtp) {
+      const cur = sysnotes.value.smtp
+      const smtpChanged = editSmtpMailhub.value?.trim() !== (cur.mailhub ?? '') ||
+        editSmtpUser.value?.trim() !== (cur.auth_user ?? '') ||
+        editSmtpPass.value !== (cur.auth_pass ?? '') ||
+        editSmtpUseTls.value !== (cur.use_tls ?? 'NO') ||
+        editSmtpUseStarttls.value !== (cur.use_starttls ?? 'NO')
+      if (smtpChanged) {
+        await getApiClient().put('syscommands/smtp', {
+          mailhub: editSmtpMailhub.value?.trim() || '',
+          auth_user: editSmtpUser.value?.trim() || null,
+          auth_pass: editSmtpPass.value || null,
+          use_tls: editSmtpUseTls.value,
+          use_starttls: editSmtpUseStarttls.value
+        })
+      }
+    }
+    const currentTz = sysnotes.value?.timezone ?? ''
+    if (editTimezone.value?.trim() !== currentTz) {
+      await getApiClient().put('syscommands/timezone', { timezone: editTimezone.value?.trim() || 'UTC' })
+    }
+    const newIcmp = editIcmp.value === 'YES'
+    if (newIcmp !== sysnotes.value?.icmp) {
+      await getApiClient().put('syscommands/icmp', { allow: newIcmp })
+    }
     const body = {
-      bindaddr: editBindaddr.value?.trim() || null,
       bindport: editBindport.value?.trim() || null,
       staticipv4: editStaticipv4.value?.trim() || null,
       tlsport: editTlsport.value !== '' && editTlsport.value != null ? parseInt(editTlsport.value, 10) : null,
-      natdefault: editNatdefault.value?.trim() || null,
+      natdefault: NATDEFAULT_OPTIONS.includes(editNatdefault.value?.trim()) ? editNatdefault.value.trim() : 'remote',
       natparams: editNatparams.value?.trim() || null,
       sitename: editSitename.value?.trim() || null
     }
@@ -125,14 +191,42 @@ onMounted(fetchData)
       </div>
 
       <div class="form-fields">
-        <h2 class="section-heading">Binding</h2>
+        <h2 class="section-heading">System</h2>
 
         <FormField
-          id="ip-bindaddr"
-          v-model="editBindaddr"
-          label="Bind Address"
-          hint="IP address to bind SIP server"
+          id="ip-hostname"
+          v-model="editHostname"
+          label="Hostname"
+          hint="System hostname (alphanumeric, hyphens)"
         />
+        <FormReadonly
+          id="ip-localip"
+          label="Local IP"
+          :value="network?.local_ip ?? '—'"
+        />
+        <FormReadonly
+          id="ip-publicip"
+          label="Public IP"
+          :value="network?.public_ip ?? '—'"
+        />
+        <FormReadonly
+          id="ip-mac"
+          label="MAC"
+          :value="network?.mac ?? '—'"
+        />
+
+        <h2 class="section-heading">DNS servers</h2>
+
+        <FormField
+          id="ip-dns"
+          v-model="editDns"
+          label="DNS servers"
+          hint="One nameserver per line (IP or hostname)"
+          multiline
+          :rows="6"
+        />
+
+        <h2 class="section-heading">Binding</h2>
 
         <FormField
           id="ip-bindport"
@@ -182,27 +276,56 @@ onMounted(fetchData)
           hint="Site name"
         />
 
-        <h2 class="section-heading">System (read-only)</h2>
+        <template v-if="sysnotes?.smtp">
+          <h2 class="section-heading">SMTP</h2>
+          <FormField
+            id="ip-smtp-mailhub"
+            v-model="editSmtpMailhub"
+            label="Mail hub"
+            hint="SMTP server (host:port)"
+          />
+          <FormField
+            id="ip-smtp-user"
+            v-model="editSmtpUser"
+            label="Auth user"
+            hint="SMTP auth username"
+          />
+          <FormField
+            id="ip-smtp-pass"
+            v-model="editSmtpPass"
+            type="password"
+            label="Auth password"
+            hint="SMTP auth password"
+          />
+          <FormSegmentedPill
+            id="ip-smtp-usetls"
+            v-model="editSmtpUseTls"
+            label="Use TLS"
+            :options="YESNO_OPTIONS"
+          />
+          <FormSegmentedPill
+            id="ip-smtp-usestarttls"
+            v-model="editSmtpUseStarttls"
+            label="Use STARTTLS"
+            :options="YESNO_OPTIONS"
+          />
+        </template>
 
-        <FormReadonly
-          id="ip-hostname"
-          label="Hostname"
-          :value="network?.hostname ?? '—'"
+        <h2 class="section-heading">NTP</h2>
+        <FormField
+          id="ip-timezone"
+          v-model="editTimezone"
+          label="Timezone"
+          hint="e.g. Europe/London, America/New_York"
         />
-        <FormReadonly
-          id="ip-localip"
-          label="Local IP"
-          :value="network?.local_ip ?? '—'"
-        />
-        <FormReadonly
-          id="ip-publicip"
-          label="Public IP"
-          :value="network?.public_ip ?? '—'"
-        />
-        <FormReadonly
-          id="ip-mac"
-          label="MAC"
-          :value="network?.mac ?? '—'"
+
+        <h2 class="section-heading">Ping (ICMP)</h2>
+        <FormSegmentedPill
+          id="ip-icmp"
+          v-model="editIcmp"
+          label="Allow ping requests"
+          :options="ICMP_OPTIONS"
+          hint="Allow ICMP echo from network"
         />
       </div>
 
