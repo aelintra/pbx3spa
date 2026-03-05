@@ -6,6 +6,7 @@ import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
+import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 
 const NATDEFAULT_OPTIONS = ['local', 'remote']
@@ -34,6 +35,7 @@ const editSmtpUser = ref('')
 const editSmtpPass = ref('')
 const editSmtpUseTls = ref('NO')
 const editSmtpUseStarttls = ref('NO')
+const timezoneOptions = ref([])
 const editTimezone = ref('')
 const editIcmp = ref('NO')
 
@@ -52,9 +54,10 @@ async function fetchData() {
   loading.value = true
   error.value = ''
   try {
-    const [globalsRes, notesRes] = await Promise.all([
+    const [globalsRes, notesRes, tzList] = await Promise.all([
       getApiClient().get('sysglobals'),
-      getApiClient().get('syscommands/sysnotes')
+      getApiClient().get('syscommands/sysnotes'),
+      getApiClient().get('syscommands/timezones')
     ])
     sysglobal.value = globalsRes
     sysnotes.value = notesRes
@@ -75,7 +78,14 @@ async function fetchData() {
       editSmtpUseTls.value = 'NO'
       editSmtpUseStarttls.value = 'NO'
     }
-    editTimezone.value = notesRes?.timezone ?? ''
+    const currentTz = notesRes?.timezone ?? ''
+    editTimezone.value = currentTz
+    const tzArray = Array.isArray(tzList) ? tzList : []
+    if (currentTz && !tzArray.includes(currentTz)) {
+      timezoneOptions.value = [currentTz, ...tzArray]
+    } else {
+      timezoneOptions.value = tzArray
+    }
     editIcmp.value = notesRes?.icmp === true ? 'YES' : 'NO'
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load IP settings')
@@ -312,11 +322,13 @@ onMounted(fetchData)
         </template>
 
         <h2 class="section-heading">NTP</h2>
-        <FormField
+        <FormSelect
           id="ip-timezone"
           v-model="editTimezone"
           label="Timezone"
-          hint="e.g. Europe/London, America/New_York"
+          :options="timezoneOptions"
+          emptyText="—"
+          hint="System timezone"
         />
 
         <h2 class="section-heading">Ping (ICMP)</h2>
