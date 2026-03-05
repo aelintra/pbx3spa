@@ -35,11 +35,32 @@ Every resource has **exactly three panels** (List, Create, Edit) unless a resour
 
 ### The three panels
 
-1. **Main list** (`{Resource}ListView.vue`) – Table (or list) of all items. Toolbar: Create button, filter. Rows: columns + Edit action + Delete action. **Action column icons (Edit, Delete, Play, Download, etc.) must be SVG only** — see “List action icons” in the Important section; do not use emoji.
+1. **Main list** (`{Resource}ListView.vue`) – Table (or list) of all items. Toolbar: Create button, filter. Rows: columns + Edit action + Delete action. **Action column icons (Edit, Delete, Play, Download, etc.) must be SVG only** — see “List action icons” in the Important section; do not use emoji. See **Optional: List export (CSV / PDF)** below for adding Export CSV and Export PDF to the toolbar.
 2. **Create** (`{Resource}CreateView.vue`) – Single form to create one item. No top-level back link; use Cancel in the form to return to the list. **Action buttons (Create, Cancel) must appear at both the top and bottom of the form.**
 3. **Edit** (`{Resource}DetailView.vue`) – Single form to view and edit one item (immutable fields with FormReadonly, editable with FormField/FormSelect/FormToggle). **All edit panels must have three buttons (Save, Cancel, Delete) at both the top and bottom of the form.** Delete is placed alongside Save and Cancel in `.edit-actions`, not in a toolbar at the top. No separate "view" panel; no link from the list that goes to a different "item list" panel.
 
 There is **no fourth panel** (e.g. no "item list" or intermediate list). Navigation is: **List ↔ Create** and **List ↔ Edit** only.
+
+### Optional: List export (CSV / PDF)
+
+**Main list panels** may optionally include **Export CSV** and **Export PDF** in the toolbar so users can download the current list (filtered/sorted for CSV; full list from API for PDF). When adding a new list panel, consider including export if the resource is a table of config/records that operators might want to share, audit, or archive.
+
+- **Include export for:** Standard CRUD list panels (e.g. Queues, Trunks, Routes, Inbound routes, IVRs, Agents, Tenants, Conferences, Extensions). Same pattern for each.
+- **Omit or defer for:** Sensitive lists (e.g. Users), or views that are not a simple table of records (e.g. file browser where “export” would mean something else).
+
+**SPA (list view):**
+
+- **Export CSV:** Use `exportListToCsv(rows, columns, filename)` from `@/utils/exportCsv`. Define a computed `columns` array: `{ key, label }` or `{ key, label, getValue(row) }` for display values (tenant, formatted fields). Export the **current filtered/sorted** list (e.g. `sortedItems`). Trigger download; show a success toast.
+- **Export PDF:** Call `getApiClient().getBlob('resource/export/pdf')`, create object URL from the blob, trigger download with a temporary `<a download="resource.pdf">`, revoke the URL. Use `exportPdfLoading` ref and disable the PDF button while loading; show toast on success or error (use `firstErrorMessage` in catch).
+- **Toolbar:** Add two buttons after Create: “Export CSV” and “Export PDF”. Use class `.export-btn` (outline style); disable both when the list is empty, and disable PDF when `exportPdfLoading`. See existing list views for exact markup and `.export-btn` CSS.
+
+**API (when adding PDF export):**
+
+- Add route `GET resource/export/pdf` **before** `GET resource/{id}` so the path is not captured by the binding.
+- Controller: `exportPdf()` method that loads the same dataset as `index()` (for tenant-scoped resources, use `attach_tenant_pkey_to_collection()` from Helper so the Blade view can show tenant pkey). Render Blade view in `resources/views/exports/resource-pdf.blade.php` (table matching list columns, “Generated …” line). Return `Pdf::loadView(...)->setPaper('a4', 'landscape')->download('resource.pdf')`.
+- Blade: Simple HTML table; use `tenant_pkey ?? cluster` for tenant column when applicable.
+
+**Reference:** `LIST_EXPORT_PDF_CSV.md` (how we produce PDFs/CSVs); `ExtensionsListView.vue`, `QueuesListView.vue`, `TrunksListView.vue` (and other list views with Export CSV/PDF); `src/utils/exportCsv.js`; pbx3api `app/Helpers/Helper.php` (`attach_tenant_pkey_to_collection`), `app/Http/Controllers/*Controller.php` (`exportPdf`), `resources/views/exports/*.blade.php`.
 
 ### Singleton / edit-only panels (exception)
 

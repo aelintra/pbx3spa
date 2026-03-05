@@ -2,6 +2,8 @@
 
 **Context:** Replace sarkreport with “Export” on each list panel. Export = current filtered/sorted list as PDF or CSV. This doc recommends how to generate PDFs and CSVs.
 
+**Pattern:** When adding a **new main list panel**, optionally include Export CSV and Export PDF following the same approach. See **PANEL_PATTERN.md** § “Optional: List export (CSV / PDF)” for when to add it and the step-by-step (SPA toolbar, export columns, API route + controller + Blade view).
+
 ---
 
 ## CSV
