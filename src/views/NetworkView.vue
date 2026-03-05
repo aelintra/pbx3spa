@@ -100,10 +100,14 @@ function goBack() {
   router.push({ name: 'dashboard' })
 }
 
+function cancelEdit() {
+  goBack()
+}
+
 function onKeydown(e) {
   if (e.key === 'Escape') {
     e.preventDefault()
-    goBack()
+    cancelEdit()
   }
 }
 
@@ -197,7 +201,7 @@ onMounted(fetchData)
         <button type="submit" :disabled="saving" class="btn btn-primary">
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
-        <button type="button" @click="goBack" :disabled="saving" class="btn btn-secondary">Cancel</button>
+        <button type="button" @click="cancelEdit" :disabled="saving" class="btn btn-secondary">Cancel</button>
       </div>
 
       <div class="form-fields">
@@ -341,22 +345,125 @@ onMounted(fetchData)
         />
       </div>
 
-      <div class="edit-actions edit-actions-bottom">
+      <div class="edit-actions">
         <button type="submit" :disabled="saving" class="btn btn-primary">
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
-        <button type="button" @click="goBack" :disabled="saving" class="btn btn-secondary">Cancel</button>
+        <button type="button" @click="cancelEdit" :disabled="saving" class="btn btn-secondary">Cancel</button>
       </div>
     </form>
   </div>
 </template>
 
 <style scoped>
+.edit-view {
+  padding: 1rem;
+}
+
+.edit-header {
+  margin-bottom: 1rem;
+}
+
+.edit-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.loading-state,
+.error-state {
+  padding: 2rem;
+  text-align: center;
+}
+
+.loading {
+  color: #64748b;
+}
+
+.error {
+  color: #dc2626;
+  margin-bottom: 1rem;
+}
+
+.edit-form {
+  margin-top: 1rem;
+}
+
+.form-error {
+  color: #dc2626;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: #fef2f2;
+  border-radius: 0.375rem;
+}
+
+.form-fields {
+  display: grid;
+  gap: 1rem;
+}
+
 .network-view .section-heading {
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
+  grid-column: 1 / -1;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
 }
+
 .network-view .section-heading:first-of-type {
   margin-top: 0;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.edit-actions-top {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  padding-top: 0;
+  padding-bottom: 1.5rem;
+  border-top: none;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #f8fafc;
 }
 </style>
