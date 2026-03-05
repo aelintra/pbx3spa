@@ -139,7 +139,7 @@ onMounted(loadQueues)
 <template>
   <div class="list-view">
     <header class="list-header">
-      <h1>Queues</h1>
+      <h1>Queues / Ring groups</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'queue-create' }" class="add-btn">Create</router-link>
         <input

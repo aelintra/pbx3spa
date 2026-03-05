@@ -35,30 +35,62 @@ async function logout() {
       <nav class="nav">
         <template v-if="auth.can('admin')">
           <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">Home</router-link>
-          <router-link to="/tenants" class="nav-link" active-class="active">Tenants</router-link>
-          <router-link to="/extensions" class="nav-link" active-class="active">Extensions</router-link>
-          <router-link to="/trunks" class="nav-link" active-class="active">Trunks</router-link>
-          <router-link to="/queues" class="nav-link" active-class="active">Queues</router-link>
-          <router-link to="/conferences" class="nav-link" active-class="active">Conferences</router-link>
-          <router-link to="/cosrules" class="nav-link" active-class="active">Class of Service</router-link>
-          <router-link to="/daytimers" class="nav-link" active-class="active">Day timers</router-link>
-          <router-link to="/holidaytimers" class="nav-link" active-class="active">Holiday timers</router-link>
-          <router-link to="/greetings" class="nav-link" active-class="active">Greetings</router-link>
-          <router-link to="/agents" class="nav-link" active-class="active">Agents</router-link>
-          <router-link to="/routes" class="nav-link" active-class="active">Routes</router-link>
-          <router-link to="/customapps" class="nav-link" active-class="active">Custom Apps</router-link>
-          <router-link to="/devices" class="nav-link" active-class="active">Devices</router-link>
-          <router-link to="/help-messages" class="nav-link" active-class="active">Help messages</router-link>
-          <router-link to="/ivrs" class="nav-link" active-class="active">IVRs</router-link>
-          <router-link to="/inbound-routes" class="nav-link" active-class="active">Inbound routes</router-link>
-          <router-link to="/users" class="nav-link" active-class="active">Users</router-link>
-          <router-link to="/sysglobals" class="nav-link" active-class="active">System Globals</router-link>
-          <router-link to="/firewall" class="nav-link" active-class="active">Firewall</router-link>
-          <router-link to="/certificates" class="nav-link" active-class="active">Certificates</router-link>
-          <router-link to="/ip-settings" class="nav-link" active-class="active">IP Settings</router-link>
-          <router-link to="/asterisk-files" class="nav-link" active-class="active">Asterisk Files</router-link>
-          <router-link to="/logs" class="nav-link" active-class="active">Logs</router-link>
-          <router-link to="/backup" class="nav-link" active-class="active">Backup</router-link>
+
+          <div class="nav-group">
+            <span class="nav-heading">Tenancy</span>
+            <router-link to="/tenants" class="nav-link" active-class="active">Tenants</router-link>
+          </div>
+
+          <div class="nav-group">
+            <span class="nav-heading">Endpoints</span>
+            <router-link to="/extensions" class="nav-link" active-class="active">Extensions</router-link>
+            <router-link to="/conferences" class="nav-link" active-class="active">Conferences</router-link>
+          </div>
+
+          <div class="nav-group">
+            <span class="nav-heading">Inbound</span>
+            <router-link to="/inbound-routes" class="nav-link" active-class="active">Inbound routes</router-link>
+          </div>
+
+          <div class="nav-group">
+            <span class="nav-heading">Outbound</span>
+            <router-link to="/trunks" class="nav-link" active-class="active">Trunks</router-link>
+            <router-link to="/routes" class="nav-link" active-class="active">Routes</router-link>
+          </div>
+
+          <div class="nav-group">
+            <span class="nav-heading">ACD</span>
+            <router-link to="/queues" class="nav-link" active-class="active">Queues / Ring groups</router-link>
+            <router-link to="/agents" class="nav-link" active-class="active">Agents</router-link>
+            <router-link to="/ivrs" class="nav-link" active-class="active">IVRs</router-link>
+            <router-link to="/greetings" class="nav-link" active-class="active">Greetings</router-link>
+          </div>
+
+          <div class="nav-group">
+            <span class="nav-heading">Schedules &amp; policy</span>
+            <router-link to="/daytimers" class="nav-link" active-class="active">Day timers</router-link>
+            <router-link to="/holidaytimers" class="nav-link" active-class="active">Holiday timers</router-link>
+            <router-link to="/cosrules" class="nav-link" active-class="active">Class of Service</router-link>
+          </div>
+
+          <div class="nav-group">
+            <span class="nav-heading">Devices &amp; apps</span>
+            <router-link to="/devices" class="nav-link" active-class="active">Devices</router-link>
+            <router-link to="/customapps" class="nav-link" active-class="active">Custom Apps</router-link>
+            <router-link to="/help-messages" class="nav-link" active-class="active">Help messages</router-link>
+          </div>
+
+          <div class="nav-group">
+            <span class="nav-heading">System</span>
+            <router-link to="/users" class="nav-link" active-class="active">Users</router-link>
+            <router-link to="/certificates" class="nav-link" active-class="active">Certificates</router-link>
+            <router-link to="/ip-settings" class="nav-link" active-class="active">IP Settings</router-link>
+            <router-link to="/firewall" class="nav-link" active-class="active">Firewall</router-link>
+            <router-link to="/sysglobals" class="nav-link" active-class="active">System Globals</router-link>
+            <router-link to="/asterisk-files" class="nav-link" active-class="active">Asterisk Files</router-link>
+            <router-link to="/logs" class="nav-link" active-class="active">Logs</router-link>
+            <router-link to="/backup" class="nav-link" active-class="active">Backup</router-link>
+          </div>
         </template>
         <template v-else>
           <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">Home</router-link>
@@ -95,6 +127,22 @@ async function logout() {
   display: flex;
   flex-direction: column;
   padding: 1rem 0;
+}
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.75rem;
+}
+.nav-group:first-of-type {
+  margin-top: 0.5rem;
+}
+.nav-heading {
+  padding: 0.5rem 1rem 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #e2e8f0;
 }
 .nav-link {
   padding: 0.5rem 1rem;
