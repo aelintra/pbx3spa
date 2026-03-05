@@ -10,8 +10,8 @@
 
 **Status summary**
 
-- **Done (from candidate list):** sarkconference, sarkgreeting, **sarkcert** (Certificates – LE setup + renew + purchased cert; single-screen at `/certificates`). Holiday timers (API + SPA) also complete.
-- **Left to do (candidates):** sarkrecordings, sarkreport, sarkcos (SPA), sarktimer (Day timers SPA), sark3pcerts (3rd-party/provisioning), sarknetwork, sarkwallboard, sarkshell, sarkldap, sarkpcap, sarkfreset. See §6 for details and §8 for next-step workflow.
+- **Done (from candidate list):** sarkconference, sarkgreeting, **sarkcert** (Certificates), **sarkcos** (Class of Service), **sarktimer** (Day timers), **sarkholiday** (Holiday timers). All have API + SPA.
+- **Left to do (candidates):** sarkrecordings, sarkreport, sark3pcerts (3rd-party/provisioning), sarknetwork, sarkwallboard, sarkshell, sarkldap, sarkpcap, sarkfreset. See §6 for details and §8 for next-step workflow.
 
 ---
 
@@ -135,19 +135,19 @@ From `php/` in sail65 (sail-6/opt/sark/php):
 | sarkbackup     | Backup                   | backups            | ✓ |
 | sarkcluster    | Tenants                  | tenants            | ✓ |
 | sarkconference | Conferences (list/create/detail) | conferences (meetme) | ✓ Done  |
-| sarkcos        | —                        | cosrules, cosopens, coscloses | API only; no SPA panels yet |
+| sarkcos        | Class of Service (list/create/detail) | cosrules, cosopens, coscloses | ✓ **Done** |
 | sarkdevice     | Devices                  | devices            | ✓ |
 | sarkextension  | Extensions               | extensions         | ✓ |
 | sarkglobal     | System Globals           | sysglobals         | ✓ |
 | sarkgreeting   | Greetings (list/create/detail) | greetingrecords    | ✓ Done  |
-| sarkholiday    | —                        | holidaytimers      | API only |
+| sarkholiday    | Holiday timers (list/create/detail) | holidaytimers      | ✓ **Done** |
 | sarkivr        | IVRs                     | ivrs               | ✓ |
 | sarklog        | Logs                     | (logs)            | ✓ |
 | sarklogin      | Login                    | auth               | ✓ |
 | sarkqueue      | Queues                   | queues             | ✓ |
 | sarkroute      | Routes                   | routes             | ✓ |
 | sarksplash     | Dashboard (Home)          | —                  | ✓ |
-| sarktimer      | —                        | daytimers          | API only |
+| sarktimer      | Day timers (list/create/detail) | daytimers          | ✓ **Done** |
 | sarktrunk      | Trunks                   | trunks             | ✓ |
 | sarkuser       | Users                    | auth/users         | ✓ |
 | sarkddi        | Inbound routes           | inboundroutes      | ✓ (likely) |
@@ -165,11 +165,11 @@ These sail65 panels do **not** currently have a full SPA + API CRUD (or single-s
 - **sarkrecordings** – Recordings list/browse/search-by-time-date/play/download. May be read-only list + detail or single-screen; origrecs in www is separate app. 
 - **sarkreport** – Reports. These will be PDF reports for each table. probably an option on the main list panel rather than a separate oanel of its own.
 
-**CoS / Timers (API exists, SPA missing); Greetings done**
+**CoS / Timers; Greetings done**
 
-- **sarkcos** – Class of Service: cosrules + cosopens + coscloses. API exists; add SPA list/create/detail for each or one combined view.
-- **sarktimer** – Day timers. API: daytimers. Add DayTimersListView, Create, Detail.
-- **sarkholiday** – Holiday timers. API: holidaytimers. Add HolidayTimersListView, Create, Detail.
+- ~~**sarkcos**~~ – **Done.** Class of Service: cosrules + cosopens + coscloses; API + SPA list/create/detail.
+- ~~**sarktimer**~~ – **Done.** Day timers: API daytimers + SPA list/create/detail.
+- ~~**sarkholiday**~~ – **Done.** Holiday timers: API holidaytimers + SPA list/create/detail (Start/End date+time, cluster, route, etc.).
 - ~~**sarkgreeting**~~ – **Done.** Greetings panel: list/create/detail using greetingrecords API; tenant-scoped, wav/mp3 upload, download, replace, delete.
 
 **Certificates / Security / Network**
@@ -204,9 +204,9 @@ For each chosen sail65 panel:
 
 ## 8. Next step
 
-**Done so far (from candidate list):** Conferences, Greetings, **Certificates** (sarkcert). Holiday timers SPA + API complete.
+**Done so far (from candidate list):** Conferences, Greetings, **Certificates** (sarkcert), **Class of Service** (sarkcos), **Day timers** (sarktimer), **Holiday timers** (sarkholiday). All have API + SPA.
 
-**Remaining candidates to port** (pick next): CoS SPA, Day timers SPA, Recordings, 3rd-party certs (sark3pcerts), Network, Wallboard, Shell, LDAP, Packet capture, Factory reset. For each:
+**Remaining candidates to port** (pick next): Recordings, 3rd-party certs (sark3pcerts), Network, Wallboard, Shell, LDAP, Packet capture, Factory reset. For each:
 
 - Open the corresponding sail65 `view.php` (and related files).
 - Confirm or add pbx3 DB + API.
