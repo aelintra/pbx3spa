@@ -8,6 +8,7 @@
 | Trunk create | TRUNK_IMPLEMENTATION_PLAN.md, COMPLEX_CREATE_PLAN.md | done |
 | DDI / Inbound routes | DDI_CREATE_PLAN.md, COMPLEX_CREATE_PLAN.md | done |
 | Certificates / Let's Encrypt | CERTIFICATES_ADOPTION_PLAN.md | done |
+| LE per-tenant FQDN / multi-SAN | LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md | planned (gated §11) |
 | Permissions / admin | PERMISSIONS_MINIMAL_DEPLOY_PLAN.md, ADMIN_PANELS_AND_PERMISSIONS.md, AUTH_PATTERNS.md | done (Phase 0) |
 | Field mutability (schema) | FIELD_MUTABILITY_API_PLAN.md, pbx3api/docs/SCHEMAS_ENDPOINT.md | done |
 | List export (CSV/PDF) | LIST_EXPORT_PDF_CSV.md, PANEL_PATTERN.md § Optional list export | done |

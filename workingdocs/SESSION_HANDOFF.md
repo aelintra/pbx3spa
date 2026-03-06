@@ -39,6 +39,7 @@
 - **Certificates API (pbx3api):** GET active, GET letsencrypt, POST letsencrypt/setup (fqdn, email → le-first-cert.sh), POST letsencrypt/renew (le-renew-with-80.sh), GET/POST/DELETE custom. Setup and renew need PBX3_SYSCMD_TIMEOUT ≥ 90.
 - **pbx3 scripts:** le-port80-open.sh, le-port80-close.sh (Shorewall managed rule); le-renew-with-80.sh (open 80, certbot renew, close 80); le-first-cert.sh (first-time: open 80, certonly --standalone, write le-domain, apply-active-cert, close 80). Cron: twice daily LE renewal when le-domain exists. apply-active-cert.sh unchanged (custom → LE → snakeoil for nginx + Asterisk).
 - **Docs:** LETSENCRYPT_PLAN.md (panel setup, port 80 control, scripts), CERTIFICATES_ADOPTION_PLAN.md (API table, panel behaviour). Branch: `spanel` (pbx3, pbx3api, pbx3spa).
+- **Per-tenant FQDN + LE options plan:** **LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md** is complete. It covers: Option A (multi-SAN LE cert), firewall FQDN inspection (inline rules per tenant), data model (FQDNs in tenants, domain_name in globals), purchased certs (§6: wildcard/single multi-SAN supported via custom path; multiple individual purchased certs = future extension). **Implementation is gated** per §11 until panels work is merged; then Phases 1–4 in §12.
 - **For next agent:** Certificates panel and LE flow are complete. Deploy: ensure scripts are executable (chmod +x le-*.sh); set PBX3_SYSCMD_TIMEOUT=90 for setup/renew from panel. Local test: don't create le-domain so no LE renewal runs.
 
 ### Previous sessions (condensed)
@@ -59,6 +60,10 @@ Holiday Timers, Extension harmonisation, Queue audit, Custom Apps, Help messages
 ### Create-panel standardization (PANEL_PATTERN §3 + §8)
 
 **Done:** All six create panels (Extension, Trunk, Route, Queue, Agent, IVR) now match §3: Identity / Settings / optional Advanced grouping; defaults preset where applicable; FormToggle for booleans, FormSegmentedPill for 2–3 option fields, FormSelect for 4+. See **CREATE_PANELS_STANDARDIZATION.md** for status. Trunk type-chooser and conditional fields remain per COMPLEX_CREATE_PLAN.md.
+
+### Let's Encrypt per-tenant FQDN (multi-SAN cert)
+
+- **Plan:** **LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md** — multi-SAN LE cert (node + all tenant FQDNs), manual “Sync with tenant list”, firewall INLINE rules per FQDN, purchased certs (§6). **Gate (§11):** Do not start implementation until current panels work is merged (e.g. `spanel` → `main`). Then follow §12 Phases 1–4 (pbx3 scripts + NetHelper + update-fqdn-inline; API domain list from tenants + sysglobals; SPA Certificates “Cert covers” + Sync; cron/runbook).
 
 ### Future project: data-driven list policy
 
@@ -119,3 +124,4 @@ Holiday Timers, Extension harmonisation, Queue audit, Custom Apps, Help messages
 - **wizardnotes/** — add-wizard.md, agent-brief-spa.md per resource (DDI, extension, trunk, ivr).
 - **SYSTEM_CONTEXT.md**, **README.md** — context and setup.
 - **CERTIFICATES_ADOPTION_PLAN.md** — Certificates panel: LE setup (FQDN + email, Get certificate), status, Renew now, custom cert install/remove; API design (setup, renew, custom), SPA sections, port 80 control.
+- **LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md** — Per-tenant FQDNs + TLS: options (multi-SAN, wildcard, SNI), recommendation (Option A + manual sync), firewall FQDN inspection (§9), purchased certs (§6), prerequisites and gate (§11), implementation plan (§12). Read when implementing LE multi-SAN or tenant hostnames.
