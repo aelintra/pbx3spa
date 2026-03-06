@@ -198,7 +198,7 @@ INLINE(ACCEPT) net $FW udp 5060 ; -m string --algo bm --to 1000 --string "sip:$F
 
 ### 8.3 What’s needed for multiple tenant FQDNs
 
-We need to allow SIP that contains **any** of the valid FQDNs: **node FQDN** (globals.fqdn) plus **every tenant FQDN** (cluster.fqdn where not null). So:
+We need to allow SIP that contains **any** of the valid FQDNs: every **cluster.fqdn** (non-null). The **default tenant** holds the node FQDN; other tenants hold shortuid.domain_name. So:
 
 - **One INLINE(ACCEPT) rule per FQDN**, for both TCP and UDP on the SIP port(s), with string **`sip:<that_fqdn>`**.
 - Example: if node is `node1.pbx3.com` and tenants have `abc12xyz.pbx3.com`, `def99uvw.pbx3.com`, then the generated **pbx3_inline_fqdn** should contain (conceptually):
@@ -207,12 +207,12 @@ We need to allow SIP that contains **any** of the valid FQDNs: **node FQDN** (gl
   - same for `sip:abc12xyz.pbx3.com` (tcp + udp)
   - same for `sip:def99uvw.pbx3.com` (tcp + udp)
 - **Who generates:** The same place that today writes **pbx3_inline_fqdn** (e.g. **NetHelperClass::copyFirewallTemplates()** in pbx3) should:
-  1. Read **globals.fqdn**, **globals.fqdninspect**, **globals.bindport** (or use 5060 if bindport is for something else; confirm from sail65/pbx3).
-  2. If fqdninspect is enabled, read all **cluster.fqdn** that are not null/empty (and optionally only where **cluster.fqdninspect** is true if we make it per-tenant later).
-  3. Build the full list of FQDNs: node FQDN (if set) + tenant FQDNs, deduplicated.
-  4. Write **pbx3_inline_fqdn** with two lines (TCP, UDP) per FQDN, each with string **`sip:<fqdn>`**, using the same **--to** and port as sail65 (e.g. 1000 and 5060) for consistency.
+  1. Read **globals.fqdninspect**, **globals.bindport** (SIP port; source of truth for INLINE rules, typically 5060). **Globals** do not hold FQDN; they hold **domain_name** and **fqdninspect** (global for now).
+  2. If fqdninspect is enabled, read all **cluster.fqdn** (non-null). Default tenant’s fqdn = node FQDN; others = tenant FQDNs.
+  3. Build the full list of FQDNs: all cluster.fqdn values, deduplicated.
+  4. Write **pbx3_inline_fqdn** with two lines (TCP, UDP) per FQDN, each with string **`sip:<fqdn>`**, using **--to 1000** and port from **globals.bindport** (source of truth; typically 5060).
   5. If fqdninspect is disabled, write the file as comment-only (current behaviour).
-- **When to regenerate:** Whenever **fqdninspect** is toggled, or when **globals.fqdn** or any **cluster.fqdn** is added/changed/removed, so that the inline file stays in sync with the tenant list. That implies: after tenant create/update/delete (if fqdn changed), and after sysglobals update (fqdn or fqdninspect), trigger the same path that runs copyFirewallTemplates (or equivalent) and then Shorewall restart/reload.
+- **When to regenerate:** Whenever **fqdninspect** is toggled (sysglobals) or any tenant is created/updated/deleted, run the FQDN inline update script and **automatically restart Shorewall** (decision 5).
 
 **Note:** iptables string matching is the reason we keep using iptables/Shorewall for this bit rather than nftables; nftables has different syntax and may not have the same string module. So this stays as an INLINE iptables rule under Shorewall.
 
@@ -229,16 +229,16 @@ Below is the set of **panels, API controllers, backend scripts, and helpers** th
 | **le-first-cert.sh** | `pbx3-1/opt/pbx3/scripts/le-first-cert.sh` | Extend to support **multiple domains**: accept either one FQDN (current) or a list (e.g. from a file or space-separated args). Run `certbot certonly --standalone -d fqdn1 -d fqdn2 ... -m email`. Write **first** FQDN to `le-domain` (so cert path remains `/etc/letsencrypt/live/<first_fqdn>/`). Alternatively: add **le-first-cert-multi.sh** that takes domain list + email and leaves le-first-cert.sh as-is for single FQDN. |
 | **le-renew-with-80.sh** | `pbx3-1/opt/pbx3/scripts/le-renew-with-80.sh` | No change if certbot renewal config (created at first run with multiple `-d`) already lists all SANs; `certbot renew` will renew that cert. Ensure deploy hook (apply-active-cert.sh) still runs. |
 | **apply-active-cert.sh** | `pbx3-1/opt/pbx3/scripts/apply-active-cert.sh` | No change: continues to read **le-domain** (single “primary” FQDN) for cert path; multi-SAN cert lives in that one directory. |
-| **NetHelperClass::copyFirewallTemplates()** | `pbx3-1/opt/pbx3/php/classes/NetHelperClass` | **Change:** (1) Read **globals** (fqdn, fqdninspect, bindport). (2) If fqdninspect enabled, also query **cluster** for all non-null `fqdn`. (3) Build list: node FQDN + tenant FQDNs, deduplicated. (4) Write **pbx3_inline_fqdn** with **two lines per FQDN** (TCP, UDP), string **`sip:<fqdn>`** (not raw fqdn), port from bindport or 5060, `--to 1000`. (5) If fqdninspect disabled, write comment-only. |
+| **NetHelperClass::copyFirewallTemplates()** | `pbx3-1/opt/pbx3/php/classes/NetHelperClass` | **Change:** (1) Read **globals** (fqdninspect, bindport); no FQDN in globals. (2) If fqdninspect enabled, query **cluster** for all non-null **fqdn**. (3) Build list: all cluster.fqdn (default tenant = node FQDN). (4) Write **pbx3_inline_fqdn** with **two lines per FQDN** (TCP, UDP), string **`sip:<fqdn>`** (not raw fqdn), port from **globals.bindport** (source of truth; typically 5060), `--to 1000`. (5) If fqdninspect disabled, write comment-only. |
 | **Firewall / syshelper trigger** | — | Today the API does **not** run copyFirewallTemplates; only pbx3’s `restartFirewall()` does. To keep the inline file in sync when tenant or sysglobals change from the panel, either: **(a)** Add a **script** on pbx3 (e.g. `update-fqdn-inline.sh`) that runs the PHP NetHelper copyFirewallTemplates (or replicates the logic in shell + sqlite3) and have the API call it via syshelper before/after firewall restart; or **(b)** Firewall panel “Restart” calls that script then shorewall restart. So: **FirewallController** (see below) or a new syscommand that “refreshes FQDN inline then restarts” may be needed. |
 
 ### 9.2 pbx3api (API)
 
 | Block | Path / location | Change |
 |-------|------------------|--------|
-| **CertificateController** | `app/Http/Controllers/CertificateController.php` | **setup:** Accept **optional** list of extra FQDNs (e.g. `domains[]` or body with `fqdn` + `tenant_fqdns[]`). Build full list (node + tenants), call **le-first-cert-multi.sh** (or extended le-first-cert) with that list so the issued cert is multi-SAN. **letsencrypt (GET):** Continue to use le-domain for “primary” and path; optionally return **domains** (list of SANs) by reading from DB (globals.fqdn + cluster.fqdn) or from cert. **renew:** No change; certbot renew renews the multi-SAN cert. Optionally add **POST /certificates/letsencrypt/sync** that (1) builds domain list from globals + cluster, (2) re-issues cert with that list (same as setup but “already configured” path), for use when a tenant FQDN is added/removed. |
-| **TenantController** | `app/Http/Controllers/TenantController.php` | **After create/update/delete** (when `cluster.fqdn` or `cluster.fqdninspect` might have changed): call syshelper to **refresh firewall FQDN inline** (script that runs copyFirewallTemplates or equivalent). Optionally trigger **cert re-issue** when tenant FQDN is set/changed (multi-SAN sync). |
-| **SysglobalController** | `app/Http/Controllers/SysglobalController.php` | If **sysglobals** (or a dedicated “network” endpoint) exposes **fqdn** / **fqdninspect**: after update, call syshelper to **refresh firewall FQDN inline** so the Shorewall file is updated before next restart. |
+| **CertificateController** | `app/Http/Controllers/CertificateController.php` | **setup:** Accept **optional** list of extra FQDNs (e.g. `domains[]` or body with `fqdn` + `tenant_fqdns[]`). Build full list from GET tenants (all cluster.fqdn), call **le-first-cert-multi.sh** (or extended le-first-cert) with that list so the issued cert is multi-SAN. **letsencrypt (GET):** Continue to use le-domain for “primary” and path; optionally return **domains** (list of SANs) by reading from DB (globals.fqdn + cluster.fqdn) or from cert. **renew:** No change; certbot renew renews the multi-SAN cert. Optionally add **POST /certificates/letsencrypt/sync** that (1) builds domain list from globals + cluster, (2) re-issues cert with that list (same as setup but “already configured” path), for use when a tenant FQDN is added/removed. |
+| **TenantController** | `app/Http/Controllers/TenantController.php` | **On create:** set **cluster.fqdn = shortuid + "." + domain_name** (domain_name from sysglobals); **immutable** (no update of fqdn). **After create/update/delete:** call update-fqdn-inline script (writes file + **automatic Shorewall restart**). No auto cert sync (manual only). |
+| **SysglobalController** | `app/Http/Controllers/SysglobalController.php` | If **sysglobals** (or a dedicated “network” endpoint) exposes **domain_name** (readonly) and **fqdninspect**: after update, call syshelper to run **update-fqdn-inline** (writes file + automatic Shorewall restart). |
 | **FirewallController** | `app/Http/Controllers/FirewallController.php` | **ipv4restart / ipv6restart:** Before `shorewall restart`, call syshelper to run the **FQDN inline update script** (so the file reflects current globals + cluster.fqdn). That way “Restart firewall” from the panel always writes the latest tenant list into pbx3_inline_fqdn. |
 | **New syscommand or script** | e.g. `syscommands` or new route | Optional: **“Refresh firewall FQDN inline”** (no restart) so tenant/sysglobals save can update the file without restarting Shorewall; admin can restart later. Or fold into existing firewall restart. |
 
@@ -247,9 +247,9 @@ Below is the set of **panels, API controllers, backend scripts, and helpers** th
 | Block | Path / location | Change |
 |-------|------------------|--------|
 | **CertificatesView** | `src/views/CertificatesView.vue` | **Option A multi-SAN:** (1) **Setup:** Either keep single “Hostname (FQDN)” for **node** only and add copy like “Tenant FQDNs are added from Tenant panel and included in cert at next renewal/sync,” or add a “Sync cert with tenant list” button that calls the new sync endpoint so the cert is re-issued with node + all tenant FQDNs. (2) **Status:** Show “Cert covers: &lt;list of domains&gt;” from GET letsencrypt if API returns **domains** (SAN list). (3) **Renew now:** Unchanged. |
-| **TenantDetailView** | `src/views/TenantDetailView.vue` | Add **FQDN** (and optionally **FQDN inspect**) to the form: bind **editFqdn** to `cluster.fqdn`, include in save payload. Optionally show hint: “e.g. {shortuid}.pbx3.com”. If base domain is configurable (sysglobals or config), show it so user can follow convention. |
-| **tenantAdvanced.js** | `src/constants/tenantAdvanced.js` | If FQDN is in the “advanced” section, add **fqdn** (and **fqdninspect** if per-tenant) to ADVANCED_KEYS and ADVANCED_FIELDS; otherwise add **editFqdn** in TenantDetailView outside advanced (e.g. Identity or Settings) and include in save. |
-| **TenantCreateView** | `src/views/TenantCreateView.vue` | If new tenants get a default FQDN (e.g. derived from shortuid + base domain), add **fqdn** to create payload; else leave as null and user sets it in Edit. |
+| **TenantDetailView** | `src/views/TenantDetailView.vue` | Add **FQDN** (and optionally **FQDN inspect**) to the form: show as **read-only derived** (shortuid + "." + base_domain); no edit or save of cluster.fqdn. Optionally show hint: “e.g. {shortuid}.pbx3.com”. If base domain is configurable (sysglobals or config), show it so user can follow convention. |
+| **tenantAdvanced.js** | — | If FQDN is in the “advanced” section, No change; FQDN is a stored, read-only display field. |
+| **TenantCreateView** | `src/views/TenantCreateView.vue` | API sets cluster.fqdn = shortuid.domain_name on create (immutable). Optional hint in SPA. |
 
 ### 9.4 Summary table
 
@@ -259,14 +259,76 @@ Below is the set of **panels, API controllers, backend scripts, and helpers** th
 | pbx3 | NetHelperClass::copyFirewallTemplates | Write one INLINE rule per FQDN with `sip:<fqdn>`. |
 | pbx3 | Script + API call path | Refresh pbx3_inline_fqdn from API (tenant/sysglobals/firewall restart). |
 | pbx3api | CertificateController | Setup/sync with domain list from DB; optionally return SAN list. |
-| pbx3api | TenantController | After save: refresh firewall FQDN inline; optionally trigger cert sync. |
-| pbx3api | SysglobalController / FirewallController | After sysglobals update or before firewall restart: refresh FQDN inline. |
+| pbx3api | TenantController | On create set cluster.fqdn; after save run update-fqdn-inline + auto Shorewall restart; no auto cert sync. |
+| pbx3api | SysglobalController / FirewallController | Expose domain_name, fqdninspect; after sysglobals PUT or firewall Restart run update-fqdn-inline + auto Shorewall restart. |
 | pbx3spa | CertificatesView | Show “Cert covers” list; optional “Sync with tenant list” action. |
-| pbx3spa | TenantDetailView (+ constants) | Edit (and create) **cluster.fqdn** (and optionally fqdninspect). |
+| pbx3spa | TenantDetailView | Show **derived** tenant FQDN (shortuid.base_domain) as read-only. |
 
 ---
 
-## 10. Impact on future tenant-scoped access
+## 10. Implementation plan
+
+Ordered by dependency: pbx3 first (scripts and FQDN inline), then pbx3api (API and syshelper calls), then pbx3spa (panels). Each phase ends with a short verification step.
+
+**Decisions (product):**
+
+- **4. Cert sync:** **Manual only** — re-issue only when admin clicks “Sync with tenant list” on Certificates panel (avoids LE rate limits).
+- **5. Firewall restart:** **Automatic** — after updating the FQDN inline file (on tenant create/update/delete or when sysglobals fqdninspect/domain_name change), automatically run Shorewall restart so new rules apply immediately.
+- **6. Where FQDNs live:** **Globals** do **not** hold FQDN; they hold only **domain_name** (base domain, e.g. `pbx3.com`), set at install, readonly. **FQDNs** live in **tenants**: each tenant has **cluster.fqdn**. The **default tenant** (node-owned) holds the **node FQDN** (e.g. `node1.pbx3.com`); store it there. **Globals** own the **fqdninspect** boolean (check/don’t check SIP for FQDN); global for now.
+- **7. New tenant FQDN:** **Self-defining** = **shortuid.domain_name**. Set **cluster.fqdn = shortuid + "." + domain_name** on tenant create; **immutable** thereafter. Display in tenant views as read-only.
+- **8. fqdninspect:** **Global only** (in globals). May become per-tenant later (move to cluster); that can be done later.
+
+**Domain list: API-only, from tenants.** All panels use the API only. **Domain list** = all **cluster.fqdn** (non-null) from **GET tenants** — i.e. every tenant’s stored FQDN (default tenant = node FQDN; others = shortuid.domain_name). No FQDN in globals. **GET sysglobals** provides **domain_name** (for tenant create: set cluster.fqdn = shortuid + "." + domain_name) and **fqdninspect**. On the pbx3 side, the firewall script reads **cluster.fqdn** for all tenants (and globals.fqdninspect, globals.bindport) and writes one INLINE rule per FQDN.
+
+### Phase 1 — pbx3 backend (cert multi-SAN + firewall FQDN inline)
+
+| Step | Task | Details |
+|------|------|---------|
+| **1.1** | Multi-domain first-cert script | Add **le-first-cert-multi.sh** (or extend **le-first-cert.sh**) that accepts multiple FQDNs (e.g. from args or a file) plus email. Run `certbot certonly --standalone -d fqdn1 -d fqdn2 ... -m email` (open 80, certbot, write **first** FQDN to `le-domain`, apply-active-cert, close 80). Ensure certbot creates renewal config with all SANs so `certbot renew` later renews the same cert. |
+| **1.2** | NetHelperClass::copyFirewallTemplates | Change to: read **globals** (fqdninspect, bindport); if fqdninspect enabled, query **cluster** for all **fqdn** (non-null); build list = all tenant FQDNs (default tenant’s fqdn = node FQDN); write **pbx3_inline_fqdn** with two lines per FQDN (TCP, UDP), string **`sip:<fqdn>`**, port from **globals.bindport**, `--to 1000`. If fqdninspect disabled, write `#` only. Use sail65 format. |
+| **1.3** | FQDN inline update script | Add script (e.g. **update-fqdn-inline.sh**) that invokes the logic in step 1.2. After writing the file, **restart Shorewall** (automatic firewall restart per decision 5). Script callable as root or via sudo. Install under `/opt/pbx3/scripts/`. |
+| **1.4** | Verify Phase 1 | On a dev node: (1) Set default tenant’s fqdn (node FQDN) and one other tenant’s fqdn; set globals.fqdninspect YES; run the update script; confirm pbx3_inline_fqdn contains two INLINE rules per FQDN with `sip:<fqdn>` and Shorewall restarted. (2) Run le-first-cert-multi with those FQDNs; confirm cert shows both SANs. |
+
+### Phase 2 — pbx3api (cert API + firewall refresh)
+
+| Step | Task | Details |
+|------|------|---------|
+| **2.1** | CertificateController — domain list helper | Build domain list **via API only**: **GET tenants**; take every tenant’s **fqdn** (non-null). Domain list = [t.fqdn for each tenant]. (Default tenant’s fqdn = node FQDN; others = shortuid.domain_name.) No FQDN in sysglobals; sysglobals has **domain_name** and **fqdninspect** only. Used by setup, sync, and GET response. |
+| **2.2** | CertificateController::setup (multi-SAN) | Build domain list as in 2.1 (all tenant fqdns from GET tenants). Call **le-first-cert-multi.sh** with that list + email (via syshelper). Keep 409 when already configured. |
+| **2.3** | CertificateController::letsencrypt (GET) — return domains | Return configured, domain (primary), expires_at, issuer; add **domains** (array) = all tenant fqdns from GET tenants. |
+| **2.4** | CertificateController — sync endpoint | Add **POST /certificates/letsencrypt/sync**: build domain list as in 2.1; if LE already configured, run re-issue script with current list. **Manual only** (no auto sync on tenant save); document LE rate limits. |
+| **2.5** | FirewallController — refresh FQDN before restart | In **ipv4restart** / **ipv6restart**, call syshelper to run **update-fqdn-inline** (which writes file and **restarts Shorewall**). So panel “Restart” uses current tenant FQDN list. |
+| **2.6** | TenantController — FQDN on create + refresh + auto restart | On tenant **create**: set **cluster.fqdn = shortuid + "." + domain_name** (domain_name from GET sysglobals); **immutable** (do not allow update of fqdn). After **create**, **update**, or **delete**, call syshelper to run **update-fqdn-inline** (script writes file and **automatically restarts Shorewall** per decision 5). |
+| **2.7** | SysglobalController | Expose **domain_name** (readonly) and **fqdninspect**. After successful PUT (e.g. fqdninspect changed), call syshelper to run **update-fqdn-inline** (writes file + **automatic Shorewall restart**). |
+| **2.8** | Verify Phase 2 | From API: (1) POST certificates/letsencrypt/setup (domain list = all tenant fqdns); confirm 200 and cert has multiple SANs. (2) GET certificates/letsencrypt; confirm **domains** = tenant fqdns. (3) Create a tenant; confirm cluster.fqdn set to shortuid.domain_name and update-fqdn-inline ran and Shorewall restarted. (4) Firewall panel Restart; confirm script runs and Shorewall restarts. |
+
+### Phase 3 — pbx3spa (Tenant FQDN + Certificates UI)
+
+| Step | Task | Details |
+|------|------|---------|
+| **3.1** | TenantDetailView — FQDN (read-only, immutable) | Show **FQDN** in the tenant view (e.g. Identity or Settings) as **read-only**: **shortuid + "." + base_domain** (base_domain from sysglobals). No need to edit or save cluster.fqdn for now; the rule is derived. Label e.g. “Tenant FQDN” with hint “Derived from shortuid + base domain (for cert and firewall).” |
+| **3.2** | TenantCreateView | API sets cluster.fqdn = shortuid + "." + domain_name on create. SPA may show hint: "FQDN will be shortuid.domain_name (immutable)." No editable FQDN field. |
+| **3.3** | CertificatesView — show “Cert covers” | When GET certificates/letsencrypt returns **domains**, display a line or list: “Cert covers: domain1, domain2, …”. If API doesn’t return domains yet, skip or show primary domain only until Phase 2 is done. |
+| **3.4** | CertificatesView — “Sync with tenant list” | Add a button **Sync with tenant list** that calls **POST /certificates/letsencrypt/sync** (when configured). On success, toast and refetch status. Show brief copy: “Re-issue cert to include current node + all tenant FQDNs.” |
+| **3.5** | Verify Phase 3 | In browser: (1) Open a tenant; confirm FQDN (cluster.fqdn) is shown as read-only. (2) Create a tenant; confirm FQDN set. (3) Certificates panel: confirm “Cert covers” list and Sync button; run Sync (manual only) and confirm cert re-issued. |
+
+### Phase 4 — Integration and docs
+
+| Step | Task | Details |
+|------|------|---------|
+| **4.1** | Cron / renewal | Confirm **le-renew-with-80.sh** (and cron) still runs `certbot renew`; with multi-SAN cert the renewal config already has all domains, so no change. Deploy hook apply-active-cert.sh unchanged. |
+| **4.2** | Tenant move runbook | Document in this doc or a short runbook: when moving a tenant (export/import), on **destination** after import run cert sync (or add tenant FQDN and Sync) so cert includes the new tenant; switch DNS; on **source** remove tenant and run cert sync so source cert no longer includes that FQDN. |
+| **4.3** | Handoff and SESSION_HANDOFF | Update **SESSION_HANDOFF.md** (and **AGENT_HANDOFF.md** in pbx3 if applicable): list per-tenant FQDN + multi-SAN cert and firewall FQDN inline as done; point to this doc and CERTIFICATES_ADOPTION_PLAN. |
+
+### Optional / follow-on
+
+- **globals.domain_name:** Stored at install, readonly. Expose via GET sysglobals; API uses it on tenant create to set cluster.fqdn = shortuid.domain_name. **Globals** do not hold FQDN; **fqdninspect** (boolean) stays in globals, global for now.
+- **Per-tenant fqdninspect (later):** Keep global for now; may move to cluster later so inspect is per-tenant.
+- **Dedicated “Refresh FQDN inline” syscommand:** Expose a syscommand (e.g. POST syscommands/refresh-fqdn-inline) that only runs the update script, for use from scripts or support without restarting the firewall.
+
+---
+
+## 11. Impact on future tenant-scoped access
 
 **Context:** Today only admins have access; there is no tenant-scoped security yet. The plan (see **ADMIN_PANELS_AND_PERMISSIONS.md**) is to tighten this so that **tenant users** can only see and manage their own tenant’s data (row-level scope via “allowed clusters” and abilities). A possible addition is using the **tenant URL** (e.g. `https://abc12xyz.pbx3.com`) as the **access point** so that the hostname identifies the tenant and the session is scoped to that tenant.
 
@@ -286,12 +348,12 @@ Below is the set of **panels, API controllers, backend scripts, and helpers** th
 
 ---
 
-## 11. References
+## 12. References
 
 - **pbx3spa/workingdocs/CERTIFICATES_ADOPTION_PLAN.md** — Panel and API; active cert selection; LE setup/renew.
 - **pbx3/workingdocs/LETSENCRYPT_PLAN.md** — HTTP-01, one hostname, port 80, deploy hook; multi-server (one cert per server).
 - **pbx3spa/workingdocs/TRUNK_ROUTE_MULTITENANCY.md** — Tenant migration (export/import, miniDB, trunk mapping).
-- **pbx3 full_schema.sql** — `cluster.fqdn`, `cluster.fqdninspect`; `globals.fqdn` (instance).
+- **pbx3 full_schema.sql** — `cluster.fqdn` (per tenant; default tenant = node FQDN); `cluster.fqdninspect` (optional, later); **globals.domain_name** (base domain), **globals.fqdninspect** (global check/don’t check).
 - **pbx3api app/Models/Tenant.php** — `fqdn` in `$fillable`.
 - **sail65:** `sail-6/opt/sark/etc/shorewall/sark_inline_fqdn` — reference INLINE rule with `sip:$FQDN`.
 - **pbx3:** `pbx3-1/opt/pbx3/php/classes/NetHelperClass` — `copyFirewallTemplates()`; `pbx3-1/opt/pbx3/etc/shorewall/pbx3_inline_fqdn` — shipped template.
