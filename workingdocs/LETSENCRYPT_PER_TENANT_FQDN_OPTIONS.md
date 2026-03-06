@@ -266,7 +266,24 @@ Below is the set of **panels, API controllers, backend scripts, and helpers** th
 
 ---
 
-## 10. Implementation plan
+## 10. Prerequisites and when to start
+
+**Gate: do not start this build until current panels work is finished and merged back.** Implementation of per-tenant FQDN, multi-SAN cert, and firewall FQDN inline should begin only after the in-progress panels work (e.g. on branch `spanel`) is complete and merged to the target branch (e.g. `main`). This keeps the change set focused and avoids merging conflicts or half-finished panel behaviour.
+
+**Before or at the start of Phase 1, ensure:**
+
+| Item | Where | Notes |
+|------|--------|------|
+| **globals.domain_name** | pbx3 schema (globals table) + installer | Base domain (e.g. `pbx3.com`), set at install, readonly. Add column if not present; installer prompts for it and writes once. |
+| **Default tenant fqdn = node FQDN** | pbx3 installer or bootstrap | At install, set the **default** tenant’s **cluster.fqdn** to the node FQDN (e.g. shortuid_default.domain_name, or a separate install prompt for “node FQDN” that is written to default tenant). So the node has a stable FQDN for the cert and firewall from first boot. |
+| **Sysglobals exposes domain_name, fqdninspect** | pbx3api Sysglobal model + GET sysglobals | API must return **domain_name** (readonly) and **fqdninspect** so CertificateController and TenantController can build domain list and set tenant fqdn on create. Expose in model; ensure not hidden. |
+| **Tenant create returns shortuid** | pbx3api TenantController | New tenant must get **shortuid** (and id) on create so cluster.fqdn = shortuid + "." + domain_name can be set. Already the case if tenant create follows tenant-scoped pattern. |
+
+**Branch:** Start implementation from the branch that has the merged panels work (e.g. after `spanel` is merged, create a feature branch from `main` for this work, or continue on `spanel` if that remains the integration branch).
+
+---
+
+## 11. Implementation plan
 
 Ordered by dependency: pbx3 first (scripts and FQDN inline), then pbx3api (API and syshelper calls), then pbx3spa (panels). Each phase ends with a short verification step.
 
@@ -328,7 +345,7 @@ Ordered by dependency: pbx3 first (scripts and FQDN inline), then pbx3api (API a
 
 ---
 
-## 11. Impact on future tenant-scoped access
+## 12. Impact on future tenant-scoped access
 
 **Context:** Today only admins have access; there is no tenant-scoped security yet. The plan (see **ADMIN_PANELS_AND_PERMISSIONS.md**) is to tighten this so that **tenant users** can only see and manage their own tenant’s data (row-level scope via “allowed clusters” and abilities). A possible addition is using the **tenant URL** (e.g. `https://abc12xyz.pbx3.com`) as the **access point** so that the hostname identifies the tenant and the session is scoped to that tenant.
 
@@ -348,7 +365,7 @@ Ordered by dependency: pbx3 first (scripts and FQDN inline), then pbx3api (API a
 
 ---
 
-## 12. References
+## 13. References
 
 - **pbx3spa/workingdocs/CERTIFICATES_ADOPTION_PLAN.md** — Panel and API; active cert selection; LE setup/renew.
 - **pbx3/workingdocs/LETSENCRYPT_PLAN.md** — HTTP-01, one hostname, port 80, deploy hook; multi-server (one cert per server).
