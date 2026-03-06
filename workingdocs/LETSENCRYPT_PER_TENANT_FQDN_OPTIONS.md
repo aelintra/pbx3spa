@@ -157,7 +157,19 @@ So today, if a phone connected to `abc12xyz.pbx3.com` (tenant FQDN) but the cert
 
 ---
 
-## 6. Recommendation (short)
+## 6. Purchased certificates (wildcard and individual)
+
+The existing **selection order** (CERTIFICATES_ADOPTION_PLAN §3) is: **(1) Purchased (custom)** — if cert + key exist at `/opt/pbx3/etc/ssl/custom/`, use them; **(2) Let's Encrypt** — else if configured; **(3) Snakeoil**. Custom takes precedence; no mode toggle. That order is unchanged by the LE multi-SAN work.
+
+**Purchased wildcard cert:** A customer who has a **commercial wildcard cert** (e.g. `*.mydomain.com`) can **install it as the custom cert** (Certificates panel → Purchased certificate → Install, upload fullchain + privkey). That single cert covers the node (default tenant) and all tenant FQDNs matching the pattern. Nginx and Asterisk use it for every hostname; no SNI or multi-path needed. **Fully accommodated** — no change to the proposed structure. LE multi-SAN is simply not used when custom is present.
+
+**Single purchased multi-SAN cert:** Same: one cert with multiple SANs (e.g. from a commercial CA), installed via the same custom path. Covers all listed hostnames. **Fully accommodated.**
+
+**Set of individual purchased certs:** If a customer wants to use **multiple separate certs** (e.g. one cert per tenant, or different CAs per hostname), the current design has **one** custom path. To support that we would need: **(a)** a **per-FQDN (or per-tenant) custom cert store** (e.g. `/opt/pbx3/etc/ssl/custom/<fqdn>/fullchain.pem` and `privkey.pem`), and **(b)** nginx and Asterisk config that use **SNI** to select the cert by Host (similar to Option C for LE). That is a **future extension** — not part of the current LE multi-SAN + single custom path design. Until then, customers who need multiple individual certs could (i) use one purchased wildcard or multi-SAN cert that covers all their tenant FQDNs, or (ii) use LE multi-SAN (Sync with tenant list) and not install a custom cert. So the proposed structure **does not block** purchased certs; wildcard and single multi-SAN purchased certs remain fully supported. Multiple individual purchased certs would require a later enhancement (multi-path custom store + SNI).
+
+---
+
+## 7. Recommendation (short)
 
 - **Small/medium per-node tenant count (e.g. &lt; 50), want to avoid DNS API:** **Option A** (multi-SAN). Straightforward extension of current design; add a script that builds domain list from node + `cluster.fqdn`, run certbot with multiple `-d`, re-issue when tenant FQDNs change (or at renewal with current list).
 - **Many tenants or want zero re-issue on tenant churn:** **Option B** (wildcard + DNS-01) if you can adopt a DNS API and secure credentials.
@@ -165,7 +177,7 @@ So today, if a phone connected to `abc12xyz.pbx3.com` (tenant FQDN) but the cert
 
 ---
 
-## 7. Tenant FQDN and migration
+## 8. Tenant FQDN and migration
 
 - **Setting tenant FQDN:** Convention: `cluster.fqdn = {shortuid}.{domain}.{tld}` (e.g. derived from tenant shortuid + base domain). API/SPA can enforce this or allow override. Base domain could come from globals or config.
 - **DNS for tenant FQDN:** For **HTTP-01** (Options A and C), each tenant FQDN must resolve to the **node** that hosts that tenant (A or CNAME). When a tenant is **migrated**, DNS must be updated so the same FQDN now points to the **new** node (supertask or manual). For **wildcard** (Option B), no per-tenant DNS for cert; but routing (which node serves which tenant) may still need A/CNAME or a load balancer that routes by hostname.
@@ -173,11 +185,11 @@ So today, if a phone connected to `abc12xyz.pbx3.com` (tenant FQDN) but the cert
 
 ---
 
-## 8. Firewall FQDN inspection (iptables string match)
+## 9. Firewall FQDN inspection (iptables string match)
 
 When **fqdninspect** is enabled, the firewall uses **iptables string matching** on inbound SIP (port 5060) so that only packets that contain the expected FQDN in the SIP payload (e.g. in Via or Contact, as `sip:<fqdn>`) are accepted. This reduces robo‑dialler / brute‑force attempts that don’t know the correct hostname. This only applies to **unencrypted** SIP (TCP/UDP 5060); TLS SIP is separate.
 
-### 8.1 Sail65 reference (single FQDN)
+### 9.1 Sail65 reference (single FQDN)
 
 In sail65 the rule is in **sail65/sail-6/opt/sark/etc/shorewall/sark_inline_fqdn**:
 
@@ -190,13 +202,13 @@ INLINE(ACCEPT) net $FW udp 5060 ; -m string --algo bm --to 1000 --string "sip:$F
 - **-m string --algo bm --to 1000** matches the first 1000 bytes of the packet for the given string.
 - **--string "sip:$FQDN"** ensures the SIP message contains the expected FQDN (e.g. in Via/Contact as `sip:node1.pbx3.com`). So only traffic that “claims” the right hostname is allowed through.
 
-### 8.2 Current pbx3 behaviour (single FQDN)
+### 9.2 Current pbx3 behaviour (single FQDN)
 
 - **pbx3** ships **pbx3_inline_fqdn** as comment-only; when **globals.fqdninspect** is YES, **NetHelperClass::copyFirewallTemplates()** overwrites it.
 - NetHelper reads **globals** (fqdn, fqdninspect, bindport) and writes **two** INLINE rules (TCP and UDP) using **bindport** and the **fqdn** string. Note: current pbx3 code uses the raw FQDN string **without** the `"sip:"` prefix (sail65 uses `"sip:$FQDN"`); for consistency with sail65 and correct matching of SIP headers, the string should be **`sip:<fqdn>`**.
 - File is written under `/etc/shorewall/pbx3_inline_fqdn` (or the configured Shorewall dir); **rules** includes `INCLUDE pbx3_inline_fqdn`.
 
-### 8.3 What’s needed for multiple tenant FQDNs
+### 9.3 What’s needed for multiple tenant FQDNs
 
 We need to allow SIP that contains **any** of the valid FQDNs: every **cluster.fqdn** (non-null). The **default tenant** holds the node FQDN; other tenants hold shortuid.domain_name. So:
 
@@ -218,11 +230,11 @@ We need to allow SIP that contains **any** of the valid FQDNs: every **cluster.f
 
 ---
 
-## 9. Code blocks (panels, modules) to change
+## 10. Code blocks (panels, modules) to change
 
 Below is the set of **panels, API controllers, backend scripts, and helpers** that need to be touched to implement **Option A (multi-SAN)** plus **firewall FQDN inspection for multiple tenant FQDNs**. Order is by layer (pbx3 → pbx3api → pbx3spa).
 
-### 9.1 pbx3 (backend)
+### 10.1 pbx3 (backend)
 
 | Block | Path / location | Change |
 |-------|------------------|--------|
@@ -232,7 +244,7 @@ Below is the set of **panels, API controllers, backend scripts, and helpers** th
 | **NetHelperClass::copyFirewallTemplates()** | `pbx3-1/opt/pbx3/php/classes/NetHelperClass` | **Change:** (1) Read **globals** (fqdninspect, bindport); no FQDN in globals. (2) If fqdninspect enabled, query **cluster** for all non-null **fqdn**. (3) Build list: all cluster.fqdn (default tenant = node FQDN). (4) Write **pbx3_inline_fqdn** with **two lines per FQDN** (TCP, UDP), string **`sip:<fqdn>`** (not raw fqdn), port from **globals.bindport** (source of truth; typically 5060), `--to 1000`. (5) If fqdninspect disabled, write comment-only. |
 | **Firewall / syshelper trigger** | — | Today the API does **not** run copyFirewallTemplates; only pbx3’s `restartFirewall()` does. To keep the inline file in sync when tenant or sysglobals change from the panel, either: **(a)** Add a **script** on pbx3 (e.g. `update-fqdn-inline.sh`) that runs the PHP NetHelper copyFirewallTemplates (or replicates the logic in shell + sqlite3) and have the API call it via syshelper before/after firewall restart; or **(b)** Firewall panel “Restart” calls that script then shorewall restart. So: **FirewallController** (see below) or a new syscommand that “refreshes FQDN inline then restarts” may be needed. |
 
-### 9.2 pbx3api (API)
+### 10.2 pbx3api (API)
 
 | Block | Path / location | Change |
 |-------|------------------|--------|
@@ -242,7 +254,7 @@ Below is the set of **panels, API controllers, backend scripts, and helpers** th
 | **FirewallController** | `app/Http/Controllers/FirewallController.php` | **ipv4restart / ipv6restart:** Before `shorewall restart`, call syshelper to run the **FQDN inline update script** (so the file reflects current globals + cluster.fqdn). That way “Restart firewall” from the panel always writes the latest tenant list into pbx3_inline_fqdn. |
 | **New syscommand or script** | e.g. `syscommands` or new route | Optional: **“Refresh firewall FQDN inline”** (no restart) so tenant/sysglobals save can update the file without restarting Shorewall; admin can restart later. Or fold into existing firewall restart. |
 
-### 9.3 pbx3spa (SPA / panels)
+### 10.3 pbx3spa (SPA / panels)
 
 | Block | Path / location | Change |
 |-------|------------------|--------|
@@ -251,7 +263,7 @@ Below is the set of **panels, API controllers, backend scripts, and helpers** th
 | **tenantAdvanced.js** | — | If FQDN is in the “advanced” section, No change; FQDN is a stored, read-only display field. |
 | **TenantCreateView** | `src/views/TenantCreateView.vue` | API sets cluster.fqdn = shortuid.domain_name on create (immutable). Optional hint in SPA. |
 
-### 9.4 Summary table
+### 10.4 Summary table
 
 | Layer | Component | Purpose of change |
 |-------|-----------|--------------------|
@@ -266,7 +278,7 @@ Below is the set of **panels, API controllers, backend scripts, and helpers** th
 
 ---
 
-## 10. Prerequisites and when to start
+## 11. Prerequisites and when to start
 
 **Gate: do not start this build until current panels work is finished and merged back.** Implementation of per-tenant FQDN, multi-SAN cert, and firewall FQDN inline should begin only after the in-progress panels work (e.g. on branch `spanel`) is complete and merged to the target branch (e.g. `main`). This keeps the change set focused and avoids merging conflicts or half-finished panel behaviour.
 
@@ -283,7 +295,7 @@ Below is the set of **panels, API controllers, backend scripts, and helpers** th
 
 ---
 
-## 11. Implementation plan
+## 12. Implementation plan
 
 Ordered by dependency: pbx3 first (scripts and FQDN inline), then pbx3api (API and syshelper calls), then pbx3spa (panels). Each phase ends with a short verification step.
 
@@ -345,7 +357,7 @@ Ordered by dependency: pbx3 first (scripts and FQDN inline), then pbx3api (API a
 
 ---
 
-## 12. Impact on future tenant-scoped access
+## 13. Impact on future tenant-scoped access
 
 **Context:** Today only admins have access; there is no tenant-scoped security yet. The plan (see **ADMIN_PANELS_AND_PERMISSIONS.md**) is to tighten this so that **tenant users** can only see and manage their own tenant’s data (row-level scope via “allowed clusters” and abilities). A possible addition is using the **tenant URL** (e.g. `https://abc12xyz.pbx3.com`) as the **access point** so that the hostname identifies the tenant and the session is scoped to that tenant.
 
@@ -365,7 +377,7 @@ Ordered by dependency: pbx3 first (scripts and FQDN inline), then pbx3api (API a
 
 ---
 
-## 13. References
+## 14. References
 
 - **pbx3spa/workingdocs/CERTIFICATES_ADOPTION_PLAN.md** — Panel and API; active cert selection; LE setup/renew.
 - **pbx3/workingdocs/LETSENCRYPT_PLAN.md** — HTTP-01, one hostname, port 80, deploy hook; multi-server (one cert per server).
