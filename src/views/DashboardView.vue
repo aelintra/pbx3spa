@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 
-const commitDirty = ref(false)
 const actionMessage = ref('')
 const actionError = ref('')
 const actionBusy = ref(null)
@@ -26,15 +25,6 @@ function displayBytes(val) {
   return n + ' B'
 }
 
-async function fetchCommitStatus() {
-  try {
-    const response = await getApiClient().get('syscommands/commitstatus')
-    commitDirty.value = response?.dirty === true
-  } catch {
-    commitDirty.value = false
-  }
-}
-
 async function fetchSysnotes() {
   sysnotesLoading.value = true
   sysnotesError.value = ''
@@ -56,7 +46,6 @@ async function runCommand(command, confirmMessage, isDanger = false) {
   try {
     await getApiClient().get(`syscommands/${command}`)
     actionMessage.value = `Command "${command}" completed.`
-    if (command === 'commit') await fetchCommitStatus()
     await fetchSysnotes()
   } catch (err) {
     const msg = err.data?.message || err.message || `Failed to run ${command}`
@@ -65,10 +54,6 @@ async function runCommand(command, confirmMessage, isDanger = false) {
   } finally {
     actionBusy.value = null
   }
-}
-
-function commit() {
-  runCommand('commit', 'Apply configuration (run Asterisk file generator)?')
 }
 
 function startPbx() {
@@ -88,7 +73,6 @@ function reboot() {
 }
 
 onMounted(() => {
-  fetchCommitStatus()
   fetchSysnotes()
 })
 </script>
@@ -102,16 +86,6 @@ onMounted(() => {
       <p v-if="actionMessage" class="message">{{ actionMessage }}</p>
       <p v-if="actionError" class="error">{{ actionError }}</p>
       <div class="action-buttons">
-        <button
-          type="button"
-          class="btn-action"
-          :class="{ 'btn-commit-dirty': commitDirty }"
-          :disabled="actionBusy != null"
-          @click="commit"
-          :title="commitDirty ? 'Uncommitted changes – run generator and reload' : 'Config is in sync'"
-        >
-          {{ actionBusy === 'commit' ? 'Running…' : (commitDirty ? 'Commit config (pending)' : 'Commit config') }}
-        </button>
         <button
           type="button"
           class="btn-action"
@@ -259,12 +233,6 @@ onMounted(() => {
 .btn-action:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-}
-.btn-action.btn-commit-dirty {
-  background: #dc2626;
-}
-.btn-action.btn-commit-dirty:hover:not(:disabled) {
-  background: #b91c1c;
 }
 .danger-zone {
   padding-top: 0.75rem;

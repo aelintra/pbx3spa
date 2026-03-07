@@ -1,12 +1,31 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getApiClient } from '@/api/client'
+import CommitButton from '@/components/CommitButton.vue'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+
+/** Panels that do NOT show the Commit button (no config commit applies). */
+const COMMIT_HIDDEN_PATH_PREFIXES = [
+  '/backup',
+  '/certificates',
+  '/devices',
+  '/firewall',
+  '/help-messages',
+  '/ip-settings',
+  '/logs',
+  '/users'
+]
+
+const showCommitButton = computed(() => {
+  if (!auth.can('admin')) return false
+  const path = route.path.replace(/\/$/, '') || '/'
+  return !COMMIT_HIDDEN_PATH_PREFIXES.some((prefix) => path === prefix || path.startsWith(prefix + '/'))
+})
 
 const navGroups = [
   { id: 'tenancy', heading: 'Tenancy', links: [{ to: '/tenants', label: 'Tenants' }] },
@@ -98,6 +117,7 @@ async function logout() {
       <header class="topbar">
         <h1 class="logo">PBX3 Admin</h1>
         <div class="topbar-right">
+          <CommitButton v-if="showCommitButton" />
           <span v-if="auth.user" class="user">Logged in as {{ auth.user.name || auth.user.email }}</span>
           <button type="button" class="logout-btn" @click="logout">Logout</button>
         </div>
