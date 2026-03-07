@@ -1,13 +1,47 @@
 <script setup>
-import { onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getApiClient } from '@/api/client'
 
+const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+const navGroups = [
+  { id: 'tenancy', heading: 'Tenancy', links: [{ to: '/tenants', label: 'Tenants' }] },
+  { id: 'endpoints', heading: 'Endpoints', links: [{ to: '/extensions', label: 'Extensions' }, { to: '/conferences', label: 'Conferences' }] },
+  { id: 'inbound', heading: 'Inbound', links: [{ to: '/inbound-routes', label: 'DID routes' }] },
+  { id: 'outbound', heading: 'Outbound', links: [{ to: '/trunks', label: 'Trunks' }, { to: '/routes', label: 'Routes' }] },
+  { id: 'acd', heading: 'ACD', links: [{ to: '/queues', label: 'Queues / Ring groups' }, { to: '/ivrs', label: 'IVRs' }, { to: '/greetings', label: 'Greetings' }, { to: '/agents', label: 'Agents' }] },
+  { id: 'schedules', heading: 'Schedules & policy', links: [{ to: '/daytimers', label: 'Day timers' }, { to: '/holidaytimers', label: 'Holiday timers' }, { to: '/cosrules', label: 'Class of Service' }] },
+  { id: 'system', heading: 'System', links: [{ to: '/asterisk-files', label: 'Asterisk Files' }, { to: '/backup', label: 'Backup' }, { to: '/certificates', label: 'Certificates' }, { to: '/customapps', label: 'Custom Apps' }, { to: '/devices', label: 'Devices' }, { to: '/firewall', label: 'Firewall' }, { to: '/help-messages', label: 'Help messages' }, { to: '/ip-settings', label: 'IP Settings' }, { to: '/logs', label: 'Logs' }, { to: '/sysglobals', label: 'System Globals' }, { to: '/users', label: 'Users' }] }
+]
+
+const expanded = ref({})
+
+function groupIdForPath(path) {
+  const p = path.replace(/\/$/, '') || '/'
+  const g = navGroups.find((gr) => gr.links.some((l) => l.to === p || (l.to !== '/' && p.startsWith(l.to + '/'))))
+  return g?.id ?? null
+}
+
+function ensureCurrentGroupOpen() {
+  const id = groupIdForPath(route.path)
+  const next = {}
+  navGroups.forEach((g) => { next[g.id] = g.id === id })
+  expanded.value = next
+}
+
+function toggle(id) {
+  const willBeOpen = !expanded.value[id]
+  const next = {}
+  navGroups.forEach((g) => { next[g.id] = g.id === id ? willBeOpen : false })
+  expanded.value = next
+}
+
 onMounted(async () => {
+  ensureCurrentGroupOpen()
   if (auth.isLoggedIn && !auth.user) {
     try {
       const user = await getApiClient().get('auth/whoami')
@@ -17,6 +51,8 @@ onMounted(async () => {
     }
   }
 })
+
+watch(() => route.path, ensureCurrentGroupOpen)
 
 async function logout() {
   try {
@@ -36,60 +72,21 @@ async function logout() {
         <template v-if="auth.can('admin')">
           <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">Home</router-link>
 
-          <div class="nav-group">
-            <span class="nav-heading">Tenancy</span>
-            <router-link to="/tenants" class="nav-link" active-class="active">Tenants</router-link>
-          </div>
-
-          <div class="nav-group">
-            <span class="nav-heading">Endpoints</span>
-            <router-link to="/extensions" class="nav-link" active-class="active">Extensions</router-link>
-            <router-link to="/conferences" class="nav-link" active-class="active">Conferences</router-link>
-          </div>
-
-          <div class="nav-group">
-            <span class="nav-heading">Inbound</span>
-            <router-link to="/inbound-routes" class="nav-link" active-class="active">Inbound routes</router-link>
-          </div>
-
-          <div class="nav-group">
-            <span class="nav-heading">Outbound</span>
-            <router-link to="/trunks" class="nav-link" active-class="active">Trunks</router-link>
-            <router-link to="/routes" class="nav-link" active-class="active">Routes</router-link>
-          </div>
-
-          <div class="nav-group">
-            <span class="nav-heading">ACD</span>
-            <router-link to="/queues" class="nav-link" active-class="active">Queues / Ring groups</router-link>
-            <router-link to="/agents" class="nav-link" active-class="active">Agents</router-link>
-            <router-link to="/ivrs" class="nav-link" active-class="active">IVRs</router-link>
-            <router-link to="/greetings" class="nav-link" active-class="active">Greetings</router-link>
-          </div>
-
-          <div class="nav-group">
-            <span class="nav-heading">Schedules &amp; policy</span>
-            <router-link to="/daytimers" class="nav-link" active-class="active">Day timers</router-link>
-            <router-link to="/holidaytimers" class="nav-link" active-class="active">Holiday timers</router-link>
-            <router-link to="/cosrules" class="nav-link" active-class="active">Class of Service</router-link>
-          </div>
-
-          <div class="nav-group">
-            <span class="nav-heading">Devices &amp; apps</span>
-            <router-link to="/devices" class="nav-link" active-class="active">Devices</router-link>
-            <router-link to="/customapps" class="nav-link" active-class="active">Custom Apps</router-link>
-            <router-link to="/help-messages" class="nav-link" active-class="active">Help messages</router-link>
-          </div>
-
-          <div class="nav-group">
-            <span class="nav-heading">System</span>
-            <router-link to="/users" class="nav-link" active-class="active">Users</router-link>
-            <router-link to="/certificates" class="nav-link" active-class="active">Certificates</router-link>
-            <router-link to="/ip-settings" class="nav-link" active-class="active">IP Settings</router-link>
-            <router-link to="/firewall" class="nav-link" active-class="active">Firewall</router-link>
-            <router-link to="/sysglobals" class="nav-link" active-class="active">System Globals</router-link>
-            <router-link to="/asterisk-files" class="nav-link" active-class="active">Asterisk Files</router-link>
-            <router-link to="/logs" class="nav-link" active-class="active">Logs</router-link>
-            <router-link to="/backup" class="nav-link" active-class="active">Backup</router-link>
+          <div v-for="group in navGroups" :key="group.id" class="nav-group">
+            <button
+              type="button"
+              class="nav-heading nav-heading-btn"
+              :aria-expanded="expanded[group.id]"
+              :aria-controls="'nav-group-' + group.id"
+              :id="'nav-heading-' + group.id"
+              @click="toggle(group.id)"
+            >
+              <span class="nav-heading-text">{{ group.heading }}</span>
+              <span class="nav-heading-chevron" :class="{ open: expanded[group.id] }" aria-hidden="true">▼</span>
+            </button>
+            <div :id="'nav-group-' + group.id" class="nav-group-links" role="region" :aria-labelledby="'nav-heading-' + group.id" v-show="expanded[group.id]">
+              <router-link v-for="link in group.links" :key="link.to" :to="link.to" class="nav-link" active-class="active">{{ link.label }}</router-link>
+            </div>
           </div>
         </template>
         <template v-else>
@@ -120,6 +117,8 @@ async function logout() {
 .sidebar {
   width: 12rem;
   flex-shrink: 0;
+  height: 100vh;
+  overflow-y: auto;
   background: #1e293b;
   color: #f8fafc;
 }
@@ -143,6 +142,40 @@ async function logout() {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #e2e8f0;
+}
+.nav-heading-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.nav-heading-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+}
+.nav-heading-text {
+  flex: 1;
+}
+.nav-heading-chevron {
+  font-size: 0.5rem;
+  opacity: 0.8;
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease;
+}
+.nav-heading-chevron.open {
+  transform: rotate(0deg);
+}
+.nav-group-links {
+  display: flex;
+  flex-direction: column;
+  padding-left: 1rem;
 }
 .nav-link {
   padding: 0.5rem 1rem;
