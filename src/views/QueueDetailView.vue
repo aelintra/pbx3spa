@@ -51,12 +51,13 @@ const confirmDeleteOpen = ref(false)
 
 const shortuid = computed(() => route.params.shortuid)
 
-// Tenant Resolution Pattern (PANEL_PATTERN.md): resolve API cluster (may be shortuid) to pkey for dropdown
+// Tenant Resolution Pattern (PANEL_PATTERN.md): resolve API cluster (id, shortuid, or pkey) to pkey for dropdown (same as list display)
 const tenantShortuidToPkey = computed(() => {
   const map = {}
   for (const t of tenants.value) {
-    if (t.shortuid) map[String(t.shortuid)] = t.pkey
-    if (t.pkey) map[String(t.pkey)] = t.pkey
+    if (t.id != null) map[String(t.id)] = t.pkey ?? t.id
+    if (t.shortuid != null) map[String(t.shortuid)] = t.pkey ?? t.shortuid
+    if (t.pkey != null) map[String(t.pkey)] = t.pkey
   }
   return map
 })

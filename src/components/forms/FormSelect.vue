@@ -92,6 +92,14 @@ function handleBlur() {
   emit('blur')
 }
 
+/** Support options as primitives or { value, label } objects. */
+function optionValue(opt) {
+  return opt != null && typeof opt === 'object' && 'value' in opt ? opt.value : opt
+}
+function optionLabel(opt) {
+  return opt != null && typeof opt === 'object' && 'label' in opt ? opt.label : opt
+}
+
 // Debug form reset: when debugReset is true, log when this select receives empty/default
 watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
   if (dbg && (v === '' || v === 'default')) console.log('[FormSelect]', props.id, 'modelValue', JSON.stringify(v))
@@ -125,7 +133,7 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
         <option v-if="loading" value="">{{ loadingText }}</option>
         <option v-else-if="!required && emptyText" value="">{{ emptyText }}</option>
         <template v-if="!loading">
-          <option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option>
+          <option v-for="opt in options" :key="optionValue(opt)" :value="optionValue(opt)">{{ optionLabel(opt) }}</option>
           <template v-if="optionGroups">
             <optgroup v-for="(pkeys, group) in optionGroups" :key="group" :label="group">
               <option v-for="p in (pkeys && Array.isArray(pkeys) ? pkeys : [])" :key="p" :value="p">{{ p }}</option>

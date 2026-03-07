@@ -49,29 +49,38 @@ const tenantOptionsForSelect = computed(() => {
   return list
 })
 
-/** Current tenant's shortuid (queue.cluster stores tenant shortuid). */
-const tenantShortuid = computed(() => {
-  const clusterVal = String(cluster.value ?? '').trim()
-  if (!clusterVal) return ''
-  const byPkey = tenants.value.find((x) => String(x.pkey ?? '').trim() === clusterVal)
-  if (byPkey?.shortuid) return String(byPkey.shortuid).trim()
-  const byShortuid = tenants.value.find((x) => String(x.shortuid ?? '').trim() === clusterVal)
-  if (byShortuid) return clusterVal
-  return clusterVal
+/** Map queue.cluster (id, shortuid, or pkey) → tenant pkey so we can filter queues by current tenant. */
+const clusterToTenantPkey = computed(() => {
+  const map = new Map()
+  for (const t of tenants.value) {
+    if (t.id != null) map.set(String(t.id), t.pkey ?? t.id)
+    if (t.shortuid != null) map.set(String(t.shortuid), t.pkey ?? t.shortuid)
+    if (t.pkey != null) map.set(String(t.pkey), t.pkey)
+  }
+  return map
 })
 
-/** Queues for the selected tenant only (queue.cluster = tenant shortuid). */
+/** Queues for the selected tenant only. queue.cluster may be tenant id, shortuid, or pkey (resolve to pkey for comparison). Returns full queue objects for labels. */
 const queueOptionsForTenant = computed(() => {
-  const shortuid = tenantShortuid.value
+  const currentPkey = String(cluster.value ?? '').trim()
+  if (!currentPkey) return []
   const forTenant = queues.value
-    .filter((q) => String(q.cluster ?? '').trim() === shortuid)
-    .map((q) => q.pkey)
-    .filter(Boolean)
-  const uniq = [...new Set(forTenant)].sort((a, b) => String(a).localeCompare(String(b)))
-  return uniq
+    .filter((q) => clusterToTenantPkey.value.get(String(q.cluster ?? '').trim()) === currentPkey)
+    .filter((q) => q.pkey != null && String(q.pkey).trim() !== '')
+  const byPkey = new Map()
+  for (const q of forTenant) byPkey.set(String(q.pkey), q)
+  return [...byPkey.values()].sort((a, b) => String(a.pkey).localeCompare(String(b.pkey)))
 })
 
-const queueOptions = computed(() => ['None', ...queueOptionsForTenant.value])
+function queueOptionLabel(q) {
+  const name = (q.cname || q.description || q.pkey || '').toString().trim() || String(q.pkey)
+  return `${q.pkey} - ${name}`
+}
+
+const queueOptions = computed(() => [
+  { value: 'None', label: 'None' },
+  ...queueOptionsForTenant.value.map((q) => ({ value: String(q.pkey), label: queueOptionLabel(q) }))
+])
 
 async function loadTenants() {
   tenantsLoading.value = true

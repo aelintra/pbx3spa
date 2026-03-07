@@ -66,29 +66,27 @@ const clusterToTenantPkey = computed(() => {
   return map
 })
 
-/** Current tenant's shortuid (queue.cluster stores tenant shortuid, not pkey). Resolve from pkey or use as shortuid if it matches a tenant. */
-const tenantShortuid = computed(() => {
-  const cluster = String(editCluster.value ?? '').trim()
-  if (!cluster) return ''
-  const byPkey = tenants.value.find((x) => String(x.pkey ?? '').trim() === cluster)
-  if (byPkey?.shortuid) return String(byPkey.shortuid).trim()
-  const byShortuid = tenants.value.find((x) => String(x.shortuid ?? '').trim() === cluster)
-  if (byShortuid) return cluster
-  return cluster
-})
-
-/** Queues for the agent's tenant only. Queue rows use cluster = tenant shortuid, so filter by that. */
+/** Queues for the agent's tenant only. queue.cluster may be tenant id, shortuid, or pkey (resolve to pkey for comparison). Returns full queue objects for labels. */
 const queueOptionsForTenant = computed(() => {
-  const shortuid = tenantShortuid.value
+  const currentPkey = String(editCluster.value ?? '').trim()
+  if (!currentPkey) return []
   const forTenant = queues.value
-    .filter((q) => String(q.cluster ?? '').trim() === shortuid)
-    .map((q) => q.pkey)
-    .filter(Boolean)
-  const uniq = [...new Set(forTenant)].sort((a, b) => String(a).localeCompare(String(b)))
-  return uniq
+    .filter((q) => clusterToTenantPkey.value.get(String(q.cluster ?? '').trim()) === currentPkey)
+    .filter((q) => q.pkey != null && String(q.pkey).trim() !== '')
+  const byPkey = new Map()
+  for (const q of forTenant) byPkey.set(String(q.pkey), q)
+  return [...byPkey.values()].sort((a, b) => String(a.pkey).localeCompare(String(b.pkey)))
 })
 
-const queueOptions = computed(() => ['None', ...queueOptionsForTenant.value])
+function queueOptionLabel(q) {
+  const name = (q.cname || q.description || q.pkey || '').toString().trim() || String(q.pkey)
+  return `${q.pkey} - ${name}`
+}
+
+const queueOptions = computed(() => [
+  { value: 'None', label: 'None' },
+  ...queueOptionsForTenant.value.map((q) => ({ value: String(q.pkey), label: queueOptionLabel(q) }))
+])
 
 /** Normalize queue from API for form: null/undefined/'-'/'None' → 'None'. */
 function normalizeQueueFromApi(v) {
@@ -104,7 +102,7 @@ function normalizeQueueForSave(v) {
 
 /** Set any queue selection to 'None' if it's not in the tenant's queues. */
 function clearQueuesNotInTenant() {
-  const allowed = new Set(['None', ...queueOptionsForTenant.value])
+  const allowed = new Set(['None', ...queueOptionsForTenant.value.map((q) => String(q.pkey))])
   const refs = [editQueue1, editQueue2, editQueue3, editQueue4, editQueue5, editQueue6]
   refs.forEach((r) => {
     if (r.value && !allowed.has(String(r.value).trim())) r.value = 'None'
