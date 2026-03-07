@@ -15,6 +15,7 @@ const NATDEFAULT_OPTIONS = ['local', 'remote']
 const router = useRouter()
 const toast = useToastStore()
 const sysglobal = ref(null)
+const defaultTenant = ref(null)
 const loading = ref(true)
 const error = ref('')
 const saving = ref(false)
@@ -101,7 +102,12 @@ async function fetchSysglobal() {
   loading.value = true
   error.value = ''
   try {
-    sysglobal.value = await getApiClient().get('sysglobals')
+    const [sysglobalRes, tenantRes] = await Promise.all([
+      getApiClient().get('sysglobals'),
+      getApiClient().get('tenants/default').catch(() => null)
+    ])
+    sysglobal.value = sysglobalRes
+    defaultTenant.value = tenantRes
     syncEditFromSysglobal()
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load system globals')
@@ -206,6 +212,20 @@ onMounted(fetchSysglobal)
       </div>
 
       <div class="form-fields">
+        <h2 class="section-heading">Identity</h2>
+        <FormReadonly
+          id="edit-identity-shortuid"
+          label="Shortuid"
+          :value="defaultTenant?.shortuid ?? '—'"
+          class="readonly-identity"
+        />
+        <FormReadonly
+          id="edit-identity-ksuid"
+          label="KSUID"
+          :value="defaultTenant?.id ?? '—'"
+          class="readonly-identity"
+        />
+
         <h2 class="section-heading">Network</h2>
         
         <FormField
@@ -562,6 +582,15 @@ onMounted(fetchSysglobal)
 
 .section-heading:first-child {
   margin-top: 0;
+}
+
+.readonly-identity :deep(.form-field-label),
+.readonly-identity :deep(.form-readonly) {
+  color: #94a3b8;
+}
+.readonly-identity :deep(.form-readonly) {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
 }
 
 .edit-actions {

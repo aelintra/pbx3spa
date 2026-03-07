@@ -32,7 +32,7 @@ const { toasts } = storeToRefs(toastStore)
 .toast-container {
   position: fixed;
   left: 50%;
-  top: 1.5rem;
+  top: min(35vh, 12rem);
   transform: translateX(-50%);
   z-index: 1100;
   display: flex;

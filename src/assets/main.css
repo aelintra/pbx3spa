@@ -18,3 +18,16 @@ body {
 #app {
   min-height: 100vh;
 }
+
+/* Save/update feedback: position towards middle of panel so it's more noticeable */
+.edit-form > p.error,
+.edit-form > p.form-error {
+  margin-top: min(25vh, 8rem);
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  color: #dc2626;
+  font-weight: 500;
+}
