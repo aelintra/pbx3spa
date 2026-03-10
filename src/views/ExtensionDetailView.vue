@@ -46,7 +46,6 @@ const editMacaddr = ref('')
 const editProtocol = ref('IPV4')
 const editProvision = ref('')
 const editProvisionwith = ref('IP')
-const editPjsipuser = ref('')
 const editTechnology = ref('SIP')
 const editVmailfwd = ref('')
 const saveError = ref('')
@@ -129,7 +128,6 @@ async function fetchExtension() {
     editProtocol.value = ext?.protocol ?? 'IPV4'
     editProvision.value = ext?.provision ?? ''
     editProvisionwith.value = (ext?.provisionwith === 'FQDN') ? 'FQDN' : 'IP'
-    editPjsipuser.value = ext?.pjsipuser ?? ''
     editTechnology.value = ext?.technology ?? 'SIP'
     editVmailfwd.value = ext?.vmailfwd ?? ''
   } catch (err) {
@@ -207,7 +205,6 @@ async function saveEdit(e) {
       protocol: editProtocol.value,
       provision: editProvision.value.trim() || undefined,
       provisionwith: editProvisionwith.value,
-      pjsipuser: editPjsipuser.value.trim() || undefined,
       technology: editTechnology.value || undefined,
       vmailfwd: editVmailfwd.value.trim() || undefined
     }
@@ -422,14 +419,13 @@ async function saveRuntime(e) {
               :options="['IPV4', 'IPV6']"
             />
             <FormField id="edit-vmailfwd" v-model="editVmailfwd" label="Voicemail forward (email)" type="email" />
-            <FormField id="edit-provision" v-model="editProvision" label="Provision" type="text" placeholder="Provisioning string" />
+            <FormField id="edit-provision" v-model="editProvision" label="Provision" type="text" placeholder="Provisioning string" :multiline="true" :rows="8" />
             <FormSelect
               id="edit-provisionwith"
               v-model="editProvisionwith"
               label="Provision with"
               :options="['IP', 'FQDN']"
             />
-            <FormField id="edit-pjsipuser" v-model="editPjsipuser" label="PJSIP user" type="text" :multiline="true" :rows="8" />
           </div>
 
           <div class="edit-actions">

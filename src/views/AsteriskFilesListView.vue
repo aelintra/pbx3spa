@@ -4,6 +4,7 @@ import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
+import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('asterisk-files')
 const toast = useToastStore()
@@ -80,7 +81,7 @@ onMounted(async () => {
     </header>
 
     <section v-if="loading || error" class="list-states">
-      <p v-if="loading" class="loading">Loading Asterisk files…</p>
+      <ListLoadingState v-if="loading" message="Loading Asterisk files from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
     </section>
 
@@ -171,7 +172,6 @@ onMounted(async () => {
   opacity: 0.7;
   cursor: not-allowed;
 }
-.list-states .loading,
 .list-states .error {
   margin: 0;
 }

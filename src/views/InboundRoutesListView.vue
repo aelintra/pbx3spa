@@ -7,6 +7,7 @@ import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('inbound-routes')
 const toast = useToastStore()
@@ -196,7 +197,7 @@ onMounted(loadInboundRoutes)
     </header>
 
     <section v-if="loading || error || deleteError || inboundRoutes.length === 0" class="list-states">
-      <p v-if="loading" class="loading">Loading inbound routes…</p>
+      <ListLoadingState v-if="loading" message="Loading inbound routes from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
       <div v-else-if="inboundRoutes.length === 0" class="empty">No inbound routes. (API returned an empty list.)</div>
@@ -284,7 +285,6 @@ onMounted(loadInboundRoutes)
 .list-body {
   margin: 0;
 }
-.loading,
 .error,
 .empty {
   margin-top: 0;

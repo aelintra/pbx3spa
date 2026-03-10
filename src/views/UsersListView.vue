@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const toast = useToastStore()
 const users = ref([])
@@ -84,7 +85,7 @@ onMounted(loadUsers)
     </header>
 
     <section v-if="loading || error || deleteError || revokeError || users.length === 0" class="list-states">
-      <p v-if="loading" class="loading">Loading users…</p>
+      <ListLoadingState v-if="loading" message="Loading users from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
       <p v-if="revokeError" class="error">{{ revokeError }}</p>
@@ -172,7 +173,6 @@ onMounted(loadUsers)
 .list-body {
   margin: 0;
 }
-.loading,
 .error,
 .empty {
   margin-top: 0;

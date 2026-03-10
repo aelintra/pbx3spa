@@ -1,7 +1,13 @@
 <script setup>
 import { computed } from 'vue'
+import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 
 const props = defineProps({
+  /** When set, show a "?" help icon next to the label that opens a popover with tt_help_core content for this pkey. */
+  helpPkey: {
+    type: String,
+    default: null
+  },
   id: {
     type: String,
     required: true
@@ -39,6 +45,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
+/** When helpPkey is not set, derive from id (e.g. id="active" or id="edit-active" → "active") so panels get help by convention. */
+const effectiveHelpPkey = computed(() => props.helpPkey ?? (props.id ? props.id.replace(/^edit(-identity)?-/, '') : null))
+
 const isChecked = computed(() => props.modelValue === props.yesValue)
 
 function handleChange(event) {
@@ -50,6 +59,7 @@ function handleChange(event) {
   <div class="form-field" :class="{ 'form-field-inline': hideLabel }">
     <label v-if="!hideLabel" :for="id" class="form-field-label">
       {{ label }}
+      <FieldHelpIcon v-if="effectiveHelpPkey" :pkey="effectiveHelpPkey" />
     </label>
     <div class="form-field-input-wrapper">
       <label class="toggle-pill-ios" :aria-label="ariaLabel || label">

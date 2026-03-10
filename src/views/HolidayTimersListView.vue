@@ -6,6 +6,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('holidaytimers')
 const toast = useToastStore()
@@ -172,7 +173,7 @@ onMounted(loadHolidaytimers)
     </header>
 
     <section v-if="loading || error || deleteError || holidaytimers.length === 0" class="list-states">
-      <p v-if="loading" class="loading">Loading Holiday timers…</p>
+      <ListLoadingState v-if="loading" message="Loading Holiday timers from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
       <div v-else-if="holidaytimers.length === 0" class="empty">No Holiday timers.</div>
@@ -244,7 +245,7 @@ onMounted(loadHolidaytimers)
 .list-view { display: flex; flex-direction: column; gap: 1rem; }
 .list-header { margin: 0; }
 .list-states, .list-body { margin: 0; }
-.loading, .error, .empty { margin-top: 0; }
+.error, .empty { margin-top: 0; }
 .error { color: #dc2626; }
 .table { margin-top: 0; width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
 .table th, .table td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; }

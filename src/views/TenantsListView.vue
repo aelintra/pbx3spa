@@ -7,6 +7,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('tenants')
 const toast = useToastStore()
@@ -181,7 +182,7 @@ onMounted(loadTenants)
     </header>
 
     <section v-if="loading || error || deleteError || tenants.length === 0" class="list-states">
-      <p v-if="loading" class="loading">Loading tenants from API…</p>
+      <ListLoadingState v-if="loading" message="Loading tenants from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
       <div v-else-if="tenants.length === 0" class="empty">No tenants. (API returned an empty list.)</div>
@@ -283,7 +284,6 @@ onMounted(loadTenants)
 .list-body {
   margin: 0;
 }
-.loading,
 .error,
 .empty {
   margin-top: 0;

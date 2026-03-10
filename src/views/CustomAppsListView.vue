@@ -6,6 +6,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('customapps')
 const toast = useToastStore()
@@ -159,7 +160,7 @@ onMounted(loadApps)
     </header>
 
     <section v-if="loading || error || deleteError || apps.length === 0" class="list-states">
-      <p v-if="loading" class="loading">Loading custom apps from API…</p>
+      <ListLoadingState v-if="loading" message="Loading custom apps from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
       <div v-else-if="apps.length === 0" class="empty">No custom apps. (API returned an empty list.)</div>
@@ -266,7 +267,6 @@ onMounted(loadApps)
 .list-body {
   margin: 0;
 }
-.loading,
 .error,
 .empty {
   margin-top: 0;

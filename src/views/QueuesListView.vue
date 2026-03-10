@@ -7,6 +7,7 @@ import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('queues')
 const toast = useToastStore()
@@ -190,7 +191,7 @@ onMounted(loadQueues)
     </header>
 
     <section v-if="loading || error || deleteError || queues.length === 0" class="list-states">
-      <p v-if="loading" class="loading">Loading queues…</p>
+      <ListLoadingState v-if="loading" message="Loading queues from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
       <div v-else-if="queues.length === 0" class="empty">No queues.</div>
@@ -265,7 +266,7 @@ onMounted(loadQueues)
 .list-view { display: flex; flex-direction: column; gap: 1rem; }
 .list-header { margin: 0; }
 .list-states, .list-body { margin: 0; }
-.loading, .error, .empty { margin-top: 0; }
+.error, .empty { margin-top: 0; }
 .error { color: #dc2626; }
 .table { margin-top: 0; width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
 .table th, .table td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; }

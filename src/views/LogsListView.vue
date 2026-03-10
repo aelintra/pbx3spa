@@ -5,6 +5,7 @@ import { useToastStore } from '@/stores/toast'
 import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import LogViewerModal from '@/components/LogViewerModal.vue'
+import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('logs')
 const toast = useToastStore()
@@ -108,7 +109,7 @@ onMounted(async () => {
     </header>
 
     <section v-if="loading || error" class="list-states">
-      <p v-if="loading" class="loading">Loading logs…</p>
+      <ListLoadingState v-if="loading" message="Loading logs from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
     </section>
 
@@ -176,7 +177,6 @@ onMounted(async () => {
 .list-body {
   margin: 0;
 }
-.loading,
 .error,
 .empty {
   margin-top: 0;

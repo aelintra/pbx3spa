@@ -2,6 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useHelp } from '@/composables/useHelp'
 import { getApiClient } from '@/api/client'
 import CommitButton from '@/components/CommitButton.vue'
 
@@ -61,6 +62,10 @@ function toggle(id) {
 
 onMounted(async () => {
   ensureCurrentGroupOpen()
+  if (auth.can('admin')) {
+    const { ensureFetched } = useHelp()
+    await ensureFetched()
+  }
   if (auth.isLoggedIn && !auth.user) {
     try {
       const user = await getApiClient().get('auth/whoami')

@@ -7,6 +7,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('ivrs')
 const toast = useToastStore()
@@ -187,7 +188,7 @@ onMounted(loadIvrs)
     </header>
 
     <section v-if="loading || error || deleteError || ivrs.length === 0" class="list-states">
-      <p v-if="loading" class="loading">Loading IVRs from API…</p>
+      <ListLoadingState v-if="loading" message="Loading IVRs from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
       <div v-else-if="ivrs.length === 0" class="empty">No IVRs. (API returned an empty list.)</div>
@@ -274,7 +275,6 @@ onMounted(loadIvrs)
 .list-body {
   margin: 0;
 }
-.loading,
 .error,
 .empty {
   margin-top: 0;

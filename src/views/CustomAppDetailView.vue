@@ -221,6 +221,7 @@ async function confirmDelete() {
           label="App name"
           type="text"
           placeholder="e.g. MyApp_1"
+          help-pkey="context"
         />
         <FormReadonly v-else id="edit-identity-pkey" label="App name" :value="app?.pkey ?? '—'" class="readonly-identity" />
         <template v-if="app?.shortuid != null && app?.shortuid !== ''">

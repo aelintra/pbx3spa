@@ -7,6 +7,7 @@ import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('agents')
 const toast = useToastStore()
@@ -196,7 +197,7 @@ onMounted(loadAgents)
     </header>
 
     <section v-if="loading || error || deleteError || agents.length === 0" class="list-states">
-      <p v-if="loading" class="loading">Loading agents… (agents: {{ agents.length }}, tenants: {{ tenants.length }})</p>
+      <ListLoadingState v-if="loading" message="Loading agents from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
       <div v-else-if="agents.length === 0" class="empty">No agents. (tenants loaded: {{ tenants.length }})</div>
@@ -270,7 +271,7 @@ onMounted(loadAgents)
 }
 .list-header { margin: 0; }
 .list-states, .list-body { margin: 0; }
-.loading, .error, .empty { margin-top: 0; }
+.error, .empty { margin-top: 0; }
 .error { color: #dc2626; }
 .table {
   margin-top: 0;

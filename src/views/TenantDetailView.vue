@@ -226,6 +226,7 @@ async function confirmAndDelete() {
                   :id="`edit-adv-${f.key}`"
                   v-model="formAdvanced[f.key]"
                   :label="f.label"
+                  :help-pkey="f.helpPkey ?? f.key"
                   yes-value="YES"
                   no-value="NO"
                 />
@@ -234,6 +235,7 @@ async function confirmAndDelete() {
                   :id="`edit-adv-${f.key}`"
                   v-model="formAdvanced[f.key]"
                   :label="f.label"
+                  :help-pkey="f.helpPkey ?? f.key"
                   :yes-value="f.options[0]"
                   :no-value="f.options[1]"
                 />
@@ -242,6 +244,7 @@ async function confirmAndDelete() {
                   :id="`edit-adv-${f.key}`"
                   v-model="formAdvanced[f.key]"
                   :label="f.label"
+                  :help-pkey="f.helpPkey ?? f.key"
                   :options="f.options"
                   :required="false"
                 />
@@ -250,6 +253,7 @@ async function confirmAndDelete() {
                   :id="`edit-adv-${f.key}`"
                   v-model="formAdvanced[f.key]"
                   :label="f.label"
+                  :help-pkey="f.helpPkey ?? f.key"
                   type="number"
                   :placeholder="f.placeholder || 'number'"
                 />
@@ -258,6 +262,7 @@ async function confirmAndDelete() {
                   :id="`edit-adv-${f.key}`"
                   v-model="formAdvanced[f.key]"
                   :label="f.label"
+                  :help-pkey="f.helpPkey ?? f.key"
                   type="text"
                   :placeholder="f.placeholder || ''"
                 />

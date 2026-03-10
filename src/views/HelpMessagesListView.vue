@@ -6,6 +6,7 @@ import { useStickyFilter } from '@/composables/useStickyFilter'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('help-messages')
 
@@ -129,7 +130,7 @@ onMounted(loadMessages)
     </header>
 
     <section v-if="loading || error || deleteError || messages.length === 0" class="list-states">
-      <p v-if="loading" class="loading">Loading help messages…</p>
+      <ListLoadingState v-if="loading" message="Loading help messages from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
       <div v-else-if="messages.length === 0" class="empty">No help messages. (API returned an empty list.)</div>
@@ -220,7 +221,6 @@ onMounted(loadMessages)
 .list-body {
   margin: 0;
 }
-.loading,
 .error,
 .empty {
   margin-top: 0;

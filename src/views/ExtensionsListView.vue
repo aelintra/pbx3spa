@@ -7,6 +7,7 @@ import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('extensions')
 const toast = useToastStore()
@@ -241,10 +242,7 @@ onMounted(loadExtensions)
     </header>
 
     <section v-if="loading || error || deleteError || (!loading && extensions.length === 0)" class="list-states">
-      <div v-if="loading" class="loading">
-        <span class="spinner"></span>
-        <span>Loading extensions from API…</span>
-      </div>
+      <ListLoadingState v-if="loading" message="Loading extensions from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
       <div v-else-if="!loading && extensions.length === 0" class="empty">No extensions. (API returned an empty list.)</div>
@@ -355,25 +353,6 @@ onMounted(loadExtensions)
 }
 .list-body {
   margin: 0;
-}
-.loading {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 0;
-}
-.spinner {
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 2px solid #e2e8f0;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 .error,
 .empty {

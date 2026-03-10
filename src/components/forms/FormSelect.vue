@@ -1,7 +1,13 @@
 <script setup>
 import { computed, watch } from 'vue'
+import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 
 const props = defineProps({
+  /** When set, show a "?" help icon next to the label that opens a popover with tt_help_core content for this pkey. */
+  helpPkey: {
+    type: String,
+    default: null
+  },
   id: {
     type: String,
     required: true
@@ -78,6 +84,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'blur'])
 
+/** When helpPkey is not set, derive from id (e.g. id="cluster" or id="edit-cluster" → "cluster") so panels get help by convention. */
+const effectiveHelpPkey = computed(() => props.helpPkey ?? (props.id ? props.id.replace(/^edit(-identity)?-/, '') : null))
+
 const selectValue = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
@@ -110,6 +119,7 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
   <div class="form-field" :class="{ 'form-field-inline': hideLabel }">
     <label v-if="!hideLabel" :for="id" class="form-field-label">
       {{ label }}
+      <FieldHelpIcon v-if="effectiveHelpPkey" :pkey="effectiveHelpPkey" />
       <span v-if="required" class="sr-only"> (required)</span>
     </label>
     <div class="form-field-input-wrapper">
