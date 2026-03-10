@@ -22,12 +22,13 @@ const exportPdfLoading = ref(false)
 const sortKey = ref('pkey')
 const sortOrder = ref('asc')
 
-/** Map tenant shortuid -> pkey so we can show pkey in the Tenant column when IVR.cluster is shortuid. */
+/** Map tenant id / shortuid / pkey -> tenant pkey so the Tenant column always shows the pkey, regardless of what the API used in IVR.cluster. */
 const tenantShortuidToPkey = computed(() => {
   const map = {}
   for (const t of tenants.value) {
-    if (t.shortuid) map[String(t.shortuid)] = t.pkey
-    if (t.pkey) map[String(t.pkey)] = t.pkey
+    if (t.id != null) map[String(t.id)] = t.pkey ?? t.id
+    if (t.shortuid != null) map[String(t.shortuid)] = t.pkey ?? t.shortuid
+    if (t.pkey != null) map[String(t.pkey)] = t.pkey
   }
   return map
 })
