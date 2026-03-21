@@ -8,7 +8,7 @@
 
 | Endpoint | Purpose |
 |----------|---------|
-| **GET /api/extensions/live** | Returns an object keyed by extension **pkey** (string): `{ "1000": { "ip": "...", "latency": "..." }, ... }`. Only SIP extensions are queried; each gets one `PJSIPShowEndpoint` AMI call. |
+| **GET /api/extensions/live** | Returns an object keyed by extension **pkey** (string): `{ "1000": { "ip": "...", "latency": "..." }, ... }`. Only **SIP** extensions with **active ≠ NO** (same rule as legacy SARK `get_pjsip_array`) get an AMI `PJSIPShowEndpoint` call; inactive extensions are omitted — list UI shows **Unknown** for IP/Status on those rows. |
 | **GET /api/extensions/{id}/runtime** | For a single extension: cfim, cfbs, ringdelay; for SIP also **ip** and **latency**. |
 
 **Implementation (pbx3api):**
@@ -25,7 +25,7 @@
 
 **List (ExtensionsListView.vue):**
 
-- Fetches `extensions` and `extensions/live` in parallel. `liveData` is a ref holding the live response object.
+- Loads `extensions` + `tenants` first, then `extensions/live` so the table is not blocked by AMI (see `ExtensionsListView.vue`). `liveData` holds the live response object.
 - **IP** and **Status** columns: `ipDisplay(e)` and `statusDisplay(e)` use `String(e.pkey)` to look up `liveData.value[key]`. Keys in the API response are strings (e.g. `"1000"`, `"1110"`); `e.pkey` from the list is also string in JSON, but normalising with `String(e.pkey)` avoids any number/string mismatch.
 - **Normalisation:** `liveValueDisplay(val)` treats empty, `"—"`, or Unicode em dash as no value and returns **"Unknown"**. So even if the API ever returns `"—"` (e.g. old deploy), the UI shows "Unknown". Real values (IP address, `"OK (5 ms)"`) are shown as-is.
 
@@ -39,7 +39,7 @@
 
 1. **API may still return "—"** on some servers if the "Unknown" change in Helper.php wasn’t deployed. Frontend normalises "—" to "Unknown" so the list always shows Unknown when there’s no real data.
 2. **Live keys are pkey strings.** The list can have duplicate pkeys (same extension number in different tenants); each row still looks up by `e.pkey` and gets the same live entry (Asterisk doesn’t distinguish by tenant for PJSIP endpoint name).
-3. **indexLive includes all SIP** (not only active=YES) so every SIP row has an entry and can show Unknown when no phone is registered.
+3. **indexLive skips `active = NO`** (legacy SARK parity). Inactive SIP rows have no live entry → **Unknown** for IP/Status.
 4. **PJSIPShowEndpoints** (plural) returns a high-level list without Contact/RoundtripUsec; we must use **PJSIPShowEndpoint** (singular) per extension to get IP and RTT. See old SARK `srkAmiHelperClass` (sail65) for reference.
 
 ---
@@ -47,5 +47,5 @@
 ## Reference
 
 - Old panel (sail65): `sarkextension/view.php` (showMain table: IP, latency from AMI); `srkAmiHelperClass` (get_pjsip_array, getIpAddressFromPeer, getLatencyFromPeer).
-- API: `pbx3api/app/Http/Controllers/ExtensionController.php` (indexLive, showruntime), `app/Helpers/Helper.php` (pjsip_endpoint_live), `app/CustomClasses/Ami.php` (amiQueryUntilBlankLine).
+- API: `pbx3api/app/Http/Controllers/ExtensionController.php` (indexLive, showruntime), `app/Helpers/Helper.php` (pjsip_endpoint_live), `app/CustomClasses/Ami.php` (`amiPjsipShowEndpointForLive`, `amiQueryUntilBlankLine`).
 - Frontend: `pbx3spa/src/views/ExtensionsListView.vue` (liveData, ipDisplay, statusDisplay, liveValueDisplay), `ExtensionDetailView.vue` (Runtime section ip/latency).
