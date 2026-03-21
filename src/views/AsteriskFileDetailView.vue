@@ -112,7 +112,7 @@ watch(filename, loadFile)
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 52rem;
+  max-width: 90rem;
 }
 .detail-header {
   display: flex;

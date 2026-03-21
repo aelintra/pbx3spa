@@ -23,6 +23,8 @@ const sortKey = ref('pkey')
 const sortOrder = ref('asc') // 'asc' | 'desc'
 /** Live PJSIP data keyed by pkey: { ip, latency }. Empty when PBX not running or request failed. */
 const liveData = ref({})
+/** True while extensions/live (AMI) is in flight; list is already shown. */
+const liveLoading = ref(false)
 
 /** Map cluster id, shortuid, or pkey → tenant pkey for display (always show pkey, not shortuid) */
 const clusterToTenantPkey = computed(() => {
@@ -59,16 +61,22 @@ function liveValueDisplay(val) {
   return s
 }
 
-/** Live IP for list: use string pkey for lookup; no data or "—" → Unknown */
+/** Live IP for list: use string pkey for lookup; while AMI fetch runs, show … until row has data */
 function ipDisplay(e) {
   const key = String(e.pkey ?? '')
+  if (liveLoading.value && !(key in liveData.value)) {
+    return '…'
+  }
   const live = liveData.value[key]
   return liveValueDisplay(live?.ip)
 }
 
-/** Live Status (RTT) for list: use string pkey for lookup; no data or "—" → Unknown */
+/** Live Status (RTT) for list: same as ipDisplay */
 function statusDisplay(e) {
   const key = String(e.pkey ?? '')
+  if (liveLoading.value && !(key in liveData.value)) {
+    return '…'
+  }
   const live = liveData.value[key]
   return liveValueDisplay(live?.latency)
 }
@@ -168,26 +176,41 @@ async function doExportPdf() {
   }
 }
 
+/** Load list + tenants only (fast). Live AMI data loads afterward via loadLiveData(). */
 async function loadExtensions() {
   loading.value = true
   error.value = ''
+  liveData.value = {}
+  liveLoading.value = false
   try {
-    const [extResponse, tenantResponse, liveResponse] = await Promise.all([
+    const [extResponse, tenantResponse] = await Promise.all([
       getApiClient().get('extensions'),
-      getApiClient().get('tenants'),
-      getApiClient().get('extensions/live').catch(() => ({}))
+      getApiClient().get('tenants')
     ])
     extensions.value = normalizeList(extResponse)
     tenants.value = normalizeList(tenantResponse, 'tenants')
-    const raw = liveResponse?.data ?? liveResponse
-    liveData.value = typeof raw === 'object' && raw !== null && !Array.isArray(raw)
-      ? raw
-      : {}
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load extensions')
     liveData.value = {}
   } finally {
     loading.value = false
+  }
+  loadLiveData()
+}
+
+/** PBX live IP/RTT (slow AMI path). Does not block initial table render. */
+async function loadLiveData() {
+  liveLoading.value = true
+  try {
+    const liveResponse = await getApiClient().get('extensions/live')
+    const raw = liveResponse?.data ?? liveResponse
+    liveData.value = typeof raw === 'object' && raw !== null && !Array.isArray(raw)
+      ? raw
+      : {}
+  } catch {
+    liveData.value = {}
+  } finally {
+    liveLoading.value = false
   }
 }
 
@@ -250,7 +273,7 @@ onMounted(loadExtensions)
 
     <section v-else class="list-body">
       <p v-if="filterText && filteredExtensions.length === 0" class="empty">No extensions match the filter.</p>
-      <table v-else class="table">
+      <table v-else class="table" :aria-busy="liveLoading">
         <thead>
           <tr>
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">
@@ -274,8 +297,12 @@ onMounted(loadExtensions)
             <th class="th-sortable" title="Click to sort" :class="sortClass('macaddr')" @click="setSort('macaddr')">
               MAC
             </th>
-            <th title="From Asterisk">IP</th>
-            <th title="RTT from Asterisk">Status</th>
+            <th :title="liveLoading ? 'Loading from Asterisk…' : 'From Asterisk'">
+              IP{{ liveLoading ? ' (…)' : '' }}
+            </th>
+            <th :title="liveLoading ? 'Loading from Asterisk…' : 'RTT from Asterisk'">
+              Status{{ liveLoading ? ' (…)' : '' }}
+            </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('transport')" @click="setSort('transport')">
               Transport
             </th>
