@@ -7,6 +7,7 @@
 | Extension provisioning | EXTENSION_PROVISIONING_QUICKSTART.md → EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md | done |
 | Trunk create | TRUNK_IMPLEMENTATION_PLAN.md, COMPLEX_CREATE_PLAN.md | done |
 | DDI / Inbound routes | DDI_CREATE_PLAN.md, COMPLEX_CREATE_PLAN.md | done |
+| IVR create | COMPLEX_CREATE_PLAN.md, wizardnotes/ivr/ | done |
 | Certificates / Let's Encrypt | CERTIFICATES_ADOPTION_PLAN.md | done |
 | LE per-tenant FQDN / multi-SAN | LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md | planned (gated §11) |
 | Permissions / admin | PERMISSIONS_MINIMAL_DEPLOY_PLAN.md, ADMIN_PANELS_AND_PERMISSIONS.md, AUTH_PATTERNS.md | done (Phase 0) |

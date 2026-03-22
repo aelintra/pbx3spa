@@ -36,11 +36,11 @@ So we can ship a type-chooser trunk create quickly on the current API, then exte
 
 - **Trunk create** — **Done.** SIP-only type chooser (send/accept/trusted), conditional fields, tenant schema, API working. IAX2 removed from UI (effectively unusable); **ToDo** when needed: see § ToDo — Trunk / IAX2.
 - **DDI (Inbound routes)** — **Done.** Create panel and edit panel aligned with legacy: Identity + Settings only; Connection and Advanced sections removed from edit. To-do: review underlying table for removed fields (see PROJECT_PLAN).
-- **IVR** — Deferred for now. UX is complex (many options/keys, alert/option/tag grid); leave until later.
+- **IVR** — **Done.** Create flow at `/ivrs/new` with type-chooser pattern where applicable; form and API aligned with panel pattern. (Detail/edit complexity remains as documented in **SESSION_HANDOFF** / **PANEL_PATTERN** audits.)
 - **Extension** — Simplified in PBX3 vs SARK: **no on-board phone provisioning**; provisioning is a separate service. Extension create is straightforward: choose **protocol** (SIP or WebRTC). Use **sensible defaults** for transport: **SIP → UDP**, **WebRTC → TLS** (implied). No need to expose transport on create; defaults are enough. **Mailbox** defaults to the extension number (pkey); no mailbox field on create (covers >99% of use cases); administrator can adjust after creation if needed.
 - **Extension create — minimum fields:** Extension number (pkey), Name (desc), Tenant (cluster), MAC address (optional). **Tenant** must be a **dropdown** populated with all tenant (cluster) pkeys (e.g. from GET tenants). Protocol chooser (SIP / WebRTC) plus these fields is the minimum create form.
 - **Extension bulk create (later):** Optional future feature: input multiple MAC addresses or a number range and create many extensions in one transaction. Valuable for initial site setup (exists in the old system) but rarely used in practice; defer until after single-extension create is done.
-- **Revised order:** Extension create next, then IVR later when we tackle its UX.
+- **Revised order (historical):** Extension create, then IVR — **both shipped**; remaining create-flow work is trunk IAX2 refinements (§ ToDo — Trunk / IAX2) and any future bulk extension create.
 
 ---
 
