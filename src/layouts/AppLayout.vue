@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useHelp } from '@/composables/useHelp'
@@ -40,6 +40,43 @@ const navGroups = [
 
 const expanded = ref({})
 
+/** Scroll position of the left nav (sidebar) — survives refresh and keeps position after route changes + DOM updates. */
+const sidebarRef = ref(null)
+const SIDEBAR_SCROLL_KEY = 'pbx3spa-sidebar-scroll'
+let sidebarScrollSaveRaf = null
+
+function persistSidebarScroll() {
+  const el = sidebarRef.value
+  if (!el) return
+  try {
+    sessionStorage.setItem(SIDEBAR_SCROLL_KEY, String(el.scrollTop))
+  } catch {
+    // private mode / quota
+  }
+}
+
+function onSidebarScroll() {
+  if (sidebarScrollSaveRaf != null) return
+  sidebarScrollSaveRaf = requestAnimationFrame(() => {
+    sidebarScrollSaveRaf = null
+    persistSidebarScroll()
+  })
+}
+
+function restoreSidebarScroll() {
+  const el = sidebarRef.value
+  if (!el) return
+  try {
+    const raw = sessionStorage.getItem(SIDEBAR_SCROLL_KEY)
+    if (raw == null || raw === '') return
+    const y = Number.parseInt(raw, 10)
+    if (!Number.isFinite(y) || y < 0) return
+    el.scrollTop = y
+  } catch {
+    // ignore
+  }
+}
+
 function groupIdForPath(path) {
   const p = path.replace(/\/$/, '') || '/'
   const g = navGroups.find((gr) => gr.links.some((l) => l.to === p || (l.to !== '/' && p.startsWith(l.to + '/'))))
@@ -74,9 +111,26 @@ onMounted(async () => {
       // token may be expired; leave user null
     }
   }
+  await nextTick()
+  restoreSidebarScroll()
 })
 
-watch(() => route.path, ensureCurrentGroupOpen)
+watch(
+  () => route.path,
+  async () => {
+    ensureCurrentGroupOpen()
+    await nextTick()
+    restoreSidebarScroll()
+  }
+)
+
+onBeforeUnmount(() => {
+  persistSidebarScroll()
+  if (sidebarScrollSaveRaf != null) {
+    cancelAnimationFrame(sidebarScrollSaveRaf)
+    sidebarScrollSaveRaf = null
+  }
+})
 
 async function logout() {
   try {
@@ -91,7 +145,7 @@ async function logout() {
 
 <template>
   <div class="app-layout">
-    <aside class="sidebar">
+    <aside ref="sidebarRef" class="sidebar" @scroll.passive="onSidebarScroll">
       <nav class="nav">
         <template v-if="auth.can('admin')">
           <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">Home</router-link>
