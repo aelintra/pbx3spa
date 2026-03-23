@@ -137,7 +137,8 @@ async function logout() {
 <style scoped>
 .app-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 .sidebar {
   width: 12rem;
@@ -222,6 +223,8 @@ async function logout() {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100vh;
+  overflow: hidden;
 }
 .topbar {
   display: flex;
@@ -230,6 +233,9 @@ async function logout() {
   padding: 0.75rem 1.5rem;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 .logo {
   font-size: 1.25rem;
@@ -262,6 +268,7 @@ async function logout() {
 .content {
   flex: 1;
   padding: 1.5rem;
-  overflow: auto;
+  overflow-y: auto;
+  min-height: 0;
 }
 </style>
