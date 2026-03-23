@@ -8,6 +8,8 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import ListViewMeta from '@/components/ListViewMeta.vue'
+import { countActiveRows, isRowActive } from '@/utils/listActive'
 
 const { filterText } = useStickyFilter('tenants')
 const toast = useToastStore()
@@ -45,7 +47,8 @@ const filteredTenants = computed(() => {
     const abstime = (t.abstimeout ?? '').toString().toLowerCase()
     const chanmax = (t.chanmax ?? '').toString().toLowerCase()
     const timer = (t.masteroclo ?? '').toString().toLowerCase()
-    return pkey.includes(q) || shortuid.includes(q) || desc.includes(q) || clid.includes(q) || abstime.includes(q) || chanmax.includes(q) || timer.includes(q)
+    const active = (t.active ?? '').toString().toLowerCase()
+    return pkey.includes(q) || shortuid.includes(q) || desc.includes(q) || clid.includes(q) || abstime.includes(q) || chanmax.includes(q) || timer.includes(q) || active.includes(q)
   })
 })
 
@@ -55,6 +58,8 @@ function sortValue(t, key) {
   const v = t[key]
   return v == null ? '' : String(v)
 }
+
+const tenantsActiveInFilter = computed(() => countActiveRows(filteredTenants.value))
 
 const sortedTenants = computed(() => {
   const list = [...filteredTenants.value]
@@ -88,6 +93,7 @@ function sortClass(key) {
 const tenantExportColumns = computed(() => [
   { key: 'pkey', label: 'Pkey' },
   { key: 'shortuid', label: 'Local UID', getValue: (t) => localUidDisplay(t) },
+  { key: 'active', label: 'Active' },
   { key: 'description', label: 'Description' },
   { key: 'clusterclid', label: 'CLID' },
   { key: 'abstimeout', label: 'Abstimeout' },
@@ -174,7 +180,7 @@ onMounted(loadTenants)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, Local UID, description, CLID, Abstime, ChanMax, or timer"
+          placeholder="Filter by name, Local UID, active, description, CLID, Abstime, ChanMax, or timer"
           aria-label="Filter tenants"
         />
       </p>
@@ -188,6 +194,12 @@ onMounted(loadTenants)
     </section>
 
     <section v-else class="list-body">
+      <ListViewMeta
+        v-if="tenants.length > 0"
+        :total="tenants.length"
+        :filtered="filteredTenants.length"
+        :active-count="tenantsActiveInFilter"
+      />
       <p v-if="filterText && filteredTenants.length === 0" class="empty">No tenants match the filter.</p>
       <table v-else class="table">
         <thead>
@@ -197,6 +209,9 @@ onMounted(loadTenants)
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">
               Local UID
+            </th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">
+              Active
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">
               description
@@ -218,9 +233,10 @@ onMounted(loadTenants)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="t in sortedTenants" :key="t.pkey">
+          <tr v-for="t in sortedTenants" :key="t.pkey" :class="{ 'list-row-inactive': !isRowActive(t.active) }">
             <td>{{ t.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(t) }}</td>
+            <td>{{ t.active ?? '—' }}</td>
             <td>{{ t.description ?? '—' }}</td>
             <td>{{ t.clusterclid != null && t.clusterclid !== '' ? t.clusterclid : '—' }}</td>
             <td>{{ t.abstimeout != null && t.abstimeout !== '' ? t.abstimeout : '—' }}</td>

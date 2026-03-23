@@ -8,6 +8,8 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import ListViewMeta from '@/components/ListViewMeta.vue'
+import { countActiveRows, isRowActive } from '@/utils/listActive'
 
 const { filterText } = useStickyFilter('extensions')
 const toast = useToastStore()
@@ -80,6 +82,19 @@ function statusDisplay(e) {
   return liveValueDisplay(live?.latency)
 }
 
+/** True when Status column shows Unknown (not loading ellipsis). Used for Down count + cell highlight. */
+function isStatusUnknown(e) {
+  return statusDisplay(e) === 'Unknown'
+}
+
+/** Status text begins with OK (live RTT string from AMI), e.g. "OK" or "OK …". */
+const STATUS_OK_REGEX = /^OK/
+function isStatusOnline(e) {
+  const s = statusDisplay(e)
+  if (s === '…' || s === 'Unknown') return false
+  return STATUS_OK_REGEX.test(s.trim())
+}
+
 const filteredExtensions = computed(() => {
   const list = extensions.value
   const q = (filterText.value || '').trim().toLowerCase()
@@ -107,6 +122,26 @@ function sipIdentityDisplay(e) {
   const v = e.shortuid
   return v == null || v === '' ? '—' : String(v)
 }
+
+const extensionsActiveInFilter = computed(() => countActiveRows(filteredExtensions.value))
+
+/** Rows in current filter whose Status is Unknown (listed as “down” in meta). */
+const extensionsDownInFilter = computed(() => {
+  let n = 0
+  for (const e of filteredExtensions.value) {
+    if (isStatusUnknown(e)) n += 1
+  }
+  return n
+})
+
+/** Filtered rows whose Status matches /^OK/. */
+const extensionsOnlineInFilter = computed(() => {
+  let n = 0
+  for (const e of filteredExtensions.value) {
+    if (isStatusOnline(e)) n += 1
+  }
+  return n
+})
 
 const sortedExtensions = computed(() => {
   const list = [...filteredExtensions.value]
@@ -142,6 +177,7 @@ const extensionExportColumns = computed(() => [
   { key: 'pkey', label: 'Ext' },
   { key: 'shortuid', label: 'SIP Identity', getValue: (e) => sipIdentityDisplay(e) },
   { key: 'cluster', label: 'Tenant', getValue: (e) => tenantPkeyDisplay(e) },
+  { key: 'active', label: 'Active' },
   { key: 'desc', label: 'User', getValue: (e) => userDisplay(e) },
   { key: 'extension_type', label: 'Type' },
   { key: 'device', label: 'Device', getValue: (e) => (e.device ?? e.technology ?? '—') },
@@ -149,7 +185,6 @@ const extensionExportColumns = computed(() => [
   { key: 'ip', label: 'IP', getValue: (e) => ipDisplay(e) },
   { key: 'status', label: 'Status', getValue: (e) => statusDisplay(e) },
   { key: 'transport', label: 'Transport' },
-  { key: 'active', label: 'Active' }
 ])
 
 function doExportCsv() {
@@ -271,6 +306,14 @@ onMounted(loadExtensions)
     </section>
 
     <section v-else class="list-body">
+      <ListViewMeta
+        v-if="extensions.length > 0"
+        :total="extensions.length"
+        :filtered="filteredExtensions.length"
+        :active-count="extensionsActiveInFilter"
+        :down-count="extensionsDownInFilter"
+        :online-count="extensionsOnlineInFilter"
+      />
       <p v-if="filterText && filteredExtensions.length === 0" class="empty">No extensions match the filter.</p>
       <table v-else class="table" :aria-busy="liveLoading">
         <thead>
@@ -283,6 +326,9 @@ onMounted(loadExtensions)
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">
               Tenant
+            </th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">
+              Active?
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('desc')" @click="setSort('desc')">
               User
@@ -305,18 +351,23 @@ onMounted(loadExtensions)
             <th class="th-sortable" title="Click to sort" :class="sortClass('transport')" @click="setSort('transport')">
               Transport
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">
-              Active?
-            </th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
             <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="e in sortedExtensions" :key="e.shortuid || e.id || (e.cluster || '') + '-' + (e.pkey || '')">
+          <tr
+            v-for="e in sortedExtensions"
+            :key="e.shortuid || e.id || (e.cluster || '') + '-' + (e.pkey || '')"
+            :class="{
+              'list-row-inactive': !isRowActive(e.active),
+              'list-row-status-unknown': isStatusUnknown(e) && isRowActive(e.active)
+            }"
+          >
             <td>{{ e.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ sipIdentityDisplay(e) }}</td>
             <td>{{ tenantPkeyDisplay(e) }}</td>
+            <td>{{ e.active ?? '—' }}</td>
             <td :title="(e.desc ?? e.cname ?? e.description ?? '')">{{ userDisplay(e) }}</td>
             <td>{{ e.extension_type ?? '—' }}</td>
             <td class="cell-immutable" title="Immutable">{{ e.device ?? e.technology ?? '—' }}</td>
@@ -324,7 +375,6 @@ onMounted(loadExtensions)
             <td>{{ ipDisplay(e) }}</td>
             <td>{{ statusDisplay(e) }}</td>
             <td>{{ e.transport ?? '—' }}</td>
-            <td>{{ e.active ?? '—' }}</td>
             <td>
               <router-link v-if="e.shortuid" :to="{ name: 'extension-detail', params: { shortuid: e.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>

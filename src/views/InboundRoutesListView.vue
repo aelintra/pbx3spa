@@ -8,6 +8,8 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import ListViewMeta from '@/components/ListViewMeta.vue'
+import { countActiveRows, isRowActive } from '@/utils/listActive'
 
 const { filterText } = useStickyFilter('inbound-routes')
 const toast = useToastStore()
@@ -69,6 +71,8 @@ function sortValue(r, key) {
   return v == null ? '' : String(v)
 }
 
+const inboundActiveInFilter = computed(() => countActiveRows(filteredRoutes.value))
+
 const sortedRoutes = computed(() => {
   const list = [...filteredRoutes.value]
   const key = sortKey.value
@@ -102,11 +106,11 @@ const inboundRouteExportColumns = computed(() => [
   { key: 'pkey', label: 'DiD/CLiD' },
   { key: 'shortuid', label: 'Local UID', getValue: (r) => localUidDisplay(r) },
   { key: 'cluster', label: 'Tenant', getValue: (r) => tenantPkeyDisplay(r) },
+  { key: 'active', label: 'Active' },
   { key: 'trunkname', label: 'Name' },
   { key: 'openroute', label: 'Open' },
   { key: 'closeroute', label: 'Closed' },
-  { key: 'technology', label: 'Type' },
-  { key: 'active', label: 'Active' }
+  { key: 'technology', label: 'Type' }
 ])
 
 function doExportCsv() {
@@ -203,6 +207,12 @@ onMounted(loadInboundRoutes)
     </section>
 
     <section v-else class="list-body">
+      <ListViewMeta
+        v-if="inboundRoutes.length > 0"
+        :total="inboundRoutes.length"
+        :filtered="filteredRoutes.length"
+        :active-count="inboundActiveInFilter"
+      />
       <p v-if="filterText && filteredRoutes.length === 0" class="empty">No inbound routes match the filter.</p>
       <table v-else class="table">
         <thead>
@@ -210,25 +220,25 @@ onMounted(loadInboundRoutes)
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">DiD/CLiD</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active?</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('trunkname')" @click="setSort('trunkname')">Name</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('openroute')" @click="setSort('openroute')">Open</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('closeroute')" @click="setSort('closeroute')">Closed</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('technology')" @click="setSort('technology')">Type</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active?</th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
             <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="r in sortedRoutes" :key="r.shortuid || r.id || (r.cluster || '') + '-' + (r.pkey || '')">
+          <tr v-for="r in sortedRoutes" :key="r.shortuid || r.id || (r.cluster || '') + '-' + (r.pkey || '')" :class="{ 'list-row-inactive': !isRowActive(r.active) }">
             <td>{{ r.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(r) }}</td>
             <td>{{ tenantPkeyDisplay(r) }}</td>
+            <td>{{ r.active ?? '—' }}</td>
             <td>{{ r.trunkname ?? '—' }}</td>
             <td>{{ r.openroute ?? '—' }}</td>
             <td>{{ r.closeroute ?? '—' }}</td>
             <td>{{ r.technology ?? '—' }}</td>
-            <td>{{ r.active ?? '—' }}</td>
             <td>
               <router-link v-if="r.shortuid" :to="{ name: 'inbound-route-detail', params: { shortuid: r.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>

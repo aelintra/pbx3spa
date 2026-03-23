@@ -8,6 +8,7 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import ListViewMeta from '@/components/ListViewMeta.vue'
 
 const { filterText } = useStickyFilter('agents')
 const toast = useToastStore()
@@ -203,6 +204,7 @@ onMounted(loadAgents)
     </section>
 
     <section v-else class="list-body">
+      <ListViewMeta v-if="agents.length > 0" :total="agents.length" :filtered="filteredAgents.length" />
       <p v-if="filterText && filteredAgents.length === 0" class="empty">No agents match the filter.</p>
       <table v-else class="table">
         <thead>

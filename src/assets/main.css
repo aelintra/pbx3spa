@@ -31,3 +31,27 @@ body {
   color: #dc2626;
   font-weight: 500;
 }
+
+/* List tables: soften rows that are not Active (YES) */
+.list-view .table tbody tr.list-row-inactive > td {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+.list-view .table tbody tr.list-row-inactive:hover > td {
+  background-color: #e2e8f0;
+}
+.list-view .table tbody tr.list-row-inactive .cell-link {
+  color: #3b82f6;
+}
+.list-view .table tbody tr.list-row-inactive .cell-link-delete {
+  color: #b91c1c;
+}
+
+/* Extensions: Unknown reachability — same light row lowlight on every cell (incl. Status); no separate Status block */
+.list-view .table tbody tr.list-row-status-unknown > td {
+  background-color: #fffbeb;
+  color: #57534e;
+}
+.list-view .table tbody tr.list-row-status-unknown:hover > td {
+  background-color: #fef9c3;
+}

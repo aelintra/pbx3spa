@@ -5,6 +5,7 @@ import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { isRowActive } from '@/utils/listActive'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 
@@ -179,14 +180,14 @@ onMounted(loadApps)
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">
               Tenant
             </th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">
+              Active?
+            </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">
               description
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('span')" @click="setSort('span')">
               span
-            </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">
-              Active?
             </th>
             <th class="th-actions" title="Edit">
               <span class="action-icon" aria-hidden="true">
@@ -201,13 +202,13 @@ onMounted(loadApps)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="a in sortedApps" :key="a.shortuid ?? a.id ?? a.pkey">
+          <tr v-for="a in sortedApps" :key="a.shortuid ?? a.id ?? a.pkey" :class="{ 'list-row-inactive': !isRowActive(a.active) }">
             <td class="cell-immutable" title="Immutable">{{ a.pkey }}</td>
             <td>{{ a.cname ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(a) }}</td>
+            <td>{{ a.active ?? '—' }}</td>
             <td>{{ a.description ?? '—' }}</td>
             <td>{{ a.span ?? '—' }}</td>
-            <td>{{ a.active ?? '—' }}</td>
             <td>
               <router-link :to="{ name: 'customapp-detail', params: { shortuid: a.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true">

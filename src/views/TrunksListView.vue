@@ -6,6 +6,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
+import { isRowActive } from '@/utils/listActive'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 
@@ -104,8 +105,8 @@ const trunkExportColumns = computed(() => [
   { key: 'pkey', label: 'Name' },
   { key: 'shortuid', label: 'Local UID', getValue: (tr) => localUidDisplay(tr) },
   { key: 'cluster', label: 'Tenant', getValue: (tr) => tenantPkeyDisplay(tr) },
-  { key: 'description', label: 'Description' },
   { key: 'active', label: 'Active' },
+  { key: 'description', label: 'Description' },
   { key: 'host', label: 'Host' }
 ])
 
@@ -218,11 +219,11 @@ onMounted(loadTrunks)
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">
               Tenant
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">
-              description
-            </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">
               Active?
+            </th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">
+              description
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('host')" @click="setSort('host')">
               host
@@ -232,12 +233,12 @@ onMounted(loadTrunks)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="tr in sortedTrunks" :key="tr.shortuid || tr.id || (tr.cluster || '') + '-' + (tr.pkey || '')">
+          <tr v-for="tr in sortedTrunks" :key="tr.shortuid || tr.id || (tr.cluster || '') + '-' + (tr.pkey || '')" :class="{ 'list-row-inactive': !isRowActive(tr.active) }">
             <td>{{ tr.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(tr) }}</td>
             <td>{{ tenantPkeyDisplay(tr) }}</td>
-            <td>{{ tr.description ?? '—' }}</td>
             <td>{{ tr.active ?? '—' }}</td>
+            <td>{{ tr.description ?? '—' }}</td>
             <td>{{ tr.host ?? '—' }}</td>
             <td>
               <router-link v-if="tr.shortuid" :to="{ name: 'trunk-detail', params: { shortuid: tr.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">

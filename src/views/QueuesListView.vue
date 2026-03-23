@@ -8,6 +8,8 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import ListViewMeta from '@/components/ListViewMeta.vue'
+import { countActiveRows, isRowActive } from '@/utils/listActive'
 
 const { filterText } = useStickyFilter('queues')
 const toast = useToastStore()
@@ -58,6 +60,8 @@ function sortValue(item, key) {
   return key === 'timeout' ? String(Number(v)) : String(v)
 }
 
+const queuesActiveInFilter = computed(() => countActiveRows(filteredQueues.value))
+
 const sortedQueues = computed(() => {
   const list = [...filteredQueues.value]
   const key = sortKey.value
@@ -97,8 +101,8 @@ const queueExportColumns = computed(() => [
   { key: 'pkey', label: 'Queue' },
   { key: 'shortuid', label: 'Local UID' },
   { key: 'cluster', label: 'Tenant', getValue: (q) => tenantPkeyDisplay(q) },
-  { key: 'cname', label: 'Name', getValue: (q) => q.cname ?? q.name ?? '—' },
   { key: 'active', label: 'Active' },
+  { key: 'cname', label: 'Name', getValue: (q) => q.cname ?? q.name ?? '—' },
   { key: 'strategy', label: 'Strategy' },
   { key: 'timeout', label: 'Timeout', getValue: (q) => (q.timeout != null && q.timeout !== '' ? q.timeout : '—') }
 ])
@@ -197,6 +201,12 @@ onMounted(loadQueues)
     </section>
 
     <section v-else class="list-body">
+      <ListViewMeta
+        v-if="queues.length > 0"
+        :total="queues.length"
+        :filtered="filteredQueues.length"
+        :active-count="queuesActiveInFilter"
+      />
       <p v-if="filterText && filteredQueues.length === 0" class="empty">No queues match the filter.</p>
       <table v-else class="table">
         <thead>
@@ -204,8 +214,8 @@ onMounted(loadQueues)
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">Queue</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('cname')" @click="setSort('cname')">Name</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('cname')" @click="setSort('cname')">Name</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('strategy')" @click="setSort('strategy')">Strategy</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('timeout')" @click="setSort('timeout')">Timeout</th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
@@ -213,12 +223,12 @@ onMounted(loadQueues)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="q in sortedQueues" :key="q.shortuid || q.id || (q.cluster || '') + '-' + (q.pkey || '')">
+          <tr v-for="q in sortedQueues" :key="q.shortuid || q.id || (q.cluster || '') + '-' + (q.pkey || '')" :class="{ 'list-row-inactive': !isRowActive(q.active) }">
             <td>{{ q.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ q.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(q) }}</td>
-            <td>{{ q.cname ?? q.name ?? '—' }}</td>
             <td>{{ q.active ?? '—' }}</td>
+            <td>{{ q.cname ?? q.name ?? '—' }}</td>
             <td>{{ q.strategy ?? '—' }}</td>
             <td>{{ q.timeout != null && q.timeout !== '' ? q.timeout : '—' }}</td>
             <td>

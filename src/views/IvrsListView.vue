@@ -8,6 +8,8 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import ListViewMeta from '@/components/ListViewMeta.vue'
+import { countActiveRows, isRowActive } from '@/utils/listActive'
 
 const { filterText } = useStickyFilter('ivrs')
 const toast = useToastStore()
@@ -54,7 +56,8 @@ const filteredIvrs = computed(() => {
     const shortuid = (ivr.shortuid ?? '').toString().toLowerCase()
     const cluster = (ivr.cluster ?? '').toString().toLowerCase()
     const desc = (ivr.description ?? '').toString().toLowerCase()
-    return pkey.includes(q) || shortuid.includes(q) || cluster.includes(q) || desc.includes(q)
+    const active = (ivr.active ?? '').toString().toLowerCase()
+    return pkey.includes(q) || shortuid.includes(q) || cluster.includes(q) || desc.includes(q) || active.includes(q)
   })
 })
 
@@ -62,6 +65,8 @@ function sortValue(ivr, key) {
   const v = ivr[key]
   return v == null ? '' : String(v)
 }
+
+const ivrsActiveInFilter = computed(() => countActiveRows(filteredIvrs.value))
 
 const sortedIvrs = computed(() => {
   const list = [...filteredIvrs.value]
@@ -96,6 +101,7 @@ const ivrExportColumns = computed(() => [
   { key: 'pkey', label: 'IVR Direct Dial' },
   { key: 'shortuid', label: 'Local UID', getValue: (ivr) => localUidDisplay(ivr) },
   { key: 'cluster', label: 'Tenant', getValue: (ivr) => tenantDisplay(ivr) },
+  { key: 'active', label: 'Active' },
   { key: 'description', label: 'Description' },
   { key: 'greetnum', label: 'Greeting number' },
   { key: 'timeout', label: 'Timeout' }
@@ -181,7 +187,7 @@ onMounted(loadIvrs)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by IVR Direct Dial, Local UID, tenant, or description"
+          placeholder="Filter by IVR Direct Dial, Local UID, tenant, description, or active"
           aria-label="Filter IVRs"
         />
       </p>
@@ -195,6 +201,12 @@ onMounted(loadIvrs)
     </section>
 
     <section v-else class="list-body">
+      <ListViewMeta
+        v-if="ivrs.length > 0"
+        :total="ivrs.length"
+        :filtered="filteredIvrs.length"
+        :active-count="ivrsActiveInFilter"
+      />
       <p v-if="filterText && filteredIvrs.length === 0" class="empty">No IVRs match the filter.</p>
       <table v-else class="table">
         <thead>
@@ -202,6 +214,7 @@ onMounted(loadIvrs)
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">IVR Direct Dial</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">description</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('greetnum')" @click="setSort('greetnum')">Greeting number</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('timeout')" @click="setSort('timeout')">Timeout</th>
@@ -210,10 +223,11 @@ onMounted(loadIvrs)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="ivr in sortedIvrs" :key="ivr.shortuid || ivr.id || (ivr.cluster || '') + '-' + (ivr.pkey || '')">
+          <tr v-for="ivr in sortedIvrs" :key="ivr.shortuid || ivr.id || (ivr.cluster || '') + '-' + (ivr.pkey || '')" :class="{ 'list-row-inactive': !isRowActive(ivr.active) }">
             <td>{{ ivr.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(ivr) }}</td>
             <td>{{ tenantDisplay(ivr) }}</td>
+            <td>{{ ivr.active ?? '—' }}</td>
             <td>{{ ivr.description ?? '—' }}</td>
             <td>{{ ivr.greetnum != null ? String(ivr.greetnum) : '—' }}</td>
             <td>{{ ivr.timeout ?? '—' }}</td>
