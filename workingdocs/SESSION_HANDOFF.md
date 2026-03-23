@@ -6,7 +6,7 @@
 
 1. **Repos / branch:** **`pbx3spa`** and **`pbx3api`** — default integration branch is **`main`** (Mar 2026: former `cleanup` work was merged to `main`; remote `cleanup` was deleted on GitHub; you may still have a local `cleanup` branch). **`pbx3-master`** is **not** a git repo; it is a folder holding four separate repos (**pbx3**, **pbx3api**, **pbx3cagi**, **pbx3spa**). Commit and push from the repo you changed.
 2. **Read order:** This file → **PROJECT_PLAN.md** § Current state → **SYSTEM_CONTEXT.md** / **README.md** as needed. UI work: **PANEL_PATTERN.md** (especially §8 reference status, §2.2 lists, §3 create, list **Local UID** = `cell-immutable`). Cross-cutting features: **FEATURE_PLANS_INDEX.md**.
-3. **Recently shipped (sanity-check `git log`):** **Commit** in **AppLayout** (`CommitButton.vue`, `syscommands/commitstatus`); **sticky filter + sort** (`useStickyFilter.js`, **STICKY_LIST_UI.md**); **contextual help** (`useHelp.js`, `FieldHelpIcon.vue`, prefetch `helpcore` in layout); Extensions list **live** IP/Status (**EXTENSIONS_LIVE_DATA.md**); list **Local UID** uses **`cell-immutable`** everywhere that column exists (Queues, Conferences, Greetings, Class of Service, etc.); Class of Service list includes **Dialplan** column.
+3. **Recently shipped (sanity-check `git log`):** **Commit** in **AppLayout** (`CommitButton.vue`, `syscommands/commitstatus`); **sticky filter + sort** (`useStickyFilter.js`, **STICKY_LIST_UI.md**); **contextual help** (`useHelp.js`, `FieldHelpIcon.vue`, prefetch `helpcore` in layout); Extensions list **live** IP/Status (**EXTENSIONS_LIVE_DATA.md**); list **Local UID** uses **`cell-immutable`** everywhere that column exists (Queues, Conferences, Greetings, Class of Service, etc.); Class of Service list includes **Dialplan** column. **App shell:** main content scrolls independently of the **sidebar**; sidebar **`scrollTop`** persisted in **`sessionStorage`** (`pbx3spa-sidebar-scroll`). **Nav:** accordion — one section open at a time (see **PANEL_PATTERN** § App shell). May ship on branch **`scroller`** until merged to **`main`**.
 4. **What’s still open:** **Left to do** below; **SINGLE_PANEL_SCREENS.md** (Logs partial, 3rd-party certs / factory reset / SIP PCAP need API); **COMPLEX_CREATE_PLAN.md** (trunk **IAX2** deferred).
 
 **Primary branch today:** **`main`** on **pbx3spa** and **pbx3api** (not `spanel`).
@@ -39,6 +39,12 @@
 ---
 
 ## Done
+
+### App layout — independent main scroll + sidebar scroll persistence
+
+- **`src/layouts/AppLayout.vue`:** Viewport-height shell (`100vh`) so **list/detail content** scrolls inside **`.content`** while the **left nav stays on screen**. Sidebar has its own scroll and **`sessionStorage`** persistence (`pbx3spa-sidebar-scroll`) so scroll position survives refresh and route changes (rAF-throttled save; restore after `nextTick`).
+- **Accordion nav:** One nav **group** expanded at a time (compact sidebar). **Tradeoff** vs scroll persistence: user feedback may later justify **persisting expanded groups** or **multiple open sections** — documented in **PANEL_PATTERN.md** § App shell and navigation.
+- **Branch:** Developed on **`scroller`**; merge to **`main`** when ready.
 
 ### Latest session (Commit everywhere, sticky sort, contextual help)
 

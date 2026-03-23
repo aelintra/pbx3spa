@@ -1,6 +1,6 @@
 # Standardized Panel Design Pattern
 
-**Last Updated**: 2026-02-14  
+**Last Updated**: 2026-03-07  
 **Based on**: IVR CRUD panels implementation (refactored with reusable components)  
 **Status**: Pattern established and documented, ready for application to all panels
 
@@ -26,6 +26,18 @@
 This document defines the standardized pattern for all CRUD panels in the application. The pattern was established through the IVR panel implementation and should be applied consistently across all resources (Tenants, Extensions, Trunks, Routes, Queues, Agents, InboundRoutes, etc.).
 
 **This is a complete guide** - follow it step-by-step to build a new panel from scratch.
+
+---
+
+## App shell and navigation (`AppLayout.vue`)
+
+List/detail/create views render inside the **main content** column; they should **not** try to own full-window scrolling — the shell does.
+
+- **Independent scrolling:** The layout uses **`height: 100vh`** on the outer flex row with **`overflow: hidden`**, so the **browser window** does not scroll. The **main** column (`.main`) contains a **sticky topbar** and a **`.content`** region with **`overflow-y: auto`** and **`min-height: 0`** — long tables and forms scroll **here**, not with the sidebar.
+- **Left sidebar:** The **`aside.sidebar`** column scrolls on its own (`overflow-y: auto`) and stays **visible** while the main data area scrolls.
+- **Sidebar scroll persistence:** **`scrollTop`** for the sidebar is saved to **`sessionStorage`** (`key: pbx3spa-sidebar-scroll`) on scroll (throttled with `requestAnimationFrame`) and **restored** after load and after **route changes** (with `nextTick` so DOM matches the active nav group). Implementation: `src/layouts/AppLayout.vue`.
+- **Accordion nav (one open group):** Section headings use **expand/collapse**; only **one** group is expanded at a time (see `ensureCurrentGroupOpen` / toggle). Opening another heading **closes** the previous group. **Tradeoff:** this keeps the nav compact but can feel disjointed when combined with sidebar scroll persistence — persistence remembers **vertical scroll** but not **which groups were expanded**. **Future (if feedback warrants):** persist expanded group ids in `sessionStorage`, or allow **multiple** sections open; decide after real usage.
+- **Commit / help:** **`CommitButton`** and **`useHelp`** prefetch live in this layout; see **SESSION_HANDOFF** for behaviour.
 
 ---
 
