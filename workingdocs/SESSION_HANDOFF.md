@@ -105,6 +105,7 @@ Holiday Timers, Extension harmonisation, Queue audit, Custom Apps, Help messages
 - **Review later (UX):** Inline edit for list rows — revisit when main pattern is stable.
 - **Sticky list filter/sort:** **Done** — `useStickyFilter` + `useStickySort` (5‑min expiry). See **STICKY_LIST_UI.md**.
 - **Help text (per-field hints):** **Done** — cached `helpcore` + `FieldHelpIcon` / form `hint` props; optional future: REST shape `GET /help/{resource}/{field}` if we want resource-scoped URLs (see **UX_IMPROVEMENTS_IVR.md**).
+- **SPA bundle size / performance (watch):** Fine on **LAN** today; re-check when testing moves to the **cloud** (latency, slower links). Watch `npm run build` output (JS/CSS gzip sizes), consider **route-level code splitting** (`import()` in router) and **rollup visualizer** if the main chunk grows. No fixed budget yet — treat as ongoing hygiene.
 
 ### Panel pattern audit (for when we come back)
 

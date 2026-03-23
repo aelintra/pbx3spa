@@ -28,6 +28,8 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **To-do (pbx3api – Middleware on remote):** Investigate why `app/Http/Middleware/ValidateClusterAccess.php` does not appear on the remote test instance after pull. (Unclear; deployment path / branch / Sanctum history to be checked.)
 
+**To-do (SPA – bundle size / perf, watch):** Acceptable on **LAN**; revisit when **cloud** testing starts (network latency). Track production build sizes; if needed add **lazy-loaded routes** and bundle analysis. See **SESSION_HANDOFF** § Other to-dos.
+
 **Inline edit (pattern in place):** List views can support inline edits for fields that users often change without opening detail (e.g. **Active** YES/NO). Use **FormToggle** or **FormSelect** with **hideLabel** in the table cell; on change call the update API immediately; show toast on success. Pattern documented in PANEL_PATTERN.md § "Inline edits in list views"; it works. It was tried on the Queues list and reverted for now—we may revisit the look/UX when we add it again. Other lists (Trunks, Routes, IVRs, Inbound routes, etc.) can add the same when desired.
 
 **Done (create panels §3):** All create panels (Extension, Trunk, Route, Queue, Agent, IVR, Tenant, Inbound route) are standardized per PANEL_PATTERN.md §3: Identity / Settings / optional Advanced; defaults preset; FormToggle for booleans, FormSegmentedPill for 2–3 options, FormSelect for 4+. See CREATE_PANELS_STANDARDIZATION.md. **Done (field mutability):** API GET /schemas; useSchema composable; detail and create views use schema for read_only and defaults. **Next frontend priorities:** Complex create refinements per COMPLEX_CREATE_PLAN.md, or other follow-ups.

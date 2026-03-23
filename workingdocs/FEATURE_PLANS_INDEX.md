@@ -17,5 +17,6 @@
 | Help text per-field hints | UX_IMPROVEMENTS_IVR.md § Help Text, useHelp + FieldHelpIcon | done |
 | Trunk/route multitenancy | TRUNK_ROUTE_MULTITENANCY.md | reference |
 | Data-driven list policy | DATA_DRIVEN_LIST_POLICY_PROJECT.md | deferred |
+| SPA bundle size / cloud perf | SESSION_HANDOFF.md § Other to-dos, PROJECT_PLAN § Current state | watch (revisit in cloud) |
 
 **Source of truth:** Schema and code. Verify against repo when implementing; this index may be outdated.
