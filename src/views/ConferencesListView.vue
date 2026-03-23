@@ -204,7 +204,7 @@ onMounted(loadConferences)
         <tbody>
           <tr v-for="c in sortedConferences" :key="c.shortuid || c.id || (c.cluster || '') + '-' + (c.pkey || '')">
             <td>{{ c.pkey }}</td>
-            <td>{{ c.shortuid ?? '—' }}</td>
+            <td class="cell-immutable" title="Immutable">{{ c.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(c) }}</td>
             <td>{{ c.cname ?? '—' }}</td>
             <td>{{ c.type ?? '—' }}</td>
@@ -258,6 +258,7 @@ onMounted(loadConferences)
 .table { margin-top: 0; width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
 .table th, .table td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
 .table th { font-weight: 600; color: #475569; background: #f8fafc; }
+.cell-immutable { color: #64748b; background: #f8fafc; }
 .th-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
 .th-sortable::before { content: '\21C5'; font-size: 0.7em; color: #94a3b8; margin-left: 0.2em; font-weight: normal; }
 .th-sortable.sort-asc::before, .th-sortable.sort-desc::before { content: none; }
