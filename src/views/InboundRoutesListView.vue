@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
-import { useStickyFilter } from '@/composables/useStickyFilter'
+import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
@@ -19,8 +19,7 @@ const deleteError = ref('')
 const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
 const exportPdfLoading = ref(false)
-const sortKey = ref('pkey')
-const sortOrder = ref('asc')
+const { sortKey, sortOrder } = useStickySort('inbound-routes', { defaultKey: 'pkey' })
 
 /** Map cluster id, shortuid, or pkey → tenant pkey for display. */
 const clusterToTenantPkey = computed(() => {

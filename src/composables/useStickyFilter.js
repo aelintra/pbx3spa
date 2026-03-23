@@ -11,9 +11,8 @@
  *
  * Rollout: Used on all list panels that have a filter (tenants, extensions, trunks, queues, conferences, agents, routes, customapps, ivrs, inbound-routes, devices, asterisk-files).
  *
- * TODO: Sticky sort — consider useStickySort(listId) that persists sortKey + sortOrder
- * in sessionStorage the same way, so column sort survives navigation. Decide after
- * sticky filter rollout. Document in workingdocs/STICKY_LIST_UI.md.
+ * **Sticky sort:** `useStickySort(listId, options)` — same sessionStorage + 5‑minute expiry
+ * pattern; persists `sortKey` and `sortOrder`. See **workingdocs/STICKY_LIST_UI.md**.
  */
 
 import { ref, watch } from 'vue'
@@ -69,4 +68,57 @@ export function useStickyFilter(listId) {
   })
 
   return { filterText }
+}
+
+const SORT_STORAGE_PREFIX = 'pbx3spa-list-sort-'
+
+function getSortStored(listId, defaultKey, defaultOrder) {
+  try {
+    const raw = sessionStorage.getItem(SORT_STORAGE_PREFIX + listId)
+    if (!raw) return { sortKey: defaultKey, sortOrder: defaultOrder }
+    const data = JSON.parse(raw)
+    if (data == null || typeof data.storedAt !== 'number') {
+      return { sortKey: defaultKey, sortOrder: defaultOrder }
+    }
+    if (Date.now() - data.storedAt > EXPIRY_MS) {
+      return { sortKey: defaultKey, sortOrder: defaultOrder }
+    }
+    const sk = typeof data.sortKey === 'string' && data.sortKey !== '' ? data.sortKey : defaultKey
+    const so = data.sortOrder === 'desc' ? 'desc' : 'asc'
+    setSortStored(listId, sk, so)
+    return { sortKey: sk, sortOrder: so }
+  } catch {
+    return { sortKey: defaultKey, sortOrder: defaultOrder }
+  }
+}
+
+function setSortStored(listId, sortKey, sortOrder) {
+  try {
+    sessionStorage.setItem(
+      SORT_STORAGE_PREFIX + listId,
+      JSON.stringify({ sortKey, sortOrder, storedAt: Date.now() })
+    )
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Sticky column sort for list views (same expiry semantics as useStickyFilter).
+ * @param {string} listId - Stable id per list (match useStickyFilter where both apply).
+ * @param {{ defaultKey?: string, defaultOrder?: 'asc'|'desc' }} [options]
+ * @returns {{ sortKey: import('vue').Ref<string>, sortOrder: import('vue').Ref<'asc'|'desc'> }}
+ */
+export function useStickySort(listId, options = {}) {
+  const defaultKey = options.defaultKey ?? 'pkey'
+  const defaultOrder = options.defaultOrder === 'desc' ? 'desc' : 'asc'
+  const initial = getSortStored(listId, defaultKey, defaultOrder)
+  const sortKey = ref(initial.sortKey)
+  const sortOrder = ref(initial.sortOrder)
+
+  watch([sortKey, sortOrder], ([sk, so]) => {
+    setSortStored(listId, sk, so === 'desc' ? 'desc' : 'asc')
+  })
+
+  return { sortKey, sortOrder }
 }

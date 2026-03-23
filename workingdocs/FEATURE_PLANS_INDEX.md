@@ -14,7 +14,7 @@
 | Field mutability (schema) | FIELD_MUTABILITY_API_PLAN.md, pbx3api/docs/SCHEMAS_ENDPOINT.md | done |
 | List export (CSV/PDF) | LIST_EXPORT_PDF_CSV.md, PANEL_PATTERN.md § Optional list export | done |
 | Boolean standardisation | BOOLEAN_STANDARDISATION.md | deferred (migration not run) |
-| Help text per-field hints | UX_IMPROVEMENTS_IVR.md § Help Text API, PROJECT_PLAN To-do | deferred |
+| Help text per-field hints | UX_IMPROVEMENTS_IVR.md § Help Text, useHelp + FieldHelpIcon | done |
 | Trunk/route multitenancy | TRUNK_ROUTE_MULTITENANCY.md | reference |
 | Data-driven list policy | DATA_DRIVEN_LIST_POLICY_PROJECT.md | deferred |
 

@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
-import { useStickyFilter } from '@/composables/useStickyFilter'
+import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
@@ -17,8 +17,7 @@ const error = ref('')
 const deleteError = ref('')
 const deletingShortuid = ref(null)
 const confirmDeleteShortuid = ref(null)
-const sortKey = ref('pkey')
-const sortOrder = ref('asc')
+const { sortKey, sortOrder } = useStickySort('cosrules', { defaultKey: 'pkey' })
 
 const clusterToTenantPkey = computed(() => {
   const map = new Map()

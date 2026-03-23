@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
-import { useStickyFilter } from '@/composables/useStickyFilter'
+import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
@@ -17,8 +17,7 @@ const error = ref('')
 const deleteError = ref('')
 const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
-const sortKey = ref('pkey')
-const sortOrder = ref('asc')
+const { sortKey, sortOrder } = useStickySort('devices', { defaultKey: 'pkey' })
 
 function str(v) {
   return v == null ? '' : String(v)

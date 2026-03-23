@@ -20,7 +20,7 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **To-do (Tenants – masteroclo – can wait):** API can return null for tenant `masteroclo`. Needs doing but it’s a single case; can wait. Fix: Tenant model accessor `masteroclo ?? 'AUTO'` or DB default + backfill.
 
-**To-do (Help text – per-field hints – later phase):** Add a per-field hint API (e.g. `GET /help/{resource}/{field}?lang={lang}`) so panels (IVR, Extension, etc.) can show in-context hints from tt_help_core. Admin CRUD for help messages is done; this is the optional follow-up for inline guidance. **UX approach:** Prefer **always-visible short hints** (one line under the field, Google/Apple style) for the 2–3 non-obvious fields per form; use **on-demand** (tooltip / “?” / “What’s this?”) for long or technical text. API can expose both a short hint (inline) and an optional long description (tooltip). See **workingdocs/UX_IMPROVEMENTS_IVR.md** § "Help Text API & Internationalization" for design and phases.
+**Done – Per-field / contextual help:** Admin layout prefetches `GET helpcore`; **`useHelp`** + **`FieldHelpIcon`** (and static `hint` on form components) supply in-context text from **tt_help_core** by pkey. **Optional later:** Dedicated `GET /help/{resource}/{field}` for resource-scoped URLs or i18n — see **UX_IMPROVEMENTS_IVR.md** § Help Text API & Internationalization.
 
 **Done – Field mutability (API):** API exposes GET /schemas (read_only, updateable, defaults per resource). Frontend uses useSchema composable (cache, no Pinia); all nine detail views (including Custom Apps) derive read_only from schema; all nine create views preset from schema.defaults. See **FIELD_MUTABILITY_API_PLAN.md** and **pbx3api/docs/SCHEMAS_ENDPOINT.md**.
 
@@ -225,7 +225,7 @@ Each new step gets a row: Deliverable, Test, Sign-off, Commit.
 
 - **Admin user management panel (admins only):** A management panel that allows admins to add, change, and delete users and manage user privileges. This is a **sub-project in its own right**. The API has some user-management endpoints today (e.g. auth/users) but they are not as strong as desired for privilege management. **API changes to support user privileges and admin-only access will likely be required before we implement this in the admin frontend.** Plan this as a later step: first strengthen the API (user privileges, admin-only operations), then add the panel to the frontend (list users, create/edit/delete, assign privileges), with appropriate access control so only admins can see and use it.
 
-- **Help messages (tt_help_core):** **Done.** API exposes **helpcore** (GET/POST /helpcore, GET/PUT/DELETE /helpcore/{pkey}); SPA has list/create/detail panel (Key, Display name, Common name, Help text). Data is loaded from sqlite_message.sql into tt_help_core. Optional future: consume help text in other panels as field hints/tooltips (e.g. GET /help/{resource}/{field} or similar).
+- **Help messages (tt_help_core):** **Done** — API **helpcore** CRUD; SPA **Help messages** panel; **panels consume hints** via `useHelp` + `FieldHelpIcon` and form `hint` props. Optional future: `GET /help/{resource}/{field}` or i18n layer.
 
 ---
 

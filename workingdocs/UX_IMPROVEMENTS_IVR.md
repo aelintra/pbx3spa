@@ -70,7 +70,7 @@
 
 **Description:** Expand hints with more context, add examples where helpful, explain "Timeout" dropdown behavior, clarify "Listen for extension dial" behavior, add tooltips for technical terms, provide examples for Tag and Alert fields.
 
-**Note:** Help texts are stored in `tt_help_core` and are now editable via the **Help messages** admin panel (API: helpcore resource). A per-field hint API (e.g. GET /help/{resource}/{field}) for in-context tooltips in IVR and other panels is still optional; see "Help Text API & Internationalization" below.
+**Note:** Help texts live in `tt_help_core` (editable via **Help messages** / **helpcore**). **In-context use:** `useHelp` + **`FieldHelpIcon`** (pkey → displayname/htext) on panels; optional static `hint` on form components. A dedicated `GET /help/{resource}/{field}` remains optional for i18n or URL ergonomics — see below.
 
 **Implementation Steps:**
 - [ ] **Step 4.1**: Expand hint for "Timeout" field (explain what happens on timeout)
@@ -161,10 +161,10 @@
 ## Help Text API & Internationalization
 
 ### Current Situation
-- **Database**: Help texts exist in `tt_help_core` table (English only)
-- **API**: No endpoint currently exists to access help texts
-- **Language**: All entries are English only
-- **Impact**: Affects Task #4 (Enhanced Field Hints) and broader UX improvements
+- **Database**: Help texts in `tt_help_core` (English only)
+- **API**: **helpcore** list/show/CRUD for admin; panels use **GET helpcore** once (cached in `useHelp`) for contextual hints by pkey
+- **Language**: English only (i18n still future)
+- **Impact**: Task #4 can lean on **FieldHelpIcon** + content in **Help messages**; hardcoded `hint` still valid for one-offs
 
 ### The Challenge
 Creating a help text API exposes the need for:
@@ -183,8 +183,8 @@ Creating a help text API exposes the need for:
 - **Trade-off**: Not scalable long-term, but gets improvements to users quickly
 
 #### Phase 2: Help Text API (Separate Project)
-- **Status:** Admin CRUD for tt_help_core is **done** (helpcore API + Help messages panel). Optional next step: per-field hint API for in-context tooltips.
-- **Action** (optional): Build per-field hint endpoint, e.g. `GET /help/{resource}/{field}?lang={lang}` (start with English only)
+- **Status:** **Shipped for current needs:** SPA **`useHelp`** + **`FieldHelpIcon`** consume **helpcore** by pkey (no extra endpoint required).
+- **Action** (optional later): Thin wrapper `GET /help/{resource}/{field}?lang={lang}` if we want resource-scoped URLs or caching keys without loading full helpcore
 - **Structure**: Design response format to support future i18n:
   ```json
   {

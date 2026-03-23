@@ -33,7 +33,13 @@
 
 ## Done
 
-### Latest session (Certificates panel + Let's Encrypt)
+### Latest session (Commit everywhere, sticky sort, contextual help)
+
+- **Commit in app chrome:** `CommitButton` in `AppLayout` topbar on all routes that mutate PBX config (admin only), except operational-only areas (backup, certificates, devices, firewall, help-messages, IP settings, logs, users). Uses `GET syscommands/commitstatus` and `GET syscommands/commit` — same red/green dirty behaviour as Dashboard; users do not need to return Home to commit.
+- **Sticky sort:** `useStickySort` in `useStickyFilter.js`; wired to every sortable list (and both tables on Backup/restore). Same sessionStorage + 5‑min expiry as `useStickyFilter`. See **STICKY_LIST_UI.md**.
+- **Per-field help:** `useHelp` loads `helpcore` once (admin layout); `FieldHelpIcon` resolves hints by `tt_help_core` pkey on forms. No separate `GET /help/{resource}/{field}` required for current UX.
+
+### Previous milestone (Certificates panel + Let's Encrypt)
 
 - **Certificates panel (pbx3spa):** Single view at `/certificates` with two sections: **Let's Encrypt** and **Purchased certificate**. When LE not configured: form **Hostname (FQDN)** + **Email (Let's Encrypt)** and button **Get certificate** (POST `/certificates/letsencrypt/setup`). When configured: Hostname, Expires, Issuer + **Renew now** (POST `/certificates/letsencrypt/renew`). Help text: A record + port 80 reachable; we open 80 only during issuance/renewal. Purchased: upload cert/key, Install, Remove. See **CERTIFICATES_ADOPTION_PLAN.md**, **SINGLE_PANEL_SCREENS.md**.
 - **Certificates API (pbx3api):** GET active, GET letsencrypt, POST letsencrypt/setup (fqdn, email → le-first-cert.sh), POST letsencrypt/renew (le-renew-with-80.sh), GET/POST/DELETE custom. Setup and renew need PBX3_SYSCMD_TIMEOUT ≥ 90.
@@ -84,8 +90,8 @@ Holiday Timers, Extension harmonisation, Queue audit, Custom Apps, Help messages
 - **Tenants – Timer status / masteroclo:** API null handling; prefer API fix (e.g. model accessor or DB default).
 - **Field mutability:** Done — API-driven; frontend uses GET /schemas (useSchema composable). See FIELD_MUTABILITY_API_PLAN.md.
 - **Review later (UX):** Inline edit for list rows — revisit when main pattern is stable.
-- **Sticky list filter/sort:** Composable `useStickyFilter(listId)` with 5-min expiry (refreshed on re-enter). Rolled out to all list panels with a filter. **ToDo:** Sticky sort (persist sortKey/sortOrder) — see **STICKY_LIST_UI.md**.
-- **Help text (per-field hints – later phase):** To-do in PROJECT_PLAN: add per-field hint API so panels can show inline/tooltip help from tt_help_core. UX: always-visible short hint for key fields; on-demand for long text. See PROJECT_PLAN § To-do and **UX_IMPROVEMENTS_IVR.md**.
+- **Sticky list filter/sort:** **Done** — `useStickyFilter` + `useStickySort` (5‑min expiry). See **STICKY_LIST_UI.md**.
+- **Help text (per-field hints):** **Done** — cached `helpcore` + `FieldHelpIcon` / form `hint` props; optional future: REST shape `GET /help/{resource}/{field}` if we want resource-scoped URLs (see **UX_IMPROVEMENTS_IVR.md**).
 
 ### Panel pattern audit (for when we come back)
 

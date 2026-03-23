@@ -1,6 +1,6 @@
 # Sticky list UI (filter and sort)
 
-**Status:** Sticky filter rolled out to all list panels with a filter.
+**Status:** **Done** — sticky filter and sticky sort rolled out to all list panels that use them.
 
 ## Sticky filter
 
@@ -9,8 +9,8 @@
 - **Usage:** `const { filterText } = useStickyFilter('devices')` — use a stable `listId` per panel.
 - **Rollout:** In use on all list panels with a filter: Tenants, Extensions, Trunks, Queues, Agents, Routes, Custom Apps, IVRs, Inbound routes, Devices, Asterisk Files (Users list has no filter). Each uses its own listId.
 
-## ToDo: Sticky sort
+## Sticky sort
 
-- **Idea:** Persist sort column and direction (e.g. `sortKey`, `sortOrder`) in sessionStorage the same way, so that when the user sorts a list, navigates to detail, then returns, the sort is still applied.
-- **Approach:** Either a separate `useStickySort(listId)` composable returning `{ sortKey, sortOrder }` with its own storage key (e.g. `pbx3spa-list-sort-{listId}`), or extend the same composable. Decide after sticky filter is rolled out and validated.
-- **Not implemented yet.**
+- **Composable:** `useStickySort(listId, options)` in the same file (`defaultKey`, optional `defaultOrder: 'asc' | 'desc'`).
+- **Storage key:** `pbx3spa-list-sort-{listId}`; **same 5‑minute expiry and timestamp refresh** as the filter composable.
+- **Rollout:** All sortable resource lists (Tenants, Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound routes, Custom Apps, Devices, Class of Service, Conferences, Day/Holiday timers, Greetings, Help messages) plus **Backup/restore** (separate ids: `backup-backups`, `backup-snapshots`).

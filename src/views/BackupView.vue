@@ -311,6 +311,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
@@ -340,8 +341,10 @@ const downloadingSnapshot = ref(null)
 const restoringSnapshot = ref(null)
 const deletingSnapshot = ref(null)
 const confirmDeleteSnapshot = ref(null)
-const snapshotSortKey = ref('date')
-const snapshotSortOrder = ref('desc') // 'asc' | 'desc'
+const { sortKey: snapshotSortKey, sortOrder: snapshotSortOrder } = useStickySort('backup-snapshots', {
+  defaultKey: 'date',
+  defaultOrder: 'desc'
+})
 
 const showRestoreModal = ref(false)
 const restoreBackupName = ref('')
@@ -353,8 +356,7 @@ const restoreOptions = ref({
   restoreldap: false
 })
 
-const sortKey = ref('date')
-const sortOrder = ref('desc') // 'asc' | 'desc'
+const { sortKey, sortOrder } = useStickySort('backup-backups', { defaultKey: 'date', defaultOrder: 'desc' })
 
 const hasRestoreOptionSelected = computed(() => {
   return Object.values(restoreOptions.value).some(v => v === true)

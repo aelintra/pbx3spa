@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
-import { useStickyFilter } from '@/composables/useStickyFilter'
+import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
@@ -19,8 +19,7 @@ const deleteError = ref('')
 const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
 const exportPdfLoading = ref(false)
-const sortKey = ref('pkey')
-const sortOrder = ref('asc')
+const { sortKey, sortOrder } = useStickySort('ivrs', { defaultKey: 'pkey' })
 
 /** Map tenant id / shortuid / pkey -> tenant pkey so the Tenant column always shows the pkey, regardless of what the API used in IVR.cluster. */
 const tenantShortuidToPkey = computed(() => {
