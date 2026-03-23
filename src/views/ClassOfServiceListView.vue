@@ -45,8 +45,9 @@ const filteredCosrules = computed(() => {
     const cluster = (item.cluster ?? '').toString().toLowerCase()
     const tenant = (map.get(String(item.cluster)) ?? item.cluster ?? '').toString().toLowerCase()
     const cname = (item.cname ?? '').toString().toLowerCase()
+    const dialplan = (item.dialplan ?? '').toString().toLowerCase()
     const description = (item.description ?? '').toString().toLowerCase()
-    return pkey.includes(q) || cluster.includes(q) || tenant.includes(q) || cname.includes(q) || description.includes(q)
+    return pkey.includes(q) || cluster.includes(q) || tenant.includes(q) || cname.includes(q) || dialplan.includes(q) || description.includes(q)
   })
 })
 
@@ -137,7 +138,7 @@ onMounted(loadCosrules)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by key, tenant, or name"
+          placeholder="Filter by key, tenant, name, or dialplan"
           aria-label="Filter Class of Service rules"
         />
       </p>
@@ -159,6 +160,7 @@ onMounted(loadCosrules)
             <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cname')" @click="setSort('cname')">Name</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('dialplan')" @click="setSort('dialplan')">Dialplan</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('defaultopen')" @click="setSort('defaultopen')">Default open</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('defaultclosed')" @click="setSort('defaultclosed')">Default closed</th>
@@ -173,6 +175,7 @@ onMounted(loadCosrules)
             <td>{{ c.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(c) }}</td>
             <td>{{ c.cname ?? '—' }}</td>
+            <td class="td-dialplan" :title="(c.dialplan ?? '').toString()">{{ c.dialplan != null && String(c.dialplan).trim() !== '' ? c.dialplan : '—' }}</td>
             <td>{{ c.active ?? '—' }}</td>
             <td>{{ c.defaultopen ?? '—' }}</td>
             <td>{{ c.defaultclosed ?? '—' }}</td>
@@ -246,4 +249,6 @@ onMounted(loadCosrules)
 .add-btn:hover { background: #1d4ed8; }
 .filter-input { padding: 0.5rem 0.75rem; font-size: 0.9375rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; min-width: 16rem; }
 .filter-input:focus { outline: none; border-color: #2563eb; }
+/* Long dialplan snippets: one line + tooltip via title */
+.td-dialplan { max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; }
 </style>
