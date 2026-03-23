@@ -280,7 +280,7 @@ Below is the set of **panels, API controllers, backend scripts, and helpers** th
 
 ## 11. Prerequisites and when to start
 
-**Gate: do not start this build until current panels work is finished and merged back.** Implementation of per-tenant FQDN, multi-SAN cert, and firewall FQDN inline should begin only after the in-progress panels work (e.g. on branch `spanel`) is complete and merged to the target branch (e.g. `main`). This keeps the change set focused and avoids merging conflicts or half-finished panel behaviour.
+**Gate (panels):** The large SPA/API panel integration that previously lived on a side branch is **merged to `main`** (pbx3spa / pbx3api, 2026). You may start this build **from `main`** once the **prerequisite checklist** in the table below is satisfied. Still avoid mixing half-finished LE work with unrelated large refactors — use a **feature branch from `main`** for the work in **§12**.
 
 **Before or at the start of Phase 1, ensure:**
 
@@ -291,7 +291,7 @@ Below is the set of **panels, API controllers, backend scripts, and helpers** th
 | **Sysglobals exposes domain_name, fqdninspect** | pbx3api Sysglobal model + GET sysglobals | API must return **domain_name** (readonly) and **fqdninspect** so CertificateController and TenantController can build domain list and set tenant fqdn on create. Expose in model; ensure not hidden. |
 | **Tenant create returns shortuid** | pbx3api TenantController | New tenant must get **shortuid** (and id) on create so cluster.fqdn = shortuid + "." + domain_name can be set. Already the case if tenant create follows tenant-scoped pattern. |
 
-**Branch:** Start implementation from the branch that has the merged panels work (e.g. after `spanel` is merged, create a feature branch from `main` for this work, or continue on `spanel` if that remains the integration branch).
+**Branch:** Create a **feature branch from `main`** for LE multi-SAN / per-tenant FQDN work; merge back via PR when each phase is verified.
 
 ---
 

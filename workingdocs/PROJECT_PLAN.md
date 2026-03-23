@@ -6,7 +6,7 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 ## Current state (for the next chat)
 
-**See SESSION_HANDOFF.md** for done, next steps, and TODO. It is the single source of current state. Branch: **spanel** (pbx3spa, pbx3api). Schema yardstick: **pbx3/full_schema.sql**.
+**See SESSION_HANDOFF.md** for done, next steps, and TODO. It is the single source of current state. Primary branch: **`main`** (pbx3spa, pbx3api). Schema yardstick: **pbx3/full_schema.sql**.
 
 **Parked:** Backups — review after first CRUD set; behaviour may depend on PBX3 internals.
 
@@ -32,7 +32,7 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **Done (create panels §3):** All create panels (Extension, Trunk, Route, Queue, Agent, IVR, Tenant, Inbound route) are standardized per PANEL_PATTERN.md §3: Identity / Settings / optional Advanced; defaults preset; FormToggle for booleans, FormSegmentedPill for 2–3 options, FormSelect for 4+. See CREATE_PANELS_STANDARDIZATION.md. **Done (field mutability):** API GET /schemas; useSchema composable; detail and create views use schema for read_only and defaults. **Next frontend priorities:** Complex create refinements per COMPLEX_CREATE_PLAN.md, or other follow-ups.
 
-**Complex create flows (planning):** One create view per resource + type chooser + conditional fields + one polymorphic create API. See **workingdocs/COMPLEX_CREATE_PLAN.md**. **Trunk create: done** (SIP-only; IAX2 deferred). **DDI (Inbound routes): done** (create + edit aligned to legacy; Connection/Advanced removed from edit). **Next:** Extension create, then IVR later.
+**Complex create flows:** See **workingdocs/COMPLEX_CREATE_PLAN.md**. **Trunk create: done** (SIP-only; **IAX2** refinements deferred). **DDI (Inbound routes): done** (create + edit aligned to legacy; Connection/Advanced removed from edit). **Extension create** and **IVR create: done.** Remaining create-flow follow-ups: trunk IAX2 (§ ToDo in COMPLEX_CREATE_PLAN), optional extension bulk create.
 
 **Scope note:** Legacy dump/restore routines (pbx3 tree: dumper.php, dumpInstances.php, etc.) convert SARK → PBX3 and work on old and new DB versions. Ignore them for day-to-day work; focus on pbx3api, pbx3spa, and db_sql schemas. See **SYSTEM_CONTEXT.md** § "Scope: legacy dump/restore".
 

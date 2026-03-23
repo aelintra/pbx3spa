@@ -1,6 +1,6 @@
 # Feature plans index
 
-**AI:** For feature work, read the docs listed in **Read (in order)** for that task. See SESSION_HANDOFF.md read-order table.
+**AI:** For feature work, read the docs listed in **Read (in order)** for that task. See **SESSION_HANDOFF.md** (**Quick start** + read-order table). Default git branch: **`main`** (pbx3spa / pbx3api).
 
 | Task | Read (in order) | Status |
 |------|------------------|--------|

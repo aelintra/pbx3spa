@@ -2,7 +2,14 @@
 
 **AI: read this first.**
 
-**Branch:** `spanel` (pbx3spa, pbx3api). **Repos:** **pbx3-master** is not a git repo; it holds **pbx3**, **pbx3api**, **pbx3cagi**, **pbx3spa**. Commit in the relevant repo.
+## Quick start (next agent)
+
+1. **Repos / branch:** **`pbx3spa`** and **`pbx3api`** — default integration branch is **`main`** (Mar 2026: former `cleanup` work was merged to `main`; remote `cleanup` was deleted on GitHub; you may still have a local `cleanup` branch). **`pbx3-master`** is **not** a git repo; it is a folder holding four separate repos (**pbx3**, **pbx3api**, **pbx3cagi**, **pbx3spa**). Commit and push from the repo you changed.
+2. **Read order:** This file → **PROJECT_PLAN.md** § Current state → **SYSTEM_CONTEXT.md** / **README.md** as needed. UI work: **PANEL_PATTERN.md** (especially §8 reference status, §2.2 lists, §3 create, list **Local UID** = `cell-immutable`). Cross-cutting features: **FEATURE_PLANS_INDEX.md**.
+3. **Recently shipped (sanity-check `git log`):** **Commit** in **AppLayout** (`CommitButton.vue`, `syscommands/commitstatus`); **sticky filter + sort** (`useStickyFilter.js`, **STICKY_LIST_UI.md**); **contextual help** (`useHelp.js`, `FieldHelpIcon.vue`, prefetch `helpcore` in layout); Extensions list **live** IP/Status (**EXTENSIONS_LIVE_DATA.md**); list **Local UID** uses **`cell-immutable`** everywhere that column exists (Queues, Conferences, Greetings, Class of Service, etc.); Class of Service list includes **Dialplan** column.
+4. **What’s still open:** **Left to do** below; **SINGLE_PANEL_SCREENS.md** (Logs partial, 3rd-party certs / factory reset / SIP PCAP need API); **COMPLEX_CREATE_PLAN.md** (trunk **IAX2** deferred).
+
+**Primary branch today:** **`main`** on **pbx3spa** and **pbx3api** (not `spanel`).
 
 ## Read order by task
 
@@ -21,7 +28,7 @@
 
 ---
 
-**Start here (context):** Read **PROJECT_PLAN.md** § Current state and **PANEL_PATTERN.md** (single-screen panels, cascaded sections, table alignment, toast API) to see what’s done and what’s left. **Branch:** `spanel` (pbx3spa, pbx3api).
+**Start here (context):** Read **PROJECT_PLAN.md** § Current state and **PANEL_PATTERN.md** (single-screen panels, cascaded sections, table alignment, toast API) to see what’s done and what’s left. **Branch:** **`main`** (pbx3spa, pbx3api).
 
 **Extensions:** Complete (create/update, extension type derivation, live IP/Status from Asterisk AMI, SIP password display). Structure is sound; some TODOs remain (regenerate password, allow pkey change, PJSIP config edit). See **EXTENSIONS_LIVE_DATA.md** for live data behaviour and gotchas.
 
@@ -44,8 +51,8 @@
 - **Certificates panel (pbx3spa):** Single view at `/certificates` with two sections: **Let's Encrypt** and **Purchased certificate**. When LE not configured: form **Hostname (FQDN)** + **Email (Let's Encrypt)** and button **Get certificate** (POST `/certificates/letsencrypt/setup`). When configured: Hostname, Expires, Issuer + **Renew now** (POST `/certificates/letsencrypt/renew`). Help text: A record + port 80 reachable; we open 80 only during issuance/renewal. Purchased: upload cert/key, Install, Remove. See **CERTIFICATES_ADOPTION_PLAN.md**, **SINGLE_PANEL_SCREENS.md**.
 - **Certificates API (pbx3api):** GET active, GET letsencrypt, POST letsencrypt/setup (fqdn, email → le-first-cert.sh), POST letsencrypt/renew (le-renew-with-80.sh), GET/POST/DELETE custom. Setup and renew need PBX3_SYSCMD_TIMEOUT ≥ 90.
 - **pbx3 scripts:** le-port80-open.sh, le-port80-close.sh (Shorewall managed rule); le-renew-with-80.sh (open 80, certbot renew, close 80); le-first-cert.sh (first-time: open 80, certonly --standalone, write le-domain, apply-active-cert, close 80). Cron: twice daily LE renewal when le-domain exists. apply-active-cert.sh unchanged (custom → LE → snakeoil for nginx + Asterisk).
-- **Docs:** LETSENCRYPT_PLAN.md (panel setup, port 80 control, scripts), CERTIFICATES_ADOPTION_PLAN.md (API table, panel behaviour). Branch: `spanel` (pbx3, pbx3api, pbx3spa).
-- **Per-tenant FQDN + LE options plan:** **LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md** is complete. It covers: Option A (multi-SAN LE cert), firewall FQDN inspection (inline rules per tenant), data model (FQDNs in tenants, domain_name in globals), purchased certs (§6: wildcard/single multi-SAN supported via custom path; multiple individual purchased certs = future extension). **Implementation is gated** per §11 until panels work is merged; then Phases 1–4 in §12.
+- **Docs:** LETSENCRYPT_PLAN.md (panel setup, port 80 control, scripts), CERTIFICATES_ADOPTION_PLAN.md (API table, panel behaviour). Shipped on **`main`** (pbx3, pbx3api, pbx3spa).
+- **Per-tenant FQDN + LE options plan:** **LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md** is complete. It covers: Option A (multi-SAN LE cert), firewall FQDN inspection (inline rules per tenant), data model (FQDNs in tenants, domain_name in globals), purchased certs (§6: wildcard/single multi-SAN supported via custom path; multiple individual purchased certs = future extension). **§11 gate:** Panel integration is on **`main`**; re-read §11 prerequisites table, then **§12** Phases 1–4 before starting implementation.
 - **For next agent:** Certificates panel and LE flow are complete. Deploy: ensure scripts are executable (chmod +x le-*.sh); set PBX3_SYSCMD_TIMEOUT=90 for setup/renew from panel. Local test: don't create le-domain so no LE renewal runs.
 
 ### Previous sessions (condensed)
@@ -69,7 +76,7 @@ Holiday Timers, Extension harmonisation, Queue audit, Custom Apps, Help messages
 
 ### Let's Encrypt per-tenant FQDN (multi-SAN cert)
 
-- **Plan:** **LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md** — multi-SAN LE cert (node + all tenant FQDNs), manual “Sync with tenant list”, firewall INLINE rules per FQDN, purchased certs (§6). **Gate (§11):** Do not start implementation until current panels work is merged (e.g. `spanel` → `main`). Then follow §12 Phases 1–4 (pbx3 scripts + NetHelper + update-fqdn-inline; API domain list from tenants + sysglobals; SPA Certificates “Cert covers” + Sync; cron/runbook).
+- **Plan:** **LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md** — multi-SAN LE cert (node + all tenant FQDNs), manual “Sync with tenant list”, firewall INLINE rules per FQDN, purchased certs (§6). **Gate (§11):** Prerequisite panel work is on **`main`**; confirm §11 checklist (schema/sysglobals/tenant create) then follow **§12** Phases 1–4 (pbx3 scripts + NetHelper + update-fqdn-inline; API domain list from tenants + sysglobals; SPA Certificates “Cert covers” + Sync; cron/runbook).
 
 ### Future project: data-driven list policy
 
@@ -83,7 +90,7 @@ Holiday Timers, Extension harmonisation, Queue audit, Custom Apps, Help messages
 
 - **pbx3api – Middleware on remote:** Investigate why `ValidateClusterAccess.php` doesn’t appear on remote after pull (newpanels in use, file tracked); may be from old Sanctum experiment or deploy path.
 
-- **Commit button on every panel:** Save vs Commit is implemented (dirty in globals.mycommit; Commit on Dashboard). **TODO:** Add Commit button (or link) to app layout or to every panel that can save/update the DB (Extensions, Trunks, Queues, Agents, Routes, IVRs, Inbound routes, Tenants) so users can commit without going to Home. Reuse GET syscommands/commitstatus and same red/green behaviour.
+- **Commit from config panels:** **Done** — **`CommitButton`** in **`AppLayout`** topbar (admin) + Dashboard; `commitstatus` / `commit` syscommands; hidden on operational-only routes (backup, certificates, devices, firewall, help-messages, IP settings, logs, users). See **Done** § Latest session.
 - **Extensions:** Allow changing extension number (pkey) — needs API support first.
 - **Extensions:** Add "Regenerate SIP password" button — allow users to regenerate passwd (for compromised/periodic refresh) without allowing manual password creation. Low priority.
 - **Phone images:** API hosts library; SPA consumes URLs.

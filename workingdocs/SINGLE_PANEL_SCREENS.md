@@ -10,7 +10,7 @@
 
 | # | Panel name       | SARK source    | pbx3api status | Notes |
 |---|------------------|----------------|----------------|-------|
-| 1 | **Home**         | sarkglobal (part) | ✅ syscommands (pbxrunstate, commitstatus, commit, start, stop, reboot) | DashboardView exists; build out as hub with links to other single panels + Commit/Start/Stop/Reboot. |
+| 1 | **Home**         | sarkglobal (part) | ✅ syscommands (pbxrunstate, commitstatus, commit, start, stop, reboot) | **DashboardView** — PBX status + Start/Stop/Reboot; **Commit** also in **AppLayout** topbar on config routes. **Still optional:** expand Dashboard as a **hub** with prominent links to IP Settings, Firewall, Backup, Certificates, Logs, etc. (see § Implementation order). |
 | 2 | **IP Settings**  | sarknetwork    | ✅ API + panel | **Done.** Single-screen at `/ip-settings`. Binding (bindaddr, bindport, tlsport, staticipv4), NAT (natdefault, natparams), Site (sitename), System read-only (hostname, local_ip, public_ip, mac from sysnotes). No FQDN/fqdninspect/fqdnprov (moving elsewhere). See NETWORK_AUDIT_PROTOTYPE.md. |
 | 3 | **IPv4 Firewall**| Shorewall UI   | ✅ firewalls/ipv4 (GET, POST, PUT restart) | Single screen: load rules array, edit (e.g. textarea or line-by-line), Save, Restart. |
 | 4 | **IPv6 Firewall**| Shorewall6 UI  | ✅ firewalls/ipv6 (GET, POST, PUT restart) | Same as IPv4, separate endpoint. |
