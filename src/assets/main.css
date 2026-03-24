@@ -32,18 +32,22 @@ body {
   font-weight: 500;
 }
 
-/* List tables: soften rows that are not Active (YES) */
-.list-view .table tbody tr.list-row-inactive > td {
+/* List tables: soften rows that are not Active (YES); read-only Asterisk files use same lowlight */
+.list-view .table tbody tr.list-row-inactive > td,
+.list-view .table tbody tr.list-row-readonly > td {
   background-color: #f1f5f9;
   color: #64748b;
 }
-.list-view .table tbody tr.list-row-inactive:hover > td {
+.list-view .table tbody tr.list-row-inactive:hover > td,
+.list-view .table tbody tr.list-row-readonly:hover > td {
   background-color: #e2e8f0;
 }
-.list-view .table tbody tr.list-row-inactive .cell-link {
+.list-view .table tbody tr.list-row-inactive .cell-link,
+.list-view .table tbody tr.list-row-readonly .cell-link {
   color: #3b82f6;
 }
-.list-view .table tbody tr.list-row-inactive .cell-link-delete {
+.list-view .table tbody tr.list-row-inactive .cell-link-delete,
+.list-view .table tbody tr.list-row-readonly .cell-link-delete {
   color: #b91c1c;
 }
 

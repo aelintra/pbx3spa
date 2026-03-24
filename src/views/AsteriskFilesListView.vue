@@ -55,7 +55,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="astfiles-list-view">
+  <div class="list-view astfiles-list-view">
     <header class="list-header">
       <div class="list-header-row">
         <h1>Asterisk Files</h1>
@@ -96,7 +96,11 @@ onMounted(async () => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="f in filteredFiles" :key="f.filename">
+          <tr
+            v-for="f in filteredFiles"
+            :key="f.filename"
+            :class="{ 'list-row-readonly': f.readonly }"
+          >
             <td>
               <router-link :to="{ name: 'asterisk-file-detail', params: { filename: f.filename } }" class="cell-link">
                 {{ f.filename }}
