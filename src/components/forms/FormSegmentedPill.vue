@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
+import { deriveHelpPkeyFromFieldId } from '@/utils/formHelpPkey'
 
 const props = defineProps({
   /** When set, show "?" help icon; when unset, derive from id (e.g. edit-callbackto → callbackto). */
@@ -61,7 +62,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'blur'])
 
-const effectiveHelpPkey = computed(() => props.helpPkey ?? (props.id ? props.id.replace(/^edit(-identity)?-/, '') : null))
+const effectiveHelpPkey = computed(() => props.helpPkey ?? deriveHelpPkeyFromFieldId(props.id))
 const hasError = computed(() => props.error && props.touched)
 
 function displayLabel(opt) {

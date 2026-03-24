@@ -1,5 +1,9 @@
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
+import { deriveHelpPkeyFromFieldId } from '@/utils/formHelpPkey'
+
+const props = defineProps({
   id: {
     type: String,
     required: true
@@ -11,14 +15,29 @@ defineProps({
   value: {
     type: String,
     default: '—'
+  },
+  /** Override tt_help_core pkey; when unset, derived from id (same as FormField). */
+  helpPkey: {
+    type: String,
+    default: null
+  },
+  /** When true, do not show contextual help (e.g. wrong pkey for this context). */
+  hideHelp: {
+    type: Boolean,
+    default: false
   }
 })
+
+const effectiveHelpPkey = computed(() =>
+  props.hideHelp ? null : (props.helpPkey ?? deriveHelpPkeyFromFieldId(props.id))
+)
 </script>
 
 <template>
   <div class="form-field">
     <label :for="id" class="form-field-label">
       {{ label }}
+      <FieldHelpIcon v-if="effectiveHelpPkey" :pkey="effectiveHelpPkey" />
     </label>
     <div class="form-field-input-wrapper">
       <p :id="id" class="form-readonly value-immutable" title="Immutable">

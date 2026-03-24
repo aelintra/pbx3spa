@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
@@ -9,17 +8,16 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 
-const NATDEFAULT_OPTIONS = ['local', 'remote']
 const YESNO_OPTIONS = ['YES', 'NO']
 const ICMP_OPTIONS = ['YES', 'NO'] // YES = allow ping
 
-const router = useRouter()
 const toast = useToastStore()
 const sysglobal = ref(null)
 const sysnotes = ref(null)
 const loading = ref(true)
 const error = ref('')
 const saving = ref(false)
+const discarding = ref(false)
 const saveError = ref('')
 
 const editHostname = ref('')
@@ -27,8 +25,6 @@ const editDns = ref('')
 const editBindport = ref('')
 const editStaticipv4 = ref('')
 const editTlsport = ref('')
-const editNatdefault = ref('remote')
-const editNatparams = ref('')
 const editSitename = ref('')
 const editSmtpMailhub = ref('')
 const editSmtpUser = ref('')
@@ -45,13 +41,14 @@ function syncEditFromSysglobal() {
   editBindport.value = g.bindport ?? ''
   editStaticipv4.value = g.staticipv4 ?? ''
   editTlsport.value = g.tlsport != null ? String(g.tlsport) : ''
-  editNatdefault.value = NATDEFAULT_OPTIONS.includes(g.natdefault) ? g.natdefault : 'remote'
-  editNatparams.value = g.natparams ?? ''
   editSitename.value = g.sitename ?? ''
 }
 
-async function fetchData() {
-  loading.value = true
+async function fetchData(options = {}) {
+  const silent = options.silent === true
+  if (!silent) {
+    loading.value = true
+  }
   error.value = ''
   try {
     const [globalsRes, notesRes, tzList] = await Promise.all([
@@ -88,20 +85,28 @@ async function fetchData() {
     }
     editIcmp.value = notesRes?.icmp === true ? 'YES' : 'NO'
   } catch (err) {
-    error.value = firstErrorMessage(err, 'Failed to load IP settings')
+    error.value = firstErrorMessage(err, 'Failed to load network')
     sysglobal.value = null
     sysnotes.value = null
   } finally {
-    loading.value = false
+    if (!silent) {
+      loading.value = false
+    }
   }
 }
 
-function goBack() {
-  router.push({ name: 'dashboard' })
-}
-
-function cancelEdit() {
-  goBack()
+async function cancelEdit() {
+  if (saving.value || discarding.value) return
+  saveError.value = ''
+  discarding.value = true
+  try {
+    await fetchData({ silent: true })
+    if (!error.value) {
+      toast.show('Discarded unsaved changes')
+    }
+  } finally {
+    discarding.value = false
+  }
 }
 
 function onKeydown(e) {
@@ -160,15 +165,13 @@ async function saveEdit(e) {
       bindport: editBindport.value?.trim() || null,
       staticipv4: editStaticipv4.value?.trim() || null,
       tlsport: editTlsport.value !== '' && editTlsport.value != null ? parseInt(editTlsport.value, 10) : null,
-      natdefault: NATDEFAULT_OPTIONS.includes(editNatdefault.value?.trim()) ? editNatdefault.value.trim() : 'remote',
-      natparams: editNatparams.value?.trim() || null,
       sitename: editSitename.value?.trim() || null
     }
     await getApiClient().put('sysglobals', body)
-    toast.show('IP settings saved')
+    toast.show('Network saved')
     await fetchData()
   } catch (err) {
-    saveError.value = firstErrorMessage(err, 'Failed to save IP settings')
+    saveError.value = firstErrorMessage(err, 'Failed to save network')
   } finally {
     saving.value = false
   }
@@ -180,9 +183,9 @@ onMounted(fetchData)
 </script>
 
 <template>
-  <div class="edit-view network-view" @keydown="onKeydown">
+  <div class="edit-view" @keydown="onKeydown">
     <header class="edit-header">
-      <h1>IP Settings</h1>
+      <h1>Network</h1>
     </header>
 
     <section v-if="loading" class="loading-state">
@@ -198,25 +201,35 @@ onMounted(fetchData)
       <p v-if="saveError" class="form-error">{{ saveError }}</p>
 
       <div class="edit-actions edit-actions-top">
-        <button type="submit" :disabled="saving" class="btn btn-primary">
+        <button type="submit" :disabled="saving || discarding" class="btn btn-primary">
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
-        <button type="button" @click="cancelEdit" :disabled="saving" class="btn btn-secondary">Cancel</button>
+        <button type="button" @click="cancelEdit" :disabled="saving || discarding" class="btn btn-secondary">
+          {{ discarding ? 'Restoring…' : 'Cancel' }}
+        </button>
       </div>
 
+      <h2 class="detail-heading">System</h2>
       <div class="form-fields">
-        <h2 class="section-heading">System</h2>
-
+        <FormField
+          id="ip-sitename"
+          v-model="editSitename"
+          label="Site Name"
+        />
         <FormField
           id="ip-hostname"
           v-model="editHostname"
           label="Hostname"
-          hint="System hostname (alphanumeric, hyphens)"
         />
         <FormReadonly
           id="ip-localip"
           label="Local IP"
           :value="network?.local_ip ?? '—'"
+        />
+        <FormField
+          id="ip-staticipv4"
+          v-model="editStaticipv4"
+          label="Static IPv4"
         />
         <FormReadonly
           id="ip-publicip"
@@ -227,89 +240,50 @@ onMounted(fetchData)
           id="ip-mac"
           label="MAC"
           :value="network?.mac ?? '—'"
+          hide-help
         />
-
-        <h2 class="section-heading">DNS servers</h2>
-
         <FormField
           id="ip-dns"
           v-model="editDns"
           label="DNS servers"
-          hint="One nameserver per line (IP or hostname)"
           multiline
           :rows="6"
         />
+      </div>
 
-        <h2 class="section-heading">Binding</h2>
-
+      <h2 class="detail-heading">SIP Binding</h2>
+      <div class="form-fields">
         <FormField
           id="ip-bindport"
           v-model="editBindport"
           label="Bind Port"
-          hint="Port for SIP server (e.g. 5060)"
         />
-
         <FormField
           id="ip-tlsport"
           v-model="editTlsport"
           type="number"
           label="TLS Port"
-          hint="Port for TLS connections (e.g. 5061)"
         />
+      </div>
 
-        <FormField
-          id="ip-staticipv4"
-          v-model="editStaticipv4"
-          label="Static IPv4"
-          hint="Static IPv4 for VoIP; when set, used as local IP for SIP/Asterisk"
-        />
-
-        <h2 class="section-heading">NAT</h2>
-
-        <FormSegmentedPill
-          id="ip-natdefault"
-          v-model="editNatdefault"
-          label="NAT Default"
-          :options="NATDEFAULT_OPTIONS"
-          hint="local or remote"
-        />
-
-        <FormField
-          id="ip-natparams"
-          v-model="editNatparams"
-          label="NAT Parameters"
-          hint="e.g. force_rport,comedia"
-        />
-
-        <h2 class="section-heading">Site</h2>
-
-        <FormField
-          id="ip-sitename"
-          v-model="editSitename"
-          label="Site Name"
-          hint="Site name"
-        />
-
-        <template v-if="sysnotes?.smtp">
-          <h2 class="section-heading">SMTP</h2>
+      <template v-if="sysnotes?.smtp">
+        <h2 class="detail-heading">SMTP</h2>
+        <div class="form-fields">
           <FormField
             id="ip-smtp-mailhub"
             v-model="editSmtpMailhub"
             label="Mail hub"
-            hint="SMTP server (host:port)"
           />
           <FormField
             id="ip-smtp-user"
             v-model="editSmtpUser"
             label="Auth user"
-            hint="SMTP auth username"
           />
           <FormField
             id="ip-smtp-pass"
             v-model="editSmtpPass"
             type="password"
             label="Auth password"
-            hint="SMTP auth password"
           />
           <FormSegmentedPill
             id="ip-smtp-usetls"
@@ -323,33 +297,37 @@ onMounted(fetchData)
             label="Use STARTTLS"
             :options="YESNO_OPTIONS"
           />
-        </template>
+        </div>
+      </template>
 
-        <h2 class="section-heading">NTP</h2>
+      <h2 class="detail-heading">NTP</h2>
+      <div class="form-fields">
         <FormSelect
           id="ip-timezone"
           v-model="editTimezone"
           label="Timezone"
           :options="timezoneOptions"
           emptyText="—"
-          hint="System timezone"
         />
+      </div>
 
-        <h2 class="section-heading">Ping (ICMP)</h2>
+      <h2 class="detail-heading">Ping (ICMP)</h2>
+      <div class="form-fields">
         <FormSegmentedPill
           id="ip-icmp"
           v-model="editIcmp"
           label="Allow ping requests"
           :options="ICMP_OPTIONS"
-          hint="Allow ICMP echo from network"
         />
       </div>
 
       <div class="edit-actions">
-        <button type="submit" :disabled="saving" class="btn btn-primary">
+        <button type="submit" :disabled="saving || discarding" class="btn btn-primary">
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
-        <button type="button" @click="cancelEdit" :disabled="saving" class="btn btn-secondary">Cancel</button>
+        <button type="button" @click="cancelEdit" :disabled="saving || discarding" class="btn btn-secondary">
+          {{ discarding ? 'Restoring…' : 'Cancel' }}
+        </button>
       </div>
     </form>
   </div>
@@ -387,6 +365,9 @@ onMounted(fetchData)
 
 .edit-form {
   margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .form-error {
@@ -397,24 +378,22 @@ onMounted(fetchData)
   border-radius: 0.375rem;
 }
 
-.form-fields {
-  display: grid;
-  gap: 1rem;
-}
-
-.network-view .section-heading {
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-  grid-column: 1 / -1;
-  font-size: 1.125rem;
+.detail-heading {
+  font-size: 1rem;
   font-weight: 600;
-  color: #1e293b;
-  border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 0.5rem;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
 }
 
-.network-view .section-heading:first-of-type {
+.detail-heading:first-of-type {
   margin-top: 0;
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;
 }
 
 .edit-actions {

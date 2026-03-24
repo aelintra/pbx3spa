@@ -6,11 +6,6 @@ import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
-import FormSelect from '@/components/forms/FormSelect.vue'
-import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
-import FormToggle from '@/components/forms/FormToggle.vue'
-
-const NATDEFAULT_OPTIONS = ['local', 'remote']
 
 const router = useRouter()
 const toast = useToastStore()
@@ -23,14 +18,11 @@ const saveError = ref('')
 
 // Editable and display-only (read-only) fields
 const editAbstimeout = ref('')
-const editBindaddr = ref('')
-const editBindport = ref('')
 const editCosstart = ref('')
 const editEdomain = ref('')
 const editEmergency = ref('')
 const editFqdn = ref('')
 const editLanguage = ref('')
-const editLocalip = ref('')
 const editLoglevel = ref('')
 const editLogopts = ref('')
 const editLogsipdispsize = ref('')
@@ -38,10 +30,7 @@ const editLogsipnumfiles = ref('')
 const editLogsipfilesize = ref('')
 const editMaxin = ref('')
 const editMaxout = ref('')
-const editNatdefault = ref('')
-const editNatparams = ref('')
 const editOperator = ref('')
-const editPwdlen = ref('')
 const editRecfiledlim = ref('')
 const editReclimit = ref('')
 const editRecmount = ref('')
@@ -50,11 +39,7 @@ const editRecqsearchlim = ref('')
 const editSessiontimout = ref('')
 const editSendedomain = ref('')
 const editSipflood = ref('')
-const editSipdriver = ref('')
-const editSitename = ref('')
 const editSysop = ref('')
-const editSyspass = ref('')
-const editTlsport = ref('')
 const editVoipmax = ref('')
 
 function syncEditFromSysglobal() {
@@ -63,14 +48,11 @@ function syncEditFromSysglobal() {
   
   // API returns lowercase keys (schema standardised on lowercase)
   editAbstimeout.value = g.abstimeout != null ? String(g.abstimeout) : ''
-  editBindaddr.value = g.bindaddr ?? ''
-  editBindport.value = g.bindport ?? ''
   editCosstart.value = g.cosstart ?? ''
   editEdomain.value = g.edomain ?? ''
   editEmergency.value = g.emergency ?? ''
   editFqdn.value = g.fqdn ?? ''
   editLanguage.value = g.language ?? ''
-  editLocalip.value = g.localip ?? ''
   editLoglevel.value = g.loglevel != null ? String(g.loglevel) : ''
   editLogopts.value = g.logopts ?? ''
   editLogsipdispsize.value = g.logsipdispsize != null ? String(g.logsipdispsize) : ''
@@ -78,10 +60,7 @@ function syncEditFromSysglobal() {
   editLogsipfilesize.value = g.logsipfilesize != null ? String(g.logsipfilesize) : ''
   editMaxin.value = g.maxin != null ? String(g.maxin) : ''
   editMaxout.value = g.maxout != null ? String(g.maxout) : ''
-  editNatdefault.value = NATDEFAULT_OPTIONS.includes(g.natdefault) ? g.natdefault : 'remote'
-  editNatparams.value = g.natparams ?? ''
   editOperator.value = g.operator != null ? String(g.operator) : ''
-  editPwdlen.value = g.pwdlen != null ? String(g.pwdlen) : ''
   editRecfiledlim.value = g.recfiledlim ?? ''
   editReclimit.value = g.reclimit ?? ''
   editRecmount.value = g.recmount ?? ''
@@ -90,11 +69,7 @@ function syncEditFromSysglobal() {
   editSessiontimout.value = g.sessiontimout != null ? String(g.sessiontimout) : ''
   editSendedomain.value = g.sendedomain ?? ''
   editSipflood.value = g.sipflood ?? ''
-  editSipdriver.value = g.sipdriver ?? ''
-  editSitename.value = g.sitename ?? ''
   editSysop.value = g.sysop != null ? String(g.sysop) : ''
-  editSyspass.value = g.syspass != null ? String(g.syspass) : ''
-  editTlsport.value = g.tlsport != null ? String(g.tlsport) : ''
   editVoipmax.value = g.voipmax != null ? String(g.voipmax) : ''
 }
 
@@ -142,8 +117,6 @@ async function saveEdit(e) {
     
     // Send all fields - empty strings become null for nullable fields
     body.abstimeout = editAbstimeout.value !== '' && editAbstimeout.value != null ? parseInt(editAbstimeout.value, 10) : null
-    body.bindaddr = editBindaddr.value && editBindaddr.value.trim() !== '' ? editBindaddr.value.trim() : null
-    body.bindport = editBindport.value && editBindport.value.trim() !== '' ? editBindport.value.trim() : null
     body.cosstart = editCosstart.value && editCosstart.value.trim() !== '' ? editCosstart.value.trim() : null
     body.emergency = editEmergency.value && editEmergency.value.trim() !== '' ? editEmergency.value.trim() : null
     body.fqdn = editFqdn.value && editFqdn.value.trim() !== '' ? editFqdn.value.trim() : null
@@ -155,10 +128,7 @@ async function saveEdit(e) {
     body.logsipfilesize = editLogsipfilesize.value !== '' && editLogsipfilesize.value != null ? parseInt(editLogsipfilesize.value, 10) : null
     body.maxin = editMaxin.value !== '' && editMaxin.value != null ? parseInt(editMaxin.value, 10) : null
     body.maxout = editMaxout.value !== '' && editMaxout.value != null ? parseInt(editMaxout.value, 10) : null
-    body.natdefault = editNatdefault.value && editNatdefault.value.trim() !== '' ? editNatdefault.value.trim() : null
-    body.natparams = editNatparams.value && editNatparams.value.trim() !== '' ? editNatparams.value.trim() : null
     body.operator = editOperator.value !== '' && editOperator.value != null ? parseInt(editOperator.value, 10) : null
-    body.pwdlen = editPwdlen.value !== '' && editPwdlen.value != null ? parseInt(editPwdlen.value, 10) : null
     body.recfiledlim = editRecfiledlim.value && editRecfiledlim.value.trim() !== '' ? editRecfiledlim.value.trim() : null
     body.reclimit = editReclimit.value && editReclimit.value.trim() !== '' ? editReclimit.value.trim() : null
     body.recmount = editRecmount.value && editRecmount.value.trim() !== '' ? editRecmount.value.trim() : null
@@ -167,10 +137,7 @@ async function saveEdit(e) {
     body.sessiontimout = editSessiontimout.value !== '' && editSessiontimout.value != null ? parseInt(editSessiontimout.value, 10) : null
     body.sendedomain = editSendedomain.value && editSendedomain.value.trim() !== '' ? editSendedomain.value.trim() : null
     body.sipflood = editSipflood.value && editSipflood.value.trim() !== '' ? editSipflood.value.trim() : null
-    body.sitename = editSitename.value && editSitename.value.trim() !== '' ? editSitename.value.trim() : null
     body.sysop = editSysop.value !== '' && editSysop.value != null ? parseInt(editSysop.value, 10) : null
-    body.syspass = editSyspass.value !== '' && editSyspass.value != null ? parseInt(editSyspass.value, 10) : null
-    body.tlsport = editTlsport.value !== '' && editTlsport.value != null ? parseInt(editTlsport.value, 10) : null
     body.voipmax = editVoipmax.value !== '' && editVoipmax.value != null ? parseInt(editVoipmax.value, 10) : null
     
     await getApiClient().put('sysglobals', body)
@@ -211,8 +178,8 @@ onMounted(fetchSysglobal)
         <button type="button" @click="cancelEdit" :disabled="saving" class="btn btn-secondary">Cancel</button>
       </div>
 
+      <h2 class="detail-heading">Identity</h2>
       <div class="form-fields">
-        <h2 class="section-heading">Identity</h2>
         <FormReadonly
           id="edit-identity-shortuid"
           label="Shortuid"
@@ -225,291 +192,144 @@ onMounted(fetchSysglobal)
           :value="defaultTenant?.id ?? '—'"
           class="readonly-identity"
         />
+      </div>
 
-        <h2 class="section-heading">Network</h2>
-        
-        <FormField
-          id="edit-bindaddr"
-          v-model="editBindaddr"
-          label="Bind Address"
-          hint="IP address to bind SIP server"
-        />
-        
-        <FormField
-          id="edit-bindport"
-          v-model="editBindport"
-          label="Bind Port"
-          hint="Port for SIP server"
-        />
-        
-        <FormReadonly
-          id="edit-localip"
-          label="Local IP"
-          :value="sysglobal?.localip ?? '—'"
-        />
-        
-        <FormField
-          id="edit-tlsport"
-          v-model="editTlsport"
-          type="number"
-          label="TLS Port"
-          hint="Port for TLS connections"
-        />
-
-        <h2 class="section-heading">SIP</h2>
-        
-        <FormReadonly
-          id="edit-sipdriver"
-          label="SIP Driver"
-          :value="sysglobal?.sipdriver ?? '—'"
-        />
-        
+      <h2 class="detail-heading">SIP</h2>
+      <div class="form-fields">
         <FormField
           id="edit-sipflood"
           v-model="editSipflood"
           label="SIP Flood Protection"
-          hint="SIP flood protection settings"
         />
-        
-        <FormField
-          id="edit-maxin"
-          v-model="editMaxin"
-          type="number"
-          label="Max In"
-          hint="Maximum incoming connections"
-        />
-        
-        <FormField
-          id="edit-maxout"
-          v-model="editMaxout"
-          type="number"
-          label="Max Out"
-          hint="Maximum outgoing connections"
-        />
-        
-        <FormField
-          id="edit-voipmax"
-          v-model="editVoipmax"
-          type="number"
-          label="VoIP Max"
-          hint="Maximum VoIP connections"
-        />
-
-        <h2 class="section-heading">Domain & FQDN</h2>
-        
-        <FormReadonly
-          id="edit-edomain"
-          label="Email Domain"
-          :value="sysglobal?.edomain ?? '—'"
-        />
-        
-        <FormField
-          id="edit-fqdn"
-          v-model="editFqdn"
-          label="FQDN"
-          hint="Fully Qualified Domain Name"
-        />
-        
-        <FormField
-          id="edit-sendedomain"
-          v-model="editSendedomain"
-          label="Send Domain"
-          hint="Domain to send from"
-        />
-
-        <h2 class="section-heading">NAT</h2>
-        
-        <FormSegmentedPill
-          id="edit-natdefault"
-          v-model="editNatdefault"
-          label="NAT Default"
-          :options="NATDEFAULT_OPTIONS"
-          hint="local or remote"
-        />
-        
-        <FormField
-          id="edit-natparams"
-          v-model="editNatparams"
-          label="NAT Parameters"
-          hint="NAT configuration parameters"
-        />
-
-        <h2 class="section-heading">Logging</h2>
-        
-        <FormField
-          id="edit-loglevel"
-          v-model="editLoglevel"
-          type="number"
-          label="Log Level"
-          hint="Logging level (0-9)"
-        />
-        
-        <FormField
-          id="edit-logopts"
-          v-model="editLogopts"
-          label="Log Options"
-          hint="Logging options"
-        />
-        
-        <FormField
-          id="edit-logsipdispsize"
-          v-model="editLogsipdispsize"
-          type="number"
-          label="SIP Display Size"
-          hint="SIP log display size"
-        />
-        
-        <FormField
-          id="edit-logsipnumfiles"
-          v-model="editLogsipnumfiles"
-          type="number"
-          label="SIP Number of Files"
-          hint="Number of SIP log files"
-        />
-        
-        <FormField
-          id="edit-logsipfilesize"
-          v-model="editLogsipfilesize"
-          type="number"
-          label="SIP File Size"
-          hint="Size of SIP log files"
-        />
-
-        <h2 class="section-heading">Recording</h2>
-        
-        <FormField
-          id="edit-recmount"
-          v-model="editRecmount"
-          label="Recording Mount"
-          hint="Recording mount point"
-        />
-        
-        <FormField
-          id="edit-reclimit"
-          v-model="editReclimit"
-          label="Recording Limit"
-          hint="Recording limit"
-        />
-        
-        <FormField
-          id="edit-recfiledlim"
-          v-model="editRecfiledlim"
-          label="Recording File Limit"
-          hint="Recording file limit"
-        />
-        
-        <FormField
-          id="edit-recqdither"
-          v-model="editRecqdither"
-          label="Recording Q Dither"
-          hint="Recording quality dither"
-        />
-        
-        <FormField
-          id="edit-recqsearchlim"
-          v-model="editRecqsearchlim"
-          label="Recording Q Search Limit"
-          hint="Recording quality search limit"
-        />
-
-        <h2 class="section-heading">Security</h2>
-        
-        <FormField
-          id="edit-pwdlen"
-          v-model="editPwdlen"
-          type="number"
-          label="Password Length"
-          hint="Minimum password length"
-        />
-        
-        <FormField
-          id="edit-sysop"
-          v-model="editSysop"
-          type="number"
-          label="System Operator"
-          hint="System operator ID"
-        />
-        
-        <FormField
-          id="edit-syspass"
-          v-model="editSyspass"
-          type="number"
-          label="System Password"
-          hint="System password ID"
-        />
-        
-        <FormField
-          id="edit-operator"
-          v-model="editOperator"
-          type="number"
-          label="Operator"
-          hint="Operator ID"
-        />
-        
-        <h2 class="section-heading">Timeouts & Limits</h2>
-        
         <FormField
           id="edit-abstimeout"
           v-model="editAbstimeout"
           type="number"
           label="Absolute Timeout"
-          hint="Absolute timeout in seconds"
         />
-        
+        <FormField
+          id="edit-maxin"
+          v-model="editMaxin"
+          type="number"
+          label="Max In"
+        />
+        <FormField
+          id="edit-maxout"
+          v-model="editMaxout"
+          type="number"
+          label="Max Out"
+        />
+        <FormField
+          id="edit-voipmax"
+          v-model="editVoipmax"
+          type="number"
+          label="VoIP Max"
+        />
+      </div>
+
+      <h2 class="detail-heading">Domain & FQDN</h2>
+      <div class="form-fields">
+        <FormReadonly
+          id="edit-edomain"
+          label="Email Domain"
+          :value="sysglobal?.edomain ?? '—'"
+        />
+        <FormField
+          id="edit-fqdn"
+          v-model="editFqdn"
+          label="FQDN"
+        />
+        <FormField
+          id="edit-sendedomain"
+          v-model="editSendedomain"
+          label="Send Domain"
+        />
+      </div>
+
+      <h2 class="detail-heading">Logging</h2>
+      <div class="form-fields">
+        <FormField
+          id="edit-loglevel"
+          v-model="editLoglevel"
+          type="number"
+          label="Log Level"
+        />
+        <FormField
+          id="edit-logopts"
+          v-model="editLogopts"
+          label="Log Options"
+        />
+        <FormField
+          id="edit-logsipdispsize"
+          v-model="editLogsipdispsize"
+          type="number"
+          label="SIP Display Size"
+        />
+        <FormField
+          id="edit-logsipnumfiles"
+          v-model="editLogsipnumfiles"
+          type="number"
+          label="SIP Number of Files"
+        />
+        <FormField
+          id="edit-logsipfilesize"
+          v-model="editLogsipfilesize"
+          type="number"
+          label="SIP File Size"
+        />
+      </div>
+
+      <h2 class="detail-heading">Recording</h2>
+      <div class="form-fields">
+        <FormField
+          id="edit-recmount"
+          v-model="editRecmount"
+          label="Recording Mount"
+        />
+        <FormField
+          id="edit-reclimit"
+          v-model="editReclimit"
+          label="Recording Limit"
+        />
+        <FormField
+          id="edit-recfiledlim"
+          v-model="editRecfiledlim"
+          label="Recording File Limit"
+        />
+        <FormField
+          id="edit-recqdither"
+          v-model="editRecqdither"
+          label="Recording Q Dither"
+        />
+        <FormField
+          id="edit-recqsearchlim"
+          v-model="editRecqsearchlim"
+          label="Recording Q Search Limit"
+        />
+      </div>
+
+      <h2 class="detail-heading">Other</h2>
+      <div class="form-fields">
+        <FormField
+          id="edit-language"
+          v-model="editLanguage"
+          label="Language"
+        />
         <FormField
           id="edit-sessiontimout"
           v-model="editSessiontimout"
           type="number"
           label="Session Timeout"
-          hint="Session timeout in seconds"
         />
-
-        <h2 class="section-heading">Other</h2>
-        
-        <FormField
-          id="edit-language"
-          v-model="editLanguage"
-          label="Language"
-          hint="System language"
-        />
-        
-        <FormField
-          id="edit-sitename"
-          v-model="editSitename"
-          label="Site Name"
-          hint="Site name"
-        />
-        
         <FormField
           id="edit-cosstart"
           v-model="editCosstart"
           label="CoS Start"
-          hint="Class of Service start"
         />
-        
         <FormField
           id="edit-emergency"
           v-model="editEmergency"
           label="Emergency"
-          hint="Emergency number"
-        />
-        
-        <h2 class="section-heading">System</h2>
-        
-        <FormReadonly
-          id="edit-z_created"
-          label="Created"
-          :value="sysglobal?.z_created ?? '—'"
-        />
-        <FormReadonly
-          id="edit-z_updated"
-          label="Updated"
-          :value="sysglobal?.z_updated ?? '—'"
-        />
-        <FormReadonly
-          id="edit-z_updater"
-          label="Updater"
-          :value="sysglobal?.z_updater ?? '—'"
         />
       </div>
 
@@ -555,6 +375,9 @@ onMounted(fetchSysglobal)
 
 .edit-form {
   margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .form-error {
@@ -565,23 +388,22 @@ onMounted(fetchSysglobal)
   border-radius: 0.375rem;
 }
 
-.form-fields {
-  display: grid;
-  gap: 1rem;
-}
-
-.section-heading {
-  grid-column: 1 / -1;
-  margin: 1.5rem 0 0.5rem 0;
-  font-size: 1.125rem;
+.detail-heading {
+  font-size: 1rem;
   font-weight: 600;
-  color: #1e293b;
-  border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 0.5rem;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
 }
 
-.section-heading:first-child {
+.detail-heading:first-of-type {
   margin-top: 0;
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;
 }
 
 .readonly-identity :deep(.form-field-label),

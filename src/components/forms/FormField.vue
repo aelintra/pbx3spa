@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
+import { deriveHelpPkeyFromFieldId } from '@/utils/formHelpPkey'
 
 const inputRef = ref(null)
 defineExpose({ focus: () => inputRef.value?.focus() })
@@ -96,8 +97,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'blur'])
 
-/** When helpPkey is not set, derive from id (e.g. id="edit-cluster" → "cluster", id="edit-identity-pkey" → "pkey") so panels get help by convention. */
-const effectiveHelpPkey = computed(() => props.helpPkey ?? (props.id ? props.id.replace(/^edit(-identity)?-/, '') : null))
+/** When helpPkey is not set, derive from id (edit-*, ip-*, etc.); see formHelpPkey.js. */
+const effectiveHelpPkey = computed(() => props.helpPkey ?? deriveHelpPkeyFromFieldId(props.id))
 
 const inputValue = computed({
   get: () => props.modelValue,
