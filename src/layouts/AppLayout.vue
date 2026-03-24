@@ -35,7 +35,7 @@ const navGroups = [
   { id: 'outbound', heading: 'Outbound', links: [{ to: '/trunks', label: 'Trunks' }, { to: '/routes', label: 'Routes' }] },
   { id: 'acd', heading: 'ACD', links: [{ to: '/queues', label: 'Queues / Ring groups' }, { to: '/ivrs', label: 'IVRs' }, { to: '/greetings', label: 'Greetings' }, { to: '/agents', label: 'Agents' }] },
   { id: 'schedules', heading: 'Schedules & policy', links: [{ to: '/daytimers', label: 'Day timers' }, { to: '/holidaytimers', label: 'Holiday timers' }, { to: '/cosrules', label: 'Class of Service' }] },
-  { id: 'system', heading: 'System', links: [{ to: '/asterisk-files', label: 'Asterisk Files' }, { to: '/backup', label: 'Backup' }, { to: '/certificates', label: 'Certificates' }, { to: '/customapps', label: 'Custom Apps' }, { to: '/devices', label: 'Devices' }, { to: '/firewall', label: 'Firewall' }, { to: '/help-messages', label: 'Help messages' }, { to: '/ip-settings', label: 'IP Settings' }, { to: '/logs', label: 'Logs' }, { to: '/sysglobals', label: 'System Globals' }, { to: '/users', label: 'Users' }] }
+  { id: 'system', heading: 'System', links: [{ to: '/asterisk-files', label: 'Asterisk Files' }, { to: '/backup', label: 'Backup' }, { to: '/certificates', label: 'Certificates' }, { to: '/customapps', label: 'Custom Apps' }, { to: '/devices', label: 'Devices' }, { to: '/firewall', label: 'Firewall' }, { to: '/help-messages', label: 'Help messages' }, { to: '/logs', label: 'Logs' }, { to: '/ip-settings', label: 'Network' }, { to: '/sysglobals', label: 'System Globals' }, { to: '/users', label: 'Users' }] }
 ]
 
 const expanded = ref({})

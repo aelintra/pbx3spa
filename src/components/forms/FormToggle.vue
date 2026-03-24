@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
+import { deriveHelpPkeyFromFieldId } from '@/utils/formHelpPkey'
 
 const props = defineProps({
   /** When set, show a "?" help icon next to the label that opens a popover with tt_help_core content for this pkey. */
@@ -45,8 +46,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
-/** When helpPkey is not set, derive from id (e.g. id="active" or id="edit-active" → "active") so panels get help by convention. */
-const effectiveHelpPkey = computed(() => props.helpPkey ?? (props.id ? props.id.replace(/^edit(-identity)?-/, '') : null))
+/** When helpPkey is not set, derive from id; see formHelpPkey.js. */
+const effectiveHelpPkey = computed(() => props.helpPkey ?? deriveHelpPkeyFromFieldId(props.id))
 
 const isChecked = computed(() => props.modelValue === props.yesValue)
 
