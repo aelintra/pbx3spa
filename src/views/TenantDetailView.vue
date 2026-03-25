@@ -10,7 +10,24 @@ import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
-import { ADVANCED_KEYS, ADVANCED_FIELDS, buildAdvancedPayload } from '@/constants/tenantAdvanced'
+import {
+  ADVANCED_KEYS,
+  ADVANCED_FIELDS,
+  LDAP_KEYS,
+  LDAP_FIELDS,
+  CALL_CONTROL_KEYS,
+  CALL_CONTROL_FIELDS,
+  CALL_RECORDING_KEYS,
+  CALL_RECORDING_FIELDS,
+  TIMERS_KEYS,
+  TIMERS_FIELDS,
+  buildAdvancedPayload,
+  buildCallControlPayload,
+  buildCallRecordingPayload,
+  buildTimersPayload,
+  buildLdapPayload,
+  parseNum
+} from '@/constants/tenantAdvanced'
 import { firstErrorMessage } from '@/utils/formErrors'
 
 const route = useRoute()
@@ -25,9 +42,11 @@ const loading = ref(true)
 const error = ref('')
 const editDescription = ref('')
 const editClusterclid = ref('')
-const editAbstimeout = ref('')
+const editLocalarea = ref('')
+const editLocaldplan = ref('')
 const editChanmax = ref('')
-const editMasteroclo = ref('AUTO')
+const editMaxin = ref('')
+const editVoipMax = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -40,6 +59,10 @@ const isDefault = computed(() => tenant.value?.pkey === 'default')
 const formAdvanced = reactive(
   Object.fromEntries(ADVANCED_KEYS.map((k) => [k, '']))
 )
+const formCallControl = reactive(Object.fromEntries(CALL_CONTROL_KEYS.map((k) => [k, ''])))
+const formCallRecording = reactive(Object.fromEntries(CALL_RECORDING_KEYS.map((k) => [k, ''])))
+const formTimers = reactive(Object.fromEntries(TIMERS_KEYS.map((k) => [k, ''])))
+const formLdap = reactive(Object.fromEntries(LDAP_KEYS.map((k) => [k, ''])))
 
 async function fetchTenant() {
   if (!pkey.value) return
@@ -61,19 +84,29 @@ function syncEditFromTenant() {
   const t = tenant.value
   editDescription.value = t.description ?? ''
   editClusterclid.value = t.clusterclid != null && t.clusterclid !== '' ? String(t.clusterclid) : ''
-  editAbstimeout.value = t.abstimeout != null && t.abstimeout !== '' ? String(t.abstimeout) : ''
+  editLocalarea.value = t.localarea != null && t.localarea !== '' ? String(t.localarea) : ''
+  editLocaldplan.value = t.localdplan != null && t.localdplan !== '' ? String(t.localdplan) : ''
   editChanmax.value = t.chanmax != null && t.chanmax !== '' ? String(t.chanmax) : ''
-  editMasteroclo.value = (t.masteroclo != null && t.masteroclo !== '') ? t.masteroclo : 'AUTO'
-  for (const k of ADVANCED_KEYS) {
-    const v = t[k]
-    if (v === true || v === false) {
-      formAdvanced[k] = v ? 'YES' : 'NO'
-    } else if (v != null && v !== '') {
-      formAdvanced[k] = String(v)
-    } else {
-      formAdvanced[k] = ''
+  editMaxin.value = t.maxin != null && t.maxin !== '' ? String(t.maxin) : ''
+  editVoipMax.value = t.voip_max != null && t.voip_max !== '' ? String(t.voip_max) : ''
+  function syncKeysToForm(keys, form) {
+    for (const k of keys) {
+      const v = t[k]
+      if (v === true || v === false) {
+        form[k] = v ? 'YES' : 'NO'
+      } else if (v != null && v !== '') {
+        form[k] = String(v)
+      } else {
+        form[k] = ''
+      }
     }
   }
+  syncKeysToForm(TIMERS_KEYS, formTimers)
+  if (!formTimers.masteroclo) formTimers.masteroclo = 'AUTO'
+  syncKeysToForm(ADVANCED_KEYS, formAdvanced)
+  syncKeysToForm(CALL_RECORDING_KEYS, formCallRecording)
+  syncKeysToForm(CALL_CONTROL_KEYS, formCallControl)
+  syncKeysToForm(LDAP_KEYS, formLdap)
 }
 
 onMounted(async () => {
@@ -98,10 +131,16 @@ async function saveEdit(e) {
     await getApiClient().put(`tenants/${encodeURIComponent(pkey.value)}`, {
       description: editDescription.value.trim() || undefined,
       clusterclid: editClusterclid.value.trim() ? editClusterclid.value.trim() : null,
-      abstimeout: editAbstimeout.value.trim() ? editAbstimeout.value.trim() : undefined,
+      ...(parseNum(editLocalarea.value) !== undefined && { localarea: parseNum(editLocalarea.value) }),
+      ...(editLocaldplan.value.trim() !== '' && { localdplan: editLocaldplan.value.trim() }),
       chanmax: editChanmax.value.trim() ? editChanmax.value.trim() : undefined,
-      masteroclo: editMasteroclo.value.trim() || undefined,
-      ...buildAdvancedPayload(formAdvanced)
+      ...(parseNum(editMaxin.value) !== undefined && { maxin: parseNum(editMaxin.value) }),
+      ...(parseNum(editVoipMax.value) !== undefined && { voip_max: parseNum(editVoipMax.value) }),
+      ...buildTimersPayload(formTimers),
+      ...buildAdvancedPayload(formAdvanced),
+      ...buildCallRecordingPayload(formCallRecording),
+      ...buildCallControlPayload(formCallControl),
+      ...buildLdapPayload(formLdap)
     })
     await fetchTenant()
     toast.show(`Tenant ${pkey.value} saved`)
@@ -185,24 +224,31 @@ async function confirmAndDelete() {
               type="text"
               placeholder="Short description"
             />
-          </div>
-
-          <h2 class="detail-heading">Settings</h2>
-          <div class="form-fields">
             <FormField
-              id="edit-clusterclid"
+              id="edit-identity-clusterclid"
               v-model="editClusterclid"
               label="CLID"
               type="text"
               placeholder="integer"
             />
             <FormField
-              id="edit-abstimeout"
-              v-model="editAbstimeout"
-              label="Abstime"
-              type="text"
-              placeholder="integer"
+              id="edit-identity-localarea"
+              v-model="editLocalarea"
+              label="Local area"
+              type="number"
+              placeholder="number"
             />
+            <FormField
+              id="edit-identity-localdplan"
+              v-model="editLocaldplan"
+              label="Local dialplan"
+              type="text"
+              placeholder="e.g. _X."
+            />
+          </div>
+
+          <h2 class="detail-heading">Settings</h2>
+          <div class="form-fields">
             <FormField
               id="edit-chanmax"
               v-model="editChanmax"
@@ -210,12 +256,79 @@ async function confirmAndDelete() {
               type="text"
               placeholder="integer"
             />
-            <FormSegmentedPill
-              id="edit-masteroclo"
-              v-model="editMasteroclo"
-              label="Timer status"
-              :options="['AUTO', 'CLOSED']"
+            <FormField
+              id="edit-maxin"
+              v-model="editMaxin"
+              label="Max in"
+              type="number"
+              placeholder="integer"
             />
+            <FormField
+              id="edit-voip-max"
+              v-model="editVoipMax"
+              label="VoIP max"
+              type="number"
+              placeholder="integer"
+            />
+          </div>
+
+          <h2 class="detail-heading">Timers</h2>
+          <div class="form-fields timers-fields">
+            <template v-for="f in TIMERS_FIELDS" :key="f.key">
+              <FormToggle
+                v-if="f.type === 'boolean'"
+                :id="`edit-timers-${f.key}`"
+                v-model="formTimers[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                yes-value="YES"
+                no-value="NO"
+              />
+              <FormSegmentedPill
+                v-else-if="f.type === 'segmented'"
+                :id="`edit-timers-${f.key}`"
+                v-model="formTimers[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                :options="f.options"
+              />
+              <FormToggle
+                v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
+                :id="`edit-timers-${f.key}`"
+                v-model="formTimers[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                :yes-value="f.options[0]"
+                :no-value="f.options[1]"
+              />
+              <FormSelect
+                v-else-if="f.type === 'pill'"
+                :id="`edit-timers-${f.key}`"
+                v-model="formTimers[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                :options="f.options"
+                :required="false"
+              />
+              <FormField
+                v-else-if="f.type === 'number'"
+                :id="`edit-timers-${f.key}`"
+                v-model="formTimers[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                type="number"
+                :placeholder="f.placeholder || 'number'"
+              />
+              <FormField
+                v-else
+                :id="`edit-timers-${f.key}`"
+                v-model="formTimers[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                type="text"
+                :placeholder="f.placeholder || ''"
+              />
+            </template>
           </div>
 
           <h2 class="detail-heading">Advanced</h2>
@@ -266,6 +379,166 @@ async function confirmAndDelete() {
                   type="text"
                   :placeholder="f.placeholder || ''"
                 />
+            </template>
+          </div>
+
+          <h2 class="detail-heading">Call recording</h2>
+          <div class="form-fields call-recording-fields">
+            <template v-for="f in CALL_RECORDING_FIELDS" :key="f.key">
+              <FormToggle
+                v-if="f.type === 'boolean'"
+                :id="`edit-rec-${f.key}`"
+                v-model="formCallRecording[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                yes-value="YES"
+                no-value="NO"
+              />
+              <FormReadonly
+                v-else-if="f.type === 'readonly'"
+                :id="`edit-rec-${f.key}`"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                :value="formCallRecording[f.key] !== '' && formCallRecording[f.key] != null ? String(formCallRecording[f.key]) : '—'"
+              />
+              <FormToggle
+                v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
+                :id="`edit-rec-${f.key}`"
+                v-model="formCallRecording[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                :yes-value="f.options[0]"
+                :no-value="f.options[1]"
+              />
+              <FormSelect
+                v-else-if="f.type === 'pill'"
+                :id="`edit-rec-${f.key}`"
+                v-model="formCallRecording[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                :options="f.options"
+                :required="false"
+              />
+              <FormField
+                v-else-if="f.type === 'number'"
+                :id="`edit-rec-${f.key}`"
+                v-model="formCallRecording[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                type="number"
+                :placeholder="f.placeholder || 'number'"
+              />
+              <FormField
+                v-else
+                :id="`edit-rec-${f.key}`"
+                v-model="formCallRecording[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                type="text"
+                :placeholder="f.placeholder || ''"
+              />
+            </template>
+          </div>
+
+          <h2 class="detail-heading">Call control</h2>
+          <div class="form-fields call-control-fields">
+            <template v-for="f in CALL_CONTROL_FIELDS" :key="f.key">
+              <FormToggle
+                v-if="f.type === 'boolean'"
+                :id="`edit-cc-${f.key}`"
+                v-model="formCallControl[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                yes-value="YES"
+                no-value="NO"
+              />
+              <FormToggle
+                v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
+                :id="`edit-cc-${f.key}`"
+                v-model="formCallControl[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                :yes-value="f.options[0]"
+                :no-value="f.options[1]"
+              />
+              <FormSelect
+                v-else-if="f.type === 'pill'"
+                :id="`edit-cc-${f.key}`"
+                v-model="formCallControl[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                :options="f.options"
+                :required="false"
+              />
+              <FormField
+                v-else-if="f.type === 'number'"
+                :id="`edit-cc-${f.key}`"
+                v-model="formCallControl[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                type="number"
+                :placeholder="f.placeholder || 'number'"
+              />
+              <FormField
+                v-else
+                :id="`edit-cc-${f.key}`"
+                v-model="formCallControl[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                type="text"
+                :placeholder="f.placeholder || ''"
+              />
+            </template>
+          </div>
+
+          <h2 class="detail-heading">LDAP</h2>
+          <div class="form-fields ldap-fields">
+            <template v-for="f in LDAP_FIELDS" :key="f.key">
+              <FormToggle
+                v-if="f.type === 'boolean'"
+                :id="`edit-ldap-${f.key}`"
+                v-model="formLdap[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                yes-value="YES"
+                no-value="NO"
+              />
+              <FormToggle
+                v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
+                :id="`edit-ldap-${f.key}`"
+                v-model="formLdap[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                :yes-value="f.options[0]"
+                :no-value="f.options[1]"
+              />
+              <FormSelect
+                v-else-if="f.type === 'pill'"
+                :id="`edit-ldap-${f.key}`"
+                v-model="formLdap[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                :options="f.options"
+                :required="false"
+              />
+              <FormField
+                v-else-if="f.type === 'number'"
+                :id="`edit-ldap-${f.key}`"
+                v-model="formLdap[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                type="number"
+                :placeholder="f.placeholder || 'number'"
+              />
+              <FormField
+                v-else
+                :id="`edit-ldap-${f.key}`"
+                v-model="formLdap[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                type="text"
+                :placeholder="f.placeholder || ''"
+              />
             </template>
           </div>
 
@@ -337,7 +610,11 @@ async function confirmAndDelete() {
   background-color: #f1f5f9;
   border-color: #e2e8f0;
 }
-.advanced-fields {
+.advanced-fields,
+.timers-fields,
+.call-recording-fields,
+.call-control-fields,
+.ldap-fields {
   margin-top: 0.5rem;
 }
 .edit-form {

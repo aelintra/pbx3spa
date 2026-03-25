@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, toRef, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
@@ -8,8 +8,21 @@ import { useFormValidation, validateAll, focusFirstError } from '@/composables/u
 import { validateTenantPkey } from '@/utils/validation'
 import {
   ADVANCED_FIELDS,
+  LDAP_FIELDS,
+  CALL_CONTROL_FIELDS,
+  CALL_RECORDING_FIELDS,
+  TIMERS_FIELDS,
+  CLUSTER_CREATE_DEFAULTS,
   buildAdvancedPayload,
+  buildCallControlPayload,
+  buildCallRecordingPayload,
+  buildTimersPayload,
+  buildLdapPayload,
   buildInitialFormAdvanced,
+  buildInitialFormCallControl,
+  buildInitialFormCallRecording,
+  buildInitialFormTimers,
+  buildInitialFormLdap,
   parseNum
 } from '@/constants/tenantAdvanced'
 import { fieldErrors } from '@/utils/formErrors'
@@ -17,6 +30,7 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
+import FormReadonly from '@/components/forms/FormReadonly.vue'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -24,9 +38,11 @@ const { ensureFetched, applySchemaDefaults } = useSchema()
 const pkey = ref('')
 const description = ref('')
 const clusterclid = ref('')
-const abstimeout = ref('14400')
+const localarea = ref(CLUSTER_CREATE_DEFAULTS.localarea ?? '')
+const localdplan = ref(CLUSTER_CREATE_DEFAULTS.localdplan ?? '')
 const chanmax = ref('30')
-const masteroclo = ref('AUTO')
+const maxin = ref(String(CLUSTER_CREATE_DEFAULTS.maxin ?? '30'))
+const voipMax = ref(String(CLUSTER_CREATE_DEFAULTS.voip_max ?? '30'))
 const error = ref('')
 const loading = ref(false)
 const pkeyInput = ref(null)
@@ -35,15 +51,25 @@ const pkeyInput = ref(null)
 const pkeyValidation = useFormValidation(pkey, validateTenantPkey)
 
 const formAdvanced = reactive(buildInitialFormAdvanced())
+const formTimers = reactive(buildInitialFormTimers())
+const formCallRecording = reactive(buildInitialFormCallRecording())
+const formCallControl = reactive(buildInitialFormCallControl())
+const formLdap = reactive(buildInitialFormLdap())
 
 function resetForm() {
   pkey.value = ''
   description.value = ''
   clusterclid.value = ''
-  abstimeout.value = '14400'
+  localarea.value = CLUSTER_CREATE_DEFAULTS.localarea ?? ''
+  localdplan.value = CLUSTER_CREATE_DEFAULTS.localdplan ?? ''
   chanmax.value = '30'
-  masteroclo.value = 'AUTO'
+  maxin.value = String(CLUSTER_CREATE_DEFAULTS.maxin ?? '30')
+  voipMax.value = String(CLUSTER_CREATE_DEFAULTS.voip_max ?? '30')
   Object.assign(formAdvanced, buildInitialFormAdvanced())
+  Object.assign(formTimers, buildInitialFormTimers())
+  Object.assign(formCallRecording, buildInitialFormCallRecording())
+  Object.assign(formCallControl, buildInitialFormCallControl())
+  Object.assign(formLdap, buildInitialFormLdap())
   pkeyValidation.reset()
   error.value = ''
 }
@@ -70,10 +96,16 @@ async function onSubmit(e) {
       pkey: pkey.value.trim(),
       description: description.value.trim(),
       ...(parseNum(clusterclid.value) !== undefined && { clusterclid: parseNum(clusterclid.value) }),
-      ...(parseNum(abstimeout.value) !== undefined && { abstimeout: parseNum(abstimeout.value) }),
+      ...(parseNum(localarea.value) !== undefined && { localarea: parseNum(localarea.value) }),
+      ...(localdplan.value.trim() !== '' && { localdplan: localdplan.value.trim() }),
       ...(parseNum(chanmax.value) !== undefined && { chanmax: parseNum(chanmax.value) }),
-      ...(masteroclo.value.trim() && { masteroclo: masteroclo.value.trim() }),
-      ...buildAdvancedPayload(formAdvanced)
+      ...(parseNum(maxin.value) !== undefined && { maxin: parseNum(maxin.value) }),
+      ...(parseNum(voipMax.value) !== undefined && { voip_max: parseNum(voipMax.value) }),
+      ...buildTimersPayload(formTimers),
+      ...buildAdvancedPayload(formAdvanced),
+      ...buildCallRecordingPayload(formCallRecording),
+      ...buildCallControlPayload(formCallControl),
+      ...buildLdapPayload(formLdap)
     }
     const cleaned = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined && v !== ''))
     const createdPkey = pkey.value.trim()
@@ -117,7 +149,17 @@ function onKeydown(e) {
 
 onMounted(async () => {
   await ensureFetched()
-  applySchemaDefaults('tenants', { description, clusterclid, abstimeout, chanmax, masteroclo })
+  applySchemaDefaults('tenants', {
+    description,
+    clusterclid,
+    localarea,
+    localdplan,
+    chanmax,
+    maxin,
+    voip_max: voipMax,
+    abstimeout: toRef(formTimers, 'abstimeout'),
+    masteroclo: toRef(formTimers, 'masteroclo')
+  })
   nextTick().then(() => pkeyInput.value?.focus())
 })
 </script>
@@ -159,10 +201,6 @@ onMounted(async () => {
           placeholder="Short description"
           :required="true"
         />
-      </div>
-
-      <h2 class="detail-heading">Settings</h2>
-      <div class="form-fields">
         <FormField
           id="clusterclid"
           v-model="clusterclid"
@@ -171,12 +209,23 @@ onMounted(async () => {
           placeholder="integer"
         />
         <FormField
-          id="abstimeout"
-          v-model="abstimeout"
-          label="Abstime"
+          id="localarea"
+          v-model="localarea"
+          label="Local area"
           type="number"
-          placeholder="integer"
+          placeholder="number"
         />
+        <FormField
+          id="localdplan"
+          v-model="localdplan"
+          label="Local dialplan"
+          type="text"
+          placeholder="e.g. _X."
+        />
+      </div>
+
+      <h2 class="detail-heading">Settings</h2>
+      <div class="form-fields">
         <FormField
           id="chanmax"
           v-model="chanmax"
@@ -184,12 +233,73 @@ onMounted(async () => {
           type="number"
           placeholder="integer"
         />
-        <FormSegmentedPill
-          id="masteroclo"
-          v-model="masteroclo"
-          label="Timer status"
-          :options="['AUTO', 'CLOSED']"
+        <FormField
+          id="maxin"
+          v-model="maxin"
+          label="Max in"
+          type="number"
+          placeholder="integer"
         />
+        <FormField
+          id="voip-max"
+          v-model="voipMax"
+          label="VoIP max"
+          type="number"
+          placeholder="integer"
+        />
+      </div>
+
+      <h2 class="detail-heading">Timers</h2>
+      <div class="form-fields">
+        <template v-for="f in TIMERS_FIELDS" :key="f.key">
+          <FormToggle
+            v-if="f.type === 'boolean'"
+            :id="`timers-${f.key}`"
+            v-model="formTimers[f.key]"
+            :label="f.label"
+            yes-value="YES"
+            no-value="NO"
+          />
+          <FormSegmentedPill
+            v-else-if="f.type === 'segmented'"
+            :id="`timers-${f.key}`"
+            v-model="formTimers[f.key]"
+            :label="f.label"
+            :options="f.options"
+          />
+          <FormToggle
+            v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
+            :id="`timers-${f.key}`"
+            v-model="formTimers[f.key]"
+            :label="f.label"
+            :yes-value="f.options[0]"
+            :no-value="f.options[1]"
+          />
+          <FormSelect
+            v-else-if="f.type === 'pill'"
+            :id="`timers-${f.key}`"
+            v-model="formTimers[f.key]"
+            :label="f.label"
+            :options="f.options"
+            :required="false"
+          />
+          <FormField
+            v-else-if="f.type === 'number'"
+            :id="`timers-${f.key}`"
+            v-model="formTimers[f.key]"
+            :label="f.label"
+            type="number"
+            :placeholder="f.placeholder || 'number'"
+          />
+          <FormField
+            v-else
+            :id="`timers-${f.key}`"
+            v-model="formTimers[f.key]"
+            :label="f.label"
+            type="text"
+            :placeholder="f.placeholder || ''"
+          />
+        </template>
       </div>
 
       <h2 class="detail-heading">Advanced</h2>
@@ -235,6 +345,150 @@ onMounted(async () => {
               type="text"
               :placeholder="f.placeholder || ''"
             />
+        </template>
+      </div>
+
+      <h2 class="detail-heading">Call recording</h2>
+      <div class="form-fields">
+        <template v-for="f in CALL_RECORDING_FIELDS" :key="f.key">
+          <FormToggle
+            v-if="f.type === 'boolean'"
+            :id="`rec-${f.key}`"
+            v-model="formCallRecording[f.key]"
+            :label="f.label"
+            yes-value="YES"
+            no-value="NO"
+          />
+          <FormReadonly
+            v-else-if="f.type === 'readonly'"
+            :id="`rec-${f.key}`"
+            :label="f.label"
+            :value="formCallRecording[f.key] !== '' && formCallRecording[f.key] != null ? String(formCallRecording[f.key]) : '—'"
+          />
+          <FormToggle
+            v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
+            :id="`rec-${f.key}`"
+            v-model="formCallRecording[f.key]"
+            :label="f.label"
+            :yes-value="f.options[0]"
+            :no-value="f.options[1]"
+          />
+          <FormSelect
+            v-else-if="f.type === 'pill'"
+            :id="`rec-${f.key}`"
+            v-model="formCallRecording[f.key]"
+            :label="f.label"
+            :options="f.options"
+            :required="false"
+          />
+          <FormField
+            v-else-if="f.type === 'number'"
+            :id="`rec-${f.key}`"
+            v-model="formCallRecording[f.key]"
+            :label="f.label"
+            type="number"
+            :placeholder="f.placeholder || 'number'"
+          />
+          <FormField
+            v-else
+            :id="`rec-${f.key}`"
+            v-model="formCallRecording[f.key]"
+            :label="f.label"
+            type="text"
+            :placeholder="f.placeholder || ''"
+          />
+        </template>
+      </div>
+
+      <h2 class="detail-heading">Call control</h2>
+      <div class="form-fields">
+        <template v-for="f in CALL_CONTROL_FIELDS" :key="f.key">
+          <FormToggle
+            v-if="f.type === 'boolean'"
+            :id="`cc-${f.key}`"
+            v-model="formCallControl[f.key]"
+            :label="f.label"
+            yes-value="YES"
+            no-value="NO"
+          />
+          <FormToggle
+            v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
+            :id="`cc-${f.key}`"
+            v-model="formCallControl[f.key]"
+            :label="f.label"
+            :yes-value="f.options[0]"
+            :no-value="f.options[1]"
+          />
+          <FormSelect
+            v-else-if="f.type === 'pill'"
+            :id="`cc-${f.key}`"
+            v-model="formCallControl[f.key]"
+            :label="f.label"
+            :options="f.options"
+            :required="false"
+          />
+          <FormField
+            v-else-if="f.type === 'number'"
+            :id="`cc-${f.key}`"
+            v-model="formCallControl[f.key]"
+            :label="f.label"
+            type="number"
+            :placeholder="f.placeholder || 'number'"
+          />
+          <FormField
+            v-else
+            :id="`cc-${f.key}`"
+            v-model="formCallControl[f.key]"
+            :label="f.label"
+            type="text"
+            :placeholder="f.placeholder || ''"
+          />
+        </template>
+      </div>
+
+      <h2 class="detail-heading">LDAP</h2>
+      <div class="form-fields">
+        <template v-for="f in LDAP_FIELDS" :key="f.key">
+          <FormToggle
+            v-if="f.type === 'boolean'"
+            :id="`ldap-${f.key}`"
+            v-model="formLdap[f.key]"
+            :label="f.label"
+            yes-value="YES"
+            no-value="NO"
+          />
+          <FormToggle
+            v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
+            :id="`ldap-${f.key}`"
+            v-model="formLdap[f.key]"
+            :label="f.label"
+            :yes-value="f.options[0]"
+            :no-value="f.options[1]"
+          />
+          <FormSelect
+            v-else-if="f.type === 'pill'"
+            :id="`ldap-${f.key}`"
+            v-model="formLdap[f.key]"
+            :label="f.label"
+            :options="f.options"
+            :required="false"
+          />
+          <FormField
+            v-else-if="f.type === 'number'"
+            :id="`ldap-${f.key}`"
+            v-model="formLdap[f.key]"
+            :label="f.label"
+            type="number"
+            :placeholder="f.placeholder || 'number'"
+          />
+          <FormField
+            v-else
+            :id="`ldap-${f.key}`"
+            v-model="formLdap[f.key]"
+            :label="f.label"
+            type="text"
+            :placeholder="f.placeholder || ''"
+          />
         </template>
       </div>
 

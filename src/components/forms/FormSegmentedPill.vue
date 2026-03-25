@@ -177,13 +177,13 @@ const hintId = computed(() => `${props.id}-hint`)
   padding: 0.375rem 0.75rem;
   font-size: 0.9375rem;
   font-weight: 500;
-  color: #475569;
+  color: #64748b;
   background: transparent;
   border: none;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
-.pill:hover:not(:disabled) {
+.pill:hover:not(:disabled):not(.pill-selected) {
   background: #e2e8f0;
   color: #0f172a;
 }
@@ -198,9 +198,13 @@ const hintId = computed(() => `${props.id}-hint`)
 }
 
 .pill-selected {
-  background: #fff;
-  color: #0f172a;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+}
+.pill-selected:hover:not(:disabled) {
+  background: #1d4ed8;
+  color: #fff;
 }
 .pill-first {
   border-radius: 0.25rem 0 0 0.25rem;
