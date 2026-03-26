@@ -11,16 +11,19 @@ import {
   LDAP_FIELDS,
   CALL_CONTROL_FIELDS,
   CALL_RECORDING_FIELDS,
+  MONITORING_FIELDS,
   TIMERS_FIELDS,
   CLUSTER_CREATE_DEFAULTS,
   buildAdvancedPayload,
   buildCallControlPayload,
   buildCallRecordingPayload,
+  buildMonitoringPayload,
   buildTimersPayload,
   buildLdapPayload,
   buildInitialFormAdvanced,
   buildInitialFormCallControl,
   buildInitialFormCallRecording,
+  buildInitialFormMonitoring,
   buildInitialFormTimers,
   buildInitialFormLdap,
   parseNum
@@ -40,7 +43,7 @@ const description = ref('')
 const clusterclid = ref('')
 const localarea = ref(CLUSTER_CREATE_DEFAULTS.localarea ?? '')
 const localdplan = ref(CLUSTER_CREATE_DEFAULTS.localdplan ?? '')
-const chanmax = ref('30')
+const chanmax = ref('3')
 const maxin = ref(String(CLUSTER_CREATE_DEFAULTS.maxin ?? '30'))
 const voipMax = ref(String(CLUSTER_CREATE_DEFAULTS.voip_max ?? '30'))
 const error = ref('')
@@ -55,6 +58,7 @@ const formTimers = reactive(buildInitialFormTimers())
 const formCallRecording = reactive(buildInitialFormCallRecording())
 const formCallControl = reactive(buildInitialFormCallControl())
 const formLdap = reactive(buildInitialFormLdap())
+const formMonitoring = reactive(buildInitialFormMonitoring())
 
 function resetForm() {
   pkey.value = ''
@@ -62,7 +66,7 @@ function resetForm() {
   clusterclid.value = ''
   localarea.value = CLUSTER_CREATE_DEFAULTS.localarea ?? ''
   localdplan.value = CLUSTER_CREATE_DEFAULTS.localdplan ?? ''
-  chanmax.value = '30'
+  chanmax.value = '3'
   maxin.value = String(CLUSTER_CREATE_DEFAULTS.maxin ?? '30')
   voipMax.value = String(CLUSTER_CREATE_DEFAULTS.voip_max ?? '30')
   Object.assign(formAdvanced, buildInitialFormAdvanced())
@@ -70,6 +74,7 @@ function resetForm() {
   Object.assign(formCallRecording, buildInitialFormCallRecording())
   Object.assign(formCallControl, buildInitialFormCallControl())
   Object.assign(formLdap, buildInitialFormLdap())
+  Object.assign(formMonitoring, buildInitialFormMonitoring())
   pkeyValidation.reset()
   error.value = ''
 }
@@ -104,6 +109,7 @@ async function onSubmit(e) {
       ...buildTimersPayload(formTimers),
       ...buildAdvancedPayload(formAdvanced),
       ...buildCallRecordingPayload(formCallRecording),
+      ...buildMonitoringPayload(formMonitoring),
       ...buildCallControlPayload(formCallControl),
       ...buildLdapPayload(formLdap)
     }
@@ -393,6 +399,28 @@ onMounted(async () => {
             v-else
             :id="`rec-${f.key}`"
             v-model="formCallRecording[f.key]"
+            :label="f.label"
+            type="text"
+            :placeholder="f.placeholder || ''"
+          />
+        </template>
+      </div>
+
+      <h2 class="detail-heading">Monitoring &amp; hot desk</h2>
+      <div class="form-fields">
+        <template v-for="f in MONITORING_FIELDS" :key="f.key">
+          <FormField
+            v-if="f.type === 'number'"
+            :id="`mon-${f.key}`"
+            v-model="formMonitoring[f.key]"
+            :label="f.label"
+            type="number"
+            :placeholder="f.placeholder || 'number'"
+          />
+          <FormField
+            v-else
+            :id="`mon-${f.key}`"
+            v-model="formMonitoring[f.key]"
             :label="f.label"
             type="text"
             :placeholder="f.placeholder || ''"

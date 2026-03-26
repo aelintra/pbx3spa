@@ -19,11 +19,14 @@ import {
   CALL_CONTROL_FIELDS,
   CALL_RECORDING_KEYS,
   CALL_RECORDING_FIELDS,
+  MONITORING_KEYS,
+  MONITORING_FIELDS,
   TIMERS_KEYS,
   TIMERS_FIELDS,
   buildAdvancedPayload,
   buildCallControlPayload,
   buildCallRecordingPayload,
+  buildMonitoringPayload,
   buildTimersPayload,
   buildLdapPayload,
   parseNum
@@ -63,6 +66,7 @@ const formCallControl = reactive(Object.fromEntries(CALL_CONTROL_KEYS.map((k) =>
 const formCallRecording = reactive(Object.fromEntries(CALL_RECORDING_KEYS.map((k) => [k, ''])))
 const formTimers = reactive(Object.fromEntries(TIMERS_KEYS.map((k) => [k, ''])))
 const formLdap = reactive(Object.fromEntries(LDAP_KEYS.map((k) => [k, ''])))
+const formMonitoring = reactive(Object.fromEntries(MONITORING_KEYS.map((k) => [k, ''])))
 
 async function fetchTenant() {
   if (!pkey.value) return
@@ -105,6 +109,7 @@ function syncEditFromTenant() {
   if (!formTimers.masteroclo) formTimers.masteroclo = 'AUTO'
   syncKeysToForm(ADVANCED_KEYS, formAdvanced)
   syncKeysToForm(CALL_RECORDING_KEYS, formCallRecording)
+  syncKeysToForm(MONITORING_KEYS, formMonitoring)
   syncKeysToForm(CALL_CONTROL_KEYS, formCallControl)
   syncKeysToForm(LDAP_KEYS, formLdap)
 }
@@ -139,6 +144,7 @@ async function saveEdit(e) {
       ...buildTimersPayload(formTimers),
       ...buildAdvancedPayload(formAdvanced),
       ...buildCallRecordingPayload(formCallRecording),
+      ...buildMonitoringPayload(formMonitoring),
       ...buildCallControlPayload(formCallControl),
       ...buildLdapPayload(formLdap)
     })
@@ -436,6 +442,32 @@ async function confirmAndDelete() {
                 :help-pkey="f.helpPkey ?? f.key"
                 type="text"
                 :placeholder="f.placeholder || ''"
+              />
+            </template>
+          </div>
+
+          <h2 class="detail-heading">Monitoring &amp; hot desk</h2>
+          <div class="form-fields monitoring-fields">
+            <template v-for="f in MONITORING_FIELDS" :key="f.key">
+              <FormField
+                v-if="f.type === 'number'"
+                :id="`edit-mon-${f.key}`"
+                v-model="formMonitoring[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                type="number"
+                :placeholder="f.placeholder || 'number'"
+                :disabled="isReadOnly(f.key)"
+              />
+              <FormField
+                v-else
+                :id="`edit-mon-${f.key}`"
+                v-model="formMonitoring[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                type="text"
+                :placeholder="f.placeholder || ''"
+                :disabled="isReadOnly(f.key)"
               />
             </template>
           </div>

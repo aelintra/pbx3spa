@@ -171,6 +171,14 @@ onMounted(fetchSysglobal)
     <form v-else @submit="saveEdit" class="edit-form">
       <p v-if="saveError" class="form-error">{{ saveError }}</p>
 
+      <p class="scope-note">
+        These values are stored in the instance <strong>globals</strong> table (one row per server). Per-tenant
+        limits, MOH, LDAP, call-control flags, and tenant passwords are on each tenant —
+        <router-link :to="{ name: 'tenant-detail', params: { pkey: 'default' } }">Default tenant</router-link>
+        or
+        <router-link :to="{ name: 'tenants' }">Tenants</router-link>.
+      </p>
+
       <div class="edit-actions edit-actions-top">
         <button type="submit" :disabled="saving" class="btn btn-primary">
           {{ saving ? 'Saving…' : 'Save' }}
@@ -386,6 +394,22 @@ onMounted(fetchSysglobal)
   padding: 0.75rem;
   background-color: #fef2f2;
   border-radius: 0.375rem;
+}
+
+.scope-note {
+  margin: 0 0 1rem 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 0.375rem;
+  border: 1px solid #e2e8f0;
+}
+
+.scope-note a {
+  color: #2563eb;
+  font-weight: 500;
 }
 
 .detail-heading {

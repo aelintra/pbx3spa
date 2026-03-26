@@ -1,10 +1,13 @@
 /**
  * Shared tenant (cluster) advanced fields config.
  * Used by TenantCreateView and TenantDetailView so we don't duplicate keys, defaults, or payload logic.
- * Defaults align with pbx3 db_sql/sqlite_create_tenant.sql and pbx3api Tenant model.
+ * Defaults and types align with pbx3 db_sql/sqlite_create_tenant.sql and pbx3api TenantController.
+ *
+ * Per-tenant settings live in API table `cluster` (GET/PUT /tenants/:id). Instance-wide defaults live in
+ * `globals` (GET/PUT /sysglobals); overlap (e.g. maxin, voipmax) is instance vs tenant scope — edit tenants for per-tenant values.
  */
 
-// Defaults from database create SQL (cluster table) and API model $attributes.
+// Defaults from sqlite_create_tenant.sql (cluster) and Tenant $attributes where applicable.
 export const CLUSTER_CREATE_DEFAULTS = {
   abstimeout: '14400',
   masteroclo: 'AUTO',
@@ -13,21 +16,25 @@ export const CLUSTER_CREATE_DEFAULTS = {
   cfwd_progress: 'enabled',
   cfwd_answer: 'enabled',
   countrycode: '44',
-  emergency: '',
+  emergency: '999 112 911',
   ivr_key_wait: '6',
   ivr_digit_wait: '6000',
   language: 'en-gb',
-  ldapbase: 'dc=sark,dc=local',
+  ldapbase: 'dc=pbx3,dc=local',
   ldaphost: '127.0.0.1',
   ldapou: 'contacts',
   ldapuser: 'admin',
-  ldappass: 'sarkadmin',
+  ldappass: 'pbx3admin',
   ldaptls: 'off',
   ldapanonbind: 'YES',
+  leasedhdtime: '43200',
   localarea: '',
   localdplan: '',
   lterm: false,
   maxin: '30',
+  mixmonitor: '',
+  monitor_out: '/var/spool/asterisk/monout/',
+  monitor_stage: '/var/spool/asterisk/monstage/',
   operator: '100',
   play_beep: true,
   play_busy: true,
@@ -45,7 +52,7 @@ export const CLUSTER_CREATE_DEFAULTS = {
   spy_pass: '3333',
   sysop: '',
   syspass: '4444',
-  usemohcustom: '',
+  usemohcustom: 'NO',
   vmail_age: '60',
   voice_instr: true,
   voip_max: '30'
@@ -79,6 +86,16 @@ export const CALL_RECORDING_KEYS = [
   'recmaxage',
   'recmaxsize',
   'recused'
+]
+
+// Mixmonitor paths and hot-desk lease (cluster columns).
+export const MONITORING_KEYS = ['mixmonitor', 'monitor_out', 'monitor_stage', 'leasedhdtime']
+
+export const MONITORING_FIELDS = [
+  { key: 'mixmonitor', label: 'Mix monitor', type: 'text' },
+  { key: 'monitor_out', label: 'Monitor out path', type: 'text' },
+  { key: 'monitor_stage', label: 'Monitor stage path', type: 'text' },
+  { key: 'leasedhdtime', label: 'Hot desk lease (seconds)', type: 'number' }
 ]
 
 export const CALL_RECORDING_FIELDS = [
@@ -143,13 +160,18 @@ export const ADVANCED_KEYS = [
 // Field config for Advanced section: label and type (text, number, pill, boolean).
 export const ADVANCED_FIELDS = [
   { key: 'countrycode', label: 'Country code', type: 'number' },
-  { key: 'emergency', label: 'Emergency', type: 'number' },
+  { key: 'emergency', label: 'Emergency numbers', type: 'text' },
   { key: 'language', label: 'Language', type: 'text' },
   { key: 'operator', label: 'Operator', type: 'number' },
-  { key: 'spy_pass', label: 'Spy pass', type: 'number', helpPkey: 'spypass' },
+  { key: 'spy_pass', label: 'Spy pass', type: 'text', helpPkey: 'spypass' },
   { key: 'sysop', label: 'Sysop', type: 'number' },
-  { key: 'syspass', label: 'Sys pass', type: 'number' },
-  { key: 'usemohcustom', label: 'Use MOH custom', type: 'number' },
+  { key: 'syspass', label: 'Sys pass', type: 'text' },
+  {
+    key: 'usemohcustom',
+    label: 'Use MOH custom',
+    type: 'pill',
+    options: ['YES', 'NO']
+  },
   { key: 'vmail_age', label: 'Vmail age', type: 'number' },
   { key: 'voice_instr', label: 'Voice instr', type: 'boolean' }
 ]
@@ -202,6 +224,14 @@ export function buildInitialFormCallControl() {
  */
 export function buildInitialFormCallRecording() {
   return Object.fromEntries(CALL_RECORDING_KEYS.map((k) => {
+    const def = CLUSTER_CREATE_DEFAULTS[k]
+    if (def === true || def === false) return [k, def ? 'YES' : 'NO']
+    return [k, def != null ? def : '']
+  }))
+}
+
+export function buildInitialFormMonitoring() {
+  return Object.fromEntries(MONITORING_KEYS.map((k) => {
     const def = CLUSTER_CREATE_DEFAULTS[k]
     if (def === true || def === false) return [k, def ? 'YES' : 'NO']
     return [k, def != null ? def : '']
@@ -268,6 +298,10 @@ export function buildCallControlPayload(formCallControl) {
  */
 export function buildCallRecordingPayload(formCallRecording) {
   return buildPayloadFromFields(formCallRecording, CALL_RECORDING_FIELDS)
+}
+
+export function buildMonitoringPayload(formMonitoring) {
+  return buildPayloadFromFields(formMonitoring, MONITORING_FIELDS)
 }
 
 /**
