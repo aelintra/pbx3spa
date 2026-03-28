@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
@@ -9,11 +9,12 @@ import { validateTrunkPkey } from '@/utils/validation'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
-import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
 const technology = ref('SIP')
+/** SIP only: matches PBX pjsipreg (SND / RCV) or trusted peer (null in API). */
+const sipRegMode = ref('TRUSTED')
 const pkey = ref('')
 const cluster = ref('default')
 const cname = ref('')
@@ -28,11 +29,20 @@ const pkeyInput = ref(null)
 const pkeyValidation = useFormValidation(pkey, validateTrunkPkey)
 
 const technologyOptions = ['SIP', 'IAX2']
+const sipRegModeOptions = [
+  { value: 'SND', label: 'Send registration to provider' },
+  { value: 'RCV', label: 'Accept registration from provider' },
+  { value: 'TRUSTED', label: 'Trusted peer (no outbound registration)' },
+]
 const isSIP = computed(() => technology.value === 'SIP')
 const typeChosen = computed(() => !!technology.value)
+const isSipSendReg = computed(() => isSIP.value && sipRegMode.value === 'SND')
+const isSipAcceptReg = computed(() => isSIP.value && sipRegMode.value === 'RCV')
+const isSipTrusted = computed(() => isSIP.value && sipRegMode.value === 'TRUSTED')
 
 function resetForm() {
   technology.value = 'SIP'
+  sipRegMode.value = 'TRUSTED'
   pkey.value = ''
   cluster.value = 'default'
   cname.value = ''
@@ -43,6 +53,12 @@ function resetForm() {
   pkeyValidation.reset()
   error.value = ''
 }
+
+watch(technology, (t) => {
+  if (t !== 'SIP') {
+    sipRegMode.value = 'TRUSTED'
+  }
+})
 
 onMounted(async () => {
   await ensureFetched()
@@ -65,8 +81,27 @@ async function onSubmit(e) {
     })
     return
   }
-  if (!host.value.trim()) {
-    error.value = 'Host is required (use "dynamic" for accept-registration trunks)'
+  if (isSIP.value) {
+    if (isSipSendReg.value || isSipTrusted.value) {
+      if (!host.value.trim()) {
+        error.value = 'Host is required (IP, hostname, or FQDN — not “dynamic” for this mode).'
+        return
+      }
+      if (isSipSendReg.value && host.value.trim().toLowerCase() === 'dynamic') {
+        error.value = 'Send-registration cannot use host “dynamic”. Choose “Accept registration” or “Trusted peer”.'
+        return
+      }
+      if (isSipTrusted.value && host.value.trim().toLowerCase() === 'dynamic') {
+        error.value = 'For host “dynamic”, choose “Accept registration from provider”.'
+        return
+      }
+    }
+    if ((isSipSendReg.value || isSipAcceptReg.value) && !password.value) {
+      error.value = 'Password is required for SIP registration (send or accept).'
+      return
+    }
+  } else if (!host.value.trim()) {
+    error.value = 'Host is required.'
     return
   }
   loading.value = true
@@ -76,13 +111,15 @@ async function onSubmit(e) {
       technology: technology.value,
       cluster: cluster.value.trim(),
       username: pkey.value.trim(),
-      host: host.value.trim(),
+      host: isSipAcceptReg.value ? 'dynamic' : host.value.trim(),
     }
     if (cname.value.trim()) body.cname = cname.value.trim()
     if (description.value.trim()) body.description = description.value.trim()
     if (isSIP.value) {
       body.password = password.value || ''
       body.transport = transport.value
+      if (sipRegMode.value === 'SND') body.pjsipreg = 'SND'
+      else if (sipRegMode.value === 'RCV') body.pjsipreg = 'RCV'
     }
     await getApiClient().post('trunks', body)
     toast.show(`Trunk ${pkey.value.trim()} created`)
@@ -147,6 +184,21 @@ function onKeydown(e) {
       </div>
 
       <template v-if="typeChosen">
+        <template v-if="isSIP">
+          <h2 class="detail-heading">SIP registration</h2>
+          <div class="form-fields">
+            <FormSelect
+              id="trunk-sip-reg-mode"
+              v-model="sipRegMode"
+              label="How this trunk registers"
+              :options="sipRegModeOptions"
+              required
+              hint="Send registration: your PBX registers to the ITSP. Accept registration: the provider registers to you (host is “dynamic”). Trusted: IP-based / no outbound registration."
+              aria-label="SIP registration mode"
+            />
+          </div>
+        </template>
+
         <h2 class="detail-heading">Identity</h2>
         <div class="form-fields">
           <FormField
@@ -179,15 +231,19 @@ function onKeydown(e) {
 
         <h2 class="detail-heading">Connection</h2>
         <div class="form-fields">
+          <template v-if="isSipAcceptReg">
+            <p class="form-hint form-hint-block">Host is set to <strong>dynamic</strong> for trunks that accept registration from the provider.</p>
+          </template>
           <FormField
+            v-else
             id="host"
             v-model="host"
             label="Host"
             type="text"
-            placeholder="e.g. sip.example.com, IP, or dynamic"
+            placeholder="e.g. sip.example.com, IP, or FQDN"
             :required="true"
           />
-          <p v-if="isSIP" class="form-hint">Use &quot;dynamic&quot; for trunks that accept registration from the provider.</p>
+          <p v-if="isSIP && !isSipAcceptReg" class="form-hint">Not “dynamic” unless you selected “Accept registration from provider”.</p>
           <FormSelect
             v-if="isSIP"
             id="transport"
@@ -202,7 +258,7 @@ function onKeydown(e) {
             v-model="password"
             label="Password"
             type="password"
-            placeholder="Required for send/accept registration; optional for trusted peer"
+            :placeholder="isSipTrusted ? 'Optional for trusted peer' : 'Required for send/accept registration'"
             autocomplete="new-password"
           />
         </div>
@@ -247,6 +303,10 @@ function onKeydown(e) {
   font-size: 0.8125rem;
   color: #64748b;
   margin: 0 0 0.5rem 0;
+}
+.form-hint-block {
+  margin: 0 0 0.75rem 0;
+  line-height: 1.4;
 }
 .error {
   color: #dc2626;

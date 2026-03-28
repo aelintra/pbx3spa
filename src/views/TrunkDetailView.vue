@@ -49,6 +49,19 @@ const editIaxreg = ref('')
 const editPjsipreg = ref('')
 const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'Outbound', 'Both']
 
+const sipPjsipregOptions = [
+  { value: '', label: 'Trusted peer (no outbound registration)' },
+  { value: 'RCV', label: 'Accept registration from provider' },
+  { value: 'SND', label: 'Send registration to provider' },
+]
+
+function normalizePjsipregForSelect(v) {
+  if (v == null || v === '') return ''
+  const u = String(v).trim().toUpperCase()
+  if (u === 'SND' || u === 'RCV') return u
+  return ''
+}
+
 function normalizeDevicerec(s) {
   if (s == null || s === '') return 'None'
   const v = String(s).trim()
@@ -105,7 +118,7 @@ async function fetchTrunk() {
     editPrivileged.value = trunk.value?.privileged ?? ''
     editTechnology.value = trunk.value?.technology ?? 'SIP'
     editIaxreg.value = trunk.value?.iaxreg ?? ''
-    editPjsipreg.value = trunk.value?.pjsipreg ?? ''
+    editPjsipreg.value = normalizePjsipregForSelect(trunk.value?.pjsipreg)
     editDevicerec.value = normalizeDevicerec(trunk.value?.devicerec)
     editDisa.value = trunk.value?.disa?.trim() || 'None'
     editDisapass.value = trunk.value?.disapass ?? ''
@@ -169,7 +182,12 @@ async function saveEdit(e) {
       privileged: editPrivileged.value.trim() || undefined,
       technology: editTechnology.value || undefined,
       iaxreg: editIaxreg.value.trim() || undefined,
-      pjsipreg: editPjsipreg.value.trim() || undefined,
+      pjsipreg:
+        editTechnology.value === 'SIP'
+          ? editPjsipreg.value
+            ? editPjsipreg.value.trim().toUpperCase()
+            : null
+          : null,
       devicerec: editDevicerec.value || 'None',
       disa: (editDisa.value.trim() && editDisa.value.trim() !== 'None') ? editDisa.value.trim() : undefined,
       disapass: editDisapass.value.trim() || undefined,
@@ -268,13 +286,21 @@ async function confirmAndDelete() {
               yes-value="YES"
               no-value="NO"
             />
+            <FormSelect
+              v-if="editTechnology === 'SIP'"
+              id="edit-pjsipreg"
+              v-model="editPjsipreg"
+              label="SIP registration"
+              :options="sipPjsipregOptions"
+              hint="Controls PJSIP template: outbound registration (SND), accept registration (RCV), or trusted peer."
+            />
             <FormField
               id="edit-host"
               v-model="editHost"
               label="Host"
               type="text"
               :required="true"
-              placeholder="e.g. sip.example.com or IP"
+              placeholder="e.g. sip.example.com, IP, or dynamic (accept-reg)"
             />
             <FormField id="edit-username" v-model="editUsername" label="Username" type="text" autocomplete="off" />
             <FormField id="edit-peername" v-model="editPeername" label="Peername" type="text" autocomplete="off" />
@@ -305,7 +331,6 @@ async function confirmAndDelete() {
             <FormField id="edit-openroute" v-model="editOpenroute" label="Open route" type="text" />
             <FormField id="edit-privileged" v-model="editPrivileged" label="Privileged" type="text" />
             <FormField id="edit-iaxreg" v-model="editIaxreg" label="IAX reg" type="text" />
-            <FormField id="edit-pjsipreg" v-model="editPjsipreg" label="PJSIP reg" type="text" />
             <FormSelect
               id="edit-devicerec"
               v-model="editDevicerec"
