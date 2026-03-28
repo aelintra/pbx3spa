@@ -17,8 +17,9 @@ const props = defineProps({
     type: String,
     required: true
   },
+  /** Coerced to/from string so JSON numeric options (e.g. extension 201) do not break API string validation. */
   modelValue: {
-    type: String,
+    type: [String, Number],
     default: ''
   },
   options: {
@@ -89,8 +90,18 @@ const emit = defineEmits(['update:modelValue', 'blur'])
 const effectiveHelpPkey = computed(() => props.helpPkey ?? deriveHelpPkeyFromFieldId(props.id))
 
 const selectValue = computed({
-  get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
+  get: () => {
+    const v = props.modelValue
+    if (v === null || v === undefined || v === '') return ''
+    return String(v)
+  },
+  set: (value) => {
+    if (value === null || value === undefined) {
+      emit('update:modelValue', value)
+      return
+    }
+    emit('update:modelValue', value === '' ? '' : String(value))
+  }
 })
 
 const hasError = computed(() => props.error && props.touched)
@@ -108,6 +119,13 @@ function optionValue(opt) {
 }
 function optionLabel(opt) {
   return opt != null && typeof opt === 'object' && 'label' in opt ? opt.label : opt
+}
+
+/** HTML option value + v-model: always string so axios JSON does not send bare numbers. */
+function optionAttrValue(opt) {
+  const v = optionValue(opt)
+  if (v === null || v === undefined) return ''
+  return String(v)
 }
 
 // Debug form reset: when debugReset is true, log when this select receives empty/default
@@ -144,10 +162,18 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
         <option v-if="loading" value="">{{ loadingText }}</option>
         <option v-else-if="!required && emptyText" value="">{{ emptyText }}</option>
         <template v-if="!loading">
-          <option v-for="opt in options" :key="optionValue(opt)" :value="optionValue(opt)">{{ optionLabel(opt) }}</option>
+          <option
+            v-for="(opt, optIdx) in options"
+            :key="`${optionAttrValue(opt)}-${optIdx}`"
+            :value="optionAttrValue(opt)"
+          >{{ optionLabel(opt) }}</option>
           <template v-if="optionGroups">
             <optgroup v-for="(pkeys, group) in optionGroups" :key="group" :label="group">
-              <option v-for="p in (pkeys && Array.isArray(pkeys) ? pkeys : [])" :key="p" :value="p">{{ p }}</option>
+              <option
+                v-for="(p, pIdx) in (pkeys && Array.isArray(pkeys) ? pkeys : [])"
+                :key="`${group}-${pIdx}-${String(p)}`"
+                :value="String(p)"
+              >{{ p }}</option>
               <option v-if="!pkeys || !pkeys.length" disabled value="">—</option>
             </optgroup>
           </template>
