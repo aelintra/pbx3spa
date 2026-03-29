@@ -11,6 +11,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 
 const TECHNOLOGY_OPTIONS = ['SIP', 'Descriptor', 'BLF Template']
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -129,7 +130,9 @@ async function confirmDelete() {
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
-    <h1>Edit Device {{ pkey }}</h1>
+    <PanelBackLink :to="{ name: 'devices' }" label="Devices">
+      <h1>Edit Device {{ pkey }}</h1>
+    </PanelBackLink>
 
     <section v-if="loading || error" class="detail-states">
       <p v-if="loading" class="loading">Loading device…</p>

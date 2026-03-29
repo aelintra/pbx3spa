@@ -9,6 +9,7 @@ import { validateDevicePkey } from '@/utils/validation'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const TECHNOLOGY_OPTIONS = ['SIP', 'Descriptor', 'BLF Template']
 
@@ -112,7 +113,9 @@ onMounted(async () => {
 
 <template>
   <div class="create-view">
-    <h1>Create device template</h1>
+    <PanelBackLink :to="{ name: 'devices' }" label="Devices">
+      <h1>Create device template</h1>
+    </PanelBackLink>
 
     <form class="form create-form" @submit="onSubmit" @keydown="onKeydown">
       <p v-if="error" class="error" role="alert">{{ error }}</p>

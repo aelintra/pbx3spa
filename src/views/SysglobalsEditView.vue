@@ -6,6 +6,7 @@ import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -155,9 +156,9 @@ onMounted(fetchSysglobal)
 
 <template>
   <div class="edit-view" @keydown="onKeydown">
-    <header class="edit-header">
+    <PanelBackLink :to="{ name: 'dashboard' }" label="Dashboard" class="edit-header">
       <h1>System Globals</h1>
-    </header>
+    </PanelBackLink>
 
     <section v-if="loading" class="loading-state">
       <p class="loading">Loading system globals…</p>

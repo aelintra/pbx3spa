@@ -12,6 +12,7 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -193,7 +194,9 @@ onMounted(async () => {
 
 <template>
   <div class="create-view" @keydown="onKeydown">
-    <h1>Create route</h1>
+    <PanelBackLink :to="{ name: 'routes' }" label="Routes">
+      <h1>Create route</h1>
+    </PanelBackLink>
 
     <form class="form" @submit="onSubmit">
       <p v-if="error" id="route-create-error" class="error" role="alert">{{ error }}</p>

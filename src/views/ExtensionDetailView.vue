@@ -12,6 +12,7 @@ import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const route = useRoute()
 const { getSchema, ensureFetched } = useSchema()
@@ -279,7 +280,9 @@ async function saveRuntime(e) {
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
-    <h1>Edit Extension {{ extension?.pkey ?? '…' }}</h1>
+    <PanelBackLink :to="{ name: 'extensions' }" label="Extensions">
+      <h1>Edit Extension {{ extension?.pkey ?? '…' }}</h1>
+    </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>
     <div v-else-if="error" class="error-state">

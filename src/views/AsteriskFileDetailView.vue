@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -64,10 +65,9 @@ watch(filename, loadFile)
 
 <template>
   <div class="astfile-detail-view">
-    <header class="detail-header">
-      <router-link :to="{ name: 'asterisk-files' }" class="back-link">← Asterisk Files</router-link>
+    <PanelBackLink :to="{ name: 'asterisk-files' }" label="Asterisk Files" class="detail-header">
       <h1>{{ filename || 'File' }}</h1>
-    </header>
+    </PanelBackLink>
 
     <section v-if="loading || error" class="detail-states">
       <p v-if="loading" class="loading">Loading file…</p>
@@ -114,17 +114,6 @@ watch(filename, loadFile)
   gap: 1rem;
   max-width: 90rem;
 }
-.detail-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-.back-link {
-  color: #2563eb;
-  text-decoration: none;
-  font-size: 0.875rem;
-}
-.back-link:hover { text-decoration: underline; }
 .detail-header h1 {
   margin: 0;
   font-size: 1.5rem;

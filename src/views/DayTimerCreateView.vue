@@ -10,6 +10,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -120,7 +121,9 @@ async function onSubmit(e) {
 
 <template>
   <div class="create-view" @keydown="onKeydown">
-    <h1>Create Day timer</h1>
+    <PanelBackLink :to="{ name: 'daytimers' }" label="Day Timers">
+      <h1>Create Day timer</h1>
+    </PanelBackLink>
 
     <form class="form" @submit="onSubmit">
       <p v-if="error" id="daytimer-create-error" class="error" role="alert">{{ error }}</p>

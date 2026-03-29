@@ -12,6 +12,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -228,7 +229,9 @@ const displayName = computed(() => queue.value?.pkey ?? '')
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
-    <h1>Edit Queue {{ displayName }}</h1>
+    <PanelBackLink :to="{ name: 'queues' }" label="Queues">
+      <h1>Edit Queue {{ displayName }}</h1>
+    </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>

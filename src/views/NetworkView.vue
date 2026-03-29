@@ -7,6 +7,7 @@ import FormField from '@/components/forms/FormField.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const YESNO_OPTIONS = ['YES', 'NO']
 const ICMP_OPTIONS = ['YES', 'NO'] // YES = allow ping
@@ -184,9 +185,9 @@ onMounted(fetchData)
 
 <template>
   <div class="edit-view" @keydown="onKeydown">
-    <header class="edit-header">
+    <PanelBackLink :to="{ name: 'dashboard' }" label="Dashboard" class="edit-header">
       <h1>Network</h1>
-    </header>
+    </PanelBackLink>
 
     <section v-if="loading" class="loading-state">
       <p class="loading">Loading…</p>

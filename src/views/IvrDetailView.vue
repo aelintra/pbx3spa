@@ -12,6 +12,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import { normalizeList } from '@/utils/listResponse'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 import { OPTION_ENTRIES, buildIvrPayload } from '@/constants/ivrDestinations'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 
@@ -320,7 +321,9 @@ async function confirmAndDelete() {
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
-    <h1>Edit IVR {{ ivr?.cname?.trim() ? ivr.cname.trim() : (ivr?.pkey ?? '…') }}</h1>
+    <PanelBackLink :to="{ name: 'ivrs' }" label="IVRs">
+      <h1>Edit IVR {{ ivr?.cname?.trim() ? ivr.cname.trim() : (ivr?.pkey ?? '…') }}</h1>
+    </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>

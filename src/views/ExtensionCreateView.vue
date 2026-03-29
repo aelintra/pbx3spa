@@ -13,6 +13,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -212,7 +213,9 @@ function onKeydown(e) {
 
 <template>
   <div class="create-view">
-    <h1>Create extension</h1>
+    <PanelBackLink :to="{ name: 'extensions' }" label="Extensions">
+      <h1>Create extension</h1>
+    </PanelBackLink>
 
     <form class="form create-form" @submit="onSubmit" @keydown="onKeydown">
       <p v-if="error" id="extension-create-error" class="error" role="alert">{{ error }}</p>

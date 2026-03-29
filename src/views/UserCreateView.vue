@@ -5,6 +5,7 @@ import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { fieldErrors } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -75,12 +76,9 @@ onMounted(() => {
 
 <template>
   <div class="create-view">
-    <header class="create-header">
+    <PanelBackLink :to="{ name: 'users' }" label="Users" class="create-header">
       <h1>Create user</h1>
-      <p class="back-link">
-        <router-link :to="{ name: 'users' }">← Back to Users</router-link>
-      </p>
-    </header>
+    </PanelBackLink>
 
     <form class="create-form" @submit="onSubmit">
       <section class="form-section">
@@ -166,17 +164,6 @@ onMounted(() => {
 }
 .create-header h1 {
   margin: 0;
-}
-.back-link {
-  margin: 0.25rem 0 0 0;
-  font-size: 0.9375rem;
-}
-.back-link a {
-  color: #2563eb;
-  text-decoration: none;
-}
-.back-link a:hover {
-  text-decoration: underline;
 }
 .create-form {
   display: flex;

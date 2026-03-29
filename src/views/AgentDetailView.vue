@@ -11,6 +11,7 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -244,7 +245,9 @@ async function confirmAndDelete() {
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
-    <h1>Edit Agent {{ agent?.pkey ?? '…' }}</h1>
+    <PanelBackLink :to="{ name: 'agents' }" label="Agents">
+      <h1>Edit Agent {{ agent?.pkey ?? '…' }}</h1>
+    </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
