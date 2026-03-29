@@ -13,6 +13,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -275,7 +276,20 @@ async function confirmAndDelete() {
 <template>
   <div class="detail-view" @keydown="onKeydown">
     <PanelBackLink :to="{ name: 'inbound-routes' }" label="Inbound Routes">
-      <h1>Edit Inbound Route {{ inboundRoute?.pkey ?? '…' }}</h1>
+      <div class="detail-panel-head">
+        <div class="detail-title-status-row">
+          <h1 class="detail-panel-title">Edit Inbound Route {{ inboundRoute?.pkey ?? '…' }}</h1>
+          <DetailActiveStatusBar
+            v-if="inboundRoute"
+            v-model="editActive"
+            :readonly="isReadOnly('active')"
+            toggle-id="edit-inbound-active"
+          />
+        </div>
+        <p v-if="inboundRoute && editActive === 'NO'" class="detail-inactive-banner" role="status">
+          This record is inactive and may not participate in normal call flow until you activate it and save.
+        </p>
+      </div>
     </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>
@@ -341,13 +355,6 @@ async function confirmAndDelete() {
               :options="tenantOptionsForSelect"
               :required="true"
               hint="The tenant this inbound route belongs to."
-            />
-            <FormToggle
-              id="edit-active"
-              v-model="editActive"
-              label="Active?"
-              yes-value="YES"
-              no-value="NO"
             />
             <FormSelect
               id="edit-openroute"

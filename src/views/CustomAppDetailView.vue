@@ -12,6 +12,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -195,7 +196,20 @@ async function confirmDelete() {
 <template>
   <div class="detail-view" @keydown="onKeydown">
     <PanelBackLink :to="{ name: 'customapps' }" label="Custom Apps">
-      <h1>Edit Custom App {{ app?.pkey ?? shortuid }}</h1>
+      <div class="detail-panel-head">
+        <div class="detail-title-status-row">
+          <h1 class="detail-panel-title">Edit Custom App {{ app?.pkey ?? shortuid }}</h1>
+          <DetailActiveStatusBar
+            v-if="app"
+            v-model="editActive"
+            :readonly="isReadOnly('active')"
+            toggle-id="edit-customapp-active"
+          />
+        </div>
+        <p v-if="app && editActive === 'NO'" class="detail-inactive-banner" role="status">
+          This record is inactive and may not participate in normal call flow until you activate it and save.
+        </p>
+      </div>
     </PanelBackLink>
 
     <section v-if="loading || error" class="detail-states">
@@ -261,14 +275,6 @@ async function confirmDelete() {
           :disabled="tenantsLoading"
         />
         <FormReadonly v-else id="cluster" label="Tenant" :value="resolveClusterToTenantPkey(app?.cluster) || '—'" />
-
-        <FormToggle
-          v-if="!isReadOnly('active')"
-          id="active"
-          v-model="editActive"
-          label="Active?"
-        />
-        <FormReadonly v-else id="active" label="Active?" :value="app?.active ?? '—'" />
 
         <FormSelect
           v-if="!isReadOnly('span')"

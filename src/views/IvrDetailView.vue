@@ -13,6 +13,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import { normalizeList } from '@/utils/listResponse'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { OPTION_ENTRIES, buildIvrPayload } from '@/constants/ivrDestinations'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 
@@ -322,7 +323,20 @@ async function confirmAndDelete() {
 <template>
   <div class="detail-view" @keydown="onKeydown">
     <PanelBackLink :to="{ name: 'ivrs' }" label="IVRs">
-      <h1>Edit IVR {{ ivr?.cname?.trim() ? ivr.cname.trim() : (ivr?.pkey ?? '…') }}</h1>
+      <div class="detail-panel-head">
+        <div class="detail-title-status-row">
+          <h1 class="detail-panel-title">Edit IVR {{ ivr?.cname?.trim() ? ivr.cname.trim() : (ivr?.pkey ?? '…') }}</h1>
+          <DetailActiveStatusBar
+            v-if="ivr"
+            v-model="editActive"
+            :readonly="isReadOnly('active')"
+            toggle-id="edit-ivr-active"
+          />
+        </div>
+        <p v-if="ivr && editActive === 'NO'" class="detail-inactive-banner" role="status">
+          This record is inactive and may not participate in normal call flow until you activate it and save.
+        </p>
+      </div>
     </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>
@@ -388,11 +402,6 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Settings</h2>
           <div class="form-fields">
-            <FormToggle
-              id="edit-active"
-              v-model="editActive"
-              label="Active?"
-            />
             <FormSelect
               id="edit-greetnum"
               v-model="editGreetnum"

@@ -9,10 +9,10 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import { validateQueuePkey } from '@/utils/validation'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
-import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -230,7 +230,20 @@ const displayName = computed(() => queue.value?.pkey ?? '')
 <template>
   <div class="detail-view" @keydown="onKeydown">
     <PanelBackLink :to="{ name: 'queues' }" label="Queues">
-      <h1>Edit Queue {{ displayName }}</h1>
+      <div class="detail-panel-head">
+        <div class="detail-title-status-row">
+          <h1 class="detail-panel-title">Edit Queue {{ displayName }}</h1>
+          <DetailActiveStatusBar
+            v-if="queue"
+            v-model="editActive"
+            :readonly="isReadOnly('active')"
+            toggle-id="edit-queue-active"
+          />
+        </div>
+        <p v-if="queue && editActive === 'NO'" class="detail-inactive-banner" role="status">
+          This record is inactive and may not participate in normal call flow until you activate it and save.
+        </p>
+      </div>
     </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>
@@ -274,13 +287,6 @@ const displayName = computed(() => queue.value?.pkey ?? '')
               label="Tenant (required)"
               :options="tenantOptionsForSelect"
               :required="true"
-            />
-            <FormToggle
-              id="edit-active"
-              v-model="editActive"
-              label="Active"
-              yes-value="YES"
-              no-value="NO"
             />
             <FormField
               id="edit-description"
