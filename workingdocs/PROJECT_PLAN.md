@@ -6,7 +6,9 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 ## Current state (for the next chat)
 
-**See SESSION_HANDOFF.md** for done, next steps, and TODO. It is the single source of current state. Primary branch: **`main`** (pbx3spa, pbx3api). Schema yardstick: **pbx3/full_schema.sql**.
+**See SESSION_HANDOFF.md** for done, next steps, and TODO. It is the single source of current state. Primary branch: **`main`** (pbx3spa, pbx3api). Schema yardstick: **pbx3/full_schema.sql**. **Git:** SPA commits live in the **`pbx3spa`** repo only (`pbx3-master` is not a git root).
+
+**Done – Panel navigation + Asterisk editor UX:** **`PanelBackLink.vue`** provides the top **`← {Parent}`** link on resource detail/create panels, user create, Asterisk file detail, system globals, and network settings (see **SESSION_HANDOFF** § Done). **Asterisk file** Save/Cancel use the same **`.edit-actions`** button styling as other detail forms.
 
 **Parked:** Backups — review after first CRUD set; behaviour may depend on PBX3 internals.
 

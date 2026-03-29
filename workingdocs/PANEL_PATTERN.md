@@ -48,8 +48,8 @@ Every resource has **exactly three panels** (List, Create, Edit) unless a resour
 ### The three panels
 
 1. **Main list** (`{Resource}ListView.vue`) – Table (or list) of all items. Toolbar: Create button, filter. Rows: columns + Edit action + Delete action. **Action column icons (Edit, Delete, Play, Download, etc.) must be SVG only** — see “List action icons” in the Important section; do not use emoji. See **Optional: List export (CSV / PDF)** below for adding Export CSV and Export PDF to the toolbar.
-2. **Create** (`{Resource}CreateView.vue`) – Single form to create one item. No top-level back link; use Cancel in the form to return to the list. **Action buttons (Create, Cancel) must appear at both the top and bottom of the form.**
-3. **Edit** (`{Resource}DetailView.vue`) – Single form to view and edit one item (immutable fields with FormReadonly, editable with FormField/FormSelect/FormToggle). **All edit panels must have three buttons (Save, Cancel, Delete) at both the top and bottom of the form.** Delete is placed alongside Save and Cancel in `.edit-actions`, not in a toolbar at the top. No separate "view" panel; no link from the list that goes to a different "item list" panel.
+2. **Create** (`{Resource}CreateView.vue`) – Single form to create one item. **Top navigation:** wrap the page `<h1>` in **`PanelBackLink`** (`src/components/PanelBackLink.vue`) with `← {List title}` and `:to="{ name: '<list-route>' }"` so users can return to the list without relying on Cancel alone. **Action buttons (Save—or submit label—and Cancel) must appear at both the top and bottom of the form.**
+3. **Edit** (`{Resource}DetailView.vue`) – Single form to view and edit one item (immutable fields with FormReadonly, editable with FormField/FormSelect/FormToggle). **Same top `PanelBackLink`** as Create, pointing at the resource list. **All edit panels must have three buttons (Save, Cancel, Delete) at both the top and bottom of the form.** Delete is placed alongside Save and Cancel in `.edit-actions`, not in a toolbar at the top. No separate "view" panel; no link from the list that goes to a different "item list" panel.
 
 There is **no fourth panel** (e.g. no "item list" or intermediate list). Navigation is: **List ↔ Create** and **List ↔ Edit** only.
 
@@ -83,9 +83,10 @@ Some resources are **singletons**: exactly one record per instance (e.g. system 
 - **Single Edit panel** — one view that loads the singleton (e.g. `GET /sysglobals`), shows a form, and saves (e.g. `PUT /sysglobals`). No route parameter (no `:shortuid` or `:pkey`).
 - **No Delete button** — omit Delete and DeleteConfirmModal; show only **Save** and **Cancel** at top and bottom.
 - **Heading** — use a static heading (e.g. "System Globals") since there is no item name.
+- **Top link** — use **`PanelBackLink`** with `label="Dashboard"` and `:to="{ name: 'dashboard' }"` (or the correct parent if the singleton moves under another hub). Same for **Network / IP settings** (`NetworkView.vue`).
 - **Everything else** follows the pattern: FormField/FormSelect/FormToggle, `form-fields`, section headings, API field parity, `firstErrorMessage`, toast, Escape to go back. Use `.edit-actions` and `.edit-actions-top` for the action row in both positions.
 
-**Reference:** `SysglobalsEditView.vue` (route `/sysglobals`, API `GET`/`PUT` `sysglobals`).
+**Reference:** `SysglobalsEditView.vue` (route `/sysglobals`, API `GET`/`PUT` `sysglobals`), `NetworkView.vue` (`/ip-settings`).
 
 ### Two-panel (list + detail) panels (exception)
 
@@ -104,9 +105,9 @@ Some resources have **exactly two panels**: a **list** and a **detail** (view/ed
 
 **Detail panel (`{Resource}DetailView.vue`):**
 
-- **Back link:** A link at the top back to the list (e.g. "← Asterisk Files" with `router-link` to the list route). Do not rely only on browser back.
+- **Back link:** Use **`PanelBackLink`** (`← Asterisk Files`, etc.) wrapping the `<h1>`, with `:to` the list route `name`. Do not rely only on browser back or ad-hoc `router-link` unless you have a strong reason.
 - **Heading:** The current item identifier (e.g. filename, or name from API).
-- **Content:** View and/or edit the single item. For **read-only** items show content in a `<pre>` or disabled textarea and omit Save. For **editable** items show a form or textarea with **Save** and **Cancel** at top and bottom; **Delete** only if the API and product allow it.
+- **Content:** View and/or edit the single item. For **read-only** items show content in a `<pre>` or disabled textarea and omit Save. For **editable** items show a form or textarea with **Save** and **Cancel** at top and bottom using **`.edit-actions`** / **`.edit-actions-top`** and the same primary/secondary button rules as other detail panels; **Delete** only if the API and product allow it.
 - **Detail view may be view-only for some items** (e.g. read-only files): same route, but no Save button and content not editable. Use API or flags (e.g. `readonly`) to decide.
 - **Max-width:** Use `max-width: 52rem` on the detail view root when the content is form-like (e.g. one large textarea) so it stays readable.
 
@@ -120,7 +121,7 @@ Some resources have **exactly two panels**: a **list** and a **detail** (view/ed
 - **List:** `GET /resource` returns an array (or array wrapper) of items; each may include a **readonly** or similar flag for the detail view.
 - **Detail:** `GET /resource/{id}` returns the single item (e.g. content + readonly). `PUT /resource/{id}` to save when editable; reject with 403 or 422 for read-only items if the UI allows attempting save.
 
-**Reference:** `AsteriskFilesListView.vue` (list with Commit, table Filename + Read-only, link to detail), `AsteriskFileDetailView.vue` (back link, filename heading, textarea + Save/Cancel or read-only pre). Routes: `asterisk-files`, `asterisk-files/:filename`.
+**Reference:** `AsteriskFilesListView.vue` (list with Commit, table Filename + Read-only, link to detail), `AsteriskFileDetailView.vue` (`PanelBackLink`, filename heading, textarea + **`.edit-actions`** Save/Cancel or read-only `<pre>`). Routes: `asterisk-files`, `asterisk-files/:filename`.
 
 ### Single-screen panels: use full content width
 
