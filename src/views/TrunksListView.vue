@@ -6,9 +6,10 @@ import { normalizeList } from '@/utils/listResponse'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
-import { isRowActive } from '@/utils/listActive'
+import { countActiveRows, isRowActive } from '@/utils/listActive'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import ListViewMeta from '@/components/ListViewMeta.vue'
 
 const { filterText } = useStickyFilter('trunks')
 const toast = useToastStore()
@@ -21,6 +22,9 @@ const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
 const exportPdfLoading = ref(false)
 const { sortKey, sortOrder } = useStickySort('trunks', { defaultKey: 'pkey' })
+/** Live PJSIP data keyed by trunk pkey: { ip, latency }. Empty when PBX not running or request failed. */
+const liveData = ref({})
+const liveLoading = ref(false)
 
 // --- Map cluster id, shortuid, or pkey → tenant pkey for display (always show pkey, not shortuid) ---
 const clusterToTenantPkey = computed(() => {
@@ -48,6 +52,41 @@ function localUidDisplay(tr) {
   return v == null || v === '' ? '—' : String(v)
 }
 
+function liveValueDisplay(val) {
+  const s = (val ?? '').toString().trim()
+  if (!s || s === '—' || s === '\u2014') return 'Unknown'
+  return s
+}
+
+function ipDisplay(tr) {
+  const key = String(tr.pkey ?? '')
+  if (liveLoading.value && !(key in liveData.value)) {
+    return '…'
+  }
+  const live = liveData.value[key]
+  return liveValueDisplay(live?.ip)
+}
+
+function statusDisplay(tr) {
+  const key = String(tr.pkey ?? '')
+  if (liveLoading.value && !(key in liveData.value)) {
+    return '…'
+  }
+  const live = liveData.value[key]
+  return liveValueDisplay(live?.latency)
+}
+
+function isStatusUnknown(tr) {
+  return statusDisplay(tr) === 'Unknown'
+}
+
+const STATUS_OK_REGEX = /^OK/
+function isStatusOnline(tr) {
+  const s = statusDisplay(tr)
+  if (s === '…' || s === 'Unknown') return false
+  return STATUS_OK_REGEX.test(s.trim())
+}
+
 // --- Filter ---
 const filteredTrunks = computed(() => {
   const list = trunks.value
@@ -63,6 +102,24 @@ const filteredTrunks = computed(() => {
     const active = (tr.active ?? '').toString().toLowerCase()
     return pkey.includes(q) || shortuid.includes(q) || tenantPkey.includes(q) || desc.includes(q) || host.includes(q) || active.includes(q)
   })
+})
+
+const trunksActiveInFilter = computed(() => countActiveRows(filteredTrunks.value))
+
+const trunksDownInFilter = computed(() => {
+  let n = 0
+  for (const tr of filteredTrunks.value) {
+    if (isStatusUnknown(tr)) n += 1
+  }
+  return n
+})
+
+const trunksOnlineInFilter = computed(() => {
+  let n = 0
+  for (const tr of filteredTrunks.value) {
+    if (isStatusOnline(tr)) n += 1
+  }
+  return n
 })
 
 // --- Sort ---
@@ -107,7 +164,9 @@ const trunkExportColumns = computed(() => [
   { key: 'cluster', label: 'Tenant', getValue: (tr) => tenantPkeyDisplay(tr) },
   { key: 'active', label: 'Active' },
   { key: 'description', label: 'Description' },
-  { key: 'host', label: 'Host' }
+  { key: 'host', label: 'Host' },
+  { key: 'ip', label: 'IP', getValue: (tr) => ipDisplay(tr) },
+  { key: 'status', label: 'Status', getValue: (tr) => statusDisplay(tr) }
 ])
 
 function doExportCsv() {
@@ -137,6 +196,8 @@ async function doExportPdf() {
 async function loadTrunks() {
   loading.value = true
   error.value = ''
+  liveData.value = {}
+  liveLoading.value = false
   try {
     const [trunkResponse, tenantResponse] = await Promise.all([
       getApiClient().get('trunks'),
@@ -146,8 +207,24 @@ async function loadTrunks() {
     tenants.value = normalizeList(tenantResponse, 'tenants')
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load trunks')
+    liveData.value = {}
   } finally {
     loading.value = false
+  }
+  loadLiveData()
+}
+
+async function loadLiveData() {
+  if (trunks.value.length === 0) return
+  liveLoading.value = true
+  try {
+    const liveResponse = await getApiClient().get('trunks/live')
+    const raw = liveResponse?.data ?? liveResponse
+    liveData.value = typeof raw === 'object' && raw !== null && !Array.isArray(raw) ? raw : {}
+  } catch {
+    liveData.value = {}
+  } finally {
+    liveLoading.value = false
   }
 }
 
@@ -206,8 +283,16 @@ onMounted(loadTrunks)
     </section>
 
     <section v-else class="list-body">
+      <ListViewMeta
+        v-if="trunks.length > 0"
+        :total="trunks.length"
+        :filtered="filteredTrunks.length"
+        :active-count="trunksActiveInFilter"
+        :down-count="trunksDownInFilter"
+        :online-count="trunksOnlineInFilter"
+      />
       <p v-if="filterText && filteredTrunks.length === 0" class="empty">No trunks match the filter.</p>
-      <table v-else class="table">
+      <table v-else class="table" :aria-busy="liveLoading">
         <thead>
           <tr>
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">
@@ -228,18 +313,33 @@ onMounted(loadTrunks)
             <th class="th-sortable" title="Click to sort" :class="sortClass('host')" @click="setSort('host')">
               host
             </th>
+            <th :title="liveLoading ? 'Loading from Asterisk…' : 'From Asterisk'">
+              IP{{ liveLoading ? ' (…)' : '' }}
+            </th>
+            <th :title="liveLoading ? 'Loading from Asterisk…' : 'RTT from Asterisk'">
+              Status{{ liveLoading ? ' (…)' : '' }}
+            </th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
             <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="tr in sortedTrunks" :key="tr.shortuid || tr.id || (tr.cluster || '') + '-' + (tr.pkey || '')" :class="{ 'list-row-inactive': !isRowActive(tr.active) }">
+          <tr
+            v-for="tr in sortedTrunks"
+            :key="tr.shortuid || tr.id || (tr.cluster || '') + '-' + (tr.pkey || '')"
+            :class="{
+              'list-row-inactive': !isRowActive(tr.active),
+              'list-row-status-unknown': isStatusUnknown(tr) && isRowActive(tr.active)
+            }"
+          >
             <td>{{ tr.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(tr) }}</td>
             <td>{{ tenantPkeyDisplay(tr) }}</td>
             <td>{{ tr.active ?? '—' }}</td>
             <td>{{ tr.description ?? '—' }}</td>
             <td>{{ tr.host ?? '—' }}</td>
+            <td>{{ ipDisplay(tr) }}</td>
+            <td>{{ statusDisplay(tr) }}</td>
             <td>
               <router-link v-if="tr.shortuid" :to="{ name: 'trunk-detail', params: { shortuid: tr.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>

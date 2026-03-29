@@ -9,6 +9,7 @@
 | Endpoint | Purpose |
 |----------|---------|
 | **GET /api/extensions/live** | Returns an object keyed by extension **pkey** (string): `{ "1000": { "ip": "...", "latency": "..." }, ... }`. Only **SIP** extensions with **active ≠ NO** (same rule as legacy SARK `get_pjsip_array`) get an AMI `PJSIPShowEndpoint` call; inactive extensions are omitted — list UI shows **Unknown** for IP/Status on those rows. |
+| **GET /api/trunks/live** | Same shape, keyed by trunk **pkey**. Only **SIP** trunks with **active ≠ NO**; AMI uses **shortuid** for `PJSIPShowEndpoint` when set, else **pkey** (same as extensions). **IAX2** trunks and inactive SIP are omitted — **TrunksListView** shows **Unknown** for IP/Status. Route must be registered **before** `GET trunks/{trunk}`. **Implementation:** `TrunkController::indexLive()`. |
 | **GET /api/extensions/{id}/runtime** | For a single extension: cfim, cfbs, ringdelay; for SIP also **ip** and **latency**. |
 
 **Implementation (pbx3api):**
@@ -48,4 +49,5 @@
 
 - Old panel (sail65): `sarkextension/view.php` (showMain table: IP, latency from AMI); `srkAmiHelperClass` (get_pjsip_array, getIpAddressFromPeer, getLatencyFromPeer).
 - API: `pbx3api/app/Http/Controllers/ExtensionController.php` (indexLive, showruntime), `app/Helpers/Helper.php` (pjsip_endpoint_live), `app/CustomClasses/Ami.php` (`amiPjsipShowEndpointForLive`, `amiQueryUntilBlankLine`).
-- Frontend: `pbx3spa/src/views/ExtensionsListView.vue` (liveData, ipDisplay, statusDisplay, liveValueDisplay), `ExtensionDetailView.vue` (Runtime section ip/latency).
+- Frontend: `pbx3spa/src/views/ExtensionsListView.vue` (liveData, ipDisplay, statusDisplay, liveValueDisplay), `ExtensionDetailView.vue` (Runtime section ip/latency); **Trunks:** `TrunksListView.vue` (same list pattern after `GET trunks`).
+- API (trunks): `pbx3api/app/Http/Controllers/TrunkController.php` (`indexLive`), `routes/api.php` (`trunks/live` before `trunks/{trunk}`).
