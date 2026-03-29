@@ -77,11 +77,11 @@ watch(filename, loadFile)
     <template v-else>
       <p v-if="readonly" class="readonly-badge">Read-only (view only)</p>
       <form v-if="!readonly" class="edit-form" @submit="saveEdit">
-        <div class="form-actions form-actions-top">
-          <button type="submit" class="action-btn action-btn-primary" :disabled="saving">
+        <div class="edit-actions edit-actions-top">
+          <button type="submit" :disabled="saving">
             {{ saving ? 'Saving…' : 'Save' }}
           </button>
-          <button type="button" class="action-btn" @click="goBack">Cancel</button>
+          <button type="button" class="secondary" @click="goBack">Cancel</button>
         </div>
         <p v-if="saveError" class="error">{{ saveError }}</p>
         <div class="field">
@@ -93,11 +93,11 @@ watch(filename, loadFile)
             aria-label="File contents"
           />
         </div>
-        <div class="form-actions">
-          <button type="submit" class="action-btn action-btn-primary" :disabled="saving">
+        <div class="edit-actions">
+          <button type="submit" :disabled="saving">
             {{ saving ? 'Saving…' : 'Save' }}
           </button>
-          <button type="button" class="action-btn" @click="goBack">Cancel</button>
+          <button type="button" class="secondary" @click="goBack">Cancel</button>
         </div>
       </form>
       <div v-else class="file-content-wrap">
@@ -135,27 +135,33 @@ watch(filename, loadFile)
   flex-direction: column;
   gap: 1rem;
 }
-.form-actions {
+.edit-actions {
   display: flex;
   gap: 0.5rem;
 }
-.form-actions-top { margin-bottom: 0; }
-.action-btn {
+.edit-actions button {
   padding: 0.375rem 0.75rem;
-  border-radius: 0.375rem;
+  font-size: 0.875rem;
   font-weight: 500;
+  border-radius: 0.375rem;
   cursor: pointer;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
 }
-.action-btn-primary {
-  background: #0f172a;
+.edit-actions button[type="submit"] {
   color: #fff;
-  border-color: #0f172a;
+  background: #2563eb;
+  border: none;
 }
-.action-btn:disabled {
+.edit-actions button[type="submit"]:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+.edit-actions button.secondary {
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+}
+.edit-actions button.secondary:hover {
+  background: #f1f5f9;
 }
 .field { margin: 0; }
 .file-textarea,
