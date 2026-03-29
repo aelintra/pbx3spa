@@ -2,8 +2,11 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useToastStore } from '@/stores/toast'
+import { firstErrorMessage } from '@/utils/formErrors'
 
 const route = useRoute()
+const toast = useToastStore()
 
 const commitDirty = ref(false)
 const actionBusy = ref(false)
@@ -23,6 +26,9 @@ async function runCommit() {
   try {
     await getApiClient().get('syscommands/commit')
     await fetchCommitStatus()
+    toast.show('Committed')
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Commit failed'), 'error')
   } finally {
     actionBusy.value = false
   }
