@@ -42,8 +42,6 @@ const editMatch = ref('')
 const editRegister = ref('')
 const editTag = ref('')
 const editCallback = ref('')
-const editCloseroute = ref('')
-const editOpenroute = ref('')
 const editPrivileged = ref('')
 const editTechnology = ref('SIP')
 const editIaxreg = ref('')
@@ -114,8 +112,6 @@ async function fetchTrunk() {
     editRegister.value = trunk.value?.register ?? ''
     editTag.value = trunk.value?.tag ?? ''
     editCallback.value = trunk.value?.callback ?? ''
-    editCloseroute.value = trunk.value?.closeroute ?? ''
-    editOpenroute.value = trunk.value?.openroute ?? ''
     editPrivileged.value = trunk.value?.privileged ?? ''
     editTechnology.value = trunk.value?.technology ?? 'SIP'
     editIaxreg.value = trunk.value?.iaxreg ?? ''
@@ -178,8 +174,6 @@ async function saveEdit(e) {
       register: editRegister.value.trim() || undefined,
       tag: editTag.value.trim() || undefined,
       callback: editCallback.value.trim() || undefined,
-      closeroute: editCloseroute.value.trim() || undefined,
-      openroute: editOpenroute.value.trim() || undefined,
       privileged: editPrivileged.value.trim() || undefined,
       technology: editTechnology.value || undefined,
       iaxreg: editIaxreg.value.trim() || undefined,
@@ -330,8 +324,6 @@ async function confirmAndDelete() {
             <FormField id="edit-register" v-model="editRegister" label="Register" type="text" />
             <FormField id="edit-tag" v-model="editTag" label="Tag" type="text" />
             <FormField id="edit-callback" v-model="editCallback" label="Callback" type="text" />
-            <FormField id="edit-closeroute" v-model="editCloseroute" label="Close route" type="text" />
-            <FormField id="edit-openroute" v-model="editOpenroute" label="Open route" type="text" />
             <FormField id="edit-privileged" v-model="editPrivileged" label="Privileged" type="text" />
             <FormField id="edit-iaxreg" v-model="editIaxreg" label="IAX reg" type="text" />
             <FormSelect
