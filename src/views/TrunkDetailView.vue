@@ -232,7 +232,7 @@ async function confirmAndDelete() {
           <DetailActiveStatusBar
             v-if="trunk"
             v-model="editActive"
-            :readonly="isReadOnly('active')"
+            schema-resource="trunks"
             toggle-id="edit-trunk-active"
           />
         </div>

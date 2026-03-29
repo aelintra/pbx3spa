@@ -329,7 +329,7 @@ async function confirmAndDelete() {
           <DetailActiveStatusBar
             v-if="ivr"
             v-model="editActive"
-            :readonly="isReadOnly('active')"
+            schema-resource="ivrs"
             toggle-id="edit-ivr-active"
           />
         </div>

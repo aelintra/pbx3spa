@@ -288,7 +288,7 @@ async function saveRuntime(e) {
           <DetailActiveStatusBar
             v-if="extension"
             v-model="editActive"
-            :readonly="isReadOnly('active')"
+            schema-resource="extensions"
             toggle-id="edit-extension-active"
           />
         </div>

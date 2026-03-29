@@ -1,19 +1,38 @@
 <script setup>
 import { computed } from 'vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
+import { useSchema } from '@/composables/useSchema'
 
 const model = defineModel({ type: String, default: 'YES' })
 
 const props = defineProps({
-  /** When true, show status badge only (schema read-only). */
+  /** When true, show status badge only (e.g. view-only mode). */
   readonly: { type: Boolean, default: false },
+  /**
+   * GET /schemas resource key (e.g. trunks, queues). When set, the toggle is shown only if
+   * `active` appears in that resource's updateable list. If schema/updateable is missing or
+   * empty, the toggle is shown (fail open). This avoids hiding the control when read_only
+   * metadata is wrong or out of sync.
+   */
+  schemaResource: { type: String, default: '' },
   /** Unique id for the toggle input (per page). */
   toggleId: { type: String, required: true },
   yesValue: { type: String, default: 'YES' },
   noValue: { type: String, default: 'NO' }
 })
 
+const { getSchema } = useSchema()
+
 const isActive = computed(() => model.value === props.yesValue)
+
+/** True when we should not render the toggle (badge only). */
+const hideToggle = computed(() => {
+  if (props.readonly) return true
+  if (!props.schemaResource) return false
+  const u = getSchema(props.schemaResource)?.updateable
+  if (!u || !Array.isArray(u) || u.length === 0) return false
+  return !u.includes('active')
+})
 </script>
 
 <template>
@@ -26,7 +45,7 @@ const isActive = computed(() => model.value === props.yesValue)
       {{ isActive ? 'Active' : 'Inactive' }}
     </span>
     <FormToggle
-      v-if="!readonly"
+      v-if="!hideToggle"
       :id="toggleId"
       v-model="model"
       label="Active"
@@ -45,6 +64,7 @@ const isActive = computed(() => model.value === props.yesValue)
   align-items: center;
   justify-content: flex-end;
   gap: 0.75rem;
+  flex-shrink: 0;
 }
 
 .detail-active-badge {

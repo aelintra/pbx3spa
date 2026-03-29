@@ -236,7 +236,7 @@ const displayName = computed(() => queue.value?.pkey ?? '')
           <DetailActiveStatusBar
             v-if="queue"
             v-model="editActive"
-            :readonly="isReadOnly('active')"
+            schema-resource="queues"
             toggle-id="edit-queue-active"
           />
         </div>

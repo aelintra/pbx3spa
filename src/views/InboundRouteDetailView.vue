@@ -282,7 +282,7 @@ async function confirmAndDelete() {
           <DetailActiveStatusBar
             v-if="inboundRoute"
             v-model="editActive"
-            :readonly="isReadOnly('active')"
+            schema-resource="inroutes"
             toggle-id="edit-inbound-active"
           />
         </div>

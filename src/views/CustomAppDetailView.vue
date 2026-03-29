@@ -202,7 +202,7 @@ async function confirmDelete() {
           <DetailActiveStatusBar
             v-if="app"
             v-model="editActive"
-            :readonly="isReadOnly('active')"
+            schema-resource="customapps"
             toggle-id="edit-customapp-active"
           />
         </div>

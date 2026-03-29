@@ -198,7 +198,7 @@ const displayName = computed(() => conference.value?.pkey ?? '')
           <DetailActiveStatusBar
             v-if="conference"
             v-model="editActive"
-            :readonly="isReadOnly('active')"
+            schema-resource="conferences"
             toggle-id="edit-conference-active"
           />
         </div>
