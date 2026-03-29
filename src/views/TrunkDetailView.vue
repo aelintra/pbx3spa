@@ -39,7 +39,6 @@ const editAlertinfo = ref('')
 const editCallerid = ref('')
 const editInprefix = ref('')
 const editMatch = ref('')
-const editRegister = ref('')
 const editTag = ref('')
 const editCallback = ref('')
 const editPrivileged = ref('')
@@ -109,7 +108,6 @@ async function fetchTrunk() {
     editCallerid.value = trunk.value?.callerid ?? ''
     editInprefix.value = trunk.value?.inprefix ?? ''
     editMatch.value = trunk.value?.match ?? ''
-    editRegister.value = trunk.value?.register ?? ''
     editTag.value = trunk.value?.tag ?? ''
     editCallback.value = trunk.value?.callback ?? ''
     editPrivileged.value = trunk.value?.privileged ?? ''
@@ -171,7 +169,6 @@ async function saveEdit(e) {
       callerid: editCallerid.value.trim() || undefined,
       inprefix: editInprefix.value.trim() || undefined,
       match: editMatch.value.trim() || undefined,
-      register: editRegister.value.trim() || undefined,
       tag: editTag.value.trim() || undefined,
       callback: editCallback.value.trim() || undefined,
       privileged: editPrivileged.value.trim() || undefined,
@@ -321,7 +318,6 @@ async function confirmAndDelete() {
             <FormField id="edit-callerid" v-model="editCallerid" label="Caller ID" type="text" />
             <FormField id="edit-inprefix" v-model="editInprefix" label="In prefix" type="text" />
             <FormField id="edit-match" v-model="editMatch" label="Match" type="text" />
-            <FormField id="edit-register" v-model="editRegister" label="Register" type="text" />
             <FormField id="edit-tag" v-model="editTag" label="Tag" type="text" />
             <FormField id="edit-callback" v-model="editCallback" label="Callback" type="text" />
             <FormField id="edit-privileged" v-model="editPrivileged" label="Privileged" type="text" />
