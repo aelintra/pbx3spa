@@ -235,7 +235,6 @@ async function confirmAndDelete() {
           <DetailActiveStatusBar
             v-if="routeData"
             v-model="editActive"
-            schema-resource="routes"
             toggle-id="edit-route-active"
           />
         </div>

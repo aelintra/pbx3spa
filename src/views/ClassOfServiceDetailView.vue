@@ -172,7 +172,6 @@ const displayName = computed(() => cosrule.value?.pkey ?? '')
           <DetailActiveStatusBar
             v-if="cosrule"
             v-model="editActive"
-            schema-resource="cosrules"
             toggle-id="edit-cos-active"
           />
         </div>

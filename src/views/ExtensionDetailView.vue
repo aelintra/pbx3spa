@@ -288,7 +288,6 @@ async function saveRuntime(e) {
           <DetailActiveStatusBar
             v-if="extension"
             v-model="editActive"
-            schema-resource="extensions"
             toggle-id="edit-extension-active"
           />
         </div>

@@ -232,7 +232,6 @@ async function confirmAndDelete() {
           <DetailActiveStatusBar
             v-if="trunk"
             v-model="editActive"
-            schema-resource="trunks"
             toggle-id="edit-trunk-active"
           />
         </div>
@@ -287,6 +286,13 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Settings</h2>
           <div class="form-fields">
+            <FormToggle
+              id="edit-active"
+              v-model="editActive"
+              label="Active?"
+              yes-value="YES"
+              no-value="NO"
+            />
             <FormSelect
               v-if="editTechnology === 'SIP'"
               id="edit-pjsipreg"
