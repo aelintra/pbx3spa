@@ -277,6 +277,13 @@ async function saveRuntime(e) {
     runtimeSaving.value = false
   }
 }
+
+const panelTitleTenantSuffix = computed(() => {
+  if (!extension.value) return ''
+  const t = String(editCluster.value ?? '').trim()
+  if (!t) return ''
+  return ` (${t})`
+})
 </script>
 
 <template>
@@ -284,7 +291,7 @@ async function saveRuntime(e) {
     <PanelBackLink :to="{ name: 'extensions' }" label="Extensions">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit Extension {{ extension?.pkey ?? '…' }}</h1>
+          <h1 class="detail-panel-title">Edit Extension {{ extension?.pkey ?? '…' }}{{ panelTitleTenantSuffix }}</h1>
           <DetailActiveStatusBar
             v-if="extension"
             v-model="editActive"
@@ -292,7 +299,7 @@ async function saveRuntime(e) {
           />
         </div>
         <p v-if="extension && editActive === 'NO'" class="detail-inactive-banner" role="status">
-          This record is inactive and may not participate in normal call flow until you activate it and save.
+          This record is inactive and will not participate in normal call flow until you activate it and commit the change.
         </p>
       </div>
     </PanelBackLink>
@@ -327,13 +334,15 @@ async function saveRuntime(e) {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Ext" :value="extension.pkey ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" :model-value="extension.pkey ?? '—'" label="Ext" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="SIP Identity" :value="extension.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="extension.shortuid ?? '—'" label="SIP Identity" disabled class="readonly-identity" />
-            <FormReadonly id="edit-identity-passwd" label="SIP Password" :value="extension.passwd ?? '—'" class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Short UID" :value="extension.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-shortuid" :model-value="extension.shortuid ?? '—'" label="Short UID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="extension.id ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-id" :model-value="extension.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Ext Dial" :value="extension.pkey ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-pkey" :model-value="extension.pkey ?? '—'" label="Ext Dial" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-sip-user" label="SIP User" :value="extension.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-sip-user" :model-value="extension.shortuid ?? '—'" label="SIP User" disabled class="readonly-identity" />
+            <FormReadonly id="edit-identity-passwd" label="SIP Password" :value="extension.passwd ?? '—'" class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('macaddr')" id="edit-identity-macaddr" label="MAC address" :value="extension.macaddr?.trim() || '—'" class="readonly-identity" />
             <FormField
               v-else
@@ -342,9 +351,7 @@ async function saveRuntime(e) {
               label="MAC address"
               type="text"
               placeholder="12 hex digits or 00:11:22:33:44:55"
-              hint="Optional. Add or change to provision device; clear to switch to General SIP."
             />
-            <FormReadonly id="edit-identity-extension-type" label="Extension type" :value="extension.extension_type ?? '—'" class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('device')" id="edit-identity-device" label="Device" :value="extension.device ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-device" :model-value="extension.device ?? '—'" label="Device" disabled class="readonly-identity" />
             <FormSelect
@@ -380,18 +387,10 @@ async function saveRuntime(e) {
           <h2 class="detail-heading">Transport</h2>
           <div class="form-fields">
             <FormSelect
-              id="edit-technology"
-              v-model="editTechnology"
-              label="Technology"
-              :options="['SIP', 'IAX2', 'DiD', 'CLiD', 'Class']"
-              hint="SIP, IAX2, or class."
-            />
-            <FormSelect
               id="edit-transport"
               v-model="editTransport"
               label="Transport"
               :options="['udp', 'tcp', 'tls', 'wss']"
-              hint="SIP transport."
             />
           </div>
 

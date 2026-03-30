@@ -165,6 +165,13 @@ onMounted(async () => {
 watch(shortuid, fetchAgent)
 watch(editCluster, clearQueuesNotInTenant)
 
+const panelTitleTenantSuffix = computed(() => {
+  if (!agent.value) return ''
+  const t = String(editCluster.value ?? '').trim()
+  if (!t) return ''
+  return ` (${t})`
+})
+
 function goBack() {
   router.push({ name: 'agents' })
 }
@@ -246,7 +253,7 @@ async function confirmAndDelete() {
 <template>
   <div class="detail-view" @keydown="onKeydown">
     <PanelBackLink :to="{ name: 'agents' }" label="Agents">
-      <h1>Edit Agent {{ agent?.pkey ?? '…' }}</h1>
+      <h1>Edit Agent {{ agent?.pkey ?? '…' }}{{ panelTitleTenantSuffix }}</h1>
     </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>
@@ -273,6 +280,8 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
+            <FormReadonly v-if="agent.shortuid != null && agent.shortuid !== ''" id="edit-identity-shortuid" label="Short UID" :value="agent.shortuid ?? '—'" class="readonly-identity" />
+            <FormReadonly v-if="agent.id != null && agent.id !== ''" id="edit-identity-id" label="KSUID" :value="agent.id ?? '—'" class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Agent number" :value="agent.pkey ?? '—'" class="readonly-identity" />
             <FormField
               v-else

@@ -168,12 +168,19 @@ async function confirmAndDelete() {
 }
 
 const displayName = computed(() => greeting.value?.pkey ?? '')
+
+const panelTitleTenantSuffix = computed(() => {
+  if (!greeting.value) return ''
+  const t = String(editCluster.value ?? '').trim()
+  if (!t) return ''
+  return ` (${t})`
+})
 </script>
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
     <PanelBackLink :to="{ name: 'greetings' }" label="Greetings">
-      <h1>Edit Greeting {{ displayName }}</h1>
+      <h1>Edit Greeting {{ displayName }}{{ panelTitleTenantSuffix }}</h1>
     </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>
@@ -195,15 +202,15 @@ const displayName = computed(() => greeting.value?.pkey ?? '')
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly id="edit-pkey" label="Greeting number" :value="String(greeting.pkey ?? '—')" class="readonly-identity" />
             <template v-if="greeting.shortuid != null && greeting.shortuid !== ''">
-              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-shortuid" label="Local UID" :value="greeting.shortuid ?? '—'" class="readonly-identity" />
-              <FormField v-else id="edit-shortuid" :model-value="greeting.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
+              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-shortuid" label="Short UID" :value="greeting.shortuid ?? '—'" class="readonly-identity" />
+              <FormField v-else id="edit-shortuid" :model-value="greeting.shortuid ?? '—'" label="Short UID" disabled class="readonly-identity" />
             </template>
             <template v-if="greeting.id != null && greeting.id !== ''">
               <FormReadonly v-if="isReadOnly('id')" id="edit-id" label="KSUID" :value="greeting.id ?? '—'" class="readonly-identity" />
               <FormField v-else id="edit-id" :model-value="greeting.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             </template>
+            <FormReadonly id="edit-pkey" label="Greeting number" :value="String(greeting.pkey ?? '—')" class="readonly-identity" />
             <FormSelect id="edit-cluster" v-model="editCluster" label="Tenant (required)" :options="tenantOptionsForSelect" :required="true" />
           </div>
 

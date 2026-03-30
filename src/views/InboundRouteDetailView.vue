@@ -271,6 +271,13 @@ async function confirmAndDelete() {
     confirmDeleteOpen.value = false
   }
 }
+
+const panelTitleTenantSuffix = computed(() => {
+  if (!inboundRoute.value) return ''
+  const t = String(editCluster.value ?? '').trim()
+  if (!t) return ''
+  return ` (${t})`
+})
 </script>
 
 <template>
@@ -278,7 +285,7 @@ async function confirmAndDelete() {
     <PanelBackLink :to="{ name: 'inbound-routes' }" label="Inbound Routes">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit Inbound Route {{ inboundRoute?.pkey ?? '…' }}</h1>
+          <h1 class="detail-panel-title">Edit Inbound Route {{ inboundRoute?.pkey ?? '…' }}{{ panelTitleTenantSuffix }}</h1>
           <DetailActiveStatusBar
             v-if="inboundRoute"
             v-model="editActive"
@@ -286,7 +293,7 @@ async function confirmAndDelete() {
           />
         </div>
         <p v-if="inboundRoute && editActive === 'NO'" class="detail-inactive-banner" role="status">
-          This record is inactive and may not participate in normal call flow until you activate it and save.
+          This record is inactive and will not participate in normal call flow until you activate it and commit the change.
         </p>
       </div>
     </PanelBackLink>
@@ -315,6 +322,10 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Short UID" :value="inboundRoute.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-shortuid" :model-value="inboundRoute.shortuid ?? '—'" label="Short UID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="inboundRoute.id ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-id" :model-value="inboundRoute.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormField
               v-if="!isReadOnly('pkey')"
               id="edit-identity-pkey"
@@ -325,10 +336,6 @@ async function confirmAndDelete() {
               hint="Digits, pattern _XZN.! (e.g. _2XXX), or special s/i/t. Cannot be single 0."
             />
             <FormReadonly v-else id="edit-identity-pkey" label="DiD/CLiD" :value="inboundRoute.pkey ?? '—'" class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="inboundRoute.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="inboundRoute.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="inboundRoute.id ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-id" :model-value="inboundRoute.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormSelect
               id="edit-technology"
               v-model="editTechnology"

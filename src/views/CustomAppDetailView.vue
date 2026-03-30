@@ -191,6 +191,13 @@ async function confirmDelete() {
     deleting.value = false
   }
 }
+
+const panelTitleTenantSuffix = computed(() => {
+  if (!app.value) return ''
+  const t = String(editCluster.value ?? '').trim()
+  if (!t) return ''
+  return ` (${t})`
+})
 </script>
 
 <template>
@@ -198,7 +205,7 @@ async function confirmDelete() {
     <PanelBackLink :to="{ name: 'customapps' }" label="Custom Apps">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit Custom App {{ app?.pkey ?? shortuid }}</h1>
+          <h1 class="detail-panel-title">Edit Custom App {{ app?.pkey ?? shortuid }}{{ panelTitleTenantSuffix }}</h1>
           <DetailActiveStatusBar
             v-if="app"
             v-model="editActive"
@@ -207,7 +214,7 @@ async function confirmDelete() {
           />
         </div>
         <p v-if="app && editActive === 'NO'" class="detail-inactive-banner" role="status">
-          This record is inactive and may not participate in normal call flow until you activate it and save.
+          This record is inactive and will not participate in normal call flow until you activate it and commit the change.
         </p>
       </div>
     </PanelBackLink>
@@ -231,6 +238,12 @@ async function confirmDelete() {
 
       <h2 class="detail-heading">Identity</h2>
       <div class="form-fields">
+        <template v-if="app?.shortuid != null && app?.shortuid !== ''">
+          <FormReadonly id="edit-identity-shortuid" label="Short UID" :value="app.shortuid ?? '—'" class="readonly-identity" />
+        </template>
+        <template v-if="app?.id != null && app?.id !== ''">
+          <FormReadonly id="edit-identity-id" label="KSUID" :value="app.id ?? '—'" class="readonly-identity" />
+        </template>
         <FormField
           v-if="!isReadOnly('pkey')"
           id="edit-pkey"
@@ -241,12 +254,6 @@ async function confirmDelete() {
           help-pkey="context"
         />
         <FormReadonly v-else id="edit-identity-pkey" label="App name" :value="app?.pkey ?? '—'" class="readonly-identity" />
-        <template v-if="app?.shortuid != null && app?.shortuid !== ''">
-          <FormReadonly id="edit-identity-shortuid" label="Local UID" :value="app.shortuid ?? '—'" class="readonly-identity" />
-        </template>
-        <template v-if="app?.id != null && app?.id !== ''">
-          <FormReadonly id="edit-identity-id" label="KSUID" :value="app.id ?? '—'" class="readonly-identity" />
-        </template>
         <FormField
           v-if="!isReadOnly('cname')"
           id="cname"

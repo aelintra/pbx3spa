@@ -1,7 +1,10 @@
 # Create & edit panels — section and field order (inventory)
 
+**Rendered HTML (tables, headings):** open [`CREATE_EDIT_PANEL_FIELD_ORDER.html`](./CREATE_EDIT_PANEL_FIELD_ORDER.html) in a browser. Regenerate from this file with `npm run docs:panel-inventory` in `pbx3spa/`.
+
 **Purpose:** Baseline for standardising column/field order across the SPA.  
 **Scope:** **Database-backed PBX entity CRUD only** — create/detail views for objects stored in the instance database (agents, extensions, queues, tenants, etc.).  
+**Special cases (ignore for standardisation):** **Device** templates (`DeviceCreateView` / `DeviceDetailView`) and **Help messages** (`HelpMessageCreateView` / `HelpMessageDetailView`) — different layout goals; do not try to align them with dialplan-style panels. They are omitted from the summary tables below; stub entries only in the long inventory.  
 **Out of scope (not listed below):** system or non-entity UIs such as `SysglobalsEditView.vue`, `AsteriskFileDetailView.vue`, `NetworkView.vue`, backup/firewall/certificates/logs, dashboard, and `UserCreateView.vue` (app user provisioning).  
 **Source of truth:** The Vue files (Mar 2026); this doc can drift — re-scan when changing forms.
 
@@ -11,6 +14,48 @@
 - **IVR** keystroke block uses `destinations-heading` (not `detail-heading`).
 - **Tenant** create/detail render Timers → Advanced → Call recording → Monitoring → Call control → LDAP from shared arrays in `@/constants/tenantAdvanced.js` (order is the array order there).
 - **Readonly identity** fields often use `FormReadonly` on edit and plain `FormField` disabled on some views — labels still listed below.
+
+### Edit panels — at a glance (table)
+
+Detail views only. Section names are headings **inside the form** (not the page chrome). **Identity stack** = whether the usual **pkey → Local UID → KSUID** pattern appears in Identity (see structural patterns below). **Tenant** = which section holds the tenant `FormSelect`. **Device** and **Help message** are omitted here (special cases).
+
+| Entity | Detail view | Sections (top → bottom) | Identity stack | Tenant section |
+|--------|-------------|-------------------------|----------------|----------------|
+| Agent | `AgentDetailView.vue` | Identity → Queues | LUID/KSUID not displayed | Identity |
+| Class of Service | `ClassOfServiceDetailView.vue` | Identity → Settings | Full | Identity |
+| Conference | `ConferenceDetailView.vue` | Identity → Settings | Full | Identity |
+| Custom app | `CustomAppDetailView.vue` | Identity → Settings → Code | Partial (no LUID line; KSUID ro) | Settings |
+| Day timer | `DayTimerDetailView.vue` | Identity → Rule | pkey + State; LUID optional; no KSUID | Rule |
+| Extension | `ExtensionDetailView.vue` | Identity → Transport → Advanced → Runtime | Ext → SIP Identity → KSUID (labels differ) | Identity |
+| Greeting | `GreetingDetailView.vue` | Identity → Metadata → Audio | Full | Identity |
+| Holiday timer | `HolidayTimerDetailView.vue` | Identity → Holiday | pkey + State; LUID if present; no KSUID | Holiday |
+| Inbound route | `InboundRouteDetailView.vue` | Identity → Settings | Full | Settings |
+| IVR | `IvrDetailView.vue` | Identity → Settings → Keystroke options | Full | Identity |
+| Queue | `QueueDetailView.vue` | Identity → **Options** → Timing & limits → Advanced | Full | Identity |
+| Outbound route | `RouteDetailView.vue` | Identity → Settings → Dialplan → Paths (trunks) | Full | Settings |
+| Tenant | `TenantDetailView.vue` | Identity → Settings → Timers → Advanced → Call recording → Monitoring & hot desk → Call control → LDAP | Full | Identity (fixed rows); rest from `tenantAdvanced.js` |
+| Trunk | `TrunkDetailView.vue` | Identity → Settings → Advanced | Full + Transport + Technology in Identity | (fixed default cluster in save) |
+
+**Create panels — at a glance (table)**
+
+**Device** and **Help message** omitted (special cases).
+
+| Entity | Create view | Sections (top → bottom) | Tenant section |
+|--------|-------------|-------------------------|----------------|
+| Agent | `AgentCreateView.vue` | Identity → Settings → Queues | Settings |
+| Class of Service | `ClassOfServiceCreateView.vue` | Identity → Settings | Settings |
+| Conference | `ConferenceCreateView.vue` | Identity → Settings | Settings |
+| Custom app | `CustomAppCreateView.vue` | Identity → Settings → Code | Settings |
+| Day timer | `DayTimerCreateView.vue` | Rule | Rule |
+| Extension | `ExtensionCreateView.vue` | Identity → Settings → Advanced | Identity |
+| Greeting | `GreetingCreateView.vue` | Identity → Metadata → Audio | Identity |
+| Holiday timer | `HolidayTimerCreateView.vue` | Holiday | Holiday |
+| Inbound route | `InboundRouteCreateView.vue` | Identity → Destinations | Identity (first) |
+| IVR | `IvrCreateView.vue` | Identity → Settings → Keystroke options | Settings |
+| Queue | `QueueCreateView.vue` | Identity → Settings → Timing & limits → Advanced | Settings |
+| Outbound route | `RouteCreateView.vue` | Identity → Settings → Dialplan → Paths | Settings |
+| Tenant | `TenantCreateView.vue` | Identity → Settings → (same dynamic blocks as detail) | Identity |
+| Trunk | `TrunkCreateView.vue` | Technology → SIP registration → Identity → Connection | — |
 
 ---
 
@@ -88,18 +133,9 @@
 
 ---
 
-## Devices (templates)
+## Devices (templates) — special case
 
-### `DeviceCreateView.vue`
-
-1. **Identity** — Template name, Description  
-2. **Settings** — Technology, Owner, Provision  
-
-### `DeviceDetailView.vue`
-
-1. **Identity** — Template name (ro), Description (ro)  
-2. **Settings** — Technology, Owner (ro)  
-3. **System** — Created (ro), Updater (ro), Provision (ro)  
+**Not part of standardisation** (template + audit shape). See `DeviceCreateView.vue` / `DeviceDetailView.vue` in the repo for field order.
 
 ---
 
@@ -136,18 +172,9 @@
 
 ---
 
-## Help messages
+## Help messages — special case
 
-### `HelpMessageCreateView.vue`
-
-1. **Identity** — Message key, Display name  
-2. **Help text** — Help text  
-
-### `HelpMessageDetailView.vue`
-
-1. **Identity** — Message key (ro), Display name (ro)  
-2. **System** — Created (ro), Updater (ro)  
-3. **Help text** — Help text (field + ro)  
+**Not part of standardisation** (help text + audit shape). See `HelpMessageCreateView.vue` / `HelpMessageDetailView.vue` in the repo for field order.
 
 ---
 
@@ -287,6 +314,63 @@ See `src/constants/tenantAdvanced.js`:
 
 ---
 
+## Edit (detail) panels — structural patterns
+
+Observations from comparing detail views (for standardisation and refactors). The inventory sections above remain the per-file source of truth.
+
+### 1. The “identity stack” (when all three exist)
+
+On many edits, **Identity** starts with the same logical order:
+
+1. **Primary / human-facing key** (`pkey`, label varies: “Queue Dial”, “Room number”, “CoS key”, “Route name”, “IVR Direct Dial”, “Greeting number”, “Name” on trunks, etc.).
+2. **Local UID** (`shortuid`, almost always labeled **“Local UID”**).
+3. **KSUID** (`id`, labeled **“KSUID”**).
+
+That matches **Class of Service, Conference, Custom app, Greeting, IVR, Inbound route, Queue, Outbound route, Tenant, Trunk** (trunk then adds **Transport** and **Technology** in the same Identity block).
+
+**Extension** uses the same data order for the two IDs but different labels: **Ext** → **SIP Identity** (still `shortuid`) → **SIP Password** (readonly) → **KSUID**, then MAC, type, device, tenant, etc.
+
+### 2. Implementation pattern (not just layout)
+
+Repeated mechanics:
+
+- **`readonly-identity`** on that stack.
+- **`FormReadonly`** vs **disabled `FormField`** behind **`isReadOnly('shortuid')` / `isReadOnly('id')`** (and sometimes `pkey`) so the same view can behave read-only or editable depending on context.
+
+The visual pattern and the code pattern are aligned in several files (e.g. trunk, queue, IVR, class of service).
+
+### 3. Where the triple is incomplete or different
+
+- **Agent** — Agent number + Tenant + human fields + password; **no** Local UID / KSUID in the form.
+- **Day timer** — `pkey` (label is literally **“pkey”**), optional Local UID, **State**; **no KSUID** in Identity.
+- **Holiday timer** — pkey, Local UID (if present), State; same kind of lightweight Identity.
+
+**Device** and **Help message** are **special cases** (ignored for this comparison); see stubs above.
+
+So “most panels show pkey + shortuid + ksuid” is **directionally** true for dialplan-ish entities, but **not** for agents or timers (and not applicable to device/help).
+
+### 4. Tenant placement
+
+**Tenant** is almost always a **`FormSelect`** with a clear label, but **where** it lives varies:
+
+- **Identity:** Agent, Conference, Extension, Greeting, IVR, Route, Class of Service (required tenant in Identity), etc.
+- **Settings:** Inbound route, and create flows that mirror that split.
+
+The control is consistent; the **section** is not.
+
+### 5. Second section naming
+
+After Identity, **“Settings”** is the default, but **Queue detail** uses **“Options”** for the same kind of block as create’s **“Settings”** — naming drift, not a different data model.
+
+### 6. Obvious standardisation targets
+
+If edit panels should feel the same:
+
+- **Always the same order in Identity** when the API exposes them: **pkey (friendly label) → Local UID → KSUID**, then entity-specific readonly lines (e.g. SIP password, extension type), then **Tenant**, then common name / description / active as applicable.
+- **Align outliers:** add Local UID + KSUID to **Agent** where the API exposes them, use a **human label** instead of **“pkey”** on day/holiday timers, and rename Queue’s **Options** → **Settings** (or the reverse on create) for parity.
+
+---
+
 ## Cross-panel patterns to reconcile (for standardisation)
 
 | Topic | Examples |
@@ -304,7 +388,8 @@ See `src/constants/tenantAdvanced.js`:
 ## Files not in this inventory
 
 - **List-only views:** `*ListView.vue` for each entity (no create/edit form inventory here).  
-- **System / non-entity views:** as listed in **Out of scope** at the top of this doc.
+- **System / non-entity views:** as listed in **Out of scope** at the top of this doc.  
+- **Special-case forms** (stubs only above): `Device*View.vue`, `HelpMessage*View.vue`.
 
 When updating this inventory, a quick mechanical check:
 

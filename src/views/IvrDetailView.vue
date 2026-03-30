@@ -318,6 +318,13 @@ async function confirmAndDelete() {
   }
 }
 
+const panelTitleTenantSuffix = computed(() => {
+  if (!ivr.value) return ''
+  const t = String(editCluster.value ?? '').trim()
+  if (!t) return ''
+  return ` (${t})`
+})
+
 </script>
 
 <template>
@@ -325,7 +332,7 @@ async function confirmAndDelete() {
     <PanelBackLink :to="{ name: 'ivrs' }" label="IVRs">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit IVR {{ ivr?.cname?.trim() ? ivr.cname.trim() : (ivr?.pkey ?? '…') }}</h1>
+          <h1 class="detail-panel-title">Edit IVR {{ ivr?.cname?.trim() ? ivr.cname.trim() : (ivr?.pkey ?? '…') }}{{ panelTitleTenantSuffix }}</h1>
           <DetailActiveStatusBar
             v-if="ivr"
             v-model="editActive"
@@ -333,7 +340,7 @@ async function confirmAndDelete() {
           />
         </div>
         <p v-if="ivr && editActive === 'NO'" class="detail-inactive-banner" role="status">
-          This record is inactive and may not participate in normal call flow until you activate it and save.
+          This record is inactive and will not participate in normal call flow until you activate it and commit the change.
         </p>
       </div>
     </PanelBackLink>
@@ -357,6 +364,10 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Short UID" :value="ivr.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-shortuid" :model-value="ivr.shortuid ?? '—'" label="Short UID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="ivr.id ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-id" :model-value="ivr.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="IVR Direct Dial" :value="ivr.pkey ?? '—'" class="readonly-identity" />
             <FormField
               v-else
@@ -367,10 +378,6 @@ async function confirmAndDelete() {
               placeholder="3-5 digits"
               hint="3-5 digits, unique per tenant."
             />
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="ivr.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="ivr.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="ivr.id ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-id" :model-value="ivr.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"

@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create &amp; edit panels — field order (rendered)</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      line-height: 1.55;
+      max-width: 58rem;
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem 3rem;
+      color: #1e293b;
+      background: #fff;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { color: #e2e8f0; background: #0f172a; }
+      a { color: #93c5fd; }
+      th, td { border-color: #334155 !important; }
+      code { background: #1e293b !important; }
+    }
+    h1 { font-size: 1.65rem; margin-top: 0; }
+    h2 { font-size: 1.2rem; margin-top: 2rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.35rem; }
+    h3 { font-size: 1.05rem; margin-top: 1.25rem; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+    th, td { border: 1px solid #cbd5e1; padding: 0.45rem 0.6rem; text-align: left; vertical-align: top; }
+    th { background: #f1f5f9; font-weight: 600; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    @media (prefers-color-scheme: dark) {
+      th { background: #1e293b; }
+      tr:nth-child(even) td { background: #0c1222; }
+      h2 { border-bottom-color: #334155; }
+    }
+    code { font-size: 0.88em; background: #f1f5f9; padding: 0.12rem 0.35rem; border-radius: 4px; }
+    pre { background: #f1f5f9; padding: 1rem; overflow: auto; border-radius: 6px; font-size: 0.85rem; }
+    hr { border: none; border-top: 1px solid #e2e8f0; margin: 2rem 0; }
+    ul { padding-left: 1.35rem; }
+    .doc-meta {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 1.5rem;
+      padding: 0.75rem 1rem;
+      background: #f8fafc;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+    @media (prefers-color-scheme: dark) {
+      .doc-meta { background: #1e293b; border-color: #334155; color: #94a3b8; }
+    }
+  </style>
+</head>
+<body>
+  <p class="doc-meta"><strong>Rendered from</strong> <code>CREATE_EDIT_PANEL_FIELD_ORDER.md</code> — regenerate with <code>npm run docs:panel-inventory</code> in <code>pbx3spa/</code>, then open this file in your browser.</p>
+  <main>
+<h1>Create &amp; edit panels — section and field order (inventory)</h1>
+<p><strong>Rendered HTML (tables, headings):</strong> open <a href="./CREATE_EDIT_PANEL_FIELD_ORDER.html"><code>CREATE_EDIT_PANEL_FIELD_ORDER.html</code></a> in a browser. Regenerate from this file with <code>npm run docs:panel-inventory</code> in <code>pbx3spa/</code>.</p>
+<p><strong>Purpose:</strong> Baseline for standardising column/field order across the SPA.<br><strong>Scope:</strong> <strong>Database-backed PBX entity CRUD only</strong> — create/detail views for objects stored in the instance database (agents, extensions, queues, tenants, etc.).<br><strong>Special cases (ignore for standardisation):</strong> <strong>Device</strong> templates (<code>DeviceCreateView</code> / <code>DeviceDetailView</code>) and <strong>Help messages</strong> (<code>HelpMessageCreateView</code> / <code>HelpMessageDetailView</code>) — different layout goals; do not try to align them with dialplan-style panels. They are omitted from the summary tables below; stub entries only in the long inventory.<br><strong>Out of scope (not listed below):</strong> system or non-entity UIs such as <code>SysglobalsEditView.vue</code>, <code>AsteriskFileDetailView.vue</code>, <code>NetworkView.vue</code>, backup/firewall/certificates/logs, dashboard, and <code>UserCreateView.vue</code> (app user provisioning).<br><strong>Source of truth:</strong> The Vue files (Mar 2026); this doc can drift — re-scan when changing forms.</p>
+<p><strong>Conventions in use</strong></p>
+<ul>
+<li>Most CRUD panels use <code>&lt;h2 class=&quot;detail-heading&quot;&gt;</code> for sections.</li>
+<li><strong>IVR</strong> keystroke block uses <code>destinations-heading</code> (not <code>detail-heading</code>).</li>
+<li><strong>Tenant</strong> create/detail render Timers → Advanced → Call recording → Monitoring → Call control → LDAP from shared arrays in <code>@/constants/tenantAdvanced.js</code> (order is the array order there).</li>
+<li><strong>Readonly identity</strong> fields often use <code>FormReadonly</code> on edit and plain <code>FormField</code> disabled on some views — labels still listed below.</li>
+</ul>
+<h3>Edit panels — at a glance (table)</h3>
+<p>Detail views only. Section names are headings <strong>inside the form</strong> (not the page chrome). <strong>Identity stack</strong> = whether the usual <strong>pkey → Local UID → KSUID</strong> pattern appears in Identity (see structural patterns below). <strong>Tenant</strong> = which section holds the tenant <code>FormSelect</code>. <strong>Device</strong> and <strong>Help message</strong> are omitted here (special cases).</p>
+<table>
+<thead>
+<tr>
+<th>Entity</th>
+<th>Detail view</th>
+<th>Sections (top → bottom)</th>
+<th>Identity stack</th>
+<th>Tenant section</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Agent</td>
+<td><code>AgentDetailView.vue</code></td>
+<td>Identity → Queues</td>
+<td>No LUID/KSUID</td>
+<td>Identity</td>
+</tr>
+<tr>
+<td>Class of Service</td>
+<td><code>ClassOfServiceDetailView.vue</code></td>
+<td>Identity → Settings</td>
+<td>Full</td>
+<td>Identity</td>
+</tr>
+<tr>
+<td>Conference</td>
+<td><code>ConferenceDetailView.vue</code></td>
+<td>Identity → Settings</td>
+<td>Full</td>
+<td>Identity</td>
+</tr>
+<tr>
+<td>Custom app</td>
+<td><code>CustomAppDetailView.vue</code></td>
+<td>Identity → Settings → Code</td>
+<td>Partial (no LUID line; KSUID ro)</td>
+<td>Settings</td>
+</tr>
+<tr>
+<td>Day timer</td>
+<td><code>DayTimerDetailView.vue</code></td>
+<td>Identity → Rule</td>
+<td>pkey + State; LUID optional; no KSUID</td>
+<td>Rule</td>
+</tr>
+<tr>
+<td>Extension</td>
+<td><code>ExtensionDetailView.vue</code></td>
+<td>Identity → Transport → Advanced → Runtime</td>
+<td>Ext → SIP Identity → KSUID (labels differ)</td>
+<td>Identity</td>
+</tr>
+<tr>
+<td>Greeting</td>
+<td><code>GreetingDetailView.vue</code></td>
+<td>Identity → Metadata → Audio</td>
+<td>Full</td>
+<td>Identity</td>
+</tr>
+<tr>
+<td>Holiday timer</td>
+<td><code>HolidayTimerDetailView.vue</code></td>
+<td>Identity → Holiday</td>
+<td>pkey + State; LUID if present; no KSUID</td>
+<td>Holiday</td>
+</tr>
+<tr>
+<td>Inbound route</td>
+<td><code>InboundRouteDetailView.vue</code></td>
+<td>Identity → Settings</td>
+<td>Full</td>
+<td>Settings</td>
+</tr>
+<tr>
+<td>IVR</td>
+<td><code>IvrDetailView.vue</code></td>
+<td>Identity → Settings → Keystroke options</td>
+<td>Full</td>
+<td>Identity</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td><code>QueueDetailView.vue</code></td>
+<td>Identity → <strong>Options</strong> → Timing &amp; limits → Advanced</td>
+<td>Full</td>
+<td>Identity</td>
+</tr>
+<tr>
+<td>Outbound route</td>
+<td><code>RouteDetailView.vue</code></td>
+<td>Identity → Settings → Dialplan → Paths (trunks)</td>
+<td>Full</td>
+<td>Settings</td>
+</tr>
+<tr>
+<td>Tenant</td>
+<td><code>TenantDetailView.vue</code></td>
+<td>Identity → Settings → Timers → Advanced → Call recording → Monitoring &amp; hot desk → Call control → LDAP</td>
+<td>Full</td>
+<td>Identity (fixed rows); rest from <code>tenantAdvanced.js</code></td>
+</tr>
+<tr>
+<td>Trunk</td>
+<td><code>TrunkDetailView.vue</code></td>
+<td>Identity → Settings → Advanced</td>
+<td>Full + Transport + Technology in Identity</td>
+<td>(fixed default cluster in save)</td>
+</tr>
+</tbody></table>
+<p><strong>Create panels — at a glance (table)</strong></p>
+<p><strong>Device</strong> and <strong>Help message</strong> omitted (special cases).</p>
+<table>
+<thead>
+<tr>
+<th>Entity</th>
+<th>Create view</th>
+<th>Sections (top → bottom)</th>
+<th>Tenant section</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Agent</td>
+<td><code>AgentCreateView.vue</code></td>
+<td>Identity → Settings → Queues</td>
+<td>Settings</td>
+</tr>
+<tr>
+<td>Class of Service</td>
+<td><code>ClassOfServiceCreateView.vue</code></td>
+<td>Identity → Settings</td>
+<td>Settings</td>
+</tr>
+<tr>
+<td>Conference</td>
+<td><code>ConferenceCreateView.vue</code></td>
+<td>Identity → Settings</td>
+<td>Settings</td>
+</tr>
+<tr>
+<td>Custom app</td>
+<td><code>CustomAppCreateView.vue</code></td>
+<td>Identity → Settings → Code</td>
+<td>Settings</td>
+</tr>
+<tr>
+<td>Day timer</td>
+<td><code>DayTimerCreateView.vue</code></td>
+<td>Rule</td>
+<td>Rule</td>
+</tr>
+<tr>
+<td>Extension</td>
+<td><code>ExtensionCreateView.vue</code></td>
+<td>Identity → Settings → Advanced</td>
+<td>Identity</td>
+</tr>
+<tr>
+<td>Greeting</td>
+<td><code>GreetingCreateView.vue</code></td>
+<td>Identity → Metadata → Audio</td>
+<td>Identity</td>
+</tr>
+<tr>
+<td>Holiday timer</td>
+<td><code>HolidayTimerCreateView.vue</code></td>
+<td>Holiday</td>
+<td>Holiday</td>
+</tr>
+<tr>
+<td>Inbound route</td>
+<td><code>InboundRouteCreateView.vue</code></td>
+<td>Identity → Destinations</td>
+<td>Identity (first)</td>
+</tr>
+<tr>
+<td>IVR</td>
+<td><code>IvrCreateView.vue</code></td>
+<td>Identity → Settings → Keystroke options</td>
+<td>Settings</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td><code>QueueCreateView.vue</code></td>
+<td>Identity → Settings → Timing &amp; limits → Advanced</td>
+<td>Settings</td>
+</tr>
+<tr>
+<td>Outbound route</td>
+<td><code>RouteCreateView.vue</code></td>
+<td>Identity → Settings → Dialplan → Paths</td>
+<td>Settings</td>
+</tr>
+<tr>
+<td>Tenant</td>
+<td><code>TenantCreateView.vue</code></td>
+<td>Identity → Settings → (same dynamic blocks as detail)</td>
+<td>Identity</td>
+</tr>
+<tr>
+<td>Trunk</td>
+<td><code>TrunkCreateView.vue</code></td>
+<td>Technology → SIP registration → Identity → Connection</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Agents</h2>
+<h3><code>AgentCreateView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Agent number, Password, Common name, Description  </li>
+<li><strong>Settings</strong> — Tenant  </li>
+<li><strong>Queues</strong> — Queue 1 … Queue 6</li>
+</ol>
+<h3><code>AgentDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Agent number (ro), Tenant, Common name, Description, Password  </li>
+<li><strong>Queues</strong> — Queue 1 … Queue 6</li>
+</ol>
+<p><strong>Create vs edit:</strong> Create puts <strong>Password</strong> under Identity and <strong>Tenant</strong> under Settings; edit puts <strong>Tenant</strong> in Identity after agent number.</p>
+<hr>
+<h2>Class of Service</h2>
+<h3><code>ClassOfServiceCreateView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — CoS key, Common name, Description  </li>
+<li><strong>Settings</strong> — Tenant, Active, Dialplan</li>
+</ol>
+<h3><code>ClassOfServiceDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — CoS key (ro), Local UID (ro), KSUID (ro), Tenant (required), Active, Description  </li>
+<li><strong>Settings</strong> — Dialplan (required), Default open (ro)</li>
+</ol>
+<hr>
+<h2>Conferences</h2>
+<h3><code>ConferenceCreateView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Room number, Common name, Description  </li>
+<li><strong>Settings</strong> — Tenant, Active, Type, Participant PIN, Admin PIN</li>
+</ol>
+<h3><code>ConferenceDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Room number (editable or ro), Common name, Local UID, KSUID, Tenant (required), Active, Description  </li>
+<li><strong>Settings</strong> — Type, Participant PIN, Admin PIN</li>
+</ol>
+<hr>
+<h2>Custom apps</h2>
+<h3><code>CustomAppCreateView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — App name, Display name, Description  </li>
+<li><strong>Settings</strong> — Tenant, Active?, Span, Strip tags?, Direct dial  </li>
+<li><strong>Code</strong> — Extension code</li>
+</ol>
+<h3><code>CustomAppDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — App name (field + ro duplicate pattern), KSUID (ro), Display name (ro), Description (ro)  </li>
+<li><strong>Settings</strong> — Tenant (select + ro), Active?, Span, Strip tags?, Direct dial (ro mix)  </li>
+<li><strong>Code</strong> — Extension code (field + ro)</li>
+</ol>
+<hr>
+<h2>Day timers</h2>
+<h3><code>DayTimerCreateView.vue</code></h3>
+<ol>
+<li><strong>Rule</strong> — Description, Tenant</li>
+</ol>
+<h3><code>DayTimerDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — pkey (ro), State (ro)  </li>
+<li><strong>Rule</strong> — Tenant, Description, Day of week, All day, Start time, End time</li>
+</ol>
+<hr>
+<h2>Devices (templates) — special case</h2>
+<p><strong>Not part of standardisation</strong> (template + audit shape). See <code>DeviceCreateView.vue</code> / <code>DeviceDetailView.vue</code> in the repo for field order.</p>
+<hr>
+<h2>Extensions</h2>
+<h3><code>ExtensionCreateView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Extension number, Tenant, Name (optional), Common name, Description, Extension type, MAC address (optional)  </li>
+<li><strong>Settings</strong> — Device (ro), Active?, Transport  </li>
+<li><strong>Advanced</strong> — Callback to, Caller ID, Cell phone, Cell twin, Devicerec, DVR voicemail, Protocol (IP version), Voicemail forward (email)</li>
+</ol>
+<h3><code>ExtensionDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Ext, SIP Identity, SIP Password (ro), KSUID, MAC address, Extension type (ro), Device, <strong>Tenant</strong>, User (extension name), Common name, Description, Active?  </li>
+<li><strong>Transport</strong> — Technology, Transport  </li>
+<li><strong>Advanced</strong> — Callback to, Caller ID, Cell phone, Cell twin, Devicerec, DVR voicemail, Call max, Ext alert, Protocol (IP version), Voicemail forward (email), Provision, Provision with  </li>
+<li><strong>Runtime</strong> — cfim, cfbs, ringdelay (+ live IP/Status when SIP)</li>
+</ol>
+<hr>
+<h2>Greetings</h2>
+<h3><code>GreetingCreateView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Greeting number, Tenant  </li>
+<li><strong>Metadata</strong> — Common name, Description  </li>
+<li><strong>Audio</strong> — file input (Audio file .wav/.mp3) + hint text</li>
+</ol>
+<h3><code>GreetingDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Greeting number (ro), Local UID, KSUID, <strong>Tenant (required)</strong>  </li>
+<li><strong>Metadata</strong> — Common name, Description, Original filename (ro), Type (ro)  </li>
+<li><strong>Audio</strong> — replace / upload controls (see file)</li>
+</ol>
+<hr>
+<h2>Help messages — special case</h2>
+<p><strong>Not part of standardisation</strong> (help text + audit shape). See <code>HelpMessageCreateView.vue</code> / <code>HelpMessageDetailView.vue</code> in the repo for field order.</p>
+<hr>
+<h2>Holiday timers</h2>
+<h3><code>HolidayTimerCreateView.vue</code></h3>
+<ol>
+<li><strong>Holiday</strong> — Description, Tenant</li>
+</ol>
+<h3><code>HolidayTimerDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — pkey (ro), State (ro)  </li>
+<li><strong>Holiday</strong> — Tenant, Description, Route, Start date, Start time, End date, End time</li>
+</ol>
+<hr>
+<h2>Inbound routes (DDI)</h2>
+<h3><code>InboundRouteCreateView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Tenant, DDI type, Number (DiD/CLiD)  </li>
+<li><strong>Destinations</strong> — Open route, Closed route</li>
+</ol>
+<h3><code>InboundRouteDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Number (DiD/CLiD), DiD/CLiD (ro), Local UID, KSUID, Description (optional)  </li>
+<li><strong>Settings</strong> — Tenant, Active?, Open route, Closed route, Alert info (optional), MOH, SWOCLIP, DISA, DISA pass (optional), In prefix (optional), Tag (optional), CNAME, Device recording</li>
+</ol>
+<hr>
+<h2>IVRs</h2>
+<h3><code>IvrCreateView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — IVR Direct Dial, Description (optional), Display name (optional)  </li>
+<li><strong>Settings</strong> — Tenant, Active?, Greeting Number, Listen for extension dial?, Action on IVR Timeout  </li>
+<li><strong>Keystroke options</strong> — Table: for each key in <code>OPTION_ENTRIES</code> (0–9, *, #): <strong>Action on KeyPress</strong> (select), <strong>Tag</strong>, <strong>Alert</strong></li>
+</ol>
+<h3><code>IvrDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — IVR Direct Dial (ro), Local UID (ro), KSUID (ro), Tenant, Description (optional), Display name (optional)  </li>
+<li><strong>Settings</strong> — Active?, Greeting Number, Listen for extension dial?, Action on IVR Timeout  </li>
+<li><strong>Keystroke options</strong> — Same grid as create</li>
+</ol>
+<hr>
+<h2>Queues</h2>
+<h3><code>QueueCreateView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Queue Dial, Common name, Description  </li>
+<li><strong>Settings</strong> — Tenant, Active, Device recording, Strategy, Greeting number, Greeting, Options, Music class, Members  </li>
+<li><strong>Timing &amp; limits</strong> — Timeout, Retry, Wrap-up time, Max length, Divert  </li>
+<li><strong>Advanced</strong> — Alert info, Outcome</li>
+</ol>
+<h3><code>QueueDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Queue Dial (ro), Common name, Local UID, KSUID, Active, Description  </li>
+<li><strong>Options</strong> — Device recording (required), Strategy, Greeting number, Greeting, Options, Music class, Members  </li>
+<li><strong>Timing &amp; limits</strong> — (same as create)  </li>
+<li><strong>Advanced</strong> — (same as create)</li>
+</ol>
+<p><strong>Naming mismatch:</strong> Create uses <strong>Settings</strong> for the block Detail calls <strong>Options</strong>.</p>
+<hr>
+<h2>Outbound routes</h2>
+<h3><code>RouteCreateView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Route name, Description, Common name  </li>
+<li><strong>Settings</strong> — Tenant, Active, Auth (PIN dial), Strategy  </li>
+<li><strong>Dialplan</strong> — Dialplan  </li>
+<li><strong>Paths (trunks)</strong> — Path 1 … Path 4</li>
+</ol>
+<h3><code>RouteDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Route name (ro), Local UID (ro), Common name, Description  </li>
+<li><strong>Settings</strong> — Tenant, Active?, Auth (PIN dial), Strategy  </li>
+<li><strong>Dialplan</strong> — Dialplan  </li>
+<li><strong>Paths (trunks)</strong> — Path 1 … Path 4</li>
+</ol>
+<p><strong>Create vs edit:</strong> Create orders Identity as name → description → common name; edit orders name → local uid → ksuid → common name → description.</p>
+<hr>
+<h2>Tenants</h2>
+<p>Section <strong>order</strong> (create and detail match):</p>
+<ol>
+<li><strong>Identity</strong>  </li>
+<li><strong>Settings</strong>  </li>
+<li><strong>Timers</strong> — driven by <code>TIMERS_FIELDS</code>  </li>
+<li><strong>Advanced</strong> — <code>ADVANCED_FIELDS</code>  </li>
+<li><strong>Call recording</strong> — <code>CALL_RECORDING_FIELDS</code>  </li>
+<li><strong>Monitoring &amp; hot desk</strong> — <code>MONITORING_FIELDS</code>  </li>
+<li><strong>Call control</strong> — <code>CALL_CONTROL_FIELDS</code>  </li>
+<li><strong>LDAP</strong> — <code>LDAP_FIELDS</code></li>
+</ol>
+<h3><code>TenantCreateView.vue</code> — fixed fields</h3>
+<ul>
+<li><strong>Identity</strong> — Name, Description, CLID, Local area, Local dialplan  </li>
+<li><strong>Settings</strong> — ChanMax, Max in, VoIP max</li>
+</ul>
+<h3><code>TenantDetailView.vue</code> — fixed fields</h3>
+<ul>
+<li><strong>Identity</strong> — Name (ro), Local UID (ro), KSUID (ro), Description, CLID, Local area, Local dialplan  </li>
+<li><strong>Settings</strong> — (same three numeric fields as create)</li>
+</ul>
+<h3>Dynamic field labels (create <strong>and</strong> detail, same order)</h3>
+<p>See <code>src/constants/tenantAdvanced.js</code>:</p>
+<ul>
+<li><strong>Timers:</strong> Abstime, Ring delay, IVR key wait, IVR digit wait, Timer status (AUTO/CLOSED)  </li>
+<li><strong>Advanced:</strong> Country code, Emergency numbers, Language, Operator, Spy pass, Sysop, Sys pass, Use MOH custom, Vmail age, Voice instr  </li>
+<li><strong>Call recording:</strong> Call record 1, Rec age, Rec final dest, Rec file dlim, Rec grace, Rec limit (readonly), Rec max age, Rec max size, Rec used  </li>
+<li><strong>Monitoring &amp; hot desk:</strong> Mix monitor, Monitor out path, Monitor stage path, Hot desk lease (seconds)  </li>
+<li><strong>Call control:</strong> Allow hash transfer, CFWD progress, CFWD answer, Lterm, Play beep, Play busy, Play congested, Play transfer  </li>
+<li><strong>LDAP:</strong> LDAP base, LDAP host, LDAP OU, LDAP user, LDAP pass, LDAP TLS, LDAP anon bind</li>
+</ul>
+<hr>
+<h2>Trunks</h2>
+<h3><code>TrunkCreateView.vue</code></h3>
+<ol>
+<li><strong>Technology</strong> — Technology (SIP / IAX2)  </li>
+<li><strong>SIP registration</strong> (SIP only) — How this trunk registers  </li>
+<li><strong>Identity</strong> — Trunk name, Common name, Description  </li>
+<li><strong>Connection</strong> — Host (unless accept-reg hint), Transport (SIP), Password (SIP)</li>
+</ol>
+<h3><code>TrunkDetailView.vue</code></h3>
+<ol>
+<li><strong>Identity</strong> — Name, Common name, Local UID, KSUID, Transport, Technology  </li>
+<li><strong>Settings</strong> — Active?, SIP registration, Host, Username, Peername, Trunkname, Password, MOH, Call progress, SWOCLIP  </li>
+<li><strong>Advanced</strong> — Alert info, Caller ID, In prefix, Match, Tag, Callback, Privileged, IAX reg, Device recording, DISA, DISA pass, Transform</li>
+</ol>
+<hr>
+<h2>Edit (detail) panels — structural patterns</h2>
+<p>Observations from comparing detail views (for standardisation and refactors). The inventory sections above remain the per-file source of truth.</p>
+<h3>1. The “identity stack” (when all three exist)</h3>
+<p>On many edits, <strong>Identity</strong> starts with the same logical order:</p>
+<ol>
+<li><strong>Primary / human-facing key</strong> (<code>pkey</code>, label varies: “Queue Dial”, “Room number”, “CoS key”, “Route name”, “IVR Direct Dial”, “Greeting number”, “Name” on trunks, etc.).</li>
+<li><strong>Local UID</strong> (<code>shortuid</code>, almost always labeled <strong>“Local UID”</strong>).</li>
+<li><strong>KSUID</strong> (<code>id</code>, labeled <strong>“KSUID”</strong>).</li>
+</ol>
+<p>That matches <strong>Class of Service, Conference, Custom app, Greeting, IVR, Inbound route, Queue, Outbound route, Tenant, Trunk</strong> (trunk then adds <strong>Transport</strong> and <strong>Technology</strong> in the same Identity block).</p>
+<p><strong>Extension</strong> uses the same data order for the two IDs but different labels: <strong>Ext</strong> → <strong>SIP Identity</strong> (still <code>shortuid</code>) → <strong>SIP Password</strong> (readonly) → <strong>KSUID</strong>, then MAC, type, device, tenant, etc.</p>
+<h3>2. Implementation pattern (not just layout)</h3>
+<p>Repeated mechanics:</p>
+<ul>
+<li><strong><code>readonly-identity</code></strong> on that stack.</li>
+<li><strong><code>FormReadonly</code></strong> vs <strong>disabled <code>FormField</code></strong> behind <strong><code>isReadOnly(&#39;shortuid&#39;)</code> / <code>isReadOnly(&#39;id&#39;)</code></strong> (and sometimes <code>pkey</code>) so the same view can behave read-only or editable depending on context.</li>
+</ul>
+<p>The visual pattern and the code pattern are aligned in several files (e.g. trunk, queue, IVR, class of service).</p>
+<h3>3. Where the triple is incomplete or different</h3>
+<ul>
+<li><strong>Agent</strong> — Agent number + Tenant + human fields + password; <strong>no</strong> Local UID / KSUID in the form.</li>
+<li><strong>Day timer</strong> — <code>pkey</code> (label is literally <strong>“pkey”</strong>), optional Local UID, <strong>State</strong>; <strong>no KSUID</strong> in Identity.</li>
+<li><strong>Holiday timer</strong> — pkey, Local UID (if present), State; same kind of lightweight Identity.</li>
+</ul>
+<p><strong>Device</strong> and <strong>Help message</strong> are <strong>special cases</strong> (ignored for this comparison); see stubs above.</p>
+<p>So “most panels show pkey + shortuid + ksuid” is <strong>directionally</strong> true for dialplan-ish entities, but <strong>not</strong> for agents or timers (and not applicable to device/help).</p>
+<h3>4. Tenant placement</h3>
+<p><strong>Tenant</strong> is almost always a <strong><code>FormSelect</code></strong> with a clear label, but <strong>where</strong> it lives varies:</p>
+<ul>
+<li><strong>Identity:</strong> Agent, Conference, Extension, Greeting, IVR, Route, Class of Service (required tenant in Identity), etc.</li>
+<li><strong>Settings:</strong> Inbound route, and create flows that mirror that split.</li>
+</ul>
+<p>The control is consistent; the <strong>section</strong> is not.</p>
+<h3>5. Second section naming</h3>
+<p>After Identity, <strong>“Settings”</strong> is the default, but <strong>Queue detail</strong> uses <strong>“Options”</strong> for the same kind of block as create’s <strong>“Settings”</strong> — naming drift, not a different data model.</p>
+<h3>6. Obvious standardisation targets</h3>
+<p>If edit panels should feel the same:</p>
+<ul>
+<li><strong>Always the same order in Identity</strong> when the API exposes them: <strong>pkey (friendly label) → Local UID → KSUID</strong>, then entity-specific readonly lines (e.g. SIP password, extension type), then <strong>Tenant</strong>, then common name / description / active as applicable.</li>
+<li><strong>Align outliers:</strong> add Local UID + KSUID to <strong>Agent</strong> where the API exposes them, use a <strong>human label</strong> instead of <strong>“pkey”</strong> on day/holiday timers, and rename Queue’s <strong>Options</strong> → <strong>Settings</strong> (or the reverse on create) for parity.</li>
+</ul>
+<hr>
+<h2>Cross-panel patterns to reconcile (for standardisation)</h2>
+<table>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Section name for “queue/capacity options”</td>
+<td>Queue <strong>Settings</strong> (create) vs <strong>Options</strong> (detail)</td>
+</tr>
+<tr>
+<td><strong>Identity</strong> field order</td>
+<td>Route create: name, description, cname vs detail: name, shortuid, ksuid, cname, description</td>
+</tr>
+<tr>
+<td><strong>Tenant</strong> in Identity vs Settings</td>
+<td>Extension detail: Tenant in Identity; Agent create: Tenant in Settings</td>
+</tr>
+<tr>
+<td><strong>Password</strong> placement</td>
+<td>Agent create: under Identity; Agent edit: after Description in Identity</td>
+</tr>
+<tr>
+<td><strong>Day / Holiday timers</strong></td>
+<td>Create = single section; Detail adds <strong>Identity</strong> block before rule/holiday</td>
+</tr>
+<tr>
+<td><strong>Heading class</strong></td>
+<td>Most use <code>detail-heading</code>; IVR keystrokes use <code>destinations-heading</code></td>
+</tr>
+<tr>
+<td><strong>Trunk</strong></td>
+<td>Create leads with <strong>Technology</strong> + <strong>SIP registration</strong> before Identity; detail is Identity-first</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Files not in this inventory</h2>
+<ul>
+<li><strong>List-only views:</strong> <code>*ListView.vue</code> for each entity (no create/edit form inventory here).  </li>
+<li><strong>System / non-entity views:</strong> as listed in <strong>Out of scope</strong> at the top of this doc.  </li>
+<li><strong>Special-case forms</strong> (stubs only above): <code>Device*View.vue</code>, <code>HelpMessage*View.vue</code>.</li>
+</ul>
+<p>When updating this inventory, a quick mechanical check:</p>
+<pre><code class="language-bash">rg &#39;class=&quot;detail-heading&quot;&#39; src/views/*CreateView.vue src/views/*DetailView.vue
+rg &#39;class=&quot;section-title&quot;&#39; src/views/
+</code></pre>
+
+  </main>
+</body>
+</html>

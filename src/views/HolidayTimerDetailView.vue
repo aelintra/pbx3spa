@@ -252,12 +252,19 @@ async function confirmAndDelete() {
 }
 
 const displayName = computed(() => holidaytimer.value?.description || holidaytimer.value?.shortuid || '')
+
+const panelTitleTenantSuffix = computed(() => {
+  if (!holidaytimer.value) return ''
+  const t = String(editCluster.value ?? '').trim()
+  if (!t) return ''
+  return ` (${t})`
+})
 </script>
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
     <PanelBackLink :to="{ name: 'holidaytimers' }" label="Holiday Timers">
-      <h1>Edit Holiday timer {{ displayName ? `— ${displayName}` : '' }}</h1>
+      <h1>Edit Holiday timer{{ displayName ? ` — ${displayName}` : '' }}{{ panelTitleTenantSuffix }}</h1>
     </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>
@@ -284,8 +291,8 @@ const displayName = computed(() => holidaytimer.value?.description || holidaytim
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="holidaytimer.pkey != null" id="edit-pkey" label="pkey" :value="String(holidaytimer.pkey)" class="readonly-identity" />
-            <FormReadonly v-if="holidaytimer.shortuid != null && holidaytimer.shortuid !== ''" id="edit-shortuid" label="Local UID" :value="holidaytimer.shortuid" class="readonly-identity" />
+            <FormReadonly v-if="holidaytimer.shortuid != null && holidaytimer.shortuid !== ''" id="edit-shortuid" label="Short UID" :value="holidaytimer.shortuid" class="readonly-identity" />
+            <FormReadonly v-if="holidaytimer.id != null && holidaytimer.id !== ''" id="edit-id" label="KSUID" :value="holidaytimer.id" class="readonly-identity" />
             <FormReadonly v-if="stateDisplay(holidaytimer)" id="edit-state" label="State" :value="stateDisplay(holidaytimer)" class="readonly-identity" />
           </div>
 

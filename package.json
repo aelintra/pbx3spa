@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docs:panel-inventory": "node scripts/render-panel-inventory-html.mjs"
   },
   "dependencies": {
     "vue": "^3.5.13",
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
+    "marked": "^15.0.7",
     "vite": "^6.0.3"
   }
 }

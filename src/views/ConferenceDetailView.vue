@@ -187,6 +187,13 @@ async function confirmAndDelete() {
 }
 
 const displayName = computed(() => conference.value?.pkey ?? '')
+
+const panelTitleTenantSuffix = computed(() => {
+  if (!conference.value) return ''
+  const t = String(editCluster.value ?? '').trim()
+  if (!t) return ''
+  return ` (${t})`
+})
 </script>
 
 <template>
@@ -194,7 +201,7 @@ const displayName = computed(() => conference.value?.pkey ?? '')
     <PanelBackLink :to="{ name: 'conferences' }" label="Conferences">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit Conference {{ displayName }}</h1>
+          <h1 class="detail-panel-title">Edit Conference {{ displayName }}{{ panelTitleTenantSuffix }}</h1>
           <DetailActiveStatusBar
             v-if="conference"
             v-model="editActive"
@@ -202,7 +209,7 @@ const displayName = computed(() => conference.value?.pkey ?? '')
           />
         </div>
         <p v-if="conference && editActive === 'NO'" class="detail-inactive-banner" role="status">
-          This record is inactive and may not participate in normal call flow until you activate it and save.
+          This record is inactive and will not participate in normal call flow until you activate it and commit the change.
         </p>
       </div>
     </PanelBackLink>
@@ -231,17 +238,17 @@ const displayName = computed(() => conference.value?.pkey ?? '')
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Room number" :value="editPkey || '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" v-model="editPkey" label="Room number" type="text" inputmode="numeric" placeholder="e.g. 9000" hint="Unique per tenant. Positive number." />
-            <FormField id="edit-cname" v-model="editCname" label="Common name" type="text" placeholder="Display name" />
             <template v-if="conference.shortuid != null && conference.shortuid !== ''">
-              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="conference.shortuid ?? '—'" class="readonly-identity" />
-              <FormField v-else id="edit-identity-shortuid" :model-value="conference.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
+              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Short UID" :value="conference.shortuid ?? '—'" class="readonly-identity" />
+              <FormField v-else id="edit-identity-shortuid" :model-value="conference.shortuid ?? '—'" label="Short UID" disabled class="readonly-identity" />
             </template>
             <template v-if="conference.id != null && conference.id !== ''">
               <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="conference.id ?? '—'" class="readonly-identity" />
               <FormField v-else id="edit-identity-id" :model-value="conference.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             </template>
+            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Room number" :value="editPkey || '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-pkey" v-model="editPkey" label="Room number" type="text" inputmode="numeric" placeholder="e.g. 9000" hint="Unique per tenant. Positive number." />
+            <FormField id="edit-cname" v-model="editCname" label="Common name" type="text" placeholder="Display name" />
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"

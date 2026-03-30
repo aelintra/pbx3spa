@@ -236,7 +236,7 @@ async function confirmAndDelete() {
           />
         </div>
         <p v-if="trunk && editActive === 'NO'" class="detail-inactive-banner" role="status">
-          This record is inactive and may not participate in normal call flow until you activate it and save.
+          This record is inactive and will not participate in normal call flow until you activate it and commit the change.
         </p>
       </div>
     </PanelBackLink>
@@ -265,13 +265,13 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Short UID" :value="trunk.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-shortuid" :model-value="trunk.shortuid ?? '—'" label="Short UID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="trunk.id ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-id" :model-value="trunk.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Name" :value="editPkey || '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-pkey" v-model="editPkey" label="Name" type="text" placeholder="e.g. mytrunk" hint="Unique per tenant." />
             <FormField id="edit-cname" v-model="editCname" label="Common name" type="text" placeholder="Display name" />
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="trunk.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="trunk.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="trunk.id ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-id" :model-value="trunk.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('transport')" id="edit-identity-transport" label="Transport" :value="trunk.transport ?? 'udp'" class="readonly-identity" />
             <FormField v-else id="edit-identity-transport" :model-value="trunk.transport ?? 'udp'" label="Transport" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('technology')" id="edit-identity-technology" label="Technology" :value="editTechnology || '—'" class="readonly-identity" />

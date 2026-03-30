@@ -161,6 +161,13 @@ async function confirmAndDelete() {
 }
 
 const displayName = computed(() => cosrule.value?.pkey ?? '')
+
+const panelTitleTenantSuffix = computed(() => {
+  if (!cosrule.value) return ''
+  const t = String(editCluster.value ?? '').trim()
+  if (!t) return ''
+  return ` (${t})`
+})
 </script>
 
 <template>
@@ -168,7 +175,7 @@ const displayName = computed(() => cosrule.value?.pkey ?? '')
     <PanelBackLink :to="{ name: 'cosrules' }" label="Class of Service">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit Class of Service {{ displayName }}</h1>
+          <h1 class="detail-panel-title">Edit Class of Service {{ displayName }}{{ panelTitleTenantSuffix }}</h1>
           <DetailActiveStatusBar
             v-if="cosrule"
             v-model="editActive"
@@ -176,7 +183,7 @@ const displayName = computed(() => cosrule.value?.pkey ?? '')
           />
         </div>
         <p v-if="cosrule && editActive === 'NO'" class="detail-inactive-banner" role="status">
-          This record is inactive and may not participate in normal call flow until you activate it and save.
+          This record is inactive and will not participate in normal call flow until you activate it and commit the change.
         </p>
       </div>
     </PanelBackLink>
@@ -205,16 +212,16 @@ const displayName = computed(() => cosrule.value?.pkey ?? '')
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly id="edit-identity-pkey" label="CoS key" :value="cosrule.pkey ?? '—'" class="readonly-identity" />
-            <FormField id="edit-cname" v-model="editCname" label="Common name" type="text" placeholder="Display name" />
             <template v-if="cosrule.shortuid != null && cosrule.shortuid !== ''">
-              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Local UID" :value="cosrule.shortuid ?? '—'" class="readonly-identity" />
-              <FormField v-else id="edit-identity-shortuid" :model-value="cosrule.shortuid ?? '—'" label="Local UID" disabled class="readonly-identity" />
+              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Short UID" :value="cosrule.shortuid ?? '—'" class="readonly-identity" />
+              <FormField v-else id="edit-identity-shortuid" :model-value="cosrule.shortuid ?? '—'" label="Short UID" disabled class="readonly-identity" />
             </template>
             <template v-if="cosrule.id != null && cosrule.id !== ''">
               <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="cosrule.id ?? '—'" class="readonly-identity" />
               <FormField v-else id="edit-identity-id" :model-value="cosrule.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             </template>
+            <FormReadonly id="edit-identity-pkey" label="CoS key" :value="cosrule.pkey ?? '—'" class="readonly-identity" />
+            <FormField id="edit-cname" v-model="editCname" label="Common name" type="text" placeholder="Display name" />
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"
