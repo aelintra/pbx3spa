@@ -285,7 +285,7 @@ async function logout() {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.5rem;
-  background: #f8fafc;
+  background: #f9fafb;
   border-bottom: 1px solid #e2e8f0;
   position: sticky;
   top: 0;

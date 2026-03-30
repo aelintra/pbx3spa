@@ -13,10 +13,13 @@ body {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Soft neutral canvas (not pure #fff) — light mode only for now */
+  background-color: #f9fafb;
 }
 
 #app {
   min-height: 100vh;
+  background-color: #f9fafb;
 }
 
 /* Save/update feedback: position towards middle of panel so it's more noticeable */
