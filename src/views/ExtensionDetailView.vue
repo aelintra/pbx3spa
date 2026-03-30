@@ -61,6 +61,9 @@ const editCfbs = ref('')
 const editRingdelay = ref('')
 const runtimeSaveError = ref('')
 const runtimeSaving = ref(false)
+const confirmRegenerateSipOpen = ref(false)
+const regeneratingSip = ref(false)
+const regenerateSipError = ref('')
 
 const shortuid = computed(() => route.params.shortuid)
 
@@ -245,6 +248,36 @@ async function confirmAndDelete() {
   }
 }
 
+function openRegenerateSipModal() {
+  regenerateSipError.value = ''
+  confirmRegenerateSipOpen.value = true
+}
+
+function cancelRegenerateSip() {
+  if (regeneratingSip.value) return
+  confirmRegenerateSipOpen.value = false
+}
+
+async function confirmRegenerateSip() {
+  regenerateSipError.value = ''
+  regeneratingSip.value = true
+  try {
+    const data = await getApiClient().post(
+      `extensions/${encodeURIComponent(shortuid.value)}/regenerate-sip-password`,
+      {}
+    )
+    if (extension.value && data && typeof data === 'object') {
+      Object.assign(extension.value, data)
+    }
+    confirmRegenerateSipOpen.value = false
+    toast.show('SIP password regenerated. Copy the new value into the phone before it can register again.')
+  } catch (err) {
+    regenerateSipError.value = firstErrorMessage(err, 'Failed to regenerate SIP password')
+  } finally {
+    regeneratingSip.value = false
+  }
+}
+
 function startEditRuntime() {
   editCfim.value = runtime.value?.cfim ?? ''
   editCfbs.value = runtime.value?.cfbs ?? ''
@@ -342,7 +375,28 @@ const panelTitleTenantSuffix = computed(() => {
             <FormField v-else id="edit-identity-pkey" :model-value="extension.pkey ?? '—'" label="Ext Dial" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-sip-user" label="SIP User" :value="extension.shortuid ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-sip-user" :model-value="extension.shortuid ?? '—'" label="SIP User" disabled class="readonly-identity" />
-            <FormReadonly id="edit-identity-passwd" label="SIP Password" :value="extension.passwd ?? '—'" class="readonly-identity" />
+            <div class="form-field sip-passwd-field readonly-identity">
+              <label for="edit-identity-passwd" class="form-field-label">SIP Password</label>
+              <div class="form-field-input-wrapper">
+                <div class="sip-passwd-inline">
+                  <p
+                    id="edit-identity-passwd"
+                    class="sip-passwd-value value-immutable"
+                    title="Immutable"
+                  >
+                    {{ extension.passwd ?? '—' }}
+                  </p>
+                  <button
+                    type="button"
+                    class="sip-regenerate-btn"
+                    :disabled="saving || regeneratingSip"
+                    @click="openRegenerateSipModal"
+                  >
+                    Regen
+                  </button>
+                </div>
+              </div>
+            </div>
             <FormReadonly v-if="isReadOnly('macaddr')" id="edit-identity-macaddr" label="MAC address" :value="extension.macaddr?.trim() || '—'" class="readonly-identity" />
             <FormField
               v-else
@@ -504,6 +558,46 @@ const panelTitleTenantSuffix = computed(() => {
         </section>
       </div>
     </template>
+
+    <Teleport to="body">
+      <div
+        v-if="confirmRegenerateSipOpen"
+        class="sip-modal-backdrop"
+        @click.self="cancelRegenerateSip"
+      >
+        <div
+          class="sip-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="regenerate-sip-title"
+        >
+          <h2 id="regenerate-sip-title" class="sip-modal-title">Regenerate SIP password?</h2>
+          <div class="sip-modal-body">
+            <p>
+              The current password will <strong>stop working immediately</strong>. This phone must be updated to the
+              new secret before it can register again.
+            </p>
+            <p class="sip-modal-hint">
+              Use <strong>Commit</strong> when you are ready so Asterisk config matches the database.
+            </p>
+            <p v-if="regenerateSipError" class="error">{{ regenerateSipError }}</p>
+          </div>
+          <div class="sip-modal-actions">
+            <button type="button" class="sip-modal-btn sip-modal-btn-cancel" @click="cancelRegenerateSip">
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="sip-modal-btn sip-modal-btn-confirm"
+              :disabled="regeneratingSip"
+              @click="confirmRegenerateSip"
+            >
+              {{ regeneratingSip ? 'Regenerating…' : 'Regenerate' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <DeleteConfirmModal
       :show="confirmDeleteOpen"
@@ -672,6 +766,144 @@ const panelTitleTenantSuffix = computed(() => {
   background: #b91c1c;
 }
 .edit-actions button.action-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* SIP password row: same grid as FormField / FormReadonly (label | value+button) */
+.sip-passwd-field.form-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2fr;
+  gap: 0.375rem 1rem;
+  align-items: start;
+  margin-bottom: 0.75rem;
+  width: 100%;
+  min-width: 0;
+}
+.sip-passwd-field .form-field-label {
+  font-weight: 500;
+  color: #475569;
+  padding-top: 0.375rem;
+  white-space: nowrap;
+}
+.sip-passwd-field .form-field-input-wrapper {
+  min-width: 0;
+}
+.sip-passwd-inline {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+.sip-passwd-value {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  border-radius: 0.375rem;
+  word-break: break-all;
+}
+.readonly-identity.sip-passwd-field .form-field-label,
+.readonly-identity.sip-passwd-field .sip-passwd-value {
+  color: #94a3b8;
+}
+.readonly-identity.sip-passwd-field .sip-passwd-value {
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+.sip-regenerate-btn {
+  flex-shrink: 0;
+  align-self: stretch;
+  padding: 0 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #fff;
+  background: #dc2626;
+  border: 1px solid #b91c1c;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sip-regenerate-btn:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #991b1b;
+}
+.sip-regenerate-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.sip-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+.sip-modal {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 1.5rem;
+  max-width: 26rem;
+  width: 100%;
+}
+.sip-modal-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+.sip-modal-body {
+  margin: 0 0 1.25rem 0;
+  font-size: 0.9375rem;
+  color: #475569;
+  line-height: 1.5;
+}
+.sip-modal-body :deep(strong),
+.sip-modal-body strong {
+  color: #0f172a;
+}
+.sip-modal-hint {
+  margin: 0.75rem 0 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+.sip-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+.sip-modal-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  border: none;
+}
+.sip-modal-btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+.sip-modal-btn-cancel:hover {
+  background: #e2e8f0;
+}
+.sip-modal-btn-confirm {
+  background: #2563eb;
+  color: #fff;
+}
+.sip-modal-btn-confirm:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+.sip-modal-btn-confirm:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
