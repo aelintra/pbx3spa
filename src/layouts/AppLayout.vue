@@ -184,6 +184,7 @@ async function logout() {
       <main class="content">
         <router-view />
       </main>
+      <div class="main-tail" aria-hidden="true" />
     </div>
   </div>
 </template>
@@ -280,16 +281,16 @@ async function logout() {
   height: 100vh;
   overflow: hidden;
   background: var(--pbx-canvas);
-  padding: 0 1.25rem 1.25rem 1rem;
+  padding: 0;
 }
 .topbar {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.5rem;
   background: var(--pbx-canvas);
   border-bottom: 1px solid var(--pbx-border);
-  box-shadow: var(--pbx-shadow-topbar);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -323,14 +324,20 @@ async function logout() {
   background: var(--pbx-surface-subtle);
 }
 .content {
-  flex: 1;
+  flex: 0 1 auto;
+  align-self: stretch;
   margin: 0;
-  padding: 1.25rem 1.5rem;
-  overflow-y: auto;
+  padding: 1.25rem 1.5rem 1.5rem;
   min-height: 0;
-  background: var(--pbx-panel);
-  border-radius: 0.5rem;
-  border: 1px solid var(--pbx-border);
-  box-shadow: var(--pbx-shadow-content);
+  max-height: calc(100vh - var(--pbx-layout-topbar));
+  max-height: calc(100dvh - var(--pbx-layout-topbar));
+  overflow-y: auto;
+  background: transparent;
+}
+/* Absorbs extra vertical space when route content is short (same surface as .main). */
+.main-tail {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
 }
 </style>

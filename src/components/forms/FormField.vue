@@ -242,7 +242,7 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
 }
 
 .form-input:disabled {
-  background-color: var(--pbx-canvas);
+  background-color: var(--pbx-surface-subtle);
   color: var(--pbx-text-muted);
   cursor: not-allowed;
 }
