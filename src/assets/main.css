@@ -30,7 +30,7 @@
   --pbx-danger: #dc2626;
   --pbx-danger-muted: #b91c1c;
   --pbx-focus-ring: rgba(59, 130, 246, 0.1);
-  /** AppLayout: approximate topbar block height — used to cap scroll area max-height */
+  /** AppLayout: approximate topbar block height — cap scroll area max-height */
   --pbx-layout-topbar: 3.5rem;
 }
 

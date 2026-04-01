@@ -145,8 +145,8 @@ async function logout() {
 
 <template>
   <div class="app-layout">
-    <aside ref="sidebarRef" class="sidebar" @scroll.passive="onSidebarScroll">
-      <nav class="nav">
+    <aside class="sidebar">
+      <nav ref="sidebarRef" class="nav" @scroll.passive="onSidebarScroll">
         <template v-if="auth.can('admin')">
           <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">Home</router-link>
 
@@ -171,6 +171,9 @@ async function logout() {
           <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">Home</router-link>
         </template>
       </nav>
+      <footer class="sidebar-footer" role="contentinfo">
+        © Aelintra Telecom
+      </footer>
     </aside>
     <div class="main">
       <header class="topbar">
@@ -196,17 +199,31 @@ async function logout() {
   overflow: hidden;
 }
 .sidebar {
+  display: flex;
+  flex-direction: column;
   width: 12rem;
   flex-shrink: 0;
   height: 100vh;
-  overflow-y: auto;
+  min-height: 0;
+  overflow: hidden;
   background: var(--pbx-sidebar-bg);
   color: var(--pbx-sidebar-fg);
 }
 .nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   padding: 1rem 0;
+}
+.sidebar-footer {
+  flex: 0 0 auto;
+  padding: 0.65rem 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--pbx-sidebar-link);
+  text-align: center;
 }
 .nav-group {
   display: flex;
