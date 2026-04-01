@@ -64,6 +64,11 @@ const props = defineProps({
     type: String,
     default: 'off'
   },
+  /** For type="time" or "datetime-local": step in seconds (e.g. 60 for whole minutes). */
+  step: {
+    type: [String, Number],
+    default: null
+  },
   /** When changed, the inner input is re-mounted (use after form reset so display updates). */
   inputKey: {
     type: [String, Number],
@@ -150,6 +155,7 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
         :inputmode="inputmode"
         :pattern="pattern"
         :autocomplete="autocomplete"
+        :step="step != null && step !== '' ? step : undefined"
         @blur="handleBlur"
       />
       <textarea

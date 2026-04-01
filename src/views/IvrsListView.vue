@@ -98,7 +98,7 @@ function sortClass(key) {
 }
 
 const ivrExportColumns = computed(() => [
-  { key: 'pkey', label: 'IVR Direct Dial' },
+  { key: 'pkey', label: 'IVR' },
   { key: 'shortuid', label: 'UID', getValue: (ivr) => localUidDisplay(ivr) },
   { key: 'cluster', label: 'Tenant', getValue: (ivr) => tenantDisplay(ivr) },
   { key: 'active', label: 'Active' },
@@ -187,7 +187,7 @@ onMounted(loadIvrs)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by IVR Direct Dial, UID, tenant, description, or active"
+          placeholder="Filter by IVR, UID, tenant, Description, or active"
           aria-label="Filter IVRs"
         />
       </p>
@@ -211,11 +211,11 @@ onMounted(loadIvrs)
       <table v-else class="table">
         <thead>
           <tr>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">IVR Direct Dial</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">IVR</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">description</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">Description</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('greetnum')" @click="setSort('greetnum')">Greeting number</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('timeout')" @click="setSort('timeout')">Timeout</th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>

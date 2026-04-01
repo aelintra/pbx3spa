@@ -46,6 +46,17 @@ function tenantPkeyDisplay(item) {
   return clusterToTenantPkey.value.get(String(cl)) ?? cl
 }
 
+/** List column: show digits only (pkey may be stored as `usergreetingnnnn` or `nnnn`). */
+function greetingNumberDisplay(item) {
+  const raw = item?.pkey
+  if (raw == null || raw === '') return '—'
+  const s = String(raw).trim()
+  const prefixed = s.match(/^usergreeting(\d+)$/i)
+  if (prefixed) return prefixed[1]
+  if (/^\d+$/.test(s)) return s
+  return s
+}
+
 const filteredGreetings = computed(() => {
   const list = greetings.value
   const q = (filterText.value || '').trim().toLowerCase()
@@ -65,6 +76,12 @@ const filteredGreetings = computed(() => {
 
 function sortValue(item, key) {
   if (key === 'cluster') return tenantPkeyDisplay(item)
+  if (key === 'pkey') {
+    const shown = greetingNumberDisplay(item)
+    if (shown === '—') return ''
+    const n = Number.parseInt(shown, 10)
+    return Number.isFinite(n) ? String(n).padStart(12, '0') : shown.toLowerCase()
+  }
   const v = item[key]
   if (v == null || v === '') return ''
   return String(v)
@@ -145,7 +162,9 @@ async function downloadGreeting(shortuid, pkey) {
     const a = document.createElement('a')
     a.href = url
     // API returns the correct filename; this is just a fallback hint for the browser.
-    a.download = `usergreeting${pkey}`
+    const num = greetingNumberDisplay({ pkey })
+    a.download =
+      num !== '—' && /^\d+$/.test(num) ? `usergreeting${num}` : `greeting-${String(pkey ?? shortuid)}`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -296,7 +315,7 @@ onUnmounted(() => {
         </thead>
         <tbody>
           <tr v-for="g in sortedGreetings" :key="g.shortuid || g.id || (g.cluster || '') + '-' + (g.pkey || '')">
-            <td>{{ g.pkey }}</td>
+            <td>{{ greetingNumberDisplay(g) }}</td>
             <td class="cell-immutable" title="Immutable">{{ g.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(g) }}</td>
             <td>{{ g.cname ?? '' }}</td>

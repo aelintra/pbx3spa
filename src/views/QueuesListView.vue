@@ -46,10 +46,19 @@ const filteredQueues = computed(() => {
   const map = clusterToTenantPkey.value
   return list.filter((item) => {
     const pkey = (item.pkey ?? '').toString().toLowerCase()
+    const shortuid = (item.shortuid ?? '').toString().toLowerCase()
     const cluster = (item.cluster ?? '').toString().toLowerCase()
     const tenant = (map.get(String(item.cluster)) ?? item.cluster ?? '').toString().toLowerCase()
-    const name = (item.name ?? item.cname ?? '').toString().toLowerCase()
-    return pkey.includes(q) || cluster.includes(q) || tenant.includes(q) || name.includes(q)
+    const cname = (item.name ?? item.cname ?? '').toString().toLowerCase()
+    const desc = (item.description ?? '').toString().toLowerCase()
+    return (
+      pkey.includes(q) ||
+      shortuid.includes(q) ||
+      cluster.includes(q) ||
+      tenant.includes(q) ||
+      cname.includes(q) ||
+      desc.includes(q)
+    )
   })
 })
 
@@ -102,7 +111,7 @@ const queueExportColumns = computed(() => [
   { key: 'shortuid', label: 'UID' },
   { key: 'cluster', label: 'Tenant', getValue: (q) => tenantPkeyDisplay(q) },
   { key: 'active', label: 'Active' },
-  { key: 'cname', label: 'Name', getValue: (q) => q.cname ?? q.name ?? '—' },
+  { key: 'description', label: 'Description', getValue: (q) => (q.description != null && q.description !== '' ? q.description : '—') },
   { key: 'strategy', label: 'Strategy' },
   { key: 'timeout', label: 'Timeout', getValue: (q) => (q.timeout != null && q.timeout !== '' ? q.timeout : '—') }
 ])
@@ -187,7 +196,7 @@ onMounted(loadQueues)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, tenant, or cluster"
+          placeholder="Filter by queue dial, UID, tenant, description, common name, or cluster"
           aria-label="Filter queues"
         />
       </p>
@@ -215,7 +224,7 @@ onMounted(loadQueues)
             <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('cname')" @click="setSort('cname')">Name</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">Description</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('strategy')" @click="setSort('strategy')">Strategy</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('timeout')" @click="setSort('timeout')">Timeout</th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
@@ -228,7 +237,7 @@ onMounted(loadQueues)
             <td class="cell-immutable" title="Immutable">{{ q.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(q) }}</td>
             <td>{{ q.active ?? '—' }}</td>
-            <td>{{ q.cname ?? q.name ?? '—' }}</td>
+            <td>{{ q.description != null && q.description !== '' ? q.description : '—' }}</td>
             <td>{{ q.strategy ?? '—' }}</td>
             <td>{{ q.timeout != null && q.timeout !== '' ? q.timeout : '—' }}</td>
             <td>

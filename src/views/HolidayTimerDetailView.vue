@@ -29,10 +29,8 @@ const error = ref('')
 const editCluster = ref('default')
 const editDescription = ref('')
 const editRoute = ref('')
-const startDate = ref('')
-const startTime = ref('')
-const endDate = ref('')
-const endTime = ref('')
+const startLocal = ref('')
+const endLocal = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -75,31 +73,22 @@ function toDestArrays(d) {
 
 const destinationGroups = computed(() => toDestArrays(destinations.value))
 
-/** Epoch seconds → date input value (YYYY-MM-DD) in local time */
-function epochToDate(epoch) {
+/** Epoch seconds → datetime-local value (YYYY-MM-DDTHH:mm) in local time */
+function epochToDatetimeLocal(epoch) {
   if (epoch == null || epoch === '') return ''
   const d = new Date(Number(epoch) * 1000)
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-/** Epoch seconds → time input value (HH:mm) in local time */
-function epochToTime(epoch) {
-  if (epoch == null || epoch === '') return ''
-  const d = new Date(Number(epoch) * 1000)
   const h = String(d.getHours()).padStart(2, '0')
   const min = String(d.getMinutes()).padStart(2, '0')
-  return `${h}:${min}`
+  return `${y}-${m}-${day}T${h}:${min}`
 }
 
-/** Date (YYYY-MM-DD) + time (HH:mm) in local time → epoch seconds */
-function dateAndTimeToEpoch(dateStr, timeStr) {
-  if (dateStr == null || String(dateStr).trim() === '') return null
-  const datePart = String(dateStr).trim()
-  const timePart = (timeStr != null && String(timeStr).trim() !== '') ? String(timeStr).trim() : '00:00'
-  const d = new Date(`${datePart}T${timePart}`)
+/** datetime-local string → epoch seconds (local) */
+function datetimeLocalToEpoch(s) {
+  if (s == null || String(s).trim() === '') return null
+  const d = new Date(String(s).trim())
   if (Number.isNaN(d.getTime())) return null
   return Math.floor(d.getTime() / 1000)
 }
@@ -151,10 +140,8 @@ async function fetchHolidaytimer() {
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
     editDescription.value = h?.description ?? ''
     editRoute.value = (h?.route && String(h.route).trim() !== '') ? String(h.route).trim() : ''
-    startDate.value = epochToDate(h?.stime)
-    startTime.value = epochToTime(h?.stime)
-    endDate.value = epochToDate(h?.etime)
-    endTime.value = epochToTime(h?.etime)
+    startLocal.value = epochToDatetimeLocal(h?.stime)
+    endLocal.value = epochToDatetimeLocal(h?.etime)
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load Holiday timer')
     holidaytimer.value = null
@@ -190,8 +177,8 @@ function onKeydown(e) {
 }
 
 function validateDateTime() {
-  const stime = dateAndTimeToEpoch(startDate.value, startTime.value)
-  const etime = dateAndTimeToEpoch(endDate.value, endTime.value)
+  const stime = datetimeLocalToEpoch(startLocal.value)
+  const etime = datetimeLocalToEpoch(endLocal.value)
   if (stime != null && etime != null && etime < stime) {
     return 'End date/time must be after start date/time.'
   }
@@ -208,8 +195,8 @@ async function saveEdit(e) {
   }
   saving.value = true
   try {
-    const stime = dateAndTimeToEpoch(startDate.value, startTime.value)
-    const etime = dateAndTimeToEpoch(endDate.value, endTime.value)
+    const stime = datetimeLocalToEpoch(startLocal.value)
+    const etime = datetimeLocalToEpoch(endLocal.value)
     const body = {
       cluster: editCluster.value.trim(),
       description: editDescription.value.trim() || null,
@@ -323,32 +310,20 @@ const panelTitleTenantSuffix = computed(() => {
               hint="Internal destination when this holiday is active (queue, extension, IVR, custom app). Leave empty for none."
             />
             <FormField
-              id="edit-start-date"
-              v-model="startDate"
-              label="Start date"
-              type="date"
-              hint="Start of holiday period (local time)"
+              id="edit-start-datetime"
+              v-model="startLocal"
+              label="Start"
+              type="datetime-local"
+              :step="60"
+              hint="Start of holiday period (local date and time)"
             />
             <FormField
-              id="edit-start-time"
-              v-model="startTime"
-              label="Start time"
-              type="time"
-              hint="Start time (local)"
-            />
-            <FormField
-              id="edit-end-date"
-              v-model="endDate"
-              label="End date"
-              type="date"
-              hint="End of holiday period (local time)"
-            />
-            <FormField
-              id="edit-end-time"
-              v-model="endTime"
-              label="End time"
-              type="time"
-              hint="End time (local)"
+              id="edit-end-datetime"
+              v-model="endLocal"
+              label="End"
+              type="datetime-local"
+              :step="60"
+              hint="End of holiday period (local date and time)"
             />
           </div>
 

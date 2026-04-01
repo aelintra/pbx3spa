@@ -17,7 +17,7 @@ const error = ref('')
 const deleteError = ref('')
 const deletingShortuid = ref(null)
 const confirmDeleteShortuid = ref(null)
-const { sortKey, sortOrder } = useStickySort('daytimers', { defaultKey: 'cluster' })
+const { sortKey, sortOrder } = useStickySort('daytimers', { defaultKey: 'shortuid' })
 
 const clusterToTenantPkey = computed(() => {
   const map = new Map()
@@ -56,13 +56,24 @@ const filteredDaytimers = computed(() => {
   if (!q) return list
   const map = clusterToTenantPkey.value
   return list.filter((item) => {
+    const shortuid = (item.shortuid ?? '').toString().toLowerCase()
     const cluster = (item.cluster ?? '').toString().toLowerCase()
     const tenant = (map.get(String(item.cluster)) ?? item.cluster ?? '').toString().toLowerCase()
     const desc = (item.description ?? '').toString().toLowerCase()
     const timespan = (item.timespan ?? '').toString().toLowerCase()
     const dow = (item.dayofweek ?? '').toString().toLowerCase()
     const state = (item.state ?? '').toString().toLowerCase()
-    return cluster.includes(q) || tenant.includes(q) || desc.includes(q) || timespan.includes(q) || dow.includes(q) || state.includes(q)
+    const active = (item.active ?? '').toString().toLowerCase()
+    return (
+      shortuid.includes(q) ||
+      cluster.includes(q) ||
+      tenant.includes(q) ||
+      desc.includes(q) ||
+      timespan.includes(q) ||
+      dow.includes(q) ||
+      state.includes(q) ||
+      active.includes(q)
+    )
   })
 })
 
@@ -158,7 +169,7 @@ onMounted(loadDaytimers)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by tenant, description, time, day, state"
+          placeholder="Filter by UID, tenant, active, description, time, day, state"
           aria-label="Filter Day timers"
         />
       </p>
@@ -176,7 +187,9 @@ onMounted(loadDaytimers)
       <table v-else class="table">
         <thead>
           <tr>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Cluster</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">UID</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('start')" @click="setSort('start')">Start</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('end')" @click="setSort('end')">End</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('dayofweek')" @click="setSort('dayofweek')">Day of week</th>
@@ -188,7 +201,9 @@ onMounted(loadDaytimers)
         </thead>
         <tbody>
           <tr v-for="d in sortedDaytimers" :key="d.shortuid || d.id || d.pkey">
+            <td class="cell-immutable" title="Immutable">{{ d.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(d) }}</td>
+            <td>{{ d.active ?? '—' }}</td>
             <td>{{ parseTimespan(d.timespan).start }}</td>
             <td>{{ parseTimespan(d.timespan).end }}</td>
             <td>{{ dayOfWeekLabel(d.dayofweek) }}</td>
@@ -242,6 +257,7 @@ onMounted(loadDaytimers)
 .table { margin-top: 0; width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
 .table th, .table td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
 .table th { font-weight: 600; color: #475569; background: #f8fafc; }
+.cell-immutable { color: #64748b; background: #f8fafc; }
 .th-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
 .th-sortable::before { content: '\21C5'; font-size: 0.7em; color: #94a3b8; margin-left: 0.2em; font-weight: normal; }
 .th-sortable.sort-asc::before, .th-sortable.sort-desc::before { content: none; }

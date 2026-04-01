@@ -59,6 +59,7 @@ const filteredHolidaytimers = computed(() => {
   if (!q) return list
   const map = clusterToTenantPkey.value
   return list.filter((item) => {
+    const shortuid = (item.shortuid ?? '').toString().toLowerCase()
     const cluster = (item.cluster ?? '').toString().toLowerCase()
     const tenant = (map.get(String(item.cluster)) ?? item.cluster ?? '').toString().toLowerCase()
     const desc = (item.description ?? '').toString().toLowerCase()
@@ -66,7 +67,16 @@ const filteredHolidaytimers = computed(() => {
     const state = stateDisplay(item).toLowerCase()
     const start = formatEpoch(item.stime).toLowerCase()
     const end = formatEpoch(item.etime).toLowerCase()
-    return cluster.includes(q) || tenant.includes(q) || desc.includes(q) || route.includes(q) || state.includes(q) || start.includes(q) || end.includes(q)
+    return (
+      shortuid.includes(q) ||
+      cluster.includes(q) ||
+      tenant.includes(q) ||
+      desc.includes(q) ||
+      route.includes(q) ||
+      state.includes(q) ||
+      start.includes(q) ||
+      end.includes(q)
+    )
   })
 })
 
@@ -165,7 +175,7 @@ onMounted(loadHolidaytimers)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by tenant, description, route, state, dates"
+          placeholder="Filter by UID, tenant, description, route, state, dates"
           aria-label="Filter Holiday timers"
         />
       </p>
@@ -183,9 +193,10 @@ onMounted(loadHolidaytimers)
       <table v-else class="table">
         <thead>
           <tr>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">UID</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('stime')" @click="setSort('stime')">Start</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('etime')" @click="setSort('etime')">End</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Cluster</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">Description</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('route')" @click="setSort('route')">Route</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('state')" @click="setSort('state')">State</th>
@@ -195,9 +206,10 @@ onMounted(loadHolidaytimers)
         </thead>
         <tbody>
           <tr v-for="h in sortedHolidaytimers" :key="h.shortuid || h.id || h.pkey">
+            <td class="cell-immutable" title="Immutable">{{ h.shortuid ?? '—' }}</td>
+            <td>{{ tenantPkeyDisplay(h) }}</td>
             <td>{{ formatEpoch(h.stime) }}</td>
             <td>{{ formatEpoch(h.etime) }}</td>
-            <td>{{ tenantPkeyDisplay(h) }}</td>
             <td>{{ h.description ?? '—' }}</td>
             <td>{{ h.route ?? '—' }}</td>
             <td>{{ stateDisplay(h) }}</td>
@@ -249,6 +261,7 @@ onMounted(loadHolidaytimers)
 .table { margin-top: 0; width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
 .table th, .table td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
 .table th { font-weight: 600; color: #475569; background: #f8fafc; }
+.cell-immutable { color: #64748b; background: #f8fafc; }
 .th-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
 .th-sortable::before { content: '\21C5'; font-size: 0.7em; color: #94a3b8; margin-left: 0.2em; font-weight: normal; }
 .th-sortable.sort-asc::before, .th-sortable.sort-desc::before { content: none; }
