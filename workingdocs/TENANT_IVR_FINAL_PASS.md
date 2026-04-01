@@ -34,7 +34,7 @@ Tenant and IVR panels are in good shape: shared `normalizeList`, `DeleteConfirmM
 
 ## 4. Minor: List column header casing
 
-**What:** TenantsListView uses lowercase for some headers (`name`, `description`); IvrsListView has `description` lowercase and others title-case (`IVR Direct Dial`, `Local UID`, etc.). Pattern doc suggests consistent column naming.
+**What:** TenantsListView uses lowercase for some headers (`name`, `description`); IvrsListView has `description` lowercase and others title-case (`IVR Direct Dial`, `UID`, etc.). Pattern doc suggests consistent column naming.
 
 **Recommendation:** Optional consistency pass: align to title-case (e.g. "Name", "Description") across list views when touching them.
 

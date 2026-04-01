@@ -99,7 +99,7 @@ function sortClass(k) {
 
 const queueExportColumns = computed(() => [
   { key: 'pkey', label: 'Queue' },
-  { key: 'shortuid', label: 'Local UID' },
+  { key: 'shortuid', label: 'UID' },
   { key: 'cluster', label: 'Tenant', getValue: (q) => tenantPkeyDisplay(q) },
   { key: 'active', label: 'Active' },
   { key: 'cname', label: 'Name', getValue: (q) => q.cname ?? q.name ?? '—' },
@@ -212,7 +212,7 @@ onMounted(loadQueues)
         <thead>
           <tr>
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">Queue</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cname')" @click="setSort('cname')">Name</th>

@@ -239,7 +239,7 @@ const panelTitleTenantSuffix = computed(() => {
       <h2 class="detail-heading">Identity</h2>
       <div class="form-fields">
         <template v-if="app?.shortuid != null && app?.shortuid !== ''">
-          <FormReadonly id="edit-identity-shortuid" label="Short UID" :value="app.shortuid ?? '—'" class="readonly-identity" />
+          <FormReadonly id="edit-identity-shortuid" label="UID" :value="app.shortuid ?? '—'" class="readonly-identity" />
         </template>
         <template v-if="app?.id != null && app?.id !== ''">
           <FormReadonly id="edit-identity-id" label="KSUID" :value="app.id ?? '—'" class="readonly-identity" />

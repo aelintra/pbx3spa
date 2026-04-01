@@ -23,7 +23,7 @@ const exportPdfLoading = ref(false)
 const { sortKey, sortOrder } = useStickySort('tenants', { defaultKey: 'pkey' })
 
 // --- Display helpers ---
-/** Local UID (shortuid) for display */
+/** UID (shortuid) for display */
 function localUidDisplay(t) {
   const v = t.shortuid
   return v == null || v === '' ? '—' : String(v)
@@ -92,7 +92,7 @@ function sortClass(key) {
 
 const tenantExportColumns = computed(() => [
   { key: 'pkey', label: 'Pkey' },
-  { key: 'shortuid', label: 'Local UID', getValue: (t) => localUidDisplay(t) },
+  { key: 'shortuid', label: 'UID', getValue: (t) => localUidDisplay(t) },
   { key: 'active', label: 'Active' },
   { key: 'description', label: 'Description' },
   { key: 'clusterclid', label: 'CLID' },
@@ -180,7 +180,7 @@ onMounted(loadTenants)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, Local UID, active, description, CLID, Abstime, ChanMax, or timer"
+          placeholder="Filter by name, UID, active, description, CLID, Abstime, ChanMax, or timer"
           aria-label="Filter tenants"
         />
       </p>
@@ -208,7 +208,7 @@ onMounted(loadTenants)
               name
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">
-              Local UID
+              UID
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">
               Active

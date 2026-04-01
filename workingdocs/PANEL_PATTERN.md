@@ -230,8 +230,8 @@ The list panel main heading is typically the resource name plural (e.g. **"Tenan
 Some fields are updateable in the API but should **not** be changeable after create (e.g. transport on Trunks). For those:
 
 - **Create panel:** Expose the field (FormField/FormSelect/FormToggle) and include it in the POST body.
-- **Edit panel:** Show the value as **FormReadonly** in the **Identity** section, below the other non-updateable fields (e.g. Name, Local UID, KSUID). Use the same low-light styling as other identity readonly fields (e.g. class `readonly-identity` on the FormReadonly component). **Do not** include the field in the PUT (save) payload.
-- **Styling:** Apply a muted colour to label and value (e.g. `#94a3b8`) and a light background (e.g. `#f1f5f9`) so it is visually grouped with Name, Local UID, KSUID. Example: `TrunkDetailView.vue` (Transport).
+- **Edit panel:** Show the value as **FormReadonly** in the **Identity** section, below the other non-updateable fields (e.g. Name, UID, KSUID). Use the same low-light styling as other identity readonly fields (e.g. class `readonly-identity` on the FormReadonly component). **Do not** include the field in the PUT (save) payload.
+- **Styling:** Apply a muted colour to label and value (e.g. `#94a3b8`) and a light background (e.g. `#f1f5f9`) so it is visually grouped with Name, UID, KSUID. Example: `TrunkDetailView.vue` (Transport).
 
 ### Form layout: one row per field (same as IVR)
 
@@ -804,7 +804,7 @@ const filteredItems = computed(() => {
   v-model="filterText"
   type="search"
   class="filter-input"
-  placeholder="Filter by name, Local UID, tenant, or description"
+  placeholder="Filter by name, UID, tenant, or description"
   aria-label="Filter {Resources}"
 />
 ```
@@ -1069,11 +1069,11 @@ function syncEditFromResource() {
 - Placeholder: Describes what can be filtered
 
 **Columns:**
-- **Identity:** Primary identifier (pkey/name), Local UID (shortuid) if the resource has it—use immutable styling for shortuid.
+- **Identity:** Primary identifier (pkey/name), UID (shortuid) if the resource has it—use immutable styling for shortuid.
 - **Tenant** (if applicable)—resolve cluster/shortuid to tenant pkey for display (see Tenant Resolution Pattern).
-- **Key display columns** from the resource that users need to scan: cross-reference the schema and controller and include columns such as description, active, strategy, timeout, dialplan, path1, etc., as appropriate for the resource. Do not leave list panels with too few columns; add the ones that match common use (e.g. Queues: Local UID, Active, Strategy, Timeout; Routes: Dialplan, Path 1, Active).
+- **Key display columns** from the resource that users need to scan: cross-reference the schema and controller and include columns such as description, active, strategy, timeout, dialplan, path1, etc., as appropriate for the resource. Do not leave list panels with too few columns; add the ones that match common use (e.g. Queues: UID, Active, Strategy, Timeout; Routes: Dialplan, Path 1, Active).
 - **Every list column** should be **sortable** (use `th-sortable`, `setSort`, `sortClass`).
-- **Include new columns in the filter** so the search box can match them; update the filter computed and the placeholder text (e.g. "Filter by name, Local UID, tenant, description, dialplan, path 1, or active").
+- **Include new columns in the filter** so the search box can match them; update the filter computed and the placeholder text (e.g. "Filter by name, UID, tenant, description, dialplan, path 1, or active").
 - **Numeric columns** (e.g. timeout, maxlen): implement **numeric sort** in the sort comparator (compare `Number(a[key])` vs `Number(b[key])`, treating NaN as lowest) so "10" sorts after "9". For non-numeric columns, string sort is fine.
 - **Edit and Delete actions:** Use icons only (pencil for Edit, **trash can SVG** for Delete). See **List view: Edit and Delete action icons** for the standard trash SVG, classes (`cell-link cell-link-delete cell-link-icon`), and header/row markup.
 
@@ -1300,7 +1300,7 @@ When a list has fields that users often change without opening the detail panel 
           />
           <FormReadonly
             id="edit-identity-shortuid"
-            label="Local UID"
+            label="UID"
             :value="resource.shortuid ?? '—'"
           />
           <FormReadonly
@@ -1386,7 +1386,7 @@ When a list has fields that users often change without opening the detail panel 
 **Which fields are readonly** is determined by the **schema** (useSchema composable, `GET /schemas`), not a hard-coded list. For each field, if `getSchema('{resource}').read_only.includes(fieldName)` use FormReadonly; otherwise use the appropriate editable control (or a disabled FormField for display). Order and styling:
 
 1. Primary identifier (readonly when in schema read_only) — use class `readonly-identity` for low-light
-2. Local UID (readonly when in schema) — `readonly-identity` — **only if the API returns it** (e.g. many resources have it; Agent does not)
+2. UID (readonly when in schema) — `readonly-identity` — **only if the API returns it** (e.g. many resources have it; Agent does not)
 3. KSUID (readonly when in schema) — `readonly-identity` — **only if the API returns it**
 4. Any other read-only-in-edit fields (e.g. Transport) — `readonly-identity`; do not include in save payload
 5. Tenant (editable dropdown)
@@ -1875,7 +1875,7 @@ watch(editCluster, () => {
 ### Database Fields → Display Labels
 
 - `pkey` → "IVR Direct Dial" / "Extension number" / "Tenant name" (resource-specific)
-- `shortuid` → "Local UID"
+- `shortuid` → "UID"
 - `id` → "KSUID"
 - `cluster` → "Tenant"
 - `description` → "Description"
@@ -2441,7 +2441,7 @@ onMounted(loadResources)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, Local UID, tenant, or description"
+          placeholder="Filter by name, UID, tenant, or description"
           aria-label="Filter {Resources}"
         />
       </p>
@@ -2460,7 +2460,7 @@ onMounted(loadResources)
         <thead>
           <tr>
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">Primary Identifier</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">Description</th>
             <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true">✏️</span></th>
@@ -2755,7 +2755,7 @@ onMounted(() => {
             />
             <FormReadonly
               id="edit-identity-shortuid"
-              label="Local UID"
+              label="UID"
               :value="resource.shortuid ?? '—'"
             />
             <FormReadonly

@@ -87,7 +87,7 @@ function sortClass(k) {
 
 const conferenceExportColumns = computed(() => [
   { key: 'pkey', label: 'Room' },
-  { key: 'shortuid', label: 'Local UID' },
+  { key: 'shortuid', label: 'UID' },
   { key: 'cluster', label: 'Tenant', getValue: (c) => tenantPkeyDisplay(c) },
   { key: 'active', label: 'Active' },
   { key: 'cname', label: 'Name' },
@@ -193,7 +193,7 @@ onMounted(loadConferences)
         <thead>
           <tr>
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">Room</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cname')" @click="setSort('cname')">Name</th>

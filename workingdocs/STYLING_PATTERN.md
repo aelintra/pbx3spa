@@ -20,8 +20,8 @@ These are **structural layout and copy conventions** already applied in the tena
 
 ### Identity section — first fields
 
-- **Order:** Any Identity lines for **Short UID** (`shortuid`) and **KSUID** (`id`) come **first**, in that order, when the API returns non-empty values. If one or both are missing, those rows are omitted (the next field is still the human primary key or the next defined line). After UID lines, the human primary key follows (e.g. queue dial, route name, **Ext Dial** on extensions).
-- **Labels:** Use **Short UID** (not “Local UID”). **KSUID** stays **KSUID**.
+- **Order:** Any Identity lines for **UID** (`shortuid`) and **KSUID** (`id`) come **first**, in that order, when the API returns non-empty values. If one or both are missing, those rows are omitted (the next field is still the human primary key or the next defined line). After UID lines, the human primary key follows (e.g. queue dial, route name, **Ext Dial** on extensions).
+- **Labels:** The `shortuid` field is labeled **UID**. **KSUID** stays **KSUID**.
 
 ### Extension detail — exceptions
 
@@ -29,11 +29,11 @@ These are **structural layout and copy conventions** already applied in the tena
 - **Extension type** and **Technology** are not shown on extension edit.
 - **Transport** remains in its own section; do not add under-label hint/legend text for SIP transport on that control.
 - **MAC address**: no under-field hint/legend on edit.
-- **Short UID** appears **twice**, same value: once as the standard first Identity line (**Short UID**), and again between **Ext Dial** and **SIP Password** with the label **SIP User**.
+- **UID** appears **twice**, same value: once as the standard first Identity line (**UID**), and again between **Ext Dial** and **SIP Password** with the label **SIP User**.
 
 ### Day timer and Holiday timer detail
 
-- **pkey** is not shown in the Identity section. Short UID, KSUID, and State remain as implemented.
+- **pkey** is not shown in the Identity section. UID, KSUID, and State remain as implemented.
 
 ### Panel title line (`<h1>`) — tenant-scoped detail views
 

@@ -220,8 +220,8 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Short UID" :value="tenant.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="tenant.shortuid ?? '—'" label="Short UID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="tenant.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-shortuid" :model-value="tenant.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="tenant.id ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-id" :model-value="tenant.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Name" :value="tenant.pkey ?? '—'" class="readonly-identity" />

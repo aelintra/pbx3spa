@@ -65,7 +65,7 @@
 <li><strong>Readonly identity</strong> fields often use <code>FormReadonly</code> on edit and plain <code>FormField</code> disabled on some views — labels still listed below.</li>
 </ul>
 <h3>Edit panels — at a glance (table)</h3>
-<p>Detail views only. Section names are headings <strong>inside the form</strong> (not the page chrome). <strong>Identity stack</strong> = whether the usual <strong>pkey → Local UID → KSUID</strong> pattern appears in Identity (see structural patterns below). <strong>Tenant</strong> = which section holds the tenant <code>FormSelect</code>. <strong>Device</strong> and <strong>Help message</strong> are omitted here (special cases).</p>
+<p>Detail views only. Section names are headings <strong>inside the form</strong> (not the page chrome). <strong>Identity stack</strong> = whether the usual <strong>pkey → UID → KSUID</strong> pattern appears in Identity (see structural patterns below). <strong>Tenant</strong> = which section holds the tenant <code>FormSelect</code>. <strong>Device</strong> and <strong>Help message</strong> are omitted here (special cases).</p>
 <table>
 <thead>
 <tr>
@@ -294,7 +294,7 @@
 </ol>
 <h3><code>ClassOfServiceDetailView.vue</code></h3>
 <ol>
-<li><strong>Identity</strong> — CoS key (ro), Local UID (ro), KSUID (ro), Tenant (required), Active, Description  </li>
+<li><strong>Identity</strong> — CoS key (ro), UID (ro), KSUID (ro), Tenant (required), Active, Description  </li>
 <li><strong>Settings</strong> — Dialplan (required), Default open (ro)</li>
 </ol>
 <hr>
@@ -306,7 +306,7 @@
 </ol>
 <h3><code>ConferenceDetailView.vue</code></h3>
 <ol>
-<li><strong>Identity</strong> — Room number (editable or ro), Common name, Local UID, KSUID, Tenant (required), Active, Description  </li>
+<li><strong>Identity</strong> — Room number (editable or ro), Common name, UID, KSUID, Tenant (required), Active, Description  </li>
 <li><strong>Settings</strong> — Type, Participant PIN, Admin PIN</li>
 </ol>
 <hr>
@@ -362,7 +362,7 @@
 </ol>
 <h3><code>GreetingDetailView.vue</code></h3>
 <ol>
-<li><strong>Identity</strong> — Greeting number (ro), Local UID, KSUID, <strong>Tenant (required)</strong>  </li>
+<li><strong>Identity</strong> — Greeting number (ro), UID, KSUID, <strong>Tenant (required)</strong>  </li>
 <li><strong>Metadata</strong> — Common name, Description, Original filename (ro), Type (ro)  </li>
 <li><strong>Audio</strong> — replace / upload controls (see file)</li>
 </ol>
@@ -389,7 +389,7 @@
 </ol>
 <h3><code>InboundRouteDetailView.vue</code></h3>
 <ol>
-<li><strong>Identity</strong> — Number (DiD/CLiD), DiD/CLiD (ro), Local UID, KSUID, Description (optional)  </li>
+<li><strong>Identity</strong> — Number (DiD/CLiD), DiD/CLiD (ro), UID, KSUID, Description (optional)  </li>
 <li><strong>Settings</strong> — Tenant, Active?, Open route, Closed route, Alert info (optional), MOH, SWOCLIP, DISA, DISA pass (optional), In prefix (optional), Tag (optional), CNAME, Device recording</li>
 </ol>
 <hr>
@@ -402,7 +402,7 @@
 </ol>
 <h3><code>IvrDetailView.vue</code></h3>
 <ol>
-<li><strong>Identity</strong> — IVR Direct Dial (ro), Local UID (ro), KSUID (ro), Tenant, Description (optional), Display name (optional)  </li>
+<li><strong>Identity</strong> — IVR Direct Dial (ro), UID (ro), KSUID (ro), Tenant, Description (optional), Display name (optional)  </li>
 <li><strong>Settings</strong> — Active?, Greeting Number, Listen for extension dial?, Action on IVR Timeout  </li>
 <li><strong>Keystroke options</strong> — Same grid as create</li>
 </ol>
@@ -417,7 +417,7 @@
 </ol>
 <h3><code>QueueDetailView.vue</code></h3>
 <ol>
-<li><strong>Identity</strong> — Queue Dial (ro), Common name, Local UID, KSUID, Active, Description  </li>
+<li><strong>Identity</strong> — Queue Dial (ro), Common name, UID, KSUID, Active, Description  </li>
 <li><strong>Options</strong> — Device recording (required), Strategy, Greeting number, Greeting, Options, Music class, Members  </li>
 <li><strong>Timing &amp; limits</strong> — (same as create)  </li>
 <li><strong>Advanced</strong> — (same as create)</li>
@@ -434,7 +434,7 @@
 </ol>
 <h3><code>RouteDetailView.vue</code></h3>
 <ol>
-<li><strong>Identity</strong> — Route name (ro), Local UID (ro), Common name, Description  </li>
+<li><strong>Identity</strong> — Route name (ro), UID (ro), Common name, Description  </li>
 <li><strong>Settings</strong> — Tenant, Active?, Auth (PIN dial), Strategy  </li>
 <li><strong>Dialplan</strong> — Dialplan  </li>
 <li><strong>Paths (trunks)</strong> — Path 1 … Path 4</li>
@@ -460,7 +460,7 @@
 </ul>
 <h3><code>TenantDetailView.vue</code> — fixed fields</h3>
 <ul>
-<li><strong>Identity</strong> — Name (ro), Local UID (ro), KSUID (ro), Description, CLID, Local area, Local dialplan  </li>
+<li><strong>Identity</strong> — Name (ro), UID (ro), KSUID (ro), Description, CLID, Local area, Local dialplan  </li>
 <li><strong>Settings</strong> — (same three numeric fields as create)</li>
 </ul>
 <h3>Dynamic field labels (create <strong>and</strong> detail, same order)</h3>
@@ -484,7 +484,7 @@
 </ol>
 <h3><code>TrunkDetailView.vue</code></h3>
 <ol>
-<li><strong>Identity</strong> — Name, Common name, Local UID, KSUID, Transport, Technology  </li>
+<li><strong>Identity</strong> — Name, Common name, UID, KSUID, Transport, Technology  </li>
 <li><strong>Settings</strong> — Active?, SIP registration, Host, Username, Peername, Trunkname, Password, MOH, Call progress, SWOCLIP  </li>
 <li><strong>Advanced</strong> — Alert info, Caller ID, In prefix, Match, Tag, Callback, Privileged, IAX reg, Device recording, DISA, DISA pass, Transform</li>
 </ol>
@@ -495,7 +495,7 @@
 <p>On many edits, <strong>Identity</strong> starts with the same logical order:</p>
 <ol>
 <li><strong>Primary / human-facing key</strong> (<code>pkey</code>, label varies: “Queue Dial”, “Room number”, “CoS key”, “Route name”, “IVR Direct Dial”, “Greeting number”, “Name” on trunks, etc.).</li>
-<li><strong>Local UID</strong> (<code>shortuid</code>, almost always labeled <strong>“Local UID”</strong>).</li>
+<li><strong>UID</strong> (<code>shortuid</code>).</li>
 <li><strong>KSUID</strong> (<code>id</code>, labeled <strong>“KSUID”</strong>).</li>
 </ol>
 <p>That matches <strong>Class of Service, Conference, Custom app, Greeting, IVR, Inbound route, Queue, Outbound route, Tenant, Trunk</strong> (trunk then adds <strong>Transport</strong> and <strong>Technology</strong> in the same Identity block).</p>
@@ -509,9 +509,9 @@
 <p>The visual pattern and the code pattern are aligned in several files (e.g. trunk, queue, IVR, class of service).</p>
 <h3>3. Where the triple is incomplete or different</h3>
 <ul>
-<li><strong>Agent</strong> — Agent number + Tenant + human fields + password; <strong>no</strong> Local UID / KSUID in the form.</li>
-<li><strong>Day timer</strong> — <code>pkey</code> (label is literally <strong>“pkey”</strong>), optional Local UID, <strong>State</strong>; <strong>no KSUID</strong> in Identity.</li>
-<li><strong>Holiday timer</strong> — pkey, Local UID (if present), State; same kind of lightweight Identity.</li>
+<li><strong>Agent</strong> — Agent number + Tenant + human fields + password; <strong>no</strong> UID / KSUID in the form.</li>
+<li><strong>Day timer</strong> — <code>pkey</code> (label is literally <strong>“pkey”</strong>), optional UID, <strong>State</strong>; <strong>no KSUID</strong> in Identity.</li>
+<li><strong>Holiday timer</strong> — pkey, UID (if present), State; same kind of lightweight Identity.</li>
 </ul>
 <p><strong>Device</strong> and <strong>Help message</strong> are <strong>special cases</strong> (ignored for this comparison); see stubs above.</p>
 <p>So “most panels show pkey + shortuid + ksuid” is <strong>directionally</strong> true for dialplan-ish entities, but <strong>not</strong> for agents or timers (and not applicable to device/help).</p>
@@ -527,8 +527,8 @@
 <h3>6. Obvious standardisation targets</h3>
 <p>If edit panels should feel the same:</p>
 <ul>
-<li><strong>Always the same order in Identity</strong> when the API exposes them: <strong>pkey (friendly label) → Local UID → KSUID</strong>, then entity-specific readonly lines (e.g. SIP password, extension type), then <strong>Tenant</strong>, then common name / description / active as applicable.</li>
-<li><strong>Align outliers:</strong> add Local UID + KSUID to <strong>Agent</strong> where the API exposes them, use a <strong>human label</strong> instead of <strong>“pkey”</strong> on day/holiday timers, and rename Queue’s <strong>Options</strong> → <strong>Settings</strong> (or the reverse on create) for parity.</li>
+<li><strong>Always the same order in Identity</strong> when the API exposes them: <strong>pkey (friendly label) → UID → KSUID</strong>, then entity-specific readonly lines (e.g. SIP password, extension type), then <strong>Tenant</strong>, then common name / description / active as applicable.</li>
+<li><strong>Align outliers:</strong> add UID + KSUID to <strong>Agent</strong> where the API exposes them, use a <strong>human label</strong> instead of <strong>“pkey”</strong> on day/holiday timers, and rename Queue’s <strong>Options</strong> → <strong>Settings</strong> (or the reverse on create) for parity.</li>
 </ul>
 <hr>
 <h2>Cross-panel patterns to reconcile (for standardisation)</h2>

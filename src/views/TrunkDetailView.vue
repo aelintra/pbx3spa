@@ -265,8 +265,8 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Short UID" :value="trunk.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="trunk.shortuid ?? '—'" label="Short UID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="trunk.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-shortuid" :model-value="trunk.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="trunk.id ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-id" :model-value="trunk.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Name" :value="editPkey || '—'" class="readonly-identity" />
@@ -410,7 +410,7 @@ async function confirmAndDelete() {
   gap: 0;
   margin-top: 0.5rem;
 }
-/* Non-updateable identity fields (Name, Local UID, KSUID, Transport) – low-light */
+/* Non-updateable identity fields (Name, UID, KSUID, Transport) – low-light */
 .readonly-identity :deep(.form-field-label),
 .readonly-identity :deep(.form-readonly) {
   color: #94a3b8;

@@ -110,11 +110,11 @@ No departures.
 
 ## 7. Edit panel: Identity section and optional fields
 
-**Pattern:** Identity order: (1) Primary identifier (FormReadonly), (2) Local UID if API returns it, (3) KSUID if API returns it, (4) other read-only-at-edit fields, (5) Tenant, (6) Description, etc. Use `readonly-identity` class for low-light. Show shortuid/id only if the API returns them.
+**Pattern:** Identity order: (1) Primary identifier (FormReadonly), (2) UID if API returns it, (3) KSUID if API returns it, (4) other read-only-at-edit fields, (5) Tenant, (6) Description, etc. Use `readonly-identity` class for low-light. Show shortuid/id only if the API returns them.
 
 | View | Notes |
 |------|--------|
-| ExtensionDetailView | Uses labels "Ext", "SIP Identity" instead of "Primary identifier", "Local UID" — acceptable resource-specific labels. Shows MAC address, Device as readonly identity (API-specific). |
+| ExtensionDetailView | Uses labels "Ext", "SIP Identity" instead of "Primary identifier", "UID" — acceptable resource-specific labels. Shows MAC address, Device as readonly identity (API-specific). |
 | IvrDetailView | Identity FormReadonly components do not use class `readonly-identity` on pkey/shortuid/id in snippet checked; verify all immutable identity fields have the class. |
 | Others | Compliant or resource-specific (e.g. Queue "Queue name", Agent "Agent number") |
 

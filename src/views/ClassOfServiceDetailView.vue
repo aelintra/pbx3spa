@@ -213,8 +213,8 @@ const panelTitleTenantSuffix = computed(() => {
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
             <template v-if="cosrule.shortuid != null && cosrule.shortuid !== ''">
-              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Short UID" :value="cosrule.shortuid ?? '—'" class="readonly-identity" />
-              <FormField v-else id="edit-identity-shortuid" :model-value="cosrule.shortuid ?? '—'" label="Short UID" disabled class="readonly-identity" />
+              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="cosrule.shortuid ?? '—'" class="readonly-identity" />
+              <FormField v-else id="edit-identity-shortuid" :model-value="cosrule.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
             </template>
             <template v-if="cosrule.id != null && cosrule.id !== ''">
               <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="cosrule.id ?? '—'" class="readonly-identity" />

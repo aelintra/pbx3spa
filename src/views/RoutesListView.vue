@@ -43,7 +43,7 @@ function tenantPkeyDisplay(route) {
   return clusterToTenantPkey.value.get(s) ?? s
 }
 
-/** Local UID (shortuid) for display */
+/** UID (shortuid) for display */
 function localUidDisplay(r) {
   const v = r.shortuid
   return v == null || v === '' ? '—' : String(v)
@@ -105,7 +105,7 @@ function sortClass(key) {
 
 const routeExportColumns = computed(() => [
   { key: 'pkey', label: 'Name' },
-  { key: 'shortuid', label: 'Local UID', getValue: (r) => localUidDisplay(r) },
+  { key: 'shortuid', label: 'UID', getValue: (r) => localUidDisplay(r) },
   { key: 'cluster', label: 'Tenant', getValue: (r) => tenantPkeyDisplay(r) },
   { key: 'active', label: 'Active', getValue: (r) => (r.active ?? '').toString().trim() || 'None' },
   { key: 'description', label: 'Description', getValue: (r) => (r.description ?? '').toString().trim() || 'None' },
@@ -193,7 +193,7 @@ onMounted(loadRoutes)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, Local UID, tenant, description, dialplan, path 1, or active"
+          placeholder="Filter by name, UID, tenant, description, dialplan, path 1, or active"
           aria-label="Filter routes"
         />
       </p>
@@ -221,7 +221,7 @@ onMounted(loadRoutes)
               name
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">
-              Local UID
+              UID
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">
               Tenant

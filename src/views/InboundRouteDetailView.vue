@@ -322,8 +322,8 @@ const panelTitleTenantSuffix = computed(() => {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Short UID" :value="inboundRoute.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="inboundRoute.shortuid ?? '—'" label="Short UID" disabled class="readonly-identity" />
+            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="inboundRoute.shortuid ?? '—'" class="readonly-identity" />
+            <FormField v-else id="edit-identity-shortuid" :model-value="inboundRoute.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="inboundRoute.id ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-id" :model-value="inboundRoute.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
             <FormField

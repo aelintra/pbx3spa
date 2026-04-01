@@ -239,8 +239,8 @@ const panelTitleTenantSuffix = computed(() => {
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
             <template v-if="conference.shortuid != null && conference.shortuid !== ''">
-              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="Short UID" :value="conference.shortuid ?? '—'" class="readonly-identity" />
-              <FormField v-else id="edit-identity-shortuid" :model-value="conference.shortuid ?? '—'" label="Short UID" disabled class="readonly-identity" />
+              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="conference.shortuid ?? '—'" class="readonly-identity" />
+              <FormField v-else id="edit-identity-shortuid" :model-value="conference.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
             </template>
             <template v-if="conference.id != null && conference.id !== ''">
               <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="conference.id ?? '—'" class="readonly-identity" />

@@ -291,7 +291,7 @@ const panelTitleTenantSuffix = computed(() => {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="holidaytimer.shortuid != null && holidaytimer.shortuid !== ''" id="edit-shortuid" label="Short UID" :value="holidaytimer.shortuid" class="readonly-identity" />
+            <FormReadonly v-if="holidaytimer.shortuid != null && holidaytimer.shortuid !== ''" id="edit-shortuid" label="UID" :value="holidaytimer.shortuid" class="readonly-identity" />
             <FormReadonly v-if="holidaytimer.id != null && holidaytimer.id !== ''" id="edit-id" label="KSUID" :value="holidaytimer.id" class="readonly-identity" />
             <FormReadonly v-if="stateDisplay(holidaytimer)" id="edit-state" label="State" :value="stateDisplay(holidaytimer)" class="readonly-identity" />
           </div>

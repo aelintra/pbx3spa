@@ -104,7 +104,7 @@ function sortClass(key) {
 
 const inboundRouteExportColumns = computed(() => [
   { key: 'pkey', label: 'DiD/CLiD' },
-  { key: 'shortuid', label: 'Local UID', getValue: (r) => localUidDisplay(r) },
+  { key: 'shortuid', label: 'UID', getValue: (r) => localUidDisplay(r) },
   { key: 'cluster', label: 'Tenant', getValue: (r) => tenantPkeyDisplay(r) },
   { key: 'active', label: 'Active' },
   { key: 'trunkname', label: 'Name' },
@@ -193,7 +193,7 @@ onMounted(loadInboundRoutes)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by DiD/CLiD, Local UID, tenant, name, Open, Closed, Type, description, active"
+          placeholder="Filter by DiD/CLiD, UID, tenant, name, Open, Closed, Type, description, active"
           aria-label="Filter inbound routes"
         />
       </p>
@@ -218,7 +218,7 @@ onMounted(loadInboundRoutes)
         <thead>
           <tr>
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">DiD/CLiD</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active?</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('trunkname')" @click="setSort('trunkname')">Name</th>

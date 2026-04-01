@@ -46,7 +46,7 @@ function tenantPkeyDisplay(trunk) {
   return clusterToTenantPkey.value.get(s) ?? s
 }
 
-/** Local UID (shortuid) for display */
+/** UID (shortuid) for display */
 function localUidDisplay(tr) {
   const v = tr.shortuid
   return v == null || v === '' ? '—' : String(v)
@@ -160,7 +160,7 @@ function sortClass(key) {
 
 const trunkExportColumns = computed(() => [
   { key: 'pkey', label: 'Name' },
-  { key: 'shortuid', label: 'Local UID', getValue: (tr) => localUidDisplay(tr) },
+  { key: 'shortuid', label: 'UID', getValue: (tr) => localUidDisplay(tr) },
   { key: 'cluster', label: 'Tenant', getValue: (tr) => tenantPkeyDisplay(tr) },
   { key: 'active', label: 'Active' },
   { key: 'description', label: 'Description' },
@@ -269,7 +269,7 @@ onMounted(loadTrunks)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, Local UID, tenant, description, host, or active"
+          placeholder="Filter by name, UID, tenant, description, host, or active"
           aria-label="Filter trunks"
         />
       </p>
@@ -299,7 +299,7 @@ onMounted(loadTrunks)
               name
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">
-              Local UID
+              UID
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">
               Tenant

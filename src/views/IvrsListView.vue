@@ -34,7 +34,7 @@ const tenantShortuidToPkey = computed(() => {
   return map
 })
 
-/** Local UID (shortuid) for display — same as Trunk/Tenant/InboundRoute list */
+/** UID (shortuid) for display — same as Trunk/Tenant/InboundRoute list */
 function localUidDisplay(ivr) {
   const v = ivr.shortuid
   return v == null || v === '' ? '—' : String(v)
@@ -99,7 +99,7 @@ function sortClass(key) {
 
 const ivrExportColumns = computed(() => [
   { key: 'pkey', label: 'IVR Direct Dial' },
-  { key: 'shortuid', label: 'Local UID', getValue: (ivr) => localUidDisplay(ivr) },
+  { key: 'shortuid', label: 'UID', getValue: (ivr) => localUidDisplay(ivr) },
   { key: 'cluster', label: 'Tenant', getValue: (ivr) => tenantDisplay(ivr) },
   { key: 'active', label: 'Active' },
   { key: 'description', label: 'Description' },
@@ -187,7 +187,7 @@ onMounted(loadIvrs)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by IVR Direct Dial, Local UID, tenant, description, or active"
+          placeholder="Filter by IVR Direct Dial, UID, tenant, description, or active"
           aria-label="Filter IVRs"
         />
       </p>
@@ -212,7 +212,7 @@ onMounted(loadIvrs)
         <thead>
           <tr>
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">IVR Direct Dial</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">Local UID</th>
+            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">UID</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active</th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">description</th>

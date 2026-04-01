@@ -32,10 +32,17 @@ const clusterToTenantPkey = computed(() => {
 })
 
 function tenantPkeyDisplay(app) {
+  if (app.tenant_pkey != null && app.tenant_pkey !== '') return String(app.tenant_pkey)
   const v = app.cluster
   if (v == null || v === '') return '—'
   const s = String(v)
   return clusterToTenantPkey.value.get(s) ?? s
+}
+
+/** UID (shortuid) for display — same pattern as other resource lists */
+function uidDisplay(app) {
+  const v = app.shortuid
+  return v == null || v === '' ? '—' : String(v)
 }
 
 function str(v) {
@@ -50,12 +57,21 @@ const filteredApps = computed(() => {
   const map = clusterToTenantPkey.value
   return list.filter((a) => {
     const pkey = str(a.pkey).toLowerCase()
+    const shortuid = str(a.shortuid).toLowerCase()
     const cname = str(a.cname).toLowerCase()
     const desc = str(a.description).toLowerCase()
     const span = str(a.span).toLowerCase()
     const active = str(a.active).toLowerCase()
     const tenant = (a.tenant_pkey ?? map.get(String(a.cluster)) ?? a.cluster ?? '').toString().toLowerCase()
-    return pkey.includes(q) || cname.includes(q) || desc.includes(q) || span.includes(q) || active.includes(q) || tenant.includes(q)
+    return (
+      pkey.includes(q) ||
+      shortuid.includes(q) ||
+      cname.includes(q) ||
+      desc.includes(q) ||
+      span.includes(q) ||
+      active.includes(q) ||
+      tenant.includes(q)
+    )
   })
 })
 
@@ -153,7 +169,7 @@ onMounted(loadApps)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, display name, tenant, description, span, or active"
+          placeholder="Filter by app name, UID, tenant, description, span, or active"
           aria-label="Filter custom apps"
         />
       </p>
@@ -172,10 +188,10 @@ onMounted(loadApps)
         <thead>
           <tr>
             <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">
-              name
+              App name
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('cname')" @click="setSort('cname')">
-              Display name
+            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">
+              UID
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">
               Tenant
@@ -204,20 +220,22 @@ onMounted(loadApps)
         <tbody>
           <tr v-for="a in sortedApps" :key="a.shortuid ?? a.id ?? a.pkey" :class="{ 'list-row-inactive': !isRowActive(a.active) }">
             <td class="cell-immutable" title="Immutable">{{ a.pkey }}</td>
-            <td>{{ a.cname ?? '—' }}</td>
+            <td class="cell-immutable" title="Immutable">{{ uidDisplay(a) }}</td>
             <td>{{ tenantPkeyDisplay(a) }}</td>
             <td>{{ a.active ?? '—' }}</td>
             <td>{{ a.description ?? '—' }}</td>
             <td>{{ a.span ?? '—' }}</td>
             <td>
-              <router-link :to="{ name: 'customapp-detail', params: { shortuid: a.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
+              <router-link v-if="a.shortuid" :to="{ name: 'customapp-detail', params: { shortuid: a.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
                 <span class="action-icon" aria-hidden="true">
                   <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                 </span>
               </router-link>
+              <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot edit" style="opacity: 0.5;">—</span>
             </td>
             <td>
               <button
+                v-if="a.shortuid"
                 type="button"
                 class="cell-link cell-link-delete cell-link-icon"
                 :title="deletingShortuid === a.shortuid ? 'Deleting…' : 'Delete'"
@@ -232,6 +250,7 @@ onMounted(loadApps)
                   <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                 </span>
               </button>
+              <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot delete" style="opacity: 0.5;">—</span>
             </td>
           </tr>
         </tbody>

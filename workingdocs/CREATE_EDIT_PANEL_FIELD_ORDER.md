@@ -17,7 +17,7 @@
 
 ### Edit panels — at a glance (table)
 
-Detail views only. Section names are headings **inside the form** (not the page chrome). **Identity stack** = whether the usual **pkey → Local UID → KSUID** pattern appears in Identity (see structural patterns below). **Tenant** = which section holds the tenant `FormSelect`. **Device** and **Help message** are omitted here (special cases).
+Detail views only. Section names are headings **inside the form** (not the page chrome). **Identity stack** = whether the usual **pkey → UID → KSUID** pattern appears in Identity (see structural patterns below). **Tenant** = which section holds the tenant `FormSelect`. **Device** and **Help message** are omitted here (special cases).
 
 | Entity | Detail view | Sections (top → bottom) | Identity stack | Tenant section |
 |--------|-------------|-------------------------|----------------|----------------|
@@ -85,7 +85,7 @@ Detail views only. Section names are headings **inside the form** (not the page 
 
 ### `ClassOfServiceDetailView.vue`
 
-1. **Identity** — CoS key (ro), Local UID (ro), KSUID (ro), Tenant (required), Active, Description  
+1. **Identity** — CoS key (ro), UID (ro), KSUID (ro), Tenant (required), Active, Description  
 2. **Settings** — Dialplan (required), Default open (ro)  
 
 ---
@@ -99,7 +99,7 @@ Detail views only. Section names are headings **inside the form** (not the page 
 
 ### `ConferenceDetailView.vue`
 
-1. **Identity** — Room number (editable or ro), Common name, Local UID, KSUID, Tenant (required), Active, Description  
+1. **Identity** — Room number (editable or ro), Common name, UID, KSUID, Tenant (required), Active, Description  
 2. **Settings** — Type, Participant PIN, Admin PIN  
 
 ---
@@ -166,7 +166,7 @@ Detail views only. Section names are headings **inside the form** (not the page 
 
 ### `GreetingDetailView.vue`
 
-1. **Identity** — Greeting number (ro), Local UID, KSUID, **Tenant (required)**  
+1. **Identity** — Greeting number (ro), UID, KSUID, **Tenant (required)**  
 2. **Metadata** — Common name, Description, Original filename (ro), Type (ro)  
 3. **Audio** — replace / upload controls (see file)  
 
@@ -200,7 +200,7 @@ Detail views only. Section names are headings **inside the form** (not the page 
 
 ### `InboundRouteDetailView.vue`
 
-1. **Identity** — Number (DiD/CLiD), DiD/CLiD (ro), Local UID, KSUID, Description (optional)  
+1. **Identity** — Number (DiD/CLiD), DiD/CLiD (ro), UID, KSUID, Description (optional)  
 2. **Settings** — Tenant, Active?, Open route, Closed route, Alert info (optional), MOH, SWOCLIP, DISA, DISA pass (optional), In prefix (optional), Tag (optional), CNAME, Device recording  
 
 ---
@@ -215,7 +215,7 @@ Detail views only. Section names are headings **inside the form** (not the page 
 
 ### `IvrDetailView.vue`
 
-1. **Identity** — IVR Direct Dial (ro), Local UID (ro), KSUID (ro), Tenant, Description (optional), Display name (optional)  
+1. **Identity** — IVR Direct Dial (ro), UID (ro), KSUID (ro), Tenant, Description (optional), Display name (optional)  
 2. **Settings** — Active?, Greeting Number, Listen for extension dial?, Action on IVR Timeout  
 3. **Keystroke options** — Same grid as create  
 
@@ -232,7 +232,7 @@ Detail views only. Section names are headings **inside the form** (not the page 
 
 ### `QueueDetailView.vue`
 
-1. **Identity** — Queue Dial (ro), Common name, Local UID, KSUID, Active, Description  
+1. **Identity** — Queue Dial (ro), Common name, UID, KSUID, Active, Description  
 2. **Options** — Device recording (required), Strategy, Greeting number, Greeting, Options, Music class, Members  
 3. **Timing & limits** — (same as create)  
 4. **Advanced** — (same as create)  
@@ -252,7 +252,7 @@ Detail views only. Section names are headings **inside the form** (not the page 
 
 ### `RouteDetailView.vue`
 
-1. **Identity** — Route name (ro), Local UID (ro), Common name, Description  
+1. **Identity** — Route name (ro), UID (ro), Common name, Description  
 2. **Settings** — Tenant, Active?, Auth (PIN dial), Strategy  
 3. **Dialplan** — Dialplan  
 4. **Paths (trunks)** — Path 1 … Path 4  
@@ -281,7 +281,7 @@ Section **order** (create and detail match):
 
 ### `TenantDetailView.vue` — fixed fields
 
-- **Identity** — Name (ro), Local UID (ro), KSUID (ro), Description, CLID, Local area, Local dialplan  
+- **Identity** — Name (ro), UID (ro), KSUID (ro), Description, CLID, Local area, Local dialplan  
 - **Settings** — (same three numeric fields as create)  
 
 ### Dynamic field labels (create **and** detail, same order)
@@ -308,7 +308,7 @@ See `src/constants/tenantAdvanced.js`:
 
 ### `TrunkDetailView.vue`
 
-1. **Identity** — Name, Common name, Local UID, KSUID, Transport, Technology  
+1. **Identity** — Name, Common name, UID, KSUID, Transport, Technology  
 2. **Settings** — Active?, SIP registration, Host, Username, Peername, Trunkname, Password, MOH, Call progress, SWOCLIP  
 3. **Advanced** — Alert info, Caller ID, In prefix, Match, Tag, Callback, Privileged, IAX reg, Device recording, DISA, DISA pass, Transform  
 
@@ -323,7 +323,7 @@ Observations from comparing detail views (for standardisation and refactors). Th
 On many edits, **Identity** starts with the same logical order:
 
 1. **Primary / human-facing key** (`pkey`, label varies: “Queue Dial”, “Room number”, “CoS key”, “Route name”, “IVR Direct Dial”, “Greeting number”, “Name” on trunks, etc.).
-2. **Local UID** (`shortuid`, almost always labeled **“Local UID”**).
+2. **UID** (`shortuid`).
 3. **KSUID** (`id`, labeled **“KSUID”**).
 
 That matches **Class of Service, Conference, Custom app, Greeting, IVR, Inbound route, Queue, Outbound route, Tenant, Trunk** (trunk then adds **Transport** and **Technology** in the same Identity block).
@@ -341,9 +341,9 @@ The visual pattern and the code pattern are aligned in several files (e.g. trunk
 
 ### 3. Where the triple is incomplete or different
 
-- **Agent** — Agent number + Tenant + human fields + password; **no** Local UID / KSUID in the form.
-- **Day timer** — `pkey` (label is literally **“pkey”**), optional Local UID, **State**; **no KSUID** in Identity.
-- **Holiday timer** — pkey, Local UID (if present), State; same kind of lightweight Identity.
+- **Agent** — Agent number + Tenant + human fields + password; **no** UID / KSUID in the form.
+- **Day timer** — `pkey` (label is literally **“pkey”**), optional UID, **State**; **no KSUID** in Identity.
+- **Holiday timer** — pkey, UID (if present), State; same kind of lightweight Identity.
 
 **Device** and **Help message** are **special cases** (ignored for this comparison); see stubs above.
 
@@ -366,8 +366,8 @@ After Identity, **“Settings”** is the default, but **Queue detail** uses **�
 
 If edit panels should feel the same:
 
-- **Always the same order in Identity** when the API exposes them: **pkey (friendly label) → Local UID → KSUID**, then entity-specific readonly lines (e.g. SIP password, extension type), then **Tenant**, then common name / description / active as applicable.
-- **Align outliers:** add Local UID + KSUID to **Agent** where the API exposes them, use a **human label** instead of **“pkey”** on day/holiday timers, and rename Queue’s **Options** → **Settings** (or the reverse on create) for parity.
+- **Always the same order in Identity** when the API exposes them: **pkey (friendly label) → UID → KSUID**, then entity-specific readonly lines (e.g. SIP password, extension type), then **Tenant**, then common name / description / active as applicable.
+- **Align outliers:** add UID + KSUID to **Agent** where the API exposes them, use a **human label** instead of **“pkey”** on day/holiday timers, and rename Queue’s **Options** → **Settings** (or the reverse on create) for parity.
 
 ---
 

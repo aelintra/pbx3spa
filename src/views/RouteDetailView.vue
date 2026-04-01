@@ -275,7 +275,7 @@ const panelTitleTenantSuffix = computed(() => {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly id="edit-identity-shortuid" label="Short UID" :value="routeData.shortuid ?? '—'" class="readonly-identity" />
+            <FormReadonly id="edit-identity-shortuid" label="UID" :value="routeData.shortuid ?? '—'" class="readonly-identity" />
             <FormReadonly id="edit-identity-id" label="KSUID" :value="routeData.id ?? '—'" class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Route name" :value="routeData.pkey ?? '—'" class="readonly-identity" />
             <FormField
