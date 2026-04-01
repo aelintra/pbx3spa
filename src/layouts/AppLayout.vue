@@ -199,8 +199,8 @@ async function logout() {
   flex-shrink: 0;
   height: 100vh;
   overflow-y: auto;
-  background: #1e293b;
-  color: #f8fafc;
+  background: var(--pbx-sidebar-bg);
+  color: var(--pbx-sidebar-fg);
 }
 .nav {
   display: flex;
@@ -221,7 +221,7 @@ async function logout() {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #e2e8f0;
+  color: var(--pbx-sidebar-heading);
 }
 .nav-heading-btn {
   display: flex;
@@ -238,7 +238,7 @@ async function logout() {
 }
 .nav-heading-btn:hover {
   background: rgba(255, 255, 255, 0.05);
-  color: #f8fafc;
+  color: var(--pbx-sidebar-fg);
 }
 .nav-heading-text {
   flex: 1;
@@ -259,16 +259,16 @@ async function logout() {
 }
 .nav-link {
   padding: 0.5rem 1rem;
-  color: #cbd5e1;
+  color: var(--pbx-sidebar-link);
   text-decoration: none;
   font-size: 0.9375rem;
 }
 .nav-link:hover {
-  color: #f8fafc;
+  color: var(--pbx-sidebar-fg);
   background: rgba(255, 255, 255, 0.05);
 }
 .nav-link.active {
-  color: #f8fafc;
+  color: var(--pbx-sidebar-fg);
   background: rgba(255, 255, 255, 0.1);
   font-weight: 500;
 }
@@ -279,14 +279,17 @@ async function logout() {
   min-width: 0;
   height: 100vh;
   overflow: hidden;
+  background: var(--pbx-canvas);
+  padding: 0 1.25rem 1.25rem 1rem;
 }
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.5rem;
-  background: #f9fafb;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--pbx-canvas);
+  border-bottom: 1px solid var(--pbx-border);
+  box-shadow: var(--pbx-shadow-topbar);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -295,7 +298,7 @@ async function logout() {
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
-  color: #0f172a;
+  color: var(--pbx-text);
 }
 .topbar-right {
   display: flex;
@@ -304,25 +307,30 @@ async function logout() {
 }
 .user {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--pbx-text-muted);
 }
 .logout-btn {
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--pbx-text-muted);
   background: transparent;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--pbx-border);
   border-radius: 0.375rem;
   cursor: pointer;
 }
 .logout-btn:hover {
-  color: #0f172a;
-  background: #f1f5f9;
+  color: var(--pbx-text);
+  background: var(--pbx-surface-subtle);
 }
 .content {
   flex: 1;
-  padding: 1.5rem;
+  margin: 0;
+  padding: 1.25rem 1.5rem;
   overflow-y: auto;
   min-height: 0;
+  background: var(--pbx-panel);
+  border-radius: 0.5rem;
+  border: 1px solid var(--pbx-border);
+  box-shadow: var(--pbx-shadow-content);
 }
 </style>

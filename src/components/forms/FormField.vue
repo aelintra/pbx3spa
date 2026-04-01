@@ -208,7 +208,7 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
 
 .form-field-label {
   font-weight: 500;
-  color: #475569;
+  color: var(--pbx-text-label);
   padding-top: 0.375rem;
   white-space: nowrap;
 }
@@ -222,9 +222,9 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
   padding: 0.5rem 0.75rem;
   font-size: 0.9375rem;
   line-height: 1.5;
-  color: #0f172a;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  color: var(--pbx-text);
+  background-color: var(--pbx-panel);
+  border: 1px solid var(--pbx-border);
   border-radius: 0.375rem;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -237,23 +237,23 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
 
 .form-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--pbx-accent-bright);
+  box-shadow: 0 0 0 3px var(--pbx-focus-ring);
 }
 
 .form-input:disabled {
-  background-color: #f8fafc;
-  color: #64748b;
+  background-color: var(--pbx-canvas);
+  color: var(--pbx-text-muted);
   cursor: not-allowed;
 }
 
 .form-input-error {
-  border-color: #dc2626;
+  border-color: var(--pbx-danger);
   border-width: 2px;
 }
 
 .form-input-error:focus {
-  border-color: #dc2626;
+  border-color: var(--pbx-danger);
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
@@ -267,7 +267,7 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
 }
 
 .form-field-error {
-  color: #dc2626;
+  color: var(--pbx-danger);
   font-size: 0.8125rem;
   margin: 0.25rem 0 0 0;
   display: flex;
@@ -282,7 +282,7 @@ watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
 }
 
 .form-field-hint {
-  color: #64748b;
+  color: var(--pbx-text-muted);
   font-size: 0.8125rem;
   margin: 0.25rem 0 0 0;
 }
