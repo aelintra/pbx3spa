@@ -18,5 +18,6 @@
 | Trunk/route multitenancy | TRUNK_ROUTE_MULTITENANCY.md | reference |
 | Data-driven list policy | DATA_DRIVEN_LIST_POLICY_PROJECT.md | deferred |
 | SPA bundle size / cloud perf | SESSION_HANDOFF.md § Other to-dos, PROJECT_PLAN § Current state | watch (revisit in cloud) |
+| SPA shell (nav / chrome) | SPA_SHELL_ROADMAP.md | stage 1 done; follow-ups listed in doc |
 
 **Source of truth:** Schema and code. Verify against repo when implementing; this index may be outdated.

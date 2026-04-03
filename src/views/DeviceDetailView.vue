@@ -12,7 +12,6 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 const TECHNOLOGY_OPTIONS = ['SIP', 'Descriptor', 'BLF Template']
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
-
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()

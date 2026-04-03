@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useHelp } from '@/composables/useHelp'
 import { getApiClient } from '@/api/client'
 import CommitButton from '@/components/CommitButton.vue'
+import NavIcon from '@/components/NavIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -29,13 +30,65 @@ const showCommitButton = computed(() => {
 })
 
 const navGroups = [
-  { id: 'tenancy', heading: 'Tenancy', links: [{ to: '/tenants', label: 'Tenants' }] },
-  { id: 'endpoints', heading: 'Endpoints', links: [{ to: '/extensions', label: 'Extensions' }, { to: '/conferences', label: 'Conferences' }] },
-  { id: 'inbound', heading: 'Inbound', links: [{ to: '/inbound-routes', label: 'DID routes' }] },
-  { id: 'outbound', heading: 'Outbound', links: [{ to: '/trunks', label: 'Trunks' }, { to: '/routes', label: 'Routes' }] },
-  { id: 'acd', heading: 'ACD', links: [{ to: '/queues', label: 'Queues / Ring groups' }, { to: '/ivrs', label: 'IVRs' }, { to: '/greetings', label: 'Greetings' }, { to: '/agents', label: 'Agents' }] },
-  { id: 'schedules', heading: 'Schedules & policy', links: [{ to: '/daytimers', label: 'Day timers' }, { to: '/holidaytimers', label: 'Holiday timers' }, { to: '/cosrules', label: 'Class of Service' }] },
-  { id: 'system', heading: 'System', links: [{ to: '/asterisk-files', label: 'Asterisk Files' }, { to: '/backup', label: 'Backup' }, { to: '/certificates', label: 'Certificates' }, { to: '/customapps', label: 'Custom Apps' }, { to: '/devices', label: 'Devices' }, { to: '/firewall', label: 'Firewall' }, { to: '/help-messages', label: 'Help messages' }, { to: '/sysglobals', label: 'Instance Globals' }, { to: '/logs', label: 'Logs' }, { to: '/ip-settings', label: 'Network' }, { to: '/users', label: 'Users' }] }
+  { id: 'tenancy', heading: 'Tenancy', icon: 'building2', links: [{ to: '/tenants', label: 'Tenants', icon: 'building2' }] },
+  {
+    id: 'endpoints',
+    heading: 'Endpoints',
+    icon: 'phone',
+    links: [
+      { to: '/extensions', label: 'Extensions', icon: 'phone' },
+      { to: '/conferences', label: 'Conferences', icon: 'users' }
+    ]
+  },
+  { id: 'inbound', heading: 'Inbound', icon: 'phone-incoming', links: [{ to: '/inbound-routes', label: 'DID routes', icon: 'phone-incoming' }] },
+  {
+    id: 'outbound',
+    heading: 'Outbound',
+    icon: 'link',
+    links: [
+      { to: '/trunks', label: 'Trunks', icon: 'link' },
+      { to: '/routes', label: 'Routes', icon: 'route' }
+    ]
+  },
+  {
+    id: 'acd',
+    heading: 'ACD',
+    icon: 'list-ordered',
+    links: [
+      { to: '/queues', label: 'Queues / Ring groups', icon: 'list-ordered' },
+      { to: '/ivrs', label: 'IVRs', icon: 'git-branch' },
+      { to: '/greetings', label: 'Greetings', icon: 'volume2' },
+      { to: '/agents', label: 'Agents', icon: 'headset' }
+    ]
+  },
+  {
+    id: 'schedules',
+    heading: 'Schedules & policy',
+    icon: 'clock',
+    links: [
+      { to: '/daytimers', label: 'Day timers', icon: 'clock' },
+      { to: '/holidaytimers', label: 'Holiday timers', icon: 'calendar' },
+      { to: '/cosrules', label: 'Class of Service', icon: 'shield' }
+    ]
+  },
+  {
+    id: 'system',
+    heading: 'System',
+    icon: 'layers',
+    links: [
+      { to: '/asterisk-files', label: 'Asterisk Files', icon: 'file-code' },
+      { to: '/backup', label: 'Backup', icon: 'database' },
+      { to: '/certificates', label: 'Certificates', icon: 'lock' },
+      { to: '/customapps', label: 'Custom Apps', icon: 'package' },
+      { to: '/devices', label: 'Devices', icon: 'smartphone' },
+      { to: '/firewall', label: 'Firewall', icon: 'shield-alert' },
+      { to: '/help-messages', label: 'Help messages', icon: 'help-circle' },
+      { to: '/sysglobals', label: 'Instance Globals', icon: 'sliders' },
+      { to: '/logs', label: 'Logs', icon: 'scroll-text' },
+      { to: '/ip-settings', label: 'Network', icon: 'wifi' },
+      { to: '/users', label: 'Users', icon: 'user-cog' }
+    ]
+  }
 ]
 
 const expanded = ref({})
@@ -77,6 +130,15 @@ function restoreSidebarScroll() {
   }
 }
 
+/** Keep the current route’s nav link visible inside the scrollable sidebar (SPA_SHELL_ROADMAP). */
+function scrollActiveNavIntoView() {
+  const nav = sidebarRef.value
+  if (!nav) return
+  const active = nav.querySelector('a.nav-link.active')
+  if (!active || !(active instanceof HTMLElement)) return
+  active.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' })
+}
+
 function groupIdForPath(path) {
   const p = path.replace(/\/$/, '') || '/'
   const g = navGroups.find((gr) => gr.links.some((l) => l.to === p || (l.to !== '/' && p.startsWith(l.to + '/'))))
@@ -90,11 +152,13 @@ function ensureCurrentGroupOpen() {
   expanded.value = next
 }
 
-function toggle(id) {
+async function toggle(id) {
   const willBeOpen = !expanded.value[id]
   const next = {}
   navGroups.forEach((g) => { next[g.id] = g.id === id ? willBeOpen : false })
   expanded.value = next
+  await nextTick()
+  scrollActiveNavIntoView()
 }
 
 onMounted(async () => {
@@ -113,6 +177,7 @@ onMounted(async () => {
   }
   await nextTick()
   restoreSidebarScroll()
+  requestAnimationFrame(() => scrollActiveNavIntoView())
 })
 
 watch(
@@ -121,6 +186,7 @@ watch(
     ensureCurrentGroupOpen()
     await nextTick()
     restoreSidebarScroll()
+    requestAnimationFrame(() => scrollActiveNavIntoView())
   }
 )
 
@@ -148,7 +214,10 @@ async function logout() {
     <aside class="sidebar">
       <nav ref="sidebarRef" class="nav" @scroll.passive="onSidebarScroll">
         <template v-if="auth.can('admin')">
-          <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">Home</router-link>
+          <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">
+            <NavIcon name="home" />
+            <span class="nav-link-label">Home</span>
+          </router-link>
 
           <div v-for="group in navGroups" :key="group.id" class="nav-group">
             <button
@@ -159,16 +228,25 @@ async function logout() {
               :id="'nav-heading-' + group.id"
               @click="toggle(group.id)"
             >
-              <span class="nav-heading-text">{{ group.heading }}</span>
+              <span class="nav-heading-leading">
+                <NavIcon :name="group.icon" />
+                <span class="nav-heading-text">{{ group.heading }}</span>
+              </span>
               <span class="nav-heading-chevron" :class="{ open: expanded[group.id] }" aria-hidden="true">▼</span>
             </button>
             <div :id="'nav-group-' + group.id" class="nav-group-links" role="region" :aria-labelledby="'nav-heading-' + group.id" v-show="expanded[group.id]">
-              <router-link v-for="link in group.links" :key="link.to" :to="link.to" class="nav-link" active-class="active">{{ link.label }}</router-link>
+              <router-link v-for="link in group.links" :key="link.to" :to="link.to" class="nav-link" active-class="active">
+                <NavIcon :name="link.icon" />
+                <span class="nav-link-label">{{ link.label }}</span>
+              </router-link>
             </div>
           </div>
         </template>
         <template v-else>
-          <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">Home</router-link>
+          <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">
+            <NavIcon name="home" />
+            <span class="nav-link-label">Home</span>
+          </router-link>
         </template>
       </nav>
       <footer class="sidebar-footer" role="contentinfo">
@@ -201,7 +279,7 @@ async function logout() {
 .sidebar {
   display: flex;
   flex-direction: column;
-  width: 12rem;
+  width: 13.5rem;
   flex-shrink: 0;
   height: 100vh;
   min-height: 0;
@@ -236,16 +314,16 @@ async function logout() {
 }
 .nav-heading {
   padding: 0.5rem 0.75rem 0.35rem 0.65rem;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--pbx-sidebar-heading);
 }
 .nav-heading-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.35rem;
   width: 100%;
   margin: 0;
   border: none;
@@ -260,8 +338,20 @@ async function logout() {
   background: var(--pbx-sidebar-hover-bg);
   color: var(--pbx-sidebar-fg);
 }
+.nav-heading-leading {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1;
+}
 .nav-heading-text {
   flex: 1;
+  min-width: 0;
+}
+.nav-heading-btn :deep(.nav-icon) {
+  opacity: 0.85;
+  flex-shrink: 0;
 }
 .nav-heading-chevron {
   font-size: 0.5rem;
@@ -279,6 +369,9 @@ async function logout() {
   gap: 0.125rem;
 }
 .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.45rem 0.65rem;
   margin: 0.0625rem 0;
   border-radius: 0.375rem;
@@ -286,6 +379,15 @@ async function logout() {
   text-decoration: none;
   font-size: 0.875rem;
   line-height: 1.35;
+}
+.nav-link :deep(.nav-icon) {
+  opacity: 0.88;
+}
+.nav-link.active :deep(.nav-icon) {
+  opacity: 1;
+}
+.nav-link-label {
+  min-width: 0;
 }
 .nav-link:hover {
   color: var(--pbx-text);

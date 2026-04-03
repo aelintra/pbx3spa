@@ -5,7 +5,6 @@ import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import PanelBackLink from '@/components/PanelBackLink.vue'
-
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()

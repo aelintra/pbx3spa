@@ -12,7 +12,6 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
-
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()

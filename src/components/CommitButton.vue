@@ -82,4 +82,8 @@ defineExpose({ refreshCommitStatus: fetchCommitStatus })
 .commit-btn.commit-btn-dirty:hover:not(:disabled) {
   background: #b91c1c;
 }
+.commit-btn:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+}
 </style>

@@ -9,6 +9,7 @@ import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
+import LiveDataFetchNotice from '@/components/LiveDataFetchNotice.vue'
 import { countActiveRows, isRowActive } from '@/utils/listActive'
 
 const { filterText } = useStickyFilter('extensions')
@@ -306,14 +307,16 @@ onMounted(loadExtensions)
     </section>
 
     <section v-else class="list-body">
-      <ListViewMeta
-        v-if="extensions.length > 0"
-        :total="extensions.length"
-        :filtered="filteredExtensions.length"
-        :active-count="extensionsActiveInFilter"
-        :down-count="extensionsDownInFilter"
-        :online-count="extensionsOnlineInFilter"
-      />
+      <div v-if="extensions.length > 0" class="list-meta-toolbar">
+        <ListViewMeta
+          :total="extensions.length"
+          :filtered="filteredExtensions.length"
+          :active-count="extensionsActiveInFilter"
+          :down-count="extensionsDownInFilter"
+          :online-count="extensionsOnlineInFilter"
+        />
+        <LiveDataFetchNotice :show="liveLoading" />
+      </div>
       <p v-if="filterText && filteredExtensions.length === 0" class="empty">No extensions match the filter.</p>
       <table v-else class="table" :aria-busy="liveLoading">
         <thead>

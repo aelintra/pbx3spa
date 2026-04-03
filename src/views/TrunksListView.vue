@@ -10,6 +10,7 @@ import { countActiveRows, isRowActive } from '@/utils/listActive'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
+import LiveDataFetchNotice from '@/components/LiveDataFetchNotice.vue'
 
 const { filterText } = useStickyFilter('trunks')
 const toast = useToastStore()
@@ -283,14 +284,16 @@ onMounted(loadTrunks)
     </section>
 
     <section v-else class="list-body">
-      <ListViewMeta
-        v-if="trunks.length > 0"
-        :total="trunks.length"
-        :filtered="filteredTrunks.length"
-        :active-count="trunksActiveInFilter"
-        :down-count="trunksDownInFilter"
-        :online-count="trunksOnlineInFilter"
-      />
+      <div v-if="trunks.length > 0" class="list-meta-toolbar">
+        <ListViewMeta
+          :total="trunks.length"
+          :filtered="filteredTrunks.length"
+          :active-count="trunksActiveInFilter"
+          :down-count="trunksDownInFilter"
+          :online-count="trunksOnlineInFilter"
+        />
+        <LiveDataFetchNotice :show="liveLoading" />
+      </div>
       <p v-if="filterText && filteredTrunks.length === 0" class="empty">No trunks match the filter.</p>
       <table v-else class="table" :aria-busy="liveLoading">
         <thead>
