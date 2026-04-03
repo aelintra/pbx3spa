@@ -23,10 +23,14 @@
   --pbx-accent: #2563eb;
   --pbx-accent-hover: #1d4ed8;
   --pbx-accent-bright: #3b82f6;
-  --pbx-sidebar-bg: #1e293b;
-  --pbx-sidebar-fg: #f8fafc;
-  --pbx-sidebar-heading: #e2e8f0;
-  --pbx-sidebar-link: #cbd5e1;
+  /** Light sidebar: subtle strip vs main canvas (#f1f5f9 vs #f8fafc); border + link states */
+  --pbx-sidebar-bg: var(--pbx-surface-subtle);
+  --pbx-sidebar-fg: var(--pbx-text);
+  --pbx-sidebar-heading: var(--pbx-text-muted);
+  --pbx-sidebar-link: var(--pbx-text-label);
+  --pbx-sidebar-hover-bg: rgba(15, 23, 42, 0.05);
+  --pbx-sidebar-active-bg: rgba(37, 99, 235, 0.1);
+  --pbx-sidebar-active-color: var(--pbx-accent);
   --pbx-danger: #dc2626;
   --pbx-danger-muted: #b91c1c;
   --pbx-focus-ring: rgba(59, 130, 246, 0.1);

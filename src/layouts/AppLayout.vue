@@ -208,6 +208,7 @@ async function logout() {
   overflow: hidden;
   background: var(--pbx-sidebar-bg);
   color: var(--pbx-sidebar-fg);
+  border-right: 1px solid var(--pbx-border);
 }
 .nav {
   flex: 1 1 auto;
@@ -215,7 +216,7 @@ async function logout() {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  padding: 1rem 0;
+  padding: 1rem 0.375rem;
 }
 .sidebar-footer {
   flex: 0 0 auto;
@@ -234,10 +235,10 @@ async function logout() {
   margin-top: 0.5rem;
 }
 .nav-heading {
-  padding: 0.5rem 1rem 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  padding: 0.5rem 0.75rem 0.35rem 0.65rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--pbx-sidebar-heading);
 }
@@ -248,6 +249,7 @@ async function logout() {
   width: 100%;
   margin: 0;
   border: none;
+  border-radius: 0.375rem;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -255,7 +257,7 @@ async function logout() {
   text-align: left;
 }
 .nav-heading-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--pbx-sidebar-hover-bg);
   color: var(--pbx-sidebar-fg);
 }
 .nav-heading-text {
@@ -273,21 +275,25 @@ async function logout() {
 .nav-group-links {
   display: flex;
   flex-direction: column;
-  padding-left: 1rem;
+  padding-left: 0.5rem;
+  gap: 0.125rem;
 }
 .nav-link {
-  padding: 0.5rem 1rem;
+  padding: 0.45rem 0.65rem;
+  margin: 0.0625rem 0;
+  border-radius: 0.375rem;
   color: var(--pbx-sidebar-link);
   text-decoration: none;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
 }
 .nav-link:hover {
-  color: var(--pbx-sidebar-fg);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--pbx-text);
+  background: var(--pbx-sidebar-hover-bg);
 }
 .nav-link.active {
-  color: var(--pbx-sidebar-fg);
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--pbx-sidebar-active-color);
+  background: var(--pbx-sidebar-active-bg);
   font-weight: 500;
 }
 .main {
