@@ -9,7 +9,8 @@ import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
-import { countActiveRows, isRowActive } from '@/utils/listActive'
+import ListActiveChip from '@/components/ListActiveChip.vue'
+import { countActiveRows } from '@/utils/listActive'
 
 const { filterText } = useStickyFilter('queues')
 const toast = useToastStore()
@@ -232,11 +233,11 @@ onMounted(loadQueues)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="q in sortedQueues" :key="q.shortuid || q.id || (q.cluster || '') + '-' + (q.pkey || '')" :class="{ 'list-row-inactive': !isRowActive(q.active) }">
+          <tr v-for="q in sortedQueues" :key="q.shortuid || q.id || (q.cluster || '') + '-' + (q.pkey || '')">
             <td>{{ q.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ q.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(q) }}</td>
-            <td>{{ q.active ?? '—' }}</td>
+            <ListActiveChip :active="q.active" />
             <td>{{ q.description != null && q.description !== '' ? q.description : '—' }}</td>
             <td>{{ q.strategy ?? '—' }}</td>
             <td>{{ q.timeout != null && q.timeout !== '' ? q.timeout : '—' }}</td>

@@ -9,7 +9,8 @@ import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
-import { countActiveRows, isRowActive } from '@/utils/listActive'
+import ListActiveChip from '@/components/ListActiveChip.vue'
+import { countActiveRows } from '@/utils/listActive'
 
 const { filterText } = useStickyFilter('ivrs')
 const toast = useToastStore()
@@ -223,11 +224,11 @@ onMounted(loadIvrs)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="ivr in sortedIvrs" :key="ivr.shortuid || ivr.id || (ivr.cluster || '') + '-' + (ivr.pkey || '')" :class="{ 'list-row-inactive': !isRowActive(ivr.active) }">
+          <tr v-for="ivr in sortedIvrs" :key="ivr.shortuid || ivr.id || (ivr.cluster || '') + '-' + (ivr.pkey || '')">
             <td>{{ ivr.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(ivr) }}</td>
             <td>{{ tenantDisplay(ivr) }}</td>
-            <td>{{ ivr.active ?? '—' }}</td>
+            <ListActiveChip :active="ivr.active" />
             <td>{{ ivr.description ?? '—' }}</td>
             <td>{{ ivr.greetnum != null ? String(ivr.greetnum) : '—' }}</td>
             <td>{{ ivr.timeout ?? '—' }}</td>

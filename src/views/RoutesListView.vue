@@ -9,7 +9,8 @@ import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
-import { countActiveRows, isRowActive } from '@/utils/listActive'
+import ListActiveChip from '@/components/ListActiveChip.vue'
+import { countActiveRows } from '@/utils/listActive'
 
 const { filterText } = useStickyFilter('routes')
 const toast = useToastStore()
@@ -243,11 +244,11 @@ onMounted(loadRoutes)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="r in sortedRoutes" :key="r.shortuid || r.id || (r.cluster || '') + '-' + (r.pkey || '')" :class="{ 'list-row-inactive': !isRowActive(r.active) }">
+          <tr v-for="r in sortedRoutes" :key="r.shortuid || r.id || (r.cluster || '') + '-' + (r.pkey || '')">
             <td>{{ r.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(r) }}</td>
             <td>{{ tenantPkeyDisplay(r) }}</td>
-            <td>{{ (r.active ?? '').toString().trim() || 'None' }}</td>
+            <ListActiveChip :active="r.active" />
             <td>{{ (r.description ?? '').toString().trim() || 'None' }}</td>
             <td>{{ (r.dialplan ?? '').toString().trim() || 'None' }}</td>
             <td>{{ (r.path1 ?? '').toString().trim() || 'None' }}</td>

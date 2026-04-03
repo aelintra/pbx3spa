@@ -5,7 +5,7 @@ import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
-import { isRowActive } from '@/utils/listActive'
+import ListActiveChip from '@/components/ListActiveChip.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 
@@ -171,11 +171,11 @@ onMounted(loadCosrules)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="c in sortedCosrules" :key="c.shortuid || c.id || (c.cluster || '') + '-' + (c.pkey || '')" :class="{ 'list-row-inactive': !isRowActive(c.active) }">
+          <tr v-for="c in sortedCosrules" :key="c.shortuid || c.id || (c.cluster || '') + '-' + (c.pkey || '')">
             <td>{{ c.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ c.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(c) }}</td>
-            <td>{{ c.active ?? '—' }}</td>
+            <ListActiveChip :active="c.active" />
             <td>{{ c.cname ?? '—' }}</td>
             <td class="td-dialplan" :title="(c.dialplan ?? '').toString()">{{ c.dialplan != null && String(c.dialplan).trim() !== '' ? c.dialplan : '—' }}</td>
             <td>{{ c.defaultopen ?? '—' }}</td>

@@ -9,7 +9,8 @@ import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
-import { countActiveRows, isRowActive } from '@/utils/listActive'
+import ListActiveChip from '@/components/ListActiveChip.vue'
+import { countActiveRows } from '@/utils/listActive'
 
 const { filterText } = useStickyFilter('tenants')
 const toast = useToastStore()
@@ -233,10 +234,10 @@ onMounted(loadTenants)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="t in sortedTenants" :key="t.pkey" :class="{ 'list-row-inactive': !isRowActive(t.active) }">
+          <tr v-for="t in sortedTenants" :key="t.pkey">
             <td>{{ t.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(t) }}</td>
-            <td>{{ t.active ?? '—' }}</td>
+            <ListActiveChip :active="t.active" />
             <td>{{ t.description ?? '—' }}</td>
             <td>{{ t.clusterclid != null && t.clusterclid !== '' ? t.clusterclid : '—' }}</td>
             <td>{{ t.abstimeout != null && t.abstimeout !== '' ? t.abstimeout : '—' }}</td>

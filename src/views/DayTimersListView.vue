@@ -7,6 +7,7 @@ import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import ListActiveChip from '@/components/ListActiveChip.vue'
 
 const { filterText } = useStickyFilter('daytimers')
 const toast = useToastStore()
@@ -203,7 +204,7 @@ onMounted(loadDaytimers)
           <tr v-for="d in sortedDaytimers" :key="d.shortuid || d.id || d.pkey">
             <td class="cell-immutable" title="Immutable">{{ d.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(d) }}</td>
-            <td>{{ d.active ?? '—' }}</td>
+            <ListActiveChip :active="d.active" />
             <td>{{ parseTimespan(d.timespan).start }}</td>
             <td>{{ parseTimespan(d.timespan).end }}</td>
             <td>{{ dayOfWeekLabel(d.dayofweek) }}</td>

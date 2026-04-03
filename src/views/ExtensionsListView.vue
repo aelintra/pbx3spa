@@ -10,7 +10,10 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
 import LiveDataFetchNotice from '@/components/LiveDataFetchNotice.vue'
-import { countActiveRows, isRowActive } from '@/utils/listActive'
+import ListActiveChip from '@/components/ListActiveChip.vue'
+import ListLiveLatencyChip from '@/components/ListLiveLatencyChip.vue'
+import { countActiveRows } from '@/utils/listActive'
+import { isLiveStatusOnline } from '@/utils/liveLatencyChip'
 
 const { filterText } = useStickyFilter('extensions')
 const toast = useToastStore()
@@ -88,12 +91,8 @@ function isStatusUnknown(e) {
   return statusDisplay(e) === 'Unknown'
 }
 
-/** Status text begins with OK (live RTT string from AMI), e.g. "OK" or "OK …". */
-const STATUS_OK_REGEX = /^OK/
 function isStatusOnline(e) {
-  const s = statusDisplay(e)
-  if (s === '…' || s === 'Unknown') return false
-  return STATUS_OK_REGEX.test(s.trim())
+  return isLiveStatusOnline(statusDisplay(e))
 }
 
 const filteredExtensions = computed(() => {
@@ -184,7 +183,7 @@ const extensionExportColumns = computed(() => [
   { key: 'device', label: 'Device', getValue: (e) => (e.device ?? e.technology ?? '—') },
   { key: 'macaddr', label: 'MAC', getValue: (e) => (e.macaddr ? e.macaddr : 'N/A') },
   { key: 'ip', label: 'IP', getValue: (e) => ipDisplay(e) },
-  { key: 'status', label: 'Status', getValue: (e) => statusDisplay(e) },
+  { key: 'status', label: 'Latency', getValue: (e) => statusDisplay(e) },
   { key: 'transport', label: 'Transport' },
 ])
 
@@ -348,8 +347,8 @@ onMounted(loadExtensions)
             <th :title="liveLoading ? 'Loading from Asterisk…' : 'From Asterisk'">
               IP{{ liveLoading ? ' (…)' : '' }}
             </th>
-            <th :title="liveLoading ? 'Loading from Asterisk…' : 'RTT from Asterisk'">
-              Status{{ liveLoading ? ' (…)' : '' }}
+            <th :title="liveLoading ? 'Loading from Asterisk…' : 'Round-trip time from Asterisk'">
+              Latency{{ liveLoading ? ' (…)' : '' }}
             </th>
             <th class="th-sortable" title="Click to sort" :class="sortClass('transport')" @click="setSort('transport')">
               Transport
@@ -362,21 +361,17 @@ onMounted(loadExtensions)
           <tr
             v-for="e in sortedExtensions"
             :key="e.shortuid || e.id || (e.cluster || '') + '-' + (e.pkey || '')"
-            :class="{
-              'list-row-inactive': !isRowActive(e.active),
-              'list-row-status-unknown': isStatusUnknown(e) && isRowActive(e.active)
-            }"
           >
             <td>{{ e.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ sipIdentityDisplay(e) }}</td>
             <td>{{ tenantPkeyDisplay(e) }}</td>
-            <td>{{ e.active ?? '—' }}</td>
+            <ListActiveChip :active="e.active" />
             <td :title="(e.desc ?? e.cname ?? e.description ?? '')">{{ userDisplay(e) }}</td>
             <td>{{ e.extension_type ?? '—' }}</td>
             <td class="cell-immutable" title="Immutable">{{ e.device ?? e.technology ?? '—' }}</td>
             <td class="cell-immutable" :title="e.macaddr ? 'Immutable' : undefined">{{ e.macaddr ? e.macaddr : 'N/A' }}</td>
             <td>{{ ipDisplay(e) }}</td>
-            <td>{{ statusDisplay(e) }}</td>
+            <ListLiveLatencyChip :status="statusDisplay(e)" />
             <td>{{ e.transport ?? '—' }}</td>
             <td>
               <router-link v-if="e.shortuid" :to="{ name: 'extension-detail', params: { shortuid: e.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">

@@ -5,7 +5,7 @@ import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
-import { isRowActive } from '@/utils/listActive'
+import ListActiveChip from '@/components/ListActiveChip.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 
@@ -218,11 +218,11 @@ onMounted(loadApps)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="a in sortedApps" :key="a.shortuid ?? a.id ?? a.pkey" :class="{ 'list-row-inactive': !isRowActive(a.active) }">
+          <tr v-for="a in sortedApps" :key="a.shortuid ?? a.id ?? a.pkey">
             <td class="cell-immutable" title="Immutable">{{ a.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ uidDisplay(a) }}</td>
             <td>{{ tenantPkeyDisplay(a) }}</td>
-            <td>{{ a.active ?? '—' }}</td>
+            <ListActiveChip :active="a.active" />
             <td>{{ a.description ?? '—' }}</td>
             <td>{{ a.span ?? '—' }}</td>
             <td>

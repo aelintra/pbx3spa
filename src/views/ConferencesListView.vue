@@ -5,7 +5,7 @@ import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
-import { isRowActive } from '@/utils/listActive'
+import ListActiveChip from '@/components/ListActiveChip.vue'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
@@ -203,11 +203,11 @@ onMounted(loadConferences)
           </tr>
         </thead>
         <tbody>
-          <tr v-for="c in sortedConferences" :key="c.shortuid || c.id || (c.cluster || '') + '-' + (c.pkey || '')" :class="{ 'list-row-inactive': !isRowActive(c.active) }">
+          <tr v-for="c in sortedConferences" :key="c.shortuid || c.id || (c.cluster || '') + '-' + (c.pkey || '')">
             <td>{{ c.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ c.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(c) }}</td>
-            <td>{{ c.active ?? '—' }}</td>
+            <ListActiveChip :active="c.active" />
             <td>{{ c.cname ?? '—' }}</td>
             <td>{{ c.type ?? '—' }}</td>
             <td>
