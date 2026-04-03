@@ -614,8 +614,6 @@ onMounted(load)
 }
 .firewall-view h1 {
   margin: 0 0 1rem 0;
-  font-size: 1.5rem;
-  font-weight: 600;
 }
 .firewall-intro {
   margin: 0 0 1.5rem 0;

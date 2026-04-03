@@ -1,17 +1,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
-import { useToastStore } from '@/stores/toast'
 import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('asterisk-files')
-const toast = useToastStore()
 const files = ref([])
 const loading = ref(true)
 const error = ref('')
-const committing = ref(false)
 const filterInputRef = ref(null)
 
 const filteredFiles = computed(() => {
@@ -35,19 +32,6 @@ async function loadFiles() {
   }
 }
 
-async function doCommit() {
-  if (!confirm('Commit will apply configuration changes and reload Asterisk. Continue?')) return
-  committing.value = true
-  try {
-    await getApiClient().get('syscommands/commit')
-    toast.show('Committed')
-  } catch (err) {
-    toast.show(firstErrorMessage(err, 'Commit failed'), 'error')
-  } finally {
-    committing.value = false
-  }
-}
-
 onMounted(async () => {
   await loadFiles()
   filterInputRef.value?.focus()
@@ -59,14 +43,6 @@ onMounted(async () => {
     <header class="list-header">
       <div class="list-header-row">
         <h1>Asterisk Files</h1>
-        <button
-          type="button"
-          class="action-btn action-btn-primary"
-          :disabled="committing"
-          @click="doCommit"
-        >
-          {{ committing ? 'Committing…' : 'Commit' }}
-        </button>
       </div>
       <p class="toolbar toolbar-filter">
         <input
@@ -134,9 +110,6 @@ onMounted(async () => {
 }
 .list-header h1 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
 }
 .toolbar {
   margin: 0;
@@ -158,23 +131,6 @@ onMounted(async () => {
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-}
-.action-btn {
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-}
-.action-btn-primary {
-  background: #0f172a;
-  color: #fff;
-  border-color: #0f172a;
-}
-.action-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
 }
 .list-states .error {
   margin: 0;

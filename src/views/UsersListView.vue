@@ -96,7 +96,6 @@ onMounted(loadUsers)
       <table class="table">
         <thead>
           <tr>
-            <th>ID</th>
             <th>Name</th>
             <th>Email</th>
             <th>Abilities</th>
@@ -106,7 +105,6 @@ onMounted(loadUsers)
         </thead>
         <tbody>
           <tr v-for="u in users" :key="u.id">
-            <td>{{ u.id }}</td>
             <td>{{ u.name ?? '—' }}</td>
             <td>{{ u.email ?? '—' }}</td>
             <td>{{ abilitiesDisplay(u.abilities) }}</td>

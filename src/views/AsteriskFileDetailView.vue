@@ -116,9 +116,6 @@ watch(filename, loadFile)
 }
 .detail-header h1 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
 }
 .detail-states .loading,
 .detail-states .error { margin: 0; }
