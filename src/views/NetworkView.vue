@@ -337,6 +337,7 @@ onMounted(fetchData)
 <style scoped>
 .edit-view {
   padding: 1rem;
+  max-width: 52rem;
 }
 
 .edit-header {
@@ -366,9 +367,11 @@ onMounted(fetchData)
 
 .edit-form {
   margin-top: 1rem;
+  margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  max-width: 52rem;
 }
 
 .form-error {

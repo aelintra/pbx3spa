@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
@@ -11,7 +11,6 @@ import PanelBackLink from '@/components/PanelBackLink.vue'
 const router = useRouter()
 const toast = useToastStore()
 const sysglobal = ref(null)
-const defaultTenant = ref(null)
 const loading = ref(true)
 const error = ref('')
 const saving = ref(false)
@@ -19,10 +18,8 @@ const saveError = ref('')
 
 // Editable and display-only (read-only) fields
 const editAbstimeout = ref('')
-const editCosstart = ref('')
 const editEdomain = ref('')
 const editEmergency = ref('')
-const editFqdn = ref('')
 const editLanguage = ref('')
 const editLoglevel = ref('')
 const editLogopts = ref('')
@@ -43,16 +40,20 @@ const editSipflood = ref('')
 const editSysop = ref('')
 const editVoipmax = ref('')
 
+const globalsHeading = computed(() => {
+  const raw = sysglobal.value?.fqdn
+  const f = raw != null && String(raw).trim() !== '' ? String(raw).trim() : ''
+  return f ? `Instance Globals (${f})` : 'Instance Globals'
+})
+
 function syncEditFromSysglobal() {
   if (!sysglobal.value) return
   const g = sysglobal.value
   
   // API returns lowercase keys (schema standardised on lowercase)
   editAbstimeout.value = g.abstimeout != null ? String(g.abstimeout) : ''
-  editCosstart.value = g.cosstart ?? ''
   editEdomain.value = g.edomain ?? ''
   editEmergency.value = g.emergency ?? ''
-  editFqdn.value = g.fqdn ?? ''
   editLanguage.value = g.language ?? ''
   editLoglevel.value = g.loglevel != null ? String(g.loglevel) : ''
   editLogopts.value = g.logopts ?? ''
@@ -78,15 +79,10 @@ async function fetchSysglobal() {
   loading.value = true
   error.value = ''
   try {
-    const [sysglobalRes, tenantRes] = await Promise.all([
-      getApiClient().get('sysglobals'),
-      getApiClient().get('tenants/default').catch(() => null)
-    ])
-    sysglobal.value = sysglobalRes
-    defaultTenant.value = tenantRes
+    sysglobal.value = await getApiClient().get('sysglobals')
     syncEditFromSysglobal()
   } catch (err) {
-    error.value = firstErrorMessage(err, 'Failed to load system globals')
+    error.value = firstErrorMessage(err, 'Failed to load instance globals')
     sysglobal.value = null
   } finally {
     loading.value = false
@@ -118,9 +114,7 @@ async function saveEdit(e) {
     
     // Send all fields - empty strings become null for nullable fields
     body.abstimeout = editAbstimeout.value !== '' && editAbstimeout.value != null ? parseInt(editAbstimeout.value, 10) : null
-    body.cosstart = editCosstart.value && editCosstart.value.trim() !== '' ? editCosstart.value.trim() : null
     body.emergency = editEmergency.value && editEmergency.value.trim() !== '' ? editEmergency.value.trim() : null
-    body.fqdn = editFqdn.value && editFqdn.value.trim() !== '' ? editFqdn.value.trim() : null
     body.language = editLanguage.value && editLanguage.value.trim() !== '' ? editLanguage.value.trim() : null
     body.loglevel = editLoglevel.value !== '' && editLoglevel.value != null ? parseInt(editLoglevel.value, 10) : null
     body.logopts = editLogopts.value && editLogopts.value.trim() !== '' ? editLogopts.value.trim() : null
@@ -142,10 +136,10 @@ async function saveEdit(e) {
     body.voipmax = editVoipmax.value !== '' && editVoipmax.value != null ? parseInt(editVoipmax.value, 10) : null
     
     await getApiClient().put('sysglobals', body)
-    toast.show('System globals saved')
+    toast.show('Instance globals saved')
     await fetchSysglobal()
   } catch (err) {
-    saveError.value = firstErrorMessage(err, 'Failed to save system globals')
+    saveError.value = firstErrorMessage(err, 'Failed to save instance globals')
   } finally {
     saving.value = false
   }
@@ -157,11 +151,11 @@ onMounted(fetchSysglobal)
 <template>
   <div class="edit-view" @keydown="onKeydown">
     <PanelBackLink :to="{ name: 'dashboard' }" label="Dashboard" class="edit-header">
-      <h1>System Globals</h1>
+      <h1>{{ globalsHeading }}</h1>
     </PanelBackLink>
 
     <section v-if="loading" class="loading-state">
-      <p class="loading">Loading system globals…</p>
+      <p class="loading">Loading instance globals…</p>
     </section>
 
     <section v-else-if="error" class="error-state">
@@ -187,19 +181,47 @@ onMounted(fetchSysglobal)
         <button type="button" @click="cancelEdit" :disabled="saving" class="btn btn-secondary">Cancel</button>
       </div>
 
-      <h2 class="detail-heading">Identity</h2>
+      <h2 class="detail-heading">This Instance Identity</h2>
       <div class="form-fields">
         <FormReadonly
           id="edit-identity-shortuid"
-          label="Shortuid"
-          :value="defaultTenant?.shortuid ?? '—'"
+          label="UID"
+          :value="
+            sysglobal?.shortuid != null && String(sysglobal.shortuid).trim() !== ''
+              ? String(sysglobal.shortuid).trim()
+              : '—'
+          "
           class="readonly-identity"
+          hide-help
         />
         <FormReadonly
           id="edit-identity-ksuid"
           label="KSUID"
-          :value="defaultTenant?.id ?? '—'"
+          :value="sysglobal?.id != null && String(sysglobal.id).trim() !== '' ? String(sysglobal.id).trim() : '—'"
           class="readonly-identity"
+          hide-help
+        />
+        <FormReadonly
+          id="edit-identity-domain"
+          label="Domain"
+          :value="
+            sysglobal?.domain != null && String(sysglobal.domain).trim() !== ''
+              ? String(sysglobal.domain).trim()
+              : '—'
+          "
+          class="readonly-identity"
+          hide-help
+        />
+        <FormReadonly
+          id="edit-identity-fqdn"
+          label="FQDN"
+          :value="
+            sysglobal?.fqdn != null && String(sysglobal.fqdn).trim() !== ''
+              ? String(sysglobal.fqdn).trim()
+              : '—'
+          "
+          class="readonly-identity"
+          hide-help
         />
       </div>
 
@@ -233,25 +255,6 @@ onMounted(fetchSysglobal)
           v-model="editVoipmax"
           type="number"
           label="VoIP Max"
-        />
-      </div>
-
-      <h2 class="detail-heading">Domain & FQDN</h2>
-      <div class="form-fields">
-        <FormReadonly
-          id="edit-edomain"
-          label="Email Domain"
-          :value="sysglobal?.edomain ?? '—'"
-        />
-        <FormField
-          id="edit-fqdn"
-          v-model="editFqdn"
-          label="FQDN"
-        />
-        <FormField
-          id="edit-sendedomain"
-          v-model="editSendedomain"
-          label="Send Domain"
         />
       </div>
 
@@ -319,6 +322,16 @@ onMounted(fetchSysglobal)
 
       <h2 class="detail-heading">Other</h2>
       <div class="form-fields">
+        <FormReadonly
+          id="edit-edomain"
+          label="Email Domain"
+          :value="editEdomain.trim() !== '' ? editEdomain : '—'"
+        />
+        <FormField
+          id="edit-sendedomain"
+          v-model="editSendedomain"
+          label="Send Domain"
+        />
         <FormField
           id="edit-language"
           v-model="editLanguage"
@@ -329,11 +342,6 @@ onMounted(fetchSysglobal)
           v-model="editSessiontimout"
           type="number"
           label="Session Timeout"
-        />
-        <FormField
-          id="edit-cosstart"
-          v-model="editCosstart"
-          label="CoS Start"
         />
         <FormField
           id="edit-emergency"
@@ -355,6 +363,7 @@ onMounted(fetchSysglobal)
 <style scoped>
 .edit-view {
   padding: 1rem;
+  max-width: 52rem;
 }
 
 .edit-header {
@@ -384,9 +393,11 @@ onMounted(fetchSysglobal)
 
 .edit-form {
   margin-top: 1rem;
+  margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  max-width: 52rem;
 }
 
 .form-error {

@@ -158,6 +158,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  max-width: 52rem;
 }
 .create-header {
   margin: 0;

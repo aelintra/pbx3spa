@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, toRef, onMounted, nextTick } from 'vue'
+import { ref, reactive, toRef, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
@@ -50,6 +50,15 @@ const voipMax = ref(String(CLUSTER_CREATE_DEFAULTS.voip_max ?? '30'))
 const error = ref('')
 const loading = ref(false)
 const pkeyInput = ref(null)
+/** Instance `globals.domain`; used with server-assigned tenant shortuid for domain/fqdn on create. */
+const globalsDomain = ref('')
+const globalsFetchDone = ref(false)
+
+const autoDomainFqdnPattern = computed(() => {
+  const d = globalsDomain.value
+  if (!d) return ''
+  return `<tenant UID>.${d}`
+})
 
 // Field-level validation (refs declared before composable)
 const pkeyValidation = useFormValidation(pkey, validateTenantPkey)
@@ -156,6 +165,16 @@ function onKeydown(e) {
 
 onMounted(async () => {
   await ensureFetched()
+  try {
+    const g = await getApiClient().get('sysglobals')
+    const raw = g?.domain
+    globalsDomain.value =
+      raw != null && String(raw).trim() !== '' ? String(raw).trim() : ''
+  } catch {
+    globalsDomain.value = ''
+  } finally {
+    globalsFetchDone.value = true
+  }
   applySchemaDefaults('tenants', {
     description,
     clusterclid,
@@ -231,6 +250,22 @@ onMounted(async () => {
           type="text"
           placeholder="e.g. _X."
         />
+        <FormReadonly
+          v-if="globalsFetchDone && globalsDomain"
+          id="create-auto-domain-fqdn"
+          label="Domain / FQDN (auto)"
+          :value="autoDomainFqdnPattern"
+          hide-help
+        />
+        <p v-if="globalsFetchDone && globalsDomain" class="auto-host-note">
+          <code>&lt;tenant UID&gt;</code> is the short UID assigned when you click Create; both fields use that
+          hostname.
+        </p>
+        <p v-else-if="globalsFetchDone && !globalsDomain" class="auto-host-note auto-host-note-warn">
+          Set <strong>Domain</strong> on
+          <router-link :to="{ name: 'sysglobals' }">Instance Globals</router-link>
+          to auto-assign each new tenant’s domain and FQDN.
+        </p>
       </div>
 
       <h2 class="detail-heading">Settings</h2>
@@ -594,5 +629,28 @@ onMounted(async () => {
 }
 .actions button.secondary:hover {
   background: #f1f5f9;
+}
+
+.auto-host-note {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.auto-host-note code {
+  font-size: 0.8125rem;
+  background: #f1f5f9;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+}
+
+.auto-host-note-warn {
+  color: #b45309;
+}
+
+.auto-host-note-warn a {
+  color: #2563eb;
+  font-weight: 500;
 }
 </style>

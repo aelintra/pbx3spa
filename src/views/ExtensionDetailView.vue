@@ -693,6 +693,7 @@ const panelTitleTenantSuffix = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  max-width: 52rem;
 }
 .edit-form.runtime-form {
   margin-top: 0.5rem;

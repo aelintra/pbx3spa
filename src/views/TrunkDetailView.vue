@@ -424,6 +424,7 @@ async function confirmAndDelete() {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  max-width: 52rem;
 }
 .edit-actions {
   display: flex;

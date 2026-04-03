@@ -60,6 +60,13 @@ const confirmDeleteOpen = ref(false)
 const pkey = computed(() => route.params.pkey)
 const isDefault = computed(() => tenant.value?.pkey === 'default')
 
+const tenantHeading = computed(() => {
+  const pk = pkey.value ?? ''
+  const base = `Edit Tenant ${pk}`
+  const f = (tenant.value?.fqdn && String(tenant.value.fqdn).trim()) || ''
+  return f ? `${base} (${f})` : base
+})
+
 const formAdvanced = reactive(
   Object.fromEntries(ADVANCED_KEYS.map((k) => [k, '']))
 )
@@ -192,7 +199,7 @@ async function confirmAndDelete() {
 <template>
   <div class="detail-view">
     <PanelBackLink :to="{ name: 'tenants' }" label="Tenants">
-      <h1>Edit Tenant {{ pkey }}</h1>
+      <h1>{{ tenantHeading }}</h1>
     </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>
@@ -224,6 +231,13 @@ async function confirmAndDelete() {
             <FormField v-else id="edit-identity-shortuid" :model-value="tenant.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
             <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="tenant.id ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-id" :model-value="tenant.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
+            <FormReadonly
+              id="edit-identity-fqdn"
+              label="FQDN"
+              :value="tenant.fqdn != null && String(tenant.fqdn).trim() !== '' ? String(tenant.fqdn).trim() : '—'"
+              class="readonly-identity"
+              hide-help
+            />
             <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Name" :value="tenant.pkey ?? '—'" class="readonly-identity" />
             <FormField v-else id="edit-identity-pkey" :model-value="tenant.pkey ?? '—'" label="Name" disabled class="readonly-identity" />
             <FormField

@@ -331,7 +331,7 @@ const panelTitleTenantSuffix = computed(() => {
 .readonly-identity :deep(.form-field-label),
 .readonly-identity :deep(.form-readonly) { color: #94a3b8; }
 .readonly-identity :deep(.form-readonly) { background-color: #f1f5f9; border-color: #e2e8f0; }
-.edit-form { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.edit-form { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; max-width: 52rem; }
 .edit-actions { display: flex; gap: 0.5rem; }
 .edit-actions button { padding: 0.375rem 0.75rem; font-size: 0.875rem; font-weight: 500; border-radius: 0.375rem; cursor: pointer; }
 .edit-actions button[type="submit"] { color: #fff; background: #2563eb; border: none; }
