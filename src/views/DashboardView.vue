@@ -3,7 +3,9 @@ import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import { getSpaReleases } from '@/config/spaReleases.js'
+import { useAuthStore } from '@/stores/auth'
 
+const auth = useAuthStore()
 const spaReleases = getSpaReleases()
 
 const actionMessage = ref('')
@@ -131,7 +133,13 @@ onMounted(() => {
 
 <template>
   <div class="dashboard">
-    <h1>Home</h1>
+    <h1 class="dashboard-heading">
+      <span class="dashboard-heading-main">Home</span>
+      <template v-if="auth.displayInstanceLabel?.trim()">
+        <span class="dashboard-heading-sep" aria-hidden="true">—</span>
+        <span class="dashboard-heading-instance">{{ auth.displayInstanceLabel }}</span>
+      </template>
+    </h1>
 
     <section class="actions-section">
       <h2 class="detail-heading">Actions</h2>
@@ -235,9 +243,21 @@ onMounted(() => {
 .dashboard {
   /* No max-width: single-screen panel fills content area (PANEL_PATTERN: Single-screen panels: use full content width) */
 }
-.dashboard h1 {
+.dashboard-heading {
   margin: 0 0 1.25rem 0;
   font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1.3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.65rem;
+}
+.dashboard-heading-instance {
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.92em;
+  word-break: break-word;
 }
 .actions-section,
 .sysnotes-section {
