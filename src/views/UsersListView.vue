@@ -1,10 +1,14 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import ListViewMeta from '@/components/ListViewMeta.vue'
 
+const { filterText } = useStickyFilter('users')
+const { sortKey, sortOrder } = useStickySort('users', { defaultKey: 'name' })
 const toast = useToastStore()
 const users = ref([])
 const loading = ref(true)
@@ -18,6 +22,53 @@ const confirmDeleteId = ref(null)
 function abilitiesDisplay(abilities) {
   if (!Array.isArray(abilities) || abilities.length === 0) return '—'
   return abilities.join(', ')
+}
+
+const filteredUsers = computed(() => {
+  const list = users.value
+  const q = (filterText.value || '').trim().toLowerCase()
+  if (!q) return list
+  return list.filter((u) => {
+    const name = (u.name ?? '').toString().toLowerCase()
+    const email = (u.email ?? '').toString().toLowerCase()
+    const abil = abilitiesDisplay(u.abilities).toLowerCase()
+    const idStr = u.id != null ? String(u.id).toLowerCase() : ''
+    return name.includes(q) || email.includes(q) || abil.includes(q) || idStr.includes(q)
+  })
+})
+
+function sortValue(u, key) {
+  if (key === 'abilities') return abilitiesDisplay(u.abilities)
+  const v = u[key]
+  return v == null ? '' : String(v)
+}
+
+const sortedUsers = computed(() => {
+  const list = [...filteredUsers.value]
+  const key = sortKey.value
+  const order = sortOrder.value
+  list.sort((a, b) => {
+    const va = sortValue(a, key).toLowerCase()
+    const vb = sortValue(b, key).toLowerCase()
+    let cmp = 0
+    if (va < vb) cmp = -1
+    else if (va > vb) cmp = 1
+    return order === 'asc' ? cmp : -cmp
+  })
+  return list
+})
+
+function setSort(k) {
+  if (sortKey.value === k) sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  else {
+    sortKey.value = k
+    sortOrder.value = 'asc'
+  }
+}
+
+function sortClass(k) {
+  if (sortKey.value !== k) return ''
+  return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
 }
 
 async function loadUsers() {
@@ -81,6 +132,13 @@ onMounted(loadUsers)
       <h1>Users</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'user-create' }" class="add-btn">Create</router-link>
+        <input
+          v-model="filterText"
+          type="search"
+          class="filter-input"
+          placeholder="Filter by name, email, abilities, or id"
+          aria-label="Filter users"
+        />
       </p>
     </header>
 
@@ -96,18 +154,47 @@ onMounted(loadUsers)
     </section>
 
     <section v-else class="list-body">
-      <table class="table">
+      <ListViewMeta
+        v-if="users.length > 0"
+        :total="users.length"
+        :filtered="filteredUsers.length"
+      />
+      <p v-if="filterText && filteredUsers.length === 0" class="empty">
+        No users match the filter.
+      </p>
+      <table v-else class="table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Abilities</th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('name')"
+              @click="setSort('name')"
+            >
+              Name
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('email')"
+              @click="setSort('email')"
+            >
+              Email
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('abilities')"
+              @click="setSort('abilities')"
+            >
+              Abilities
+            </th>
             <th class="th-actions">Revoke</th>
             <th class="th-actions">Delete</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="u in users" :key="u.id">
+          <tr v-for="u in sortedUsers" :key="u.id">
             <td>{{ u.name ?? '—' }}</td>
             <td>{{ u.email ?? '—' }}</td>
             <td>{{ abilitiesDisplay(u.abilities) }}</td>
@@ -256,8 +343,40 @@ onMounted(loadUsers)
   color: #475569;
   background: #f8fafc;
 }
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.th-sortable::before {
+  content: '\21C5';
+  font-size: 0.7em;
+  color: #94a3b8;
+  margin-left: 0.2em;
+  font-weight: normal;
+}
+.th-sortable.sort-asc::before,
+.th-sortable.sort-desc::before {
+  content: none;
+}
+.th-sortable:hover {
+  background: #f1f5f9;
+}
+.th-sortable.sort-asc::after {
+  content: ' \2191';
+  font-size: 0.75em;
+  color: #64748b;
+}
+.th-sortable.sort-desc::after {
+  content: ' \2193';
+  font-size: 0.75em;
+  color: #64748b;
+}
 .th-actions {
   white-space: nowrap;
+}
+.table tbody tr:hover {
+  background: #f8fafc;
 }
 .cell-link {
   background: none;
@@ -291,6 +410,22 @@ onMounted(loadUsers)
 }
 .toolbar {
   margin: 0.75rem 0 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.filter-input {
+  margin-left: auto;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  min-width: 16rem;
+}
+.filter-input:focus {
+  outline: none;
+  border-color: #2563eb;
 }
 .add-btn {
   display: inline-block;

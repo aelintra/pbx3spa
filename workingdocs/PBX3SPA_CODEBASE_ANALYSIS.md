@@ -12,7 +12,7 @@
 
 The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/create/detail patterns, `normalizeList`, schema-driven mutability (`useSchema`), sticky list filters, and a central API client. **Strengths** are cohesion of patterns, pragmatic **sessionStorage** for token and tenant context, and a **small runtime dependency surface** (low supply-chain noise).
 
-**Main gaps:** no TypeScript, **coarse-grained authorisation** in the router (binary `admin` gate), **inherent duplication** across many similar Vue files (mitigated by shared utils, not eliminated), **no component tests** yet, and **production build shape** (single large JS chunk; no route lazy loading). **Phase A** removed dead **`HomeView` / `counter`**, list-view debug **`console.log`**, and **`debugReset`** on form components; optional **`console.error`** remains on some list error paths. **Phase B** centralised **401** handling in **`api/client.js`** via **`clearSessionAndGoLogin()`** (`request`, **`getBlob`**, **`postFile`**). **Phase C** added **ESLint** (flat config, `eslint-plugin-vue` recommended + **`vue/multi-word-component-names` off**), **Prettier** (`.prettierrc.json`), **`npm run lint`** / **`lint:fix`**, **`format`** / **`format:check`**, and formatted **`src/`**; small lint-driven fixes (unused imports, **`DeleteConfirmModal`** `defineProps`, **`HolidayTimersListView`** sort numeric guard, etc.). **Firewall** view toggles use named handlers so Prettier does not emit invalid multi-statement **`@click`** fragments. **Phase D** added **Vitest** (**`vitest.config.js`**, **`npm run test`** / **`test:watch`**) and unit tests for **`formErrors`**, **`listResponse`**, and **`validation`** (`src/utils/*.test.js`, Node environment). **Users** area lacks a detail/edit route and sticky list filters. **Native `window.confirm()`** is used in several flows while lists often use **`DeleteConfirmModal`** — inconsistent UX. Several topics are already tracked in workingdocs (permissions roadmap, panel parity, extension provisioning).
+**Main gaps:** no TypeScript, **coarse-grained authorisation** in the router (binary `admin` gate), **inherent duplication** across many similar Vue files (mitigated by shared utils, not eliminated), **no component tests** yet, and **production build shape** (single large JS chunk; no route lazy loading). **Phase A** removed dead **`HomeView` / `counter`**, list-view debug **`console.log`**, and **`debugReset`** on form components; optional **`console.error`** remains on some list error paths. **Phase B** centralised **401** handling in **`api/client.js`** via **`clearSessionAndGoLogin()`** (`request`, **`getBlob`**, **`postFile`**). **Phase C** added **ESLint** (flat config, `eslint-plugin-vue` recommended + **`vue/multi-word-component-names` off**), **Prettier** (`.prettierrc.json`), **`npm run lint`** / **`lint:fix`**, **`format`** / **`format:check`**, and formatted **`src/`**; small lint-driven fixes (unused imports, **`DeleteConfirmModal`** `defineProps`, **`HolidayTimersListView`** sort numeric guard, etc.). **Firewall** view toggles use named handlers so Prettier does not emit invalid multi-statement **`@click`** fragments. **Phase D** added **Vitest** (**`vitest.config.js`**, **`npm run test`** / **`test:watch`**) and unit tests for **`formErrors`**, **`listResponse`**, and **`validation`** (`src/utils/*.test.js`, Node environment). **Users** list uses **sticky filter + sort** (Phase E); **user detail/edit** route is still outstanding when the API supports it. **Native `window.confirm()`** is used in several flows while lists often use **`DeleteConfirmModal`** — inconsistent UX. Several topics are already tracked in workingdocs (permissions roadmap, panel parity, extension provisioning).
 
 ---
 
@@ -77,7 +77,7 @@ The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/c
 1. **Many large single-file views:** List + Create + Detail per resource multiplies similar `<script setup>` blocks (fetch, save, delete, tenant maps). Shared pieces (`tenantAdvanced.js`, `ivrDestinations.js`, composables) help but **do not remove** the file-per-resource cost.
 2. **Validation split:** `utils/validation.js` holds named validators; `composables/useFormValidation.js` wraps refs; some resources duplicate patterns — acceptable but easy to drift.
 3. **Confirm vs modal:** **`window.confirm()`** is used in **DashboardView** (PBX commands), **CommitButton**, **FirewallView**, and **BackupView**, while destructive list actions often use **`DeleteConfirmModal`**. Inconsistent affordance; harder to style, a11y-test, or theme than a shared confirmation component.
-4. **Users feature parity:** Routes exist for **`/users`** and **`/users/new`** only — **no** `users/:id` detail/edit route and **no** `UserDetailView.vue` (when the API supports editing a single user beyond create, add route + view). **UsersListView** does not use **`useStickyFilter`** / **`useStickySort`**, unlike most other list views — inconsistent list UX and weaker behaviour on large user tables.
+4. **Users feature parity:** **`UsersListView`** uses **`useStickyFilter('users')`**, **`useStickySort`** (name / email / abilities), **`ListViewMeta`**, and filter-empty messaging — aligned with other lists. Routes remain **`/users`** and **`/users/new`** only — **no** `users/:id` detail/edit or **`UserDetailView.vue`** until the API exposes stable GET/PUT for a single admin user.
 
 ---
 
@@ -90,6 +90,8 @@ The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/c
 **Phase C cleanup (applied):** ESLint + Prettier tooling, **`src/`** formatted, lint-clean tree. **`HolidayTimerDetailView`:** removed unused **`isReadOnly`** helper (was not referenced in the template).
 
 **Phase D cleanup (applied):** **Vitest** with **`vitest.config.js`** (`environment: 'node'`, `include: ['src/**/*.test.js']`, `@` alias). Tests: **`formErrors.test.js`**, **`listResponse.test.js`**, **`validation.test.js`**.
+
+**Phase E cleanup (partial):** **`UsersListView`** — sticky filter + sort + **`ListViewMeta`**; user **detail/edit** route still **not** implemented (API-dependent).
 
 | Item | Location | Note |
 |------|----------|------|
@@ -127,7 +129,7 @@ These are **known follow-ups**, not bugs in the SPA alone:
 
 ## 9. Prioritised recommendations
 
-1. **Users:** add **sticky filter** (and sort if desired) to **UsersListView**; when API allows, add **user detail/edit** route and view.
+1. **Users (remaining):** when API allows, add **`users/:id`** route and **user detail/edit** view.
 2. **Optional:** Vue Router **lazy imports** per route to shrink initial JS and silence chunk-size warnings.
 3. **When adding non-admin roles:** extend router + nav with granular `can()` checks per **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** / **ADMIN_PANELS_AND_PERMISSIONS.md**.
 4. **Longer term:** TypeScript or strict JSDoc + `checkJs`; optional **shared confirm modal** to replace scattered `window.confirm()`.
@@ -184,12 +186,10 @@ Work through in order unless you skip an entire phase. All steps are **pbx3spa-o
 
 ### Phase E — Users panel parity (optional)
 
-1. Open `src/views/UsersListView.vue`.
-2. Import `useStickyFilter` (and `useStickySort` if the table should match other lists) from `@/composables/useStickyFilter.js`, using a stable id such as `'users'`.
-3. Wire filter UI to the same toolbar pattern as other list views (see e.g. `AgentsListView.vue`).
-4. Manual test: filter persists across navigation and refresh behaviour matches other lists.
-5. **Later (API-dependent):** Add `users/:id` route, `UserDetailView.vue` (or edit view), and API wiring when **pbx3api** exposes stable GET/PUT for a single admin user.
-6. **Commit** in logical chunks e.g. `feat(users): sticky filter on users list` then user detail when ready.
+**Baseline applied:** **`UsersListView`** — **`useStickyFilter('users')`**, **`useStickySort`** (default **name**; columns **name**, **email**, **abilities**), **`ListViewMeta`**, filter matches **name / email / abilities / id**, “no match” empty state.
+
+1. **Remaining (API-dependent):** Add **`users/:id`** route, **`UserDetailView.vue`** (or edit view), and API wiring when **pbx3api** exposes stable GET/PUT for a single admin user.
+2. **Commit** user detail in a separate change when ready; list parity commit e.g. `feat(users): sticky filter and sort on users list`.
 
 ### Phase F — Granular permissions (later; cross-repo)
 
@@ -325,7 +325,7 @@ Run commands from the **`pbx3spa`** directory. Use **`npm run lint`**, **`npm ru
 | B | Single 401 path in `client.js`; manual auth smoke OK |
 | C | `npm run lint` and `npm run format:check` clean; `npm run build` green |
 | D | `npm run test` green; utils tests maintained when changing **`formErrors`** / **`listResponse`** / **`validation`** |
-| E | Users list matches sticky-filter pattern; user detail when API + route exist (if done) |
+| E | List: sticky filter + sort + meta (**done**); detail route/view when API + route exist (**if done**) |
 | F | API + SPA aligned on abilities (when you start non-admin users) |
 | G | Policy decided: TS vs JSDoc + checkJs |
 | H | Smaller initial chunk or acceptable chunk map (if adopted) |
