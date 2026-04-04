@@ -328,9 +328,15 @@ const panelTitleTenantSuffix = computed(() => {
             v-if="extension"
             v-model="editActive"
             toggle-id="edit-extension-active"
-            inactive-hint="Inactive extensions do not take calls until you activate this record and commit the change."
           />
         </div>
+        <p
+          v-if="extension && editActive === 'NO'"
+          class="detail-active-inactive-hint"
+          role="status"
+        >
+          Inactive extensions do not take calls until you activate this record and commit the change.
+        </p>
       </div>
     </PanelBackLink>
 

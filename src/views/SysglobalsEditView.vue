@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
@@ -9,6 +10,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const router = useRouter()
+const auth = useAuthStore()
 const toast = useToastStore()
 const sysglobal = ref(null)
 const loading = ref(true)
@@ -81,6 +83,7 @@ async function fetchSysglobal() {
   try {
     sysglobal.value = await getApiClient().get('sysglobals')
     syncEditFromSysglobal()
+    auth.setGlobalsFqdnFromSysglobal(sysglobal.value)
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load instance globals')
     sysglobal.value = null

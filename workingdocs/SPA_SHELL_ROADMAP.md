@@ -49,7 +49,7 @@ Rough **effort**: S = small (hours), M = moderate (day or so), L = larger.
 
 | Idea | What it does | Effort |
 |------|----------------|--------|
-| **Context chip in top bar** | Show current **tenant** or **instance** when multi-context exists — reduces wrong-box edits. | M (depends on auth/routing model) |
+| **Context chip in top bar** | **Shipped (SPA).** Instance = **`sysglobals.fqdn`** (refreshed on layout mount and when Instance Globals / Network / tenant-create loads `GET sysglobals`). Fallback: whoami `instance_label` / `instance_name`, then API URL host. Tenant pill when **Tenant detail** is open. | M |
 
 ---
 
@@ -58,8 +58,8 @@ Rough **effort**: S = small (hours), M = moderate (day or so), L = larger.
 1. ~~**Scroll active into view** + **focus-visible**~~ — **Done:** `AppLayout.vue` (`scrollActiveNavIntoView` on route change, after group toggle, after mount); `main.css` (`:focus-visible` on nav links + group buttons + logout); `CommitButton.vue` (`:focus-visible` on Commit).  
 2. **Nav icons** — **Done:** `NavIcon.vue` + `AppLayout.vue` (`icon` per group and link; sidebar `13.5rem`). **⌘K quick open** — still optional.  
 3. **Breadcrumbs** — skipped (redundant with `PanelBackLink` and two-level IA).  
-4. **Collapsible sidebar** if laptop-width layout becomes painful.  
-5. **Tenant/instance chip** when the product story for context is clear.
+4. **Collapsible sidebar** — defer until an **adaptive / responsive** layout pass (narrow breakpoints, icon rail, etc.).  
+5. **Instance + tenant context chip** in the top bar — **done** (see Product / safety table): instance = **`sysglobals.fqdn`**; tenant when editing a tenant; tenant cleared on list and when leaving detail.
 
 ---
 

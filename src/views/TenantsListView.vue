@@ -11,8 +11,10 @@ import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import { countActiveRows } from '@/utils/listActive'
+import { useSessionContext } from '@/composables/useSessionContext'
 
 const { filterText } = useStickyFilter('tenants')
+const { clearTenantContext } = useSessionContext()
 const toast = useToastStore()
 const tenants = ref([])
 const loading = ref(true)
@@ -166,7 +168,10 @@ async function confirmAndDeleteTenant(pkey) {
   }
 }
 
-onMounted(loadTenants)
+onMounted(() => {
+  clearTenantContext()
+  loadTenants()
+})
 </script>
 
 <template>

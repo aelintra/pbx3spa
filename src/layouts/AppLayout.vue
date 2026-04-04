@@ -6,6 +6,7 @@ import { useHelp } from '@/composables/useHelp'
 import { getApiClient } from '@/api/client'
 import CommitButton from '@/components/CommitButton.vue'
 import NavIcon from '@/components/NavIcon.vue'
+import SessionContextChips from '@/components/SessionContextChips.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -161,6 +162,17 @@ async function toggle(id) {
   scrollActiveNavIntoView()
 }
 
+/** Instance chip uses `sysglobals.fqdn`; keep in sync after login and when any view loads globals. */
+async function refreshGlobalsFqdnForTopBar() {
+  if (!auth.isLoggedIn) return
+  try {
+    const g = await getApiClient().get('sysglobals')
+    auth.setGlobalsFqdnFromSysglobal(g)
+  } catch {
+    auth.setGlobalsFqdn('')
+  }
+}
+
 onMounted(async () => {
   ensureCurrentGroupOpen()
   if (auth.can('admin')) {
@@ -175,10 +187,20 @@ onMounted(async () => {
       // token may be expired; leave user null
     }
   }
+  if (auth.isLoggedIn) {
+    await refreshGlobalsFqdnForTopBar()
+  }
   await nextTick()
   restoreSidebarScroll()
   requestAnimationFrame(() => scrollActiveNavIntoView())
 })
+
+watch(
+  () => auth.isLoggedIn,
+  (loggedIn) => {
+    if (loggedIn) refreshGlobalsFqdnForTopBar()
+  }
+)
 
 watch(
   () => route.path,
@@ -255,7 +277,10 @@ async function logout() {
     </aside>
     <div class="main">
       <header class="topbar">
-        <h1 class="logo">PBX3 Admin</h1>
+        <div class="topbar-leading">
+          <h1 class="logo">PBX3 Admin</h1>
+          <SessionContextChips />
+        </div>
         <div class="topbar-right">
           <CommitButton v-if="showCommitButton" />
           <span v-if="auth.user" class="user">Logged in as {{ auth.user.name || auth.user.email }}</span>
@@ -411,8 +436,10 @@ async function logout() {
 .topbar {
   flex: 0 0 auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem 1.25rem;
   padding: 0.75rem 1.5rem;
   background: var(--pbx-canvas);
   border-bottom: 1px solid var(--pbx-border);
@@ -420,16 +447,26 @@ async function logout() {
   top: 0;
   z-index: 10;
 }
+.topbar-leading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
 .logo {
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
   color: var(--pbx-text);
+  flex-shrink: 0;
 }
 .topbar-right {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-shrink: 0;
 }
 .user {
   font-size: 0.875rem;

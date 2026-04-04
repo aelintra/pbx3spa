@@ -234,8 +234,8 @@ async function confirmAndDelete() {
             toggle-id="edit-trunk-active"
           />
         </div>
-        <p v-if="trunk && editActive === 'NO'" class="detail-inactive-banner" role="status">
-          This record is inactive and will not participate in normal call flow until you activate it and commit the change.
+        <p v-if="trunk && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
+          Inactive trunks are not used for calling until you activate this record and commit the change.
         </p>
       </div>
     </PanelBackLink>

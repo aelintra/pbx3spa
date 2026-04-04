@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
@@ -33,10 +33,12 @@ import {
   parseNum
 } from '@/constants/tenantAdvanced'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { useSessionContext } from '@/composables/useSessionContext'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const { setTenantContext, clearTenantContext } = useSessionContext()
 const { getSchema, ensureFetched } = useSchema()
 function isReadOnly(field) {
   return getSchema('tenants')?.read_only?.includes(field) ?? false
@@ -78,6 +80,7 @@ const formMonitoring = reactive(Object.fromEntries(MONITORING_KEYS.map((k) => [k
 
 async function fetchTenant() {
   if (!pkey.value) return
+  clearTenantContext()
   loading.value = true
   error.value = ''
   try {
@@ -126,7 +129,19 @@ onMounted(async () => {
   await ensureFetched()
   await fetchTenant()
 })
+onUnmounted(() => clearTenantContext())
 watch(pkey, fetchTenant)
+
+watch(
+  () => tenant.value,
+  (t) => {
+    if (!t?.pkey) return
+    const pk = String(t.pkey)
+    const fq = (t.fqdn && String(t.fqdn).trim()) || ''
+    setTenantContext(pk, fq || pk)
+  },
+  { immediate: true }
+)
 
 function goBack() {
   router.push({ name: 'tenants' })

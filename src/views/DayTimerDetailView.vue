@@ -12,6 +12,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -25,6 +26,7 @@ const tenants = ref([])
 const loading = ref(true)
 const error = ref('')
 const allday = ref('YES')
+const editActive = ref('YES')
 const editCluster = ref('default')
 const editDayofweek = ref('*')
 const editDescription = ref('')
@@ -94,6 +96,7 @@ async function fetchDaytimer() {
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
     editDayofweek.value = d?.dayofweek ?? '*'
     editDescription.value = d?.description ?? ''
+    editActive.value = d?.active === 'NO' ? 'NO' : 'YES'
     const parsed = parseTimespan(d?.timespan)
     allday.value = parsed.allDay ? 'YES' : 'NO'
     startTime.value = parsed.start || '09:00'
@@ -163,7 +166,8 @@ async function saveEdit(e) {
       cluster: editCluster.value.trim(),
       dayofweek: editDayofweek.value,
       description: editDescription.value.trim() || null,
-      timespan: buildTimespan()
+      timespan: buildTimespan(),
+      ...(isReadOnly('active') ? {} : { active: editActive.value })
     }
     await getApiClient().put(`daytimers/${encodeURIComponent(shortuid.value)}`, body)
     await fetchDaytimer()
@@ -212,7 +216,26 @@ const panelTitleTenantSuffix = computed(() => {
 <template>
   <div class="detail-view" @keydown="onKeydown">
     <PanelBackLink :to="{ name: 'daytimers' }" label="Day Timers">
-      <h1>Edit Day timer{{ displayName ? ` — ${displayName}` : '' }}{{ panelTitleTenantSuffix }}</h1>
+      <div class="detail-panel-head">
+        <div class="detail-title-status-row">
+          <h1 class="detail-panel-title">
+            Edit Day timer{{ displayName ? ` — ${displayName}` : '' }}{{ panelTitleTenantSuffix }}
+          </h1>
+          <DetailActiveStatusBar
+            v-if="daytimer"
+            v-model="editActive"
+            :readonly="isReadOnly('active')"
+            toggle-id="edit-daytimer-active"
+          />
+        </div>
+        <p
+          v-if="daytimer && editActive === 'NO'"
+          class="detail-active-inactive-hint"
+          role="status"
+        >
+          Inactive day timers are not used in schedules until you activate this record and commit the change.
+        </p>
+      </div>
     </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>

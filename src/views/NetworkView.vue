@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
+import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
@@ -13,6 +14,7 @@ const YESNO_OPTIONS = ['YES', 'NO']
 const ICMP_OPTIONS = ['YES', 'NO'] // YES = allow ping
 
 const toast = useToastStore()
+const auth = useAuthStore()
 const sysglobal = ref(null)
 const sysnotes = ref(null)
 const loading = ref(true)
@@ -60,6 +62,7 @@ async function fetchData(options = {}) {
     sysglobal.value = globalsRes
     sysnotes.value = notesRes
     syncEditFromSysglobal()
+    auth.setGlobalsFqdnFromSysglobal(globalsRes)
     editHostname.value = notesRes?.network?.hostname ?? ''
     editDns.value = Array.isArray(notesRes?.dns) ? notesRes.dns.join('\n') : ''
     const s = notesRes?.smtp

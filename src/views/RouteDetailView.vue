@@ -244,8 +244,8 @@ const panelTitleTenantSuffix = computed(() => {
             toggle-id="edit-route-active"
           />
         </div>
-        <p v-if="routeData && editActive === 'NO'" class="detail-inactive-banner" role="status">
-          This record is inactive and will not participate in normal call flow until you activate it and commit the change.
+        <p v-if="routeData && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
+          Inactive routes are not used until you activate this record and commit the change.
         </p>
       </div>
     </PanelBackLink>

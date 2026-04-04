@@ -291,8 +291,8 @@ const panelTitleTenantSuffix = computed(() => {
             toggle-id="edit-inbound-active"
           />
         </div>
-        <p v-if="inboundRoute && editActive === 'NO'" class="detail-inactive-banner" role="status">
-          This record is inactive and will not participate in normal call flow until you activate it and commit the change.
+        <p v-if="inboundRoute && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
+          Inactive inbound routes do not match calls until you activate this record and commit the change.
         </p>
       </div>
     </PanelBackLink>

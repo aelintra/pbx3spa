@@ -2,6 +2,7 @@
 import { ref, reactive, toRef, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
+import { useAuthStore } from '@/stores/auth'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
@@ -38,6 +39,7 @@ import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const router = useRouter()
 const toast = useToastStore()
+const auth = useAuthStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
 const pkey = ref('')
 const description = ref('')
@@ -167,6 +169,7 @@ onMounted(async () => {
   await ensureFetched()
   try {
     const g = await getApiClient().get('sysglobals')
+    auth.setGlobalsFqdnFromSysglobal(g)
     const raw = g?.domain
     globalsDomain.value =
       raw != null && String(raw).trim() !== '' ? String(raw).trim() : ''
