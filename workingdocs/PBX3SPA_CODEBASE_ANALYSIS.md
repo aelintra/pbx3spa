@@ -12,7 +12,7 @@
 
 The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/create/detail patterns, `normalizeList`, schema-driven mutability (`useSchema`), sticky list filters, and a central API client. **Strengths** are cohesion of patterns, pragmatic **sessionStorage** for token and tenant context, and a **small runtime dependency surface** (low supply-chain noise).
 
-**Main gaps:** no TypeScript (**by design** for now), **coarse-grained authorisation** in the router (binary `admin` gate), **inherent duplication** across many similar Vue files (mitigated by shared utils, not eliminated), **no component tests** yet, and **production build shape** (single large JS chunk; **lazy loading deferred** until needed — see **Phase H**). **Phase A** removed dead **`HomeView` / `counter`**, list-view debug **`console.log`**, and **`debugReset`** on form components; optional **`console.error`** remains on some list error paths. **Phase B** centralised **401** handling in **`api/client.js`** via **`clearSessionAndGoLogin()`** (`request`, **`getBlob`**, **`postFile`**). **Phase C** added **ESLint** (flat config, `eslint-plugin-vue` recommended + **`vue/multi-word-component-names` off**), **Prettier** (`.prettierrc.json`), **`npm run lint`** / **`lint:fix`**, **`format`** / **`format:check`**, and formatted **`src/`**; small lint-driven fixes (unused imports, **`DeleteConfirmModal`** `defineProps`, **`HolidayTimersListView`** sort numeric guard, etc.). **Firewall** view toggles use named handlers so Prettier does not emit invalid multi-statement **`@click`** fragments. **Phase D** added **Vitest** (**`vitest.config.js`**, **`npm run test`** / **`test:watch`**) and unit tests for **`formErrors`**, **`listResponse`**, and **`validation`** (`src/utils/*.test.js`, Node environment). **Users** list uses **sticky filter + sort** (Phase E); **user detail/edit** route is still outstanding when the API supports it. **Phase I** added **`ConfirmModal.vue`** (primary / danger variants) and replaced **`window.confirm()`** in **DashboardView**, **CommitButton**, **FirewallView**, and **BackupView**; list deletes still use **`DeleteConfirmModal`**. Several topics are already tracked in workingdocs (permissions roadmap, panel parity, extension provisioning).
+**Main gaps:** no TypeScript (**by design** for now), **coarse-grained authorisation** in the router (binary `admin` gate), **inherent duplication** across many similar Vue files (mitigated by shared utils, not eliminated), **no component tests** yet, and **production build shape** (single large JS chunk; **lazy loading deferred** until needed — see **Phase H**). **Phase A** removed dead **`HomeView` / `counter`**, list-view debug **`console.log`**, and **`debugReset`** on form components; optional **`console.error`** remains on some list error paths. **Phase B** centralised **401** handling in **`api/client.js`** via **`clearSessionAndGoLogin()`** (`request`, **`getBlob`**, **`postFile`**). **Phase C** added **ESLint** (flat config, `eslint-plugin-vue` recommended + **`vue/multi-word-component-names` off**), **Prettier** (`.prettierrc.json`), **`npm run lint`** / **`lint:fix`**, **`format`** / **`format:check`**, and formatted **`src/`**; small lint-driven fixes (unused imports, **`DeleteConfirmModal`** `defineProps`, **`HolidayTimersListView`** sort numeric guard, etc.). **Firewall** view toggles use named handlers so Prettier does not emit invalid multi-statement **`@click`** fragments. **Phase D** added **Vitest** (**`vitest.config.js`**, **`npm run test`** / **`test:watch`**) and unit tests for **`formErrors`**, **`listResponse`**, and **`validation`** (`src/utils/*.test.js`, Node environment). **Users** list uses **sticky filter + sort** (Phase E); **user detail/edit** route is still outstanding when the API supports it. **Phase I** added **`ConfirmModal.vue`** (primary / danger variants) and replaced **`window.confirm()`** in **DashboardView**, **CommitButton**, **FirewallView**, and **BackupView**; list deletes still use **`DeleteConfirmModal`**. **Phase J** (partial): **Node 24** LTS pinned via **`.nvmrc`** and **`package.json` `engines`**; **README** updated; **`npm audit`** snapshot and follow-up noted under **Phase J** below (no lockfile auto-fix in that pass). Several topics are already tracked in workingdocs (permissions roadmap, panel parity, extension provisioning).
 
 **Project stance (2026):** The app is expected to stay **relatively small** (a few more panels at most). **Phase F** (granular SPA permissions) is **deferred until the wider permissions upgrade** with **pbx3api** — do not start Phase F in isolation. **Phase G** (**TypeScript** / strict **`checkJs`**) is **not a near-term goal**: the stack stays **plain JavaScript** so the code stays **easy to read and tinker with**; revisit TS only if maintenance pain justifies it. **Phase H** (**route lazy loading**) is **deferred**: real-world impact (e.g. **cloud** hosting) is unknown until measured; the bundle is **acceptable for now** — add **`import()`** routes when profiling or UX shows it is **worth the complexity**.
 
@@ -230,16 +230,19 @@ Work through in order unless you skip an entire phase. **Phase F** is **on hold*
 
 **Goal:** Remove **`EBADENGINE`** noise from **`npm install`**, align dev/CI on a **supported Node LTS**, and **review or clear** **`npm audit`** findings (especially after adding ESLint/Prettier). This phase does not change product behaviour; it hardens the **developer and CI** story.
 
-1. **Pick a Node line** that satisfies **Vite** and **ESLint** (and other dev tools) **`engines`** fields — typically **current LTS** (e.g. **22.x** or **20.19+**). Avoid odd majors (e.g. **21**) that tools may omit from their support matrix.
-2. Add **`.nvmrc`** (or **`.node-version`**) at the repo root with that version (e.g. `22` or `22.14.0`).
-3. Add **`engines`** to **`package.json`** — at least **`"node": ">=20.19.0 <21 || >=22.13.0"`** (tune to match what you actually test; keep it honest).
-4. Document in **README** § Development: which Node to use, **`nvm use`** / **`fnm`** if applicable, and that CI should use the same version.
+**Node line (applied):** **24.x** (Active LTS **Krypton**; official EOL **2028-04-30** per [Node release schedule](https://github.com/nodejs/Release/blob/master/schedule.json)). Chosen for new systems over **22** (EOL **2027-04-30**) to maximise remaining LTS runway.
+
+1. ~~**Pick a Node line**~~ **Done:** **24.x** LTS.
+2. **Done:** **`.nvmrc`** at repo root contains **`24`**.
+3. **Done:** **`package.json`** **`engines.node`**: **`>=24.0.0 <25`** (tight major band; bump when moving to **26** LTS later).
+4. **Done:** **README** § Development — Node **24**, **`.nvmrc`**, **`nvm use`** / **fnm**, CI alignment.
 5. **Audit**
    - Run **`npm audit`** (and optionally **`npm audit --production`** if you only care about runtime deps for the built SPA).
-   - Run **`npm audit fix`** where it does not force unacceptable major bumps; for remaining items, **upgrade** manually, **document** accepted risk in a short note (this doc or **README**), or **defer** with a tracked issue.
-6. Re-run **`rm -rf node_modules && npm install`** (or fresh clone) on the chosen Node — expect **no** (or fewer) **`EBADENGINE`** warnings.
-7. Re-run **`npm run lint`**, **`npm run format:check`**, **`npm run build`** to confirm the tree still works.
-8. **Commit** e.g. `chore: pin Node engines and address npm audit`.
+   - **Snapshot (2026-04-04):** **`npm audit`** reported **2 high** severities in transitive **picomatch** and **rollup** (Vite toolchain). **`npm audit fix`** is expected to resolve them without app code changes; run when acceptable, then re-run **`lint`**, **`format:check`**, **`test`**, **`build`**. Until then, risk is **dev/build-time** (not the shipped static bundle served to browsers).
+   - For remaining items after any fix, **document** accepted risk in this doc or **README**, or **defer** with a tracked issue.
+6. Re-run **`rm -rf node_modules && npm install`** on **Node 24** — expect **no** **`EBADENGINE`** vs **`package.json`** **`engines`**.
+7. Re-run **`npm run lint`**, **`npm run format:check`**, **`npm run build`** after any lockfile change.
+8. **Commit** e.g. `chore: pin Node 24 (.nvmrc + engines)`; separate commit optional for audit-driven lockfile updates.
 
 ### Verification per phase
 
@@ -334,7 +337,7 @@ Run commands from the **`pbx3spa`** directory. Use **`npm run lint`**, **`npm ru
 | G | **N/A (deferred):** staying on **plain JS**; revisit TS only if justified |
 | H | **Deferred** until **cloud** / measurement shows need; then smaller initial chunk + chunk map OK |
 | I | **`ConfirmModal`** + no **`window.confirm`** on Dashboard / Commit / Firewall / Backup flows (**done**) |
-| J | Node version pinned (`.nvmrc` + `package.json` engines); README/CI aligned; `npm audit` reviewed and follow-ups documented or fixed |
+| J | **Node 24** pinned (`.nvmrc` + `engines`); README updated; **`npm audit`** snapshot documented — run **`npm audit fix`** when ready, then re-verify |
 
 ---
 

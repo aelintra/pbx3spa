@@ -32,6 +32,8 @@ When building the frontend, use **pbx3api/docs** as the source of truth for all 
 
 ## Development
 
+Use **Node.js 24.x** (Active LTS). The repo root has **`.nvmrc`** set to `24` — with **[nvm](https://github.com/nvm-sh/nvm)** run **`nvm use`**, or with **[fnm](https://github.com/Schniz/fnm)** run **`fnm install`** / **`fnm use`**. **`package.json`** declares **`engines.node`** (`>=24.0.0 <25`); align CI and production build images with the same major.
+
 From this directory:
 
 - **`npm run dev`** — Vite dev server.
