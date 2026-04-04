@@ -12,7 +12,7 @@
 
 The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/create/detail patterns, `normalizeList`, schema-driven mutability (`useSchema`), sticky list filters, and a central API client. **Strengths** are cohesion of patterns, pragmatic **sessionStorage** for token and tenant context, and a **small runtime dependency surface** (low supply-chain noise).
 
-**Main gaps:** no automated tests, no TypeScript, **coarse-grained authorisation** in the router (binary `admin` gate), **inherent duplication** across many similar Vue files (mitigated by shared utils, not eliminated), and **production build shape** (single large JS chunk; no route lazy loading). **Phase A** removed dead **`HomeView` / `counter`**, list-view debug **`console.log`**, and **`debugReset`** on form components; optional **`console.error`** remains on some list error paths. **Phase B** centralised **401** handling in **`api/client.js`** via **`clearSessionAndGoLogin()`** (`request`, **`getBlob`**, **`postFile`**). **Phase C** added **ESLint** (flat config, `eslint-plugin-vue` recommended + **`vue/multi-word-component-names` off**), **Prettier** (`.prettierrc.json`), **`npm run lint`** / **`lint:fix`**, **`format`** / **`format:check`**, and formatted **`src/`**; small lint-driven fixes (unused imports, **`DeleteConfirmModal`** `defineProps`, **`HolidayTimersListView`** sort numeric guard, etc.). **Firewall** view toggles use named handlers so Prettier does not emit invalid multi-statement **`@click`** fragments. **Users** area lacks a detail/edit route and sticky list filters. **Native `window.confirm()`** is used in several flows while lists often use **`DeleteConfirmModal`** — inconsistent UX. Several topics are already tracked in workingdocs (permissions roadmap, panel parity, extension provisioning).
+**Main gaps:** no TypeScript, **coarse-grained authorisation** in the router (binary `admin` gate), **inherent duplication** across many similar Vue files (mitigated by shared utils, not eliminated), **no component tests** yet, and **production build shape** (single large JS chunk; no route lazy loading). **Phase A** removed dead **`HomeView` / `counter`**, list-view debug **`console.log`**, and **`debugReset`** on form components; optional **`console.error`** remains on some list error paths. **Phase B** centralised **401** handling in **`api/client.js`** via **`clearSessionAndGoLogin()`** (`request`, **`getBlob`**, **`postFile`**). **Phase C** added **ESLint** (flat config, `eslint-plugin-vue` recommended + **`vue/multi-word-component-names` off**), **Prettier** (`.prettierrc.json`), **`npm run lint`** / **`lint:fix`**, **`format`** / **`format:check`**, and formatted **`src/`**; small lint-driven fixes (unused imports, **`DeleteConfirmModal`** `defineProps`, **`HolidayTimersListView`** sort numeric guard, etc.). **Firewall** view toggles use named handlers so Prettier does not emit invalid multi-statement **`@click`** fragments. **Phase D** added **Vitest** (**`vitest.config.js`**, **`npm run test`** / **`test:watch`**) and unit tests for **`formErrors`**, **`listResponse`**, and **`validation`** (`src/utils/*.test.js`, Node environment). **Users** area lacks a detail/edit route and sticky list filters. **Native `window.confirm()`** is used in several flows while lists often use **`DeleteConfirmModal`** — inconsistent UX. Several topics are already tracked in workingdocs (permissions roadmap, panel parity, extension provisioning).
 
 ---
 
@@ -22,10 +22,10 @@ The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/c
 |------|---------|
 | **TypeScript** | Not used. JSDoc appears in places (`client.js`, `useSchema.js`) but most code is untyped JS. Refactors and API shape drift are catch-at-runtime only. |
 | **Lint / format** | **ESLint 10** + **`eslint-plugin-vue`** (flat **`eslint.config.js`**) + **`eslint-config-prettier`**. **Prettier** with **`.prettierrc.json`** (`semi: false`, `singleQuote: true`). Scripts: **`npm run lint`**, **`lint:fix`**, **`format`**, **`format:check`**. No Stylelint. |
-| **Tests** | No `*.test.*` / `*.spec.*` files; no Vitest/Jest script. Regressions are manual. |
+| **Tests** | **Vitest** + **`npm run test`** / **`test:watch`**. **`src/utils/*.test.js`** cover **`formErrors`**, **`listResponse`**, **`validation`**. No Vue component / E2E tests yet. |
 | **Build** | Vite 6 + `@vitejs/plugin-vue` — modern and appropriate. **`npm run build`** emits a **single main JS chunk** on the order of **~650 kB** minified (~**150 kB** gzip); Vite warns about the 500 kB threshold. There is **no route-based lazy loading** (`() => import(...)`) yet. Acceptable on a LAN admin app; optional improvement for slow links. |
 
-**Debt level:** Lint/format baseline is in place (Phase C). Next low-cost wins: optional **Vitest**, then gradual **TS** or **`vue-tsc`** / JSDoc **`checkJs`**.
+**Debt level:** Lint/format (Phase C) and **utils** unit tests (Phase D) are in place. Next low-cost wins: more **`src/utils`** or composable tests, **`@vue/test-utils`** for components, then gradual **TS** or **`vue-tsc`** / JSDoc **`checkJs`**.
 
 ---
 
@@ -89,6 +89,8 @@ The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/c
 
 **Phase C cleanup (applied):** ESLint + Prettier tooling, **`src/`** formatted, lint-clean tree. **`HolidayTimerDetailView`:** removed unused **`isReadOnly`** helper (was not referenced in the template).
 
+**Phase D cleanup (applied):** **Vitest** with **`vitest.config.js`** (`environment: 'node'`, `include: ['src/**/*.test.js']`, `@` alias). Tests: **`formErrors.test.js`**, **`listResponse.test.js`**, **`validation.test.js`**.
+
 | Item | Location | Note |
 |------|----------|------|
 | **Console on error paths** | `AgentsListView.vue`, `LogsListView.vue` | `console.error` in catch blocks — optional to remove or dev-gate; UI already surfaces errors via `error` / toast patterns. |
@@ -107,8 +109,9 @@ All routed views are imported explicitly from **`router/index.js`**. No other or
 | `marked` | **Dev-only** usage: `scripts/render-panel-inventory-html.mjs` — not in runtime bundle. Correct as devDependency. |
 | `eslint`, `@eslint/js`, `eslint-plugin-vue`, `eslint-config-prettier`, `globals` | Lint (dev). |
 | `prettier` | Format (dev). |
+| `vitest` | Unit tests for **`src/utils`** (dev). |
 
-**Runtime dependency surface remains small.** Dev tooling adds ESLint/Prettier; **Vitest** not yet added (Phase D optional).
+**Runtime dependency surface remains small.** Dev tooling: ESLint, Prettier, Vitest.
 
 ---
 
@@ -124,12 +127,12 @@ These are **known follow-ups**, not bugs in the SPA alone:
 
 ## 9. Prioritised recommendations
 
-1. **Vitest** (optional) for `utils/formErrors.js`, `listResponse.js`, `validation.js`.
-2. **Users:** add **sticky filter** (and sort if desired) to **UsersListView**; when API allows, add **user detail/edit** route and view.
-3. **Optional:** Vue Router **lazy imports** per route to shrink initial JS and silence chunk-size warnings.
-4. **When adding non-admin roles:** extend router + nav with granular `can()` checks per **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** / **ADMIN_PANELS_AND_PERMISSIONS.md**.
-5. **Longer term:** TypeScript or strict JSDoc + `checkJs`; optional **shared confirm modal** to replace scattered `window.confirm()`.
-6. **Optional hygiene:** Remove or dev-gate remaining **`console.error`** in **Agents** / **Logs** list catch blocks if you want a silent console in production.
+1. **Users:** add **sticky filter** (and sort if desired) to **UsersListView**; when API allows, add **user detail/edit** route and view.
+2. **Optional:** Vue Router **lazy imports** per route to shrink initial JS and silence chunk-size warnings.
+3. **When adding non-admin roles:** extend router + nav with granular `can()` checks per **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** / **ADMIN_PANELS_AND_PERMISSIONS.md**.
+4. **Longer term:** TypeScript or strict JSDoc + `checkJs`; optional **shared confirm modal** to replace scattered `window.confirm()`.
+5. **Optional hygiene:** Remove or dev-gate remaining **`console.error`** in **Agents** / **Logs** list catch blocks if you want a silent console in production.
+6. **Expand tests:** more **`utils`** / composables; optional **`@vue/test-utils`** for components.
 7. **Phase J (final toolchain pass):** Align **Node.js** with tool **`engines`** (e.g. **`.nvmrc`** + **`package.json` `engines`**) and review **`npm audit`** / upgrades on a schedule (see **Phase J** below).
 
 ---
@@ -170,11 +173,13 @@ Work through in order unless you skip an entire phase. All steps are **pbx3spa-o
 
 ### Phase D — Vitest (optional but valuable)
 
-1. Add `vitest` and `@vue/test-utils` only if you plan component tests later; for pure-utils tests, `vitest` alone is enough.
-2. Add `vitest.config.js` with Vue/Vite alignment (or reuse Vite config via `vitest/config`).
-3. Add `"test": "vitest run"` and optionally `"test:watch": "vitest"`.
-4. Write first tests for **`src/utils/formErrors.js`** (`fieldErrors`, `firstErrorMessage`) and **`src/utils/listResponse.js`** (`normalizeList`) — highest ROI, no DOM.
-5. Optionally add tests for **`src/utils/validation.js`** spot-checks.
+**Baseline applied:** **`vitest`**, **`vitest.config.js`** (Node env, **`src/**/*.test.js`**, `@` alias), **`npm run test`** / **`test:watch`**, tests for **`formErrors`**, **`listResponse`**, **`validation`**.
+
+1. Add **`vitest`**; for pure-utils tests, **`@vue/test-utils`** is not required.
+2. Add **`vitest.config.js`** (e.g. **`environment: 'node'`** for utils-only; merge Vite **`resolve.alias`** if tests import **`@/`**).
+3. Add **`"test": "vitest run"`** and **`"test:watch": "vitest"`**.
+4. Extend **`src/utils/*.test.js`** or add composable tests as behaviour grows.
+5. When you need **component** tests, add **`@vue/test-utils`** and switch or add a Vitest **`environment`** / **`jsdom`** project as appropriate.
 6. **Commit** e.g. `test: add vitest and utils tests`.
 
 ### Phase E — Users panel parity (optional)
@@ -229,7 +234,7 @@ Work through in order unless you skip an entire phase. All steps are **pbx3spa-o
 
 ### Verification per phase
 
-Run commands from the **`pbx3spa`** directory. Use **`npm run lint`** and **`npm run format:check`** after UI changes. Until **Phase D** (Vitest), **`npm run build`** plus **browser smoke** against a running API remain the main functional gates.
+Run commands from the **`pbx3spa`** directory. Use **`npm run lint`**, **`npm run format:check`**, and **`npm run test`** after changes that touch **`src/utils`** or shared behaviour. **`npm run build`** plus **browser smoke** against a running API remain the main **end-to-end** gates (no component/E2E harness yet).
 
 **Any change under `src/`**
 
@@ -319,7 +324,7 @@ Run commands from the **`pbx3spa`** directory. Use **`npm run lint`** and **`npm
 | A | Dead `HomeView` / `counter` removed; no stray debug `console.log` in those views; build green |
 | B | Single 401 path in `client.js`; manual auth smoke OK |
 | C | `npm run lint` and `npm run format:check` clean; `npm run build` green |
-| D | `npm run test` green (if adopted) |
+| D | `npm run test` green; utils tests maintained when changing **`formErrors`** / **`listResponse`** / **`validation`** |
 | E | Users list matches sticky-filter pattern; user detail when API + route exist (if done) |
 | F | API + SPA aligned on abilities (when you start non-admin users) |
 | G | Policy decided: TS vs JSDoc + checkJs |

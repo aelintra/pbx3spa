@@ -11,6 +11,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{js,vue,css}\"",
     "format:check": "prettier --check \"src/**/*.{js,vue,css}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "docs:panel-inventory": "node scripts/render-panel-inventory-html.mjs"
   },
   "dependencies": {
@@ -27,6 +29,7 @@
     "globals": "^17.4.0",
     "marked": "^15.0.7",
     "prettier": "^3.8.1",
-    "vite": "^6.0.3"
+    "vite": "^6.0.3",
+    "vitest": "^4.1.2"
   }
 }

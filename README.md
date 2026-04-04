@@ -38,5 +38,6 @@ From this directory:
 - **`npm run build`** — production bundle.
 - **`npm run lint`** / **`npm run lint:fix`** — ESLint (Vue + JS; flat config in `eslint.config.js`).
 - **`npm run format`** / **`npm run format:check`** — Prettier on `src/**/*.{js,vue,css}`.
+- **`npm run test`** / **`npm run test:watch`** — Vitest unit tests (`src/**/*.test.js`, utils first).
 
-Before opening a PR, run **`lint`** and **`format:check`** (or **`format`** to apply). See **`workingdocs/PBX3SPA_CODEBASE_ANALYSIS.md`** for the phased cleanup plan.
+Before opening a PR, run **`lint`**, **`format:check`**, and **`test`**. See **`workingdocs/PBX3SPA_CODEBASE_ANALYSIS.md`** for the phased cleanup plan.
