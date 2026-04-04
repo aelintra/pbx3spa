@@ -38,7 +38,7 @@ async function fetchSysnotes() {
   }
 }
 
-async function runCommand(command, confirmMessage, isDanger = false) {
+async function runCommand(command, confirmMessage) {
   if (confirmMessage && !confirm(confirmMessage)) return
   actionError.value = ''
   actionMessage.value = ''
@@ -67,8 +67,7 @@ function stopPbx() {
 function reboot() {
   runCommand(
     'reboot',
-    'Reboot the PBX instance? The system will restart and active calls may drop. This cannot be undone.',
-    true
+    'Reboot the PBX instance? The system will restart and active calls may drop. This cannot be undone.'
   )
 }
 
@@ -86,30 +85,15 @@ onMounted(() => {
       <p v-if="actionMessage" class="message">{{ actionMessage }}</p>
       <p v-if="actionError" class="error">{{ actionError }}</p>
       <div class="action-buttons">
-        <button
-          type="button"
-          class="btn-action"
-          :disabled="actionBusy != null"
-          @click="startPbx"
-        >
+        <button type="button" class="btn-action" :disabled="actionBusy != null" @click="startPbx">
           {{ actionBusy === 'start' ? 'Running…' : 'Start PBX' }}
         </button>
-        <button
-          type="button"
-          class="btn-action"
-          :disabled="actionBusy != null"
-          @click="stopPbx"
-        >
+        <button type="button" class="btn-action" :disabled="actionBusy != null" @click="stopPbx">
           {{ actionBusy === 'stop' ? 'Running…' : 'Stop PBX' }}
         </button>
       </div>
       <div class="danger-zone">
-        <button
-          type="button"
-          class="btn-danger"
-          :disabled="actionBusy != null"
-          @click="reboot"
-        >
+        <button type="button" class="btn-danger" :disabled="actionBusy != null" @click="reboot">
           {{ actionBusy === 'reboot' ? 'Running…' : 'Reboot instance' }}
         </button>
       </div>

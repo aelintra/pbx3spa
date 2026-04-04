@@ -53,7 +53,9 @@ const filteredAgents = computed(() => {
   return list.filter((a) => {
     const pkey = (a.pkey ?? '').toString().toLowerCase()
     const cluster = (a.cluster ?? '').toString().toLowerCase()
-    const tenant = (a.tenant_pkey ?? map.get(String(a.cluster)) ?? a.cluster ?? '').toString().toLowerCase()
+    const tenant = (a.tenant_pkey ?? map.get(String(a.cluster)) ?? a.cluster ?? '')
+      .toString()
+      .toLowerCase()
     const name = (a.name ?? '').toString().toLowerCase()
     return pkey.includes(q) || cluster.includes(q) || tenant.includes(q) || name.includes(q)
   })
@@ -82,7 +84,10 @@ const sortedAgents = computed(() => {
 
 function setSort(k) {
   if (sortKey.value === k) sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-  else { sortKey.value = k; sortOrder.value = 'asc' }
+  else {
+    sortKey.value = k
+    sortOrder.value = 'asc'
+  }
 }
 
 function sortClass(k) {
@@ -130,7 +135,7 @@ async function loadAgents() {
     const agentsList = normalizeList(agentsRes)
     agents.value = agentsList
     loading.value = false // Set loading false after agents load
-    
+
     // Load tenants separately - don't block on this
     try {
       const tenantsRes = await getApiClient().get('tenants')
@@ -181,8 +186,22 @@ onMounted(loadAgents)
       <h1>Agents</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'agent-create' }" class="add-btn">Create</router-link>
-        <button type="button" class="export-btn" :disabled="sortedAgents.length === 0" @click="doExportCsv">Export CSV</button>
-        <button type="button" class="export-btn" :disabled="sortedAgents.length === 0 || exportPdfLoading" @click="doExportPdf">{{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}</button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedAgents.length === 0"
+          @click="doExportCsv"
+        >
+          Export CSV
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedAgents.length === 0 || exportPdfLoading"
+          @click="doExportPdf"
+        >
+          {{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}
+        </button>
         <input
           v-model="filterText"
           type="search"
@@ -197,34 +216,127 @@ onMounted(loadAgents)
       <ListLoadingState v-if="loading" message="Loading agents from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
-      <div v-else-if="agents.length === 0" class="empty">No agents. (tenants loaded: {{ tenants.length }})</div>
+      <div v-else-if="agents.length === 0" class="empty">
+        No agents. (tenants loaded: {{ tenants.length }})
+      </div>
     </section>
 
     <section v-else class="list-body">
-      <ListViewMeta v-if="agents.length > 0" :total="agents.length" :filtered="filteredAgents.length" />
-      <p v-if="filterText && filteredAgents.length === 0" class="empty">No agents match the filter.</p>
+      <ListViewMeta
+        v-if="agents.length > 0"
+        :total="agents.length"
+        :filtered="filteredAgents.length"
+      />
+      <p v-if="filterText && filteredAgents.length === 0" class="empty">
+        No agents match the filter.
+      </p>
       <table v-else class="table">
         <thead>
           <tr>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">Agent</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('name')" @click="setSort('name')">Name</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('queue1')" @click="setSort('queue1')">Q1</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('queue2')" @click="setSort('queue2')">Q2</th>
-            <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
-            <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('pkey')"
+              @click="setSort('pkey')"
+            >
+              Agent
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('cluster')"
+              @click="setSort('cluster')"
+            >
+              Tenant
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('name')"
+              @click="setSort('name')"
+            >
+              Name
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('queue1')"
+              @click="setSort('queue1')"
+            >
+              Q1
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('queue2')"
+              @click="setSort('queue2')"
+            >
+              Q2
+            </th>
+            <th class="th-actions" title="Edit">
+              <span class="action-icon" aria-hidden="true"
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+              ></span>
+            </th>
+            <th class="th-actions" title="Delete">
+              <span class="action-icon" aria-hidden="true"
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  <line x1="10" x2="10" y1="11" y2="17" />
+                  <line x1="14" x2="14" y1="11" y2="17" /></svg
+              ></span>
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="a in sortedAgents" :key="a.shortuid || a.id || (a.cluster || '') + '-' + (a.pkey || '')">
+          <tr
+            v-for="a in sortedAgents"
+            :key="a.shortuid || a.id || (a.cluster || '') + '-' + (a.pkey || '')"
+          >
             <td>{{ a.pkey }}</td>
             <td>{{ tenantPkeyDisplay(a) }}</td>
             <td>{{ a.name ?? '—' }}</td>
             <td>{{ displayQueue(a.queue1) }}</td>
             <td>{{ displayQueue(a.queue2) }}</td>
             <td>
-              <router-link v-if="a.shortuid" :to="{ name: 'agent-detail', params: { shortuid: a.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
-                <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
+              <router-link
+                v-if="a.shortuid"
+                :to="{ name: 'agent-detail', params: { shortuid: a.shortuid } }"
+                class="cell-link cell-link-icon"
+                title="Edit"
+                aria-label="Edit"
+              >
+                <span class="action-icon" aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+                ></span>
               </router-link>
             </td>
             <td>
@@ -237,10 +349,48 @@ onMounted(loadAgents)
                 :disabled="deletingPkey === a.shortuid"
                 @click="askConfirmDelete(a.shortuid)"
               >
-                <span v-if="deletingPkey === a.shortuid" class="action-icon action-icon-spin" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg></span>
-                <span v-else class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span>
+                <span
+                  v-if="deletingPkey === a.shortuid"
+                  class="action-icon action-icon-spin"
+                  aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                    <path d="M16 21h5v-5" /></svg
+                ></span>
+                <span v-else class="action-icon" aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    <line x1="10" x2="10" y1="11" y2="17" />
+                    <line x1="14" x2="14" y1="11" y2="17" /></svg
+                ></span>
               </button>
-              <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot edit/delete" style="opacity: 0.5;">—</span>
+              <span
+                v-else
+                class="cell-link cell-link-icon"
+                title="No shortuid - cannot edit/delete"
+                style="opacity: 0.5"
+                >—</span
+              >
             </td>
           </tr>
         </tbody>
@@ -255,7 +405,10 @@ onMounted(loadAgents)
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Agent <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Agent <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be
+          undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -267,41 +420,120 @@ onMounted(loadAgents)
   flex-direction: column;
   gap: 1rem;
 }
-.list-header { margin: 0; }
-.list-states, .list-body { margin: 0; }
-.error, .empty { margin-top: 0; }
-.error { color: #dc2626; }
+.list-header {
+  margin: 0;
+}
+.list-states,
+.list-body {
+  margin: 0;
+}
+.error,
+.empty {
+  margin-top: 0;
+}
+.error {
+  color: #dc2626;
+}
 .table {
   margin-top: 0;
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9375rem;
 }
-.table th, .table td {
+.table th,
+.table td {
   padding: 0.5rem 0.75rem;
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
 }
-.table th { font-weight: 600; color: #475569; background: #f8fafc; }
-.th-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
-.th-sortable::before { content: '\21C5'; font-size: 0.7em; color: #94a3b8; margin-left: 0.2em; font-weight: normal; }
-.th-sortable.sort-asc::before, .th-sortable.sort-desc::before { content: none; }
-.th-sortable:hover { background: #f1f5f9; }
-.th-sortable.sort-asc::after { content: ' \2191'; font-size: 0.75em; color: #64748b; }
-.th-sortable.sort-desc::after { content: ' \2193'; font-size: 0.75em; color: #64748b; }
-.th-actions { cursor: default; white-space: nowrap; }
-.th-actions .action-icon { display: inline-flex; align-items: center; justify-content: center; color: #64748b; }
-.action-icon { display: inline-flex; align-items: center; justify-content: center; }
-.cell-link-icon { padding: 0.25rem; }
-.cell-link-icon .action-icon { color: inherit; }
-.action-icon-spin { animation: action-spin 0.8s linear infinite; }
-@keyframes action-spin { to { transform: rotate(360deg); } }
-.table tbody tr:hover { background: #f8fafc; }
-.cell-link { color: #2563eb; text-decoration: none; }
-.cell-link:hover { text-decoration: underline; }
-.cell-link-delete { color: #dc2626; background: none; border: none; padding: 0; font: inherit; cursor: pointer; }
-.cell-link-delete:hover:not(:disabled) { text-decoration: underline; }
-.cell-link-delete:disabled { opacity: 0.7; cursor: not-allowed; }
+.table th {
+  font-weight: 600;
+  color: #475569;
+  background: #f8fafc;
+}
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.th-sortable::before {
+  content: '\21C5';
+  font-size: 0.7em;
+  color: #94a3b8;
+  margin-left: 0.2em;
+  font-weight: normal;
+}
+.th-sortable.sort-asc::before,
+.th-sortable.sort-desc::before {
+  content: none;
+}
+.th-sortable:hover {
+  background: #f1f5f9;
+}
+.th-sortable.sort-asc::after {
+  content: ' \2191';
+  font-size: 0.75em;
+  color: #64748b;
+}
+.th-sortable.sort-desc::after {
+  content: ' \2193';
+  font-size: 0.75em;
+  color: #64748b;
+}
+.th-actions {
+  cursor: default;
+  white-space: nowrap;
+}
+.th-actions .action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+.action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cell-link-icon {
+  padding: 0.25rem;
+}
+.cell-link-icon .action-icon {
+  color: inherit;
+}
+.action-icon-spin {
+  animation: action-spin 0.8s linear infinite;
+}
+@keyframes action-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.table tbody tr:hover {
+  background: #f8fafc;
+}
+.cell-link {
+  color: #2563eb;
+  text-decoration: none;
+}
+.cell-link:hover {
+  text-decoration: underline;
+}
+.cell-link-delete {
+  color: #dc2626;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.cell-link-delete:hover:not(:disabled) {
+  text-decoration: underline;
+}
+.cell-link-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 .toolbar {
   margin: 0.75rem 0 0 0;
   display: flex;
@@ -319,10 +551,27 @@ onMounted(loadAgents)
   border-radius: 0.375rem;
   text-decoration: none;
 }
-.add-btn:hover { background: #1d4ed8; }
-.export-btn { padding: 0.5rem 1rem; font-size: 0.9375rem; font-weight: 500; color: #475569; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.375rem; cursor: pointer; }
-.export-btn:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; }
-.export-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.add-btn:hover {
+  background: #1d4ed8;
+}
+.export-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.export-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .filter-input {
   padding: 0.5rem 0.75rem;
   font-size: 0.9375rem;
@@ -330,5 +579,8 @@ onMounted(loadAgents)
   border-radius: 0.375rem;
   min-width: 16rem;
 }
-.filter-input:focus { outline: none; border-color: #2563eb; }
+.filter-input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
 </style>

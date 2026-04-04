@@ -132,11 +132,7 @@ onMounted(() => {
       <section class="form-section">
         <h2 class="section-title">Abilities</h2>
         <div class="field-row">
-          <input
-            id="abilityAdmin"
-            v-model="abilityAdmin"
-            type="checkbox"
-          />
+          <input id="abilityAdmin" v-model="abilityAdmin" type="checkbox" />
           <label for="abilityAdmin">Admin (full access)</label>
         </div>
       </section>
@@ -185,7 +181,7 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
 }
-.field-row input[type="checkbox"] {
+.field-row input[type='checkbox'] {
   width: 1rem;
   height: 1rem;
 }

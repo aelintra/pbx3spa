@@ -58,7 +58,13 @@ const filteredIvrs = computed(() => {
     const cluster = (ivr.cluster ?? '').toString().toLowerCase()
     const desc = (ivr.description ?? '').toString().toLowerCase()
     const active = (ivr.active ?? '').toString().toLowerCase()
-    return pkey.includes(q) || shortuid.includes(q) || cluster.includes(q) || desc.includes(q) || active.includes(q)
+    return (
+      pkey.includes(q) ||
+      shortuid.includes(q) ||
+      cluster.includes(q) ||
+      desc.includes(q) ||
+      active.includes(q)
+    )
   })
 })
 
@@ -182,8 +188,22 @@ onMounted(loadIvrs)
       <h1>IVRs</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'ivr-create' }" class="add-btn">Create</router-link>
-        <button type="button" class="export-btn" :disabled="sortedIvrs.length === 0" @click="doExportCsv">Export CSV</button>
-        <button type="button" class="export-btn" :disabled="sortedIvrs.length === 0 || exportPdfLoading" @click="doExportPdf">{{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}</button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedIvrs.length === 0"
+          @click="doExportCsv"
+        >
+          Export CSV
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedIvrs.length === 0 || exportPdfLoading"
+          @click="doExportPdf"
+        >
+          {{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}
+        </button>
         <input
           v-model="filterText"
           type="search"
@@ -212,19 +232,105 @@ onMounted(loadIvrs)
       <table v-else class="table">
         <thead>
           <tr>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">IVR</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">UID</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">Description</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('greetnum')" @click="setSort('greetnum')">Greeting number</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('timeout')" @click="setSort('timeout')">Timeout</th>
-            <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
-            <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('pkey')"
+              @click="setSort('pkey')"
+            >
+              IVR
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('shortuid')"
+              @click="setSort('shortuid')"
+            >
+              UID
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('cluster')"
+              @click="setSort('cluster')"
+            >
+              Tenant
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('active')"
+              @click="setSort('active')"
+            >
+              Active
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('description')"
+              @click="setSort('description')"
+            >
+              Description
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('greetnum')"
+              @click="setSort('greetnum')"
+            >
+              Greeting number
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('timeout')"
+              @click="setSort('timeout')"
+            >
+              Timeout
+            </th>
+            <th class="th-actions" title="Edit">
+              <span class="action-icon" aria-hidden="true"
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+              ></span>
+            </th>
+            <th class="th-actions" title="Delete">
+              <span class="action-icon" aria-hidden="true"
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  <line x1="10" x2="10" y1="11" y2="17" />
+                  <line x1="14" x2="14" y1="11" y2="17" /></svg
+              ></span>
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="ivr in sortedIvrs" :key="ivr.shortuid || ivr.id || (ivr.cluster || '') + '-' + (ivr.pkey || '')">
+          <tr
+            v-for="ivr in sortedIvrs"
+            :key="ivr.shortuid || ivr.id || (ivr.cluster || '') + '-' + (ivr.pkey || '')"
+          >
             <td>{{ ivr.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(ivr) }}</td>
             <td>{{ tenantDisplay(ivr) }}</td>
@@ -233,10 +339,35 @@ onMounted(loadIvrs)
             <td>{{ ivr.greetnum != null ? String(ivr.greetnum) : '—' }}</td>
             <td>{{ ivr.timeout ?? '—' }}</td>
             <td>
-              <router-link v-if="ivr.shortuid" :to="{ name: 'ivr-detail', params: { shortuid: ivr.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
-                <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
+              <router-link
+                v-if="ivr.shortuid"
+                :to="{ name: 'ivr-detail', params: { shortuid: ivr.shortuid } }"
+                class="cell-link cell-link-icon"
+                title="Edit"
+                aria-label="Edit"
+              >
+                <span class="action-icon" aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+                ></span>
               </router-link>
-              <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot edit" style="opacity: 0.5;">—</span>
+              <span
+                v-else
+                class="cell-link cell-link-icon"
+                title="No shortuid - cannot edit"
+                style="opacity: 0.5"
+                >—</span
+              >
             </td>
             <td>
               <button
@@ -248,10 +379,52 @@ onMounted(loadIvrs)
                 :disabled="deletingPkey === ivr.shortuid"
                 @click="askConfirmDelete(ivr.shortuid)"
               >
-                <span v-if="deletingPkey === ivr.shortuid" class="action-icon action-icon-spin" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg></span>
-                <span v-else class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span>
+                <span
+                  v-if="deletingPkey === ivr.shortuid"
+                  class="action-icon action-icon-spin"
+                  aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                    <path d="M16 21h5v-5" /></svg
+                ></span>
+                <span v-else class="action-icon" aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    <line x1="10" x2="10" y1="11" y2="17" />
+                    <line x1="14" x2="14" y1="11" y2="17" /></svg
+                ></span>
               </button>
-              <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot delete" style="opacity: 0.5;">—</span>
+              <span
+                v-else
+                class="cell-link cell-link-icon"
+                title="No shortuid - cannot delete"
+                style="opacity: 0.5"
+                >—</span
+              >
             </td>
           </tr>
         </tbody>
@@ -266,7 +439,10 @@ onMounted(loadIvrs)
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>IVR <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          IVR <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be
+          undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>

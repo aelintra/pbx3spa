@@ -27,11 +27,18 @@ const COMMIT_HIDDEN_PATH_PREFIXES = [
 const showCommitButton = computed(() => {
   if (!auth.can('admin')) return false
   const path = route.path.replace(/\/$/, '') || '/'
-  return !COMMIT_HIDDEN_PATH_PREFIXES.some((prefix) => path === prefix || path.startsWith(prefix + '/'))
+  return !COMMIT_HIDDEN_PATH_PREFIXES.some(
+    (prefix) => path === prefix || path.startsWith(prefix + '/')
+  )
 })
 
 const navGroups = [
-  { id: 'tenancy', heading: 'Tenancy', icon: 'building2', links: [{ to: '/tenants', label: 'Tenants', icon: 'building2' }] },
+  {
+    id: 'tenancy',
+    heading: 'Tenancy',
+    icon: 'building2',
+    links: [{ to: '/tenants', label: 'Tenants', icon: 'building2' }]
+  },
   {
     id: 'endpoints',
     heading: 'Endpoints',
@@ -41,7 +48,12 @@ const navGroups = [
       { to: '/conferences', label: 'Conferences', icon: 'users' }
     ]
   },
-  { id: 'inbound', heading: 'Inbound', icon: 'phone-incoming', links: [{ to: '/inbound-routes', label: 'DID routes', icon: 'phone-incoming' }] },
+  {
+    id: 'inbound',
+    heading: 'Inbound',
+    icon: 'phone-incoming',
+    links: [{ to: '/inbound-routes', label: 'DID routes', icon: 'phone-incoming' }]
+  },
   {
     id: 'outbound',
     heading: 'Outbound',
@@ -142,21 +154,27 @@ function scrollActiveNavIntoView() {
 
 function groupIdForPath(path) {
   const p = path.replace(/\/$/, '') || '/'
-  const g = navGroups.find((gr) => gr.links.some((l) => l.to === p || (l.to !== '/' && p.startsWith(l.to + '/'))))
+  const g = navGroups.find((gr) =>
+    gr.links.some((l) => l.to === p || (l.to !== '/' && p.startsWith(l.to + '/')))
+  )
   return g?.id ?? null
 }
 
 function ensureCurrentGroupOpen() {
   const id = groupIdForPath(route.path)
   const next = {}
-  navGroups.forEach((g) => { next[g.id] = g.id === id })
+  navGroups.forEach((g) => {
+    next[g.id] = g.id === id
+  })
   expanded.value = next
 }
 
 async function toggle(id) {
   const willBeOpen = !expanded.value[id]
   const next = {}
-  navGroups.forEach((g) => { next[g.id] = g.id === id ? willBeOpen : false })
+  navGroups.forEach((g) => {
+    next[g.id] = g.id === id ? willBeOpen : false
+  })
   expanded.value = next
   await nextTick()
   scrollActiveNavIntoView()
@@ -243,21 +261,38 @@ async function logout() {
 
           <div v-for="group in navGroups" :key="group.id" class="nav-group">
             <button
+              :id="'nav-heading-' + group.id"
               type="button"
               class="nav-heading nav-heading-btn"
               :aria-expanded="expanded[group.id]"
               :aria-controls="'nav-group-' + group.id"
-              :id="'nav-heading-' + group.id"
               @click="toggle(group.id)"
             >
               <span class="nav-heading-leading">
                 <NavIcon :name="group.icon" />
                 <span class="nav-heading-text">{{ group.heading }}</span>
               </span>
-              <span class="nav-heading-chevron" :class="{ open: expanded[group.id] }" aria-hidden="true">▼</span>
+              <span
+                class="nav-heading-chevron"
+                :class="{ open: expanded[group.id] }"
+                aria-hidden="true"
+                >▼</span
+              >
             </button>
-            <div :id="'nav-group-' + group.id" class="nav-group-links" role="region" :aria-labelledby="'nav-heading-' + group.id" v-show="expanded[group.id]">
-              <router-link v-for="link in group.links" :key="link.to" :to="link.to" class="nav-link" active-class="active">
+            <div
+              v-show="expanded[group.id]"
+              :id="'nav-group-' + group.id"
+              class="nav-group-links"
+              role="region"
+              :aria-labelledby="'nav-heading-' + group.id"
+            >
+              <router-link
+                v-for="link in group.links"
+                :key="link.to"
+                :to="link.to"
+                class="nav-link"
+                active-class="active"
+              >
                 <NavIcon :name="link.icon" />
                 <span class="nav-link-label">{{ link.label }}</span>
               </router-link>
@@ -271,9 +306,7 @@ async function logout() {
           </router-link>
         </template>
       </nav>
-      <footer class="sidebar-footer" role="contentinfo">
-        © Aelintra Telecom
-      </footer>
+      <footer class="sidebar-footer" role="contentinfo">© Aelintra Telecom</footer>
     </aside>
     <div class="main">
       <header class="topbar">
@@ -283,7 +316,9 @@ async function logout() {
         </div>
         <div class="topbar-right">
           <CommitButton v-if="showCommitButton" />
-          <span v-if="auth.user" class="user">Logged in as {{ auth.user.name || auth.user.email }}</span>
+          <span v-if="auth.user" class="user"
+            >Logged in as {{ auth.user.name || auth.user.email }}</span
+          >
           <button type="button" class="logout-btn" @click="logout">Logout</button>
         </div>
       </header>

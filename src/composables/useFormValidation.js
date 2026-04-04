@@ -2,7 +2,7 @@ import { ref, watch } from 'vue'
 
 /**
  * Composable for form field validation
- * 
+ *
  * @param {Ref} fieldRef - Vue ref containing the field value
  * @param {Function} validator - Validation function that returns error message or null
  * @param {Object} options - Options for validation behavior
@@ -11,7 +11,7 @@ import { ref, watch } from 'vue'
 export function useFormValidation(fieldRef, validator, options = {}) {
   const {
     validateOnChange = true, // Validate on change after first blur
-    validateOnBlur = true    // Validate on blur
+    validateOnBlur = true // Validate on blur
   } = options
 
   const error = ref(null)
@@ -56,7 +56,7 @@ export function useFormValidation(fieldRef, validator, options = {}) {
 
 /**
  * Helper to validate all fields in a form
- * 
+ *
  * @param {Array} validations - Array of validation objects from useFormValidation
  * @returns {Boolean} True if all fields are valid
  */
@@ -72,7 +72,7 @@ export function validateAll(validations) {
 
 /**
  * Helper to focus first error field
- * 
+ *
  * @param {Array} validations - Array of validation objects with fieldId property
  * @param {Function} getFieldElement - Function to get DOM element for field
  */
@@ -81,7 +81,7 @@ export async function focusFirstError(validations, getFieldElement) {
     if (validation.error.value) {
       const element = getFieldElement(validation.fieldId)
       if (element) {
-        await new Promise(resolve => setTimeout(resolve, 0)) // nextTick
+        await new Promise((resolve) => setTimeout(resolve, 0)) // nextTick
         element.focus()
         break
       }

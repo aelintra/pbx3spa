@@ -34,8 +34,12 @@ export function buildIvrPayload(optionsObj, tagsObj, alertsObj, timeoutVal) {
   for (let i = 0; i <= 11; i++) {
     const o = optionsObj[`option${i}`]
     body[`option${i}`] = o != null && o !== '' ? String(o) : null
-    body[`tag${i}`] = tagsObj[`tag${i}`] != null && tagsObj[`tag${i}`] !== '' ? String(tagsObj[`tag${i}`]) : null
-    body[`alert${i}`] = alertsObj[`alert${i}`] != null && alertsObj[`alert${i}`] !== '' ? String(alertsObj[`alert${i}`]) : null
+    body[`tag${i}`] =
+      tagsObj[`tag${i}`] != null && tagsObj[`tag${i}`] !== '' ? String(tagsObj[`tag${i}`]) : null
+    body[`alert${i}`] =
+      alertsObj[`alert${i}`] != null && alertsObj[`alert${i}`] !== ''
+        ? String(alertsObj[`alert${i}`])
+        : null
   }
   body.timeout = timeoutVal != null && timeoutVal !== '' ? String(timeoutVal) : null
   return body

@@ -38,16 +38,46 @@ const editGreetnum = ref('None')
 const editListenforext = ref('NO')
 const editTimeout = ref('operator')
 const options = ref({
-  option0: 'None', option1: 'None', option2: 'None', option3: 'None', option4: 'None', option5: 'None',
-  option6: 'None', option7: 'None', option8: 'None', option9: 'None', option10: 'None', option11: 'None'
+  option0: 'None',
+  option1: 'None',
+  option2: 'None',
+  option3: 'None',
+  option4: 'None',
+  option5: 'None',
+  option6: 'None',
+  option7: 'None',
+  option8: 'None',
+  option9: 'None',
+  option10: 'None',
+  option11: 'None'
 })
 const tags = ref({
-  tag0: '', tag1: '', tag2: '', tag3: '', tag4: '', tag5: '',
-  tag6: '', tag7: '', tag8: '', tag9: '', tag10: '', tag11: ''
+  tag0: '',
+  tag1: '',
+  tag2: '',
+  tag3: '',
+  tag4: '',
+  tag5: '',
+  tag6: '',
+  tag7: '',
+  tag8: '',
+  tag9: '',
+  tag10: '',
+  tag11: ''
 })
 const alerts = ref({
-  alert0: '', alert1: '', alert2: '', alert3: '', alert4: '', alert5: '',
-  alert6: '', alert7: '', alert8: '', alert9: '', alert10: '', alert11: ''
+  alert0: '',
+  alert1: '',
+  alert2: '',
+  alert3: '',
+  alert4: '',
+  alert5: '',
+  alert6: '',
+  alert7: '',
+  alert8: '',
+  alert9: '',
+  alert10: '',
+  alert11: ''
 })
 const destinations = ref(null)
 const destinationsLoading = ref(false)
@@ -83,7 +113,8 @@ const tenantShortuidToPkey = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = editCluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -203,12 +234,16 @@ onMounted(async () => {
   fetchIvr()
 })
 watch(shortuid, fetchIvr)
-watch(tenants, () => {
-  if (ivr.value && editCluster.value) {
-    const resolved = tenantShortuidToPkey.value[editCluster.value]
-    if (resolved) editCluster.value = resolved
-  }
-}, { deep: true })
+watch(
+  tenants,
+  () => {
+    if (ivr.value && editCluster.value) {
+      const resolved = tenantShortuidToPkey.value[editCluster.value]
+      if (resolved) editCluster.value = resolved
+    }
+  },
+  { deep: true }
+)
 watch(editCluster, () => {
   if (editing.value) loadDestinations()
   if (clusterValidation.touched.value) {
@@ -237,20 +272,20 @@ function onKeydown(e) {
 async function saveEdit(e) {
   e.preventDefault()
   saveError.value = ''
-  
+
   // Validate all fields before submitting
   const validations = [
     { ...clusterValidation, fieldId: 'edit-cluster' },
     { ...greetnumValidation, fieldId: 'edit-greetnum' }
   ]
-  
+
   if (!validateAll(validations)) {
     // Focus first error field
     await nextTick()
     focusFirstError(validations, (id) => document.getElementById(id))
     return
   }
-  
+
   const pkeyErr = validateIvrPkey(editPkey.value)
   if (pkeyErr) {
     saveError.value = pkeyErr
@@ -268,7 +303,8 @@ async function saveEdit(e) {
     if (editCname.value.trim()) body.cname = editCname.value.trim()
     else body.cname = null
     if (editDescription.value.trim()) body.description = editDescription.value.trim()
-    if (editGreetnum.value && editGreetnum.value !== 'None') body.greetnum = String(editGreetnum.value).trim()
+    if (editGreetnum.value && editGreetnum.value !== 'None')
+      body.greetnum = String(editGreetnum.value).trim()
     await getApiClient().put(`ivrs/${encodeURIComponent(shortuid.value)}`, body)
     await fetchIvr()
     editing.value = false
@@ -278,11 +314,15 @@ async function saveEdit(e) {
     if (errors) {
       if (errors.cluster) {
         clusterValidation.touched.value = true
-        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
+        clusterValidation.error.value = Array.isArray(errors.cluster)
+          ? errors.cluster[0]
+          : errors.cluster
       }
       if (errors.greetnum) {
         greetnumValidation.touched.value = true
-        greetnumValidation.error.value = Array.isArray(errors.greetnum) ? errors.greetnum[0] : errors.greetnum
+        greetnumValidation.error.value = Array.isArray(errors.greetnum)
+          ? errors.greetnum[0]
+          : errors.greetnum
       }
       await nextTick()
       focusFirstError(validations, (id) => document.getElementById(id))
@@ -301,7 +341,6 @@ function askConfirmDelete() {
 function cancelConfirmDelete() {
   confirmDeleteOpen.value = false
 }
-
 
 async function confirmAndDelete() {
   deleteError.value = ''
@@ -324,7 +363,6 @@ const panelTitleTenantSuffix = computed(() => {
   if (!t) return ''
   return ` (${t})`
 })
-
 </script>
 
 <template>
@@ -332,15 +370,15 @@ const panelTitleTenantSuffix = computed(() => {
     <PanelBackLink :to="{ name: 'ivrs' }" label="IVRs">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit IVR {{ ivr?.cname?.trim() ? ivr.cname.trim() : (ivr?.pkey ?? '…') }}{{ panelTitleTenantSuffix }}</h1>
-          <DetailActiveStatusBar
-            v-if="ivr"
-            v-model="editActive"
-            toggle-id="edit-ivr-active"
-          />
+          <h1 class="detail-panel-title">
+            Edit IVR {{ ivr?.cname?.trim() ? ivr.cname.trim() : (ivr?.pkey ?? '…')
+            }}{{ panelTitleTenantSuffix }}
+          </h1>
+          <DetailActiveStatusBar v-if="ivr" v-model="editActive" toggle-id="edit-ivr-active" />
         </div>
         <p v-if="ivr && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
-          Inactive IVRs are not used in call flow until you activate this record and commit the change.
+          Inactive IVRs are not used in call flow until you activate this record and commit the
+          change.
         </p>
       </div>
     </PanelBackLink>
@@ -357,18 +395,55 @@ const panelTitleTenantSuffix = computed(() => {
           <div class="edit-actions edit-actions-top">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
             <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
-            <button type="button" class="action-delete" :disabled="deleting" @click="askConfirmDelete">
+            <button
+              type="button"
+              class="action-delete"
+              :disabled="deleting"
+              @click="askConfirmDelete"
+            >
               {{ deleting ? 'Deleting…' : 'Delete' }}
             </button>
           </div>
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="ivr.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="ivr.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="ivr.id ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-id" :model-value="ivr.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="IVR Direct Dial" :value="ivr.pkey ?? '—'" class="readonly-identity" />
+            <FormReadonly
+              v-if="isReadOnly('shortuid')"
+              id="edit-identity-shortuid"
+              label="UID"
+              :value="ivr.shortuid ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-shortuid"
+              :model-value="ivr.shortuid ?? '—'"
+              label="UID"
+              disabled
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="isReadOnly('id')"
+              id="edit-identity-id"
+              label="KSUID"
+              :value="ivr.id ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-id"
+              :model-value="ivr.id ?? '—'"
+              label="KSUID"
+              disabled
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="isReadOnly('pkey')"
+              id="edit-identity-pkey"
+              label="IVR Direct Dial"
+              :value="ivr.pkey ?? '—'"
+              class="readonly-identity"
+            />
             <FormField
               v-else
               id="edit-identity-pkey"
@@ -435,7 +510,9 @@ const panelTitleTenantSuffix = computed(() => {
           </div>
 
           <section class="destinations-section" aria-labelledby="ivr-edit-destinations-heading">
-            <h2 id="ivr-edit-destinations-heading" class="destinations-heading">Keystroke options</h2>
+            <h2 id="ivr-edit-destinations-heading" class="destinations-heading">
+              Keystroke options
+            </h2>
             <div class="destinations-table">
               <div class="destinations-row destinations-header">
                 <span class="dest-cell dest-key">Key</span>
@@ -444,7 +521,10 @@ const panelTitleTenantSuffix = computed(() => {
                 <span class="dest-cell dest-alert">Alert</span>
               </div>
               <template v-for="item in OPTION_ENTRIES" :key="item.key">
-                <div class="destinations-row dest-row-fields" :class="{ 'destinations-row-none': options[item.key] === 'None' }">
+                <div
+                  class="destinations-row dest-row-fields"
+                  :class="{ 'destinations-row-none': options[item.key] === 'None' }"
+                >
                   <span class="dest-cell dest-key">{{ item.label }}</span>
                   <div class="dest-cell dest-action">
                     <FormSelect
@@ -490,7 +570,12 @@ const panelTitleTenantSuffix = computed(() => {
           <div class="edit-actions">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
             <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
-            <button type="button" class="action-delete" :disabled="deleting" @click="askConfirmDelete">
+            <button
+              type="button"
+              class="action-delete"
+              :disabled="deleting"
+              @click="askConfirmDelete"
+            >
               {{ deleting ? 'Deleting…' : 'Delete' }}
             </button>
           </div>
@@ -506,7 +591,10 @@ const panelTitleTenantSuffix = computed(() => {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>IVR <strong>{{ ivr?.pkey ?? '—' }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          IVR <strong>{{ ivr?.pkey ?? '—' }}</strong> will be permanently deleted. This cannot be
+          undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -752,7 +840,7 @@ const panelTitleTenantSuffix = computed(() => {
   gap: 0.25rem;
 }
 .field-error::before {
-  content: "⚠";
+  content: '⚠';
   font-size: 0.875rem;
   flex-shrink: 0;
 }
@@ -767,12 +855,12 @@ const panelTitleTenantSuffix = computed(() => {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.edit-actions button[type="submit"] {
+.edit-actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.edit-actions button[type="submit"]:disabled {
+.edit-actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

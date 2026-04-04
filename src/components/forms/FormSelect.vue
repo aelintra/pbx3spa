@@ -133,8 +133,8 @@ function optionAttrValue(opt) {
     </label>
     <div class="form-field-input-wrapper">
       <select
-        :key="inputKey ?? id"
         :id="id"
+        :key="inputKey ?? id"
         v-model="selectValue"
         :class="{
           'form-select': true,
@@ -142,7 +142,7 @@ function optionAttrValue(opt) {
           'form-input-valid': isValid
         }"
         :aria-invalid="hasError"
-        :aria-describedby="hasError ? errorId : (hint ? hintId : null)"
+        :aria-describedby="hasError ? errorId : hint ? hintId : null"
         :aria-label="ariaLabel || label"
         :aria-required="required"
         :required="required"
@@ -156,32 +156,27 @@ function optionAttrValue(opt) {
             v-for="(opt, optIdx) in options"
             :key="`${optionAttrValue(opt)}-${optIdx}`"
             :value="optionAttrValue(opt)"
-          >{{ optionLabel(opt) }}</option>
+          >
+            {{ optionLabel(opt) }}
+          </option>
           <template v-if="optionGroups">
             <optgroup v-for="(pkeys, group) in optionGroups" :key="group" :label="group">
               <option
-                v-for="(p, pIdx) in (pkeys && Array.isArray(pkeys) ? pkeys : [])"
+                v-for="(p, pIdx) in pkeys && Array.isArray(pkeys) ? pkeys : []"
                 :key="`${group}-${pIdx}-${String(p)}`"
                 :value="String(p)"
-              >{{ p }}</option>
+              >
+                {{ p }}
+              </option>
               <option v-if="!pkeys || !pkeys.length" disabled value="">—</option>
             </optgroup>
           </template>
         </template>
       </select>
-      <p
-        v-if="hasError"
-        :id="errorId"
-        class="form-field-error"
-        role="alert"
-      >
+      <p v-if="hasError" :id="errorId" class="form-field-error" role="alert">
         {{ error }}
       </p>
-      <p
-        v-else-if="hint"
-        :id="hintId"
-        class="form-field-hint"
-      >
+      <p v-else-if="hint" :id="hintId" class="form-field-hint">
         {{ hint }}
       </p>
     </div>
@@ -221,7 +216,9 @@ function optionAttrValue(opt) {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 0.375rem;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
   cursor: pointer;
 }
 
@@ -266,7 +263,7 @@ function optionAttrValue(opt) {
 }
 
 .form-field-error::before {
-  content: "⚠";
+  content: '⚠';
   font-size: 0.875rem;
   flex-shrink: 0;
 }

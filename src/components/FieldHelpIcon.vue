@@ -67,12 +67,12 @@ watch(open, (isOpen) => {
 <template>
   <span v-if="hasHelp" class="field-help-wrap">
     <button
+      :id="'help-trigger-' + pkey"
       ref="anchorRef"
       type="button"
       class="field-help-trigger"
       :aria-expanded="open"
       :aria-controls="'help-popover-' + pkey"
-      :id="'help-trigger-' + pkey"
       aria-label="Help"
       title="Help"
       @click="toggle"
@@ -81,8 +81,8 @@ watch(open, (isOpen) => {
     </button>
     <div
       v-show="open"
-      ref="popoverRef"
       :id="'help-popover-' + pkey"
+      ref="popoverRef"
       class="field-help-popover"
       role="region"
       :aria-labelledby="'help-trigger-' + pkey"
@@ -141,7 +141,9 @@ watch(open, (isOpen) => {
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 .field-help-text {
   margin: 0;

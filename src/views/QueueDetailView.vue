@@ -70,12 +70,20 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = editCluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
 const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'default']
-const strategyOptions = ['ringall', 'roundrobin', 'leastrecent', 'fewestcalls', 'random', 'rrmemory']
+const strategyOptions = [
+  'ringall',
+  'roundrobin',
+  'leastrecent',
+  'fewestcalls',
+  'random',
+  'rrmemory'
+]
 
 function normalizeDevicerec(v) {
   const s = (v ?? '').toString().trim()
@@ -103,7 +111,7 @@ async function fetchQueue() {
     const clusterRaw = q?.cluster ?? 'default'
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
     editPkey.value = q?.pkey ?? ''
-    editActive.value = (q?.active === 'NO') ? 'NO' : 'YES'
+    editActive.value = q?.active === 'NO' ? 'NO' : 'YES'
     editCname.value = q?.cname ?? ''
     editDescription.value = q?.description ?? ''
     editOutcome.value = q?.outcome ?? ''
@@ -111,9 +119,11 @@ async function fetchQueue() {
     editAlertinfo.value = q?.alertinfo ?? ''
     editDivert.value = q?.divert != null && q?.divert !== '' ? String(q.divert) : ''
     const g = q?.greetnum
-    editGreetnum.value = (g == null || g === '' || String(g).trim() === 'None') ? '' : String(g).trim()
+    editGreetnum.value =
+      g == null || g === '' || String(g).trim() === 'None' ? '' : String(g).trim()
     const gr = q?.greeting
-    editGreeting.value = (gr == null || gr === '' || String(gr).trim() === 'None') ? '' : String(gr).trim()
+    editGreeting.value =
+      gr == null || gr === '' || String(gr).trim() === 'None' ? '' : String(gr).trim()
     editMembers.value = q?.members ?? ''
     editMusicclass.value = q?.musicclass ?? ''
     editOptions.value = q?.options ?? ''
@@ -238,12 +248,10 @@ const panelTitleTenantSuffix = computed(() => {
     <PanelBackLink :to="{ name: 'queues' }" label="Queues">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit Queue {{ displayName }}{{ panelTitleTenantSuffix }}</h1>
-          <DetailActiveStatusBar
-            v-if="queue"
-            v-model="editActive"
-            toggle-id="edit-queue-active"
-          />
+          <h1 class="detail-panel-title">
+            Edit Queue {{ displayName }}{{ panelTitleTenantSuffix }}
+          </h1>
+          <DetailActiveStatusBar v-if="queue" v-model="editActive" toggle-id="edit-queue-active" />
         </div>
         <p v-if="queue && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
           Inactive queues do not accept calls until you activate this record and commit the change.
@@ -276,16 +284,63 @@ const panelTitleTenantSuffix = computed(() => {
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
             <template v-if="queue.shortuid != null && queue.shortuid !== ''">
-              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="queue.shortuid ?? '—'" class="readonly-identity" />
-              <FormField v-else id="edit-identity-shortuid" :model-value="queue.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
+              <FormReadonly
+                v-if="isReadOnly('shortuid')"
+                id="edit-identity-shortuid"
+                label="UID"
+                :value="queue.shortuid ?? '—'"
+                class="readonly-identity"
+              />
+              <FormField
+                v-else
+                id="edit-identity-shortuid"
+                :model-value="queue.shortuid ?? '—'"
+                label="UID"
+                disabled
+                class="readonly-identity"
+              />
             </template>
             <template v-if="queue.id != null && queue.id !== ''">
-              <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="queue.id ?? '—'" class="readonly-identity" />
-              <FormField v-else id="edit-identity-id" :model-value="queue.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
+              <FormReadonly
+                v-if="isReadOnly('id')"
+                id="edit-identity-id"
+                label="KSUID"
+                :value="queue.id ?? '—'"
+                class="readonly-identity"
+              />
+              <FormField
+                v-else
+                id="edit-identity-id"
+                :model-value="queue.id ?? '—'"
+                label="KSUID"
+                disabled
+                class="readonly-identity"
+              />
             </template>
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Queue Dial" :value="editPkey || '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" v-model="editPkey" label="Queue Dial" type="text" inputmode="numeric" placeholder="e.g. 100" hint="Unique per tenant. 3-5 digits." />
-            <FormField id="edit-cname" v-model="editCname" label="Common name" type="text" placeholder="Display name" />
+            <FormReadonly
+              v-if="isReadOnly('pkey')"
+              id="edit-identity-pkey"
+              label="Queue Dial"
+              :value="editPkey || '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-pkey"
+              v-model="editPkey"
+              label="Queue Dial"
+              type="text"
+              inputmode="numeric"
+              placeholder="e.g. 100"
+              hint="Unique per tenant. 3-5 digits."
+            />
+            <FormField
+              id="edit-cname"
+              v-model="editCname"
+              label="Common name"
+              type="text"
+              placeholder="Display name"
+            />
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"
@@ -397,12 +452,7 @@ const panelTitleTenantSuffix = computed(() => {
 
           <h2 class="detail-heading">Advanced</h2>
           <div class="form-fields">
-            <FormField
-              id="edit-alertinfo"
-              v-model="editAlertinfo"
-              label="Alert info"
-              type="text"
-            />
+            <FormField id="edit-alertinfo" v-model="editAlertinfo" label="Alert info" type="text" />
             <FormField
               id="edit-outcome"
               v-model="editOutcome"
@@ -436,31 +486,97 @@ const panelTitleTenantSuffix = computed(() => {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Queue <strong>{{ displayName }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Queue <strong>{{ displayName }}</strong> will be permanently deleted. This cannot be
+          undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
 </template>
 
 <style scoped>
-.detail-view { max-width: 52rem; }
-.loading, .error { margin-top: 1rem; }
-.error { color: #dc2626; }
-.detail-content { margin-top: 1rem; }
-.detail-heading { font-size: 1rem; font-weight: 600; color: #334155; margin: 1.5rem 0 0.5rem 0; }
-.detail-heading:first-of-type { margin-top: 0; }
-.form-fields { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+.detail-view {
+  max-width: 52rem;
+}
+.loading,
+.error {
+  margin-top: 1rem;
+}
+.error {
+  color: #dc2626;
+}
+.detail-content {
+  margin-top: 1rem;
+}
+.detail-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.detail-heading:first-of-type {
+  margin-top: 0;
+}
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;
+}
 .readonly-identity :deep(.form-field-label),
-.readonly-identity :deep(.form-readonly) { color: #94a3b8; }
-.readonly-identity :deep(.form-readonly) { background-color: #f1f5f9; border-color: #e2e8f0; }
-.edit-form { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; max-width: 52rem; }
-.edit-actions { display: flex; gap: 0.5rem; }
-.edit-actions button { padding: 0.375rem 0.75rem; font-size: 0.875rem; font-weight: 500; border-radius: 0.375rem; cursor: pointer; }
-.edit-actions button[type="submit"] { color: #fff; background: #2563eb; border: none; }
-.edit-actions button[type="submit"]:disabled { opacity: 0.7; cursor: not-allowed; }
-.edit-actions button.secondary { color: #64748b; background: transparent; border: 1px solid #e2e8f0; }
-.edit-actions button.secondary:hover { background: #f1f5f9; }
-.edit-actions button.action-delete { color: #fff; background: #dc2626; border: none; }
-.edit-actions button.action-delete:hover:not(:disabled) { background: #b91c1c; }
-.edit-actions button.action-delete:disabled { opacity: 0.7; cursor: not-allowed; }
+.readonly-identity :deep(.form-readonly) {
+  color: #94a3b8;
+}
+.readonly-identity :deep(.form-readonly) {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+}
+.edit-form {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 52rem;
+}
+.edit-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.edit-actions button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.edit-actions button[type='submit'] {
+  color: #fff;
+  background: #2563eb;
+  border: none;
+}
+.edit-actions button[type='submit']:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.edit-actions button.secondary {
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+}
+.edit-actions button.secondary:hover {
+  background: #f1f5f9;
+}
+.edit-actions button.action-delete {
+  color: #fff;
+  background: #dc2626;
+  border: none;
+}
+.edit-actions button.action-delete:hover:not(:disabled) {
+  background: #b91c1c;
+}
+.edit-actions button.action-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 </style>

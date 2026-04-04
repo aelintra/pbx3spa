@@ -95,7 +95,11 @@ const router = createRouter({
         { path: 'queues/:shortuid', name: 'queue-detail', component: QueueDetailView },
         { path: 'conferences', name: 'conferences', component: ConferencesListView },
         { path: 'conferences/new', name: 'conference-create', component: ConferenceCreateView },
-        { path: 'conferences/:shortuid', name: 'conference-detail', component: ConferenceDetailView },
+        {
+          path: 'conferences/:shortuid',
+          name: 'conference-detail',
+          component: ConferenceDetailView
+        },
         { path: 'cosrules', name: 'cosrules', component: ClassOfServiceListView },
         { path: 'cosrules/new', name: 'cosrule-create', component: ClassOfServiceCreateView },
         { path: 'cosrules/:shortuid', name: 'cosrule-detail', component: ClassOfServiceDetailView },
@@ -103,8 +107,16 @@ const router = createRouter({
         { path: 'daytimers/new', name: 'daytimer-create', component: DayTimerCreateView },
         { path: 'daytimers/:shortuid', name: 'daytimer-detail', component: DayTimerDetailView },
         { path: 'holidaytimers', name: 'holidaytimers', component: HolidayTimersListView },
-        { path: 'holidaytimers/new', name: 'holidaytimer-create', component: HolidayTimerCreateView },
-        { path: 'holidaytimers/:shortuid', name: 'holidaytimer-detail', component: HolidayTimerDetailView },
+        {
+          path: 'holidaytimers/new',
+          name: 'holidaytimer-create',
+          component: HolidayTimerCreateView
+        },
+        {
+          path: 'holidaytimers/:shortuid',
+          name: 'holidaytimer-detail',
+          component: HolidayTimerDetailView
+        },
         { path: 'greetings', name: 'greetings', component: GreetingsListView },
         { path: 'greetings/new', name: 'greeting-create', component: GreetingCreateView },
         { path: 'greetings/:shortuid', name: 'greeting-detail', component: GreetingDetailView },
@@ -121,14 +133,30 @@ const router = createRouter({
         { path: 'devices/new', name: 'device-create', component: DeviceCreateView },
         { path: 'devices/:pkey', name: 'device-detail', component: DeviceDetailView },
         { path: 'help-messages', name: 'help-messages', component: HelpMessagesListView },
-        { path: 'help-messages/new', name: 'help-message-create', component: HelpMessageCreateView },
-        { path: 'help-messages/:pkey', name: 'help-message-detail', component: HelpMessageDetailView },
+        {
+          path: 'help-messages/new',
+          name: 'help-message-create',
+          component: HelpMessageCreateView
+        },
+        {
+          path: 'help-messages/:pkey',
+          name: 'help-message-detail',
+          component: HelpMessageDetailView
+        },
         { path: 'ivrs', name: 'ivrs', component: IvrsListView },
         { path: 'ivrs/new', name: 'ivr-create', component: IvrCreateView },
         { path: 'ivrs/:shortuid', name: 'ivr-detail', component: IvrDetailView },
         { path: 'inbound-routes', name: 'inbound-routes', component: InboundRoutesListView },
-        { path: 'inbound-routes/new', name: 'inbound-route-create', component: InboundRouteCreateView },
-        { path: 'inbound-routes/:shortuid', name: 'inbound-route-detail', component: InboundRouteDetailView },
+        {
+          path: 'inbound-routes/new',
+          name: 'inbound-route-create',
+          component: InboundRouteCreateView
+        },
+        {
+          path: 'inbound-routes/:shortuid',
+          name: 'inbound-route-detail',
+          component: InboundRouteDetailView
+        },
         { path: 'users', name: 'users', component: UsersListView },
         { path: 'users/new', name: 'user-create', component: UserCreateView },
         { path: 'sysglobals', name: 'sysglobals', component: SysglobalsEditView },
@@ -137,7 +165,11 @@ const router = createRouter({
         { path: 'ip-settings', name: 'ip-settings', component: NetworkView },
         { path: 'backup', name: 'backup', component: BackupView },
         { path: 'asterisk-files', name: 'asterisk-files', component: AsteriskFilesListView },
-        { path: 'asterisk-files/:filename', name: 'asterisk-file-detail', component: AsteriskFileDetailView },
+        {
+          path: 'asterisk-files/:filename',
+          name: 'asterisk-file-detail',
+          component: AsteriskFileDetailView
+        },
         { path: 'logs', name: 'logs', component: LogsListView }
       ]
     }

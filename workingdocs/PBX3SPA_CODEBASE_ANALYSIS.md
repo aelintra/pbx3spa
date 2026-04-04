@@ -12,7 +12,7 @@
 
 The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/create/detail patterns, `normalizeList`, schema-driven mutability (`useSchema`), sticky list filters, and a central API client. **Strengths** are cohesion of patterns, pragmatic **sessionStorage** for token and tenant context, and a **small runtime dependency surface** (low supply-chain noise).
 
-**Main gaps:** no automated tests, no ESLint/TypeScript, **coarse-grained authorisation** in the router (binary `admin` gate), **inherent duplication** across many similar Vue files (mitigated by shared utils, not eliminated), and **production build shape** (single large JS chunk; no route lazy loading). **Phase A** removed dead **`HomeView` / `counter`**, list-view debug **`console.log`**, and **`debugReset`** on form components; optional **`console.error`** remains on some list error paths. **Phase B** centralised **401** handling in **`api/client.js`** via **`clearSessionAndGoLogin()`** (`request`, **`getBlob`**, **`postFile`**). **Users** area lacks a detail/edit route and sticky list filters. **Native `window.confirm()`** is used in several flows while lists often use **`DeleteConfirmModal`** — inconsistent UX. Several topics are already tracked in workingdocs (permissions roadmap, panel parity, extension provisioning).
+**Main gaps:** no automated tests, no TypeScript, **coarse-grained authorisation** in the router (binary `admin` gate), **inherent duplication** across many similar Vue files (mitigated by shared utils, not eliminated), and **production build shape** (single large JS chunk; no route lazy loading). **Phase A** removed dead **`HomeView` / `counter`**, list-view debug **`console.log`**, and **`debugReset`** on form components; optional **`console.error`** remains on some list error paths. **Phase B** centralised **401** handling in **`api/client.js`** via **`clearSessionAndGoLogin()`** (`request`, **`getBlob`**, **`postFile`**). **Phase C** added **ESLint** (flat config, `eslint-plugin-vue` recommended + **`vue/multi-word-component-names` off**), **Prettier** (`.prettierrc.json`), **`npm run lint`** / **`lint:fix`**, **`format`** / **`format:check`**, and formatted **`src/`**; small lint-driven fixes (unused imports, **`DeleteConfirmModal`** `defineProps`, **`HolidayTimersListView`** sort numeric guard, etc.). **Firewall** view toggles use named handlers so Prettier does not emit invalid multi-statement **`@click`** fragments. **Users** area lacks a detail/edit route and sticky list filters. **Native `window.confirm()`** is used in several flows while lists often use **`DeleteConfirmModal`** — inconsistent UX. Several topics are already tracked in workingdocs (permissions roadmap, panel parity, extension provisioning).
 
 ---
 
@@ -21,11 +21,11 @@ The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/c
 | Area | Finding |
 |------|---------|
 | **TypeScript** | Not used. JSDoc appears in places (`client.js`, `useSchema.js`) but most code is untyped JS. Refactors and API shape drift are catch-at-runtime only. |
-| **Lint / format** | No ESLint, Prettier, or Stylelint in `package.json`. Style relies on convention and manual review. |
+| **Lint / format** | **ESLint 10** + **`eslint-plugin-vue`** (flat **`eslint.config.js`**) + **`eslint-config-prettier`**. **Prettier** with **`.prettierrc.json`** (`semi: false`, `singleQuote: true`). Scripts: **`npm run lint`**, **`lint:fix`**, **`format`**, **`format:check`**. No Stylelint. |
 | **Tests** | No `*.test.*` / `*.spec.*` files; no Vitest/Jest script. Regressions are manual. |
 | **Build** | Vite 6 + `@vitejs/plugin-vue` — modern and appropriate. **`npm run build`** emits a **single main JS chunk** on the order of **~650 kB** minified (~**150 kB** gzip); Vite warns about the 500 kB threshold. There is **no route-based lazy loading** (`() => import(...)`) yet. Acceptable on a LAN admin app; optional improvement for slow links. |
 
-**Debt level:** High for a growing admin surface; lowest-cost wins would be ESLint (Vue essential rules) + Prettier, then optional gradual TS or `vue-tsc` on `.vue` + JSDoc.
+**Debt level:** Lint/format baseline is in place (Phase C). Next low-cost wins: optional **Vitest**, then gradual **TS** or **`vue-tsc`** / JSDoc **`checkJs`**.
 
 ---
 
@@ -87,6 +87,8 @@ The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/c
 
 **Phase B cleanup (applied):** **`clearSessionAndGoLogin()`** in **`src/api/client.js`**; used for **401** on **`request`**, **`getBlob`**, and **`postFile`**.
 
+**Phase C cleanup (applied):** ESLint + Prettier tooling, **`src/`** formatted, lint-clean tree. **`HolidayTimerDetailView`:** removed unused **`isReadOnly`** helper (was not referenced in the template).
+
 | Item | Location | Note |
 |------|----------|------|
 | **Console on error paths** | `AgentsListView.vue`, `LogsListView.vue` | `console.error` in catch blocks — optional to remove or dev-gate; UI already surfaces errors via `error` / toast patterns. |
@@ -103,8 +105,10 @@ All routed views are imported explicitly from **`router/index.js`**. No other or
 | `vue`, `vue-router`, `pinia` | Core — appropriate. |
 | `vite`, `@vitejs/plugin-vue` | Build — appropriate. |
 | `marked` | **Dev-only** usage: `scripts/render-panel-inventory-html.mjs` — not in runtime bundle. Correct as devDependency. |
+| `eslint`, `@eslint/js`, `eslint-plugin-vue`, `eslint-config-prettier`, `globals` | Lint (dev). |
+| `prettier` | Format (dev). |
 
-**Dependency surface is small** — low supply-chain noise; upside is simplicity, downside is no testing/lint stack in the repo today.
+**Runtime dependency surface remains small.** Dev tooling adds ESLint/Prettier; **Vitest** not yet added (Phase D optional).
 
 ---
 
@@ -120,18 +124,19 @@ These are **known follow-ups**, not bugs in the SPA alone:
 
 ## 9. Prioritised recommendations
 
-1. **Add ESLint** (`eslint-plugin-vue`) + **Prettier**; optional **Vitest** for `utils/formErrors.js`, `listResponse.js`, `validation.js`.
+1. **Vitest** (optional) for `utils/formErrors.js`, `listResponse.js`, `validation.js`.
 2. **Users:** add **sticky filter** (and sort if desired) to **UsersListView**; when API allows, add **user detail/edit** route and view.
 3. **Optional:** Vue Router **lazy imports** per route to shrink initial JS and silence chunk-size warnings.
 4. **When adding non-admin roles:** extend router + nav with granular `can()` checks per **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** / **ADMIN_PANELS_AND_PERMISSIONS.md**.
 5. **Longer term:** TypeScript or strict JSDoc + `checkJs`; optional **shared confirm modal** to replace scattered `window.confirm()`.
 6. **Optional hygiene:** Remove or dev-gate remaining **`console.error`** in **Agents** / **Logs** list catch blocks if you want a silent console in production.
+7. **Phase J (final toolchain pass):** Align **Node.js** with tool **`engines`** (e.g. **`.nvmrc`** + **`package.json` `engines`**) and review **`npm audit`** / upgrades on a schedule (see **Phase J** below).
 
 ---
 
 ## 10. Step-by-step worklist (proposed changes)
 
-Work through in order unless you skip an entire phase. All steps are **pbx3spa-only** except **Phase F**, which requires **pbx3api** (and possibly policy docs) in lockstep.
+Work through in order unless you skip an entire phase. All steps are **pbx3spa-only** except **Phase F**, which requires **pbx3api** (and possibly policy docs) in lockstep. **Phase J** is an optional **final** pass: **Node** alignment and **`npm audit`** hygiene (do after **Phase C** or whenever devDependencies change materially).
 
 ### Phase A — Quick hygiene (same day)
 
@@ -154,13 +159,14 @@ Work through in order unless you skip an entire phase. All steps are **pbx3spa-o
 
 ### Phase C — ESLint + Prettier
 
-1. Add devDependencies: `eslint`, `eslint-plugin-vue`, `vue-eslint-parser`, `prettier`, and optionally `eslint-config-prettier` to avoid rule clashes.
-2. Add `eslint.config.js` (flat config) or `.eslintrc.cjs` with Vue 3 recommended rules and `parserOptions` for ESM; set `env` / `globals` for browser if needed.
-3. Add `.prettierrc` (or `prettier` key in `package.json`) matching project style (semicolons, quotes — match existing files).
-4. Add scripts to `package.json`: e.g. `"lint": "eslint src --ext .vue,.js"`, `"format": "prettier --write ."` (scope to `src` if you prefer).
-5. Run `npm run lint`, fix issues in batches (or `--fix` where safe).
-6. Add a short **Contributing** note in **README** or this doc: run lint before PR (optional).
-7. **Commit** e.g. `chore: add eslint and prettier`.
+1. Add devDependencies: `eslint`, `@eslint/js`, `eslint-plugin-vue`, `prettier`, `eslint-config-prettier`, `globals` (flat config; `vue-eslint-parser` is pulled in by the plugin).
+2. Add **`eslint.config.js`**: `js.configs.recommended`, `pluginVue.configs['flat/recommended']`, browser **`globals`**, Node **`globals`** for `vite.config.js` / `scripts/`, **`vue/multi-word-component-names`: `off`**, **`eslint-config-prettier`** last; **`ignores`**: `dist`, `node_modules`.
+3. Add **`.prettierrc.json`** and **`.prettierignore`** (`dist`, `node_modules`, lockfile).
+4. Add scripts: **`lint`** / **`lint:fix`** (`eslint .`), **`format`** / **`format:check`** on `src/**/*.{js,vue,css}`.
+5. Run **`npm run format`**, then **`npm run lint`** / **`lint:fix`**, fix remaining errors (unused vars, invalid template expressions if Prettier splits multi-statement `@click`).
+6. **`npm run build`** must stay green.
+7. Short **Contributing** note in **README** (lint + format before PR).
+8. **Commit** e.g. `chore: add eslint and prettier`.
 
 ### Phase D — Vitest (optional but valuable)
 
@@ -206,9 +212,24 @@ Work through in order unless you skip an entire phase. All steps are **pbx3spa-o
 2. Replace **`window.confirm()`** in **DashboardView**, **CommitButton**, **FirewallView**, and **BackupView** incrementally; keep copy and danger styling per action.
 3. **Commit** in small PRs per area to ease review.
 
+### Phase J — Node engines and dependency audit (final toolchain hygiene)
+
+**Goal:** Remove **`EBADENGINE`** noise from **`npm install`**, align dev/CI on a **supported Node LTS**, and **review or clear** **`npm audit`** findings (especially after adding ESLint/Prettier). This phase does not change product behaviour; it hardens the **developer and CI** story.
+
+1. **Pick a Node line** that satisfies **Vite** and **ESLint** (and other dev tools) **`engines`** fields — typically **current LTS** (e.g. **22.x** or **20.19+**). Avoid odd majors (e.g. **21**) that tools may omit from their support matrix.
+2. Add **`.nvmrc`** (or **`.node-version`**) at the repo root with that version (e.g. `22` or `22.14.0`).
+3. Add **`engines`** to **`package.json`** — at least **`"node": ">=20.19.0 <21 || >=22.13.0"`** (tune to match what you actually test; keep it honest).
+4. Document in **README** § Development: which Node to use, **`nvm use`** / **`fnm`** if applicable, and that CI should use the same version.
+5. **Audit**
+   - Run **`npm audit`** (and optionally **`npm audit --production`** if you only care about runtime deps for the built SPA).
+   - Run **`npm audit fix`** where it does not force unacceptable major bumps; for remaining items, **upgrade** manually, **document** accepted risk in a short note (this doc or **README**), or **defer** with a tracked issue.
+6. Re-run **`rm -rf node_modules && npm install`** (or fresh clone) on the chosen Node — expect **no** (or fewer) **`EBADENGINE`** warnings.
+7. Re-run **`npm run lint`**, **`npm run format:check`**, **`npm run build`** to confirm the tree still works.
+8. **Commit** e.g. `chore: pin Node engines and address npm audit`.
+
 ### Verification per phase
 
-Run commands from the **`pbx3spa`** directory. Until **Phase C** (lint) and **Phase D** (Vitest) exist, **`npm run build`** plus **browser smoke** against a running API are the main gates.
+Run commands from the **`pbx3spa`** directory. Use **`npm run lint`** and **`npm run format:check`** after UI changes. Until **Phase D** (Vitest), **`npm run build`** plus **browser smoke** against a running API remain the main functional gates.
 
 **Any change under `src/`**
 
@@ -236,9 +257,9 @@ Run commands from the **`pbx3spa`** directory. Until **Phase C** (lint) and **Ph
 
 | Automated | Manual |
 |-----------|--------|
-| `npm run lint` — exit code **0** | Spot-check formatted files match team expectations. |
+| `npm run lint` — exit code **0** | Spot-check a few views after large Prettier passes. |
+| `npm run format:check` — exit code **0** | — |
 | `npm run build` | — |
-| Optional: add `"format:check": "prettier --check src"` (or equivalent) and run it | — |
 
 **Phase D — Vitest (optional)**
 
@@ -282,19 +303,29 @@ Run commands from the **`pbx3spa`** directory. Until **Phase C** (lint) and **Ph
 |-----------|--------|
 | `npm run build` | After each migrated surface: **Dashboard** (PBX commands), **Commit**, **Firewall** restarts, **Backup** restore/confirm flows — in-app modal **Cancel** / **OK** behave correctly; no remaining **`window.confirm`** for those flows. |
 
+**Phase J — Node engines and dependency audit**
+
+| Automated | Manual |
+|-----------|--------|
+| `node -v` matches **`.nvmrc`** (or documented version). | CI image / developer shells use the same Node. |
+| `npm install` | Little or no **`EBADENGINE`** output; if warnings remain, document exception. |
+| `npm audit` | Review output; **`npm audit fix`** applied where safe; remaining issues documented or ticketed. |
+| `npm run lint` / `npm run format:check` / `npm run build` | All exit **0** after any lockfile changes. |
+
 ### Checkpoint checklist
 
 | Phase | Done when |
 |-------|-----------|
 | A | Dead `HomeView` / `counter` removed; no stray debug `console.log` in those views; build green |
 | B | Single 401 path in `client.js`; manual auth smoke OK |
-| C | `npm run lint` clean (or documented exceptions) |
+| C | `npm run lint` and `npm run format:check` clean; `npm run build` green |
 | D | `npm run test` green (if adopted) |
 | E | Users list matches sticky-filter pattern; user detail when API + route exist (if done) |
 | F | API + SPA aligned on abilities (when you start non-admin users) |
 | G | Policy decided: TS vs JSDoc + checkJs |
 | H | Smaller initial chunk or acceptable chunk map (if adopted) |
 | I | Critical actions use in-app confirm (if adopted) |
+| J | Node version pinned (`.nvmrc` + `package.json` engines); README/CI aligned; `npm audit` reviewed and follow-ups documented or fixed |
 
 ---
 

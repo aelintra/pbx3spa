@@ -63,7 +63,9 @@ onMounted(async () => {
 
     <section v-else class="list-body">
       <div v-if="files.length === 0" class="empty">No files found in /etc/asterisk.</div>
-      <p v-else-if="filterText && filteredFiles.length === 0" class="empty">No files match the filter.</p>
+      <p v-else-if="filterText && filteredFiles.length === 0" class="empty">
+        No files match the filter.
+      </p>
       <table v-else class="table">
         <thead>
           <tr>
@@ -78,7 +80,10 @@ onMounted(async () => {
             :class="{ 'list-row-readonly': f.readonly }"
           >
             <td>
-              <router-link :to="{ name: 'asterisk-file-detail', params: { filename: f.filename } }" class="cell-link">
+              <router-link
+                :to="{ name: 'asterisk-file-detail', params: { filename: f.filename } }"
+                class="cell-link"
+              >
                 {{ f.filename }}
               </router-link>
             </td>
@@ -135,9 +140,15 @@ onMounted(async () => {
 .list-states .error {
   margin: 0;
 }
-.loading { color: #64748b; }
-.error { color: #b91c1c; }
-.empty { color: #64748b; }
+.loading {
+  color: #64748b;
+}
+.error {
+  color: #b91c1c;
+}
+.empty {
+  color: #64748b;
+}
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -149,10 +160,15 @@ onMounted(async () => {
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
 }
-.table th { font-weight: 600; color: #0f172a; }
+.table th {
+  font-weight: 600;
+  color: #0f172a;
+}
 .cell-link {
   color: #2563eb;
   text-decoration: none;
 }
-.cell-link:hover { text-decoration: underline; }
+.cell-link:hover {
+  text-decoration: underline;
+}
 </style>

@@ -29,7 +29,7 @@
 <script setup>
 import { computed } from 'vue'
 
-const props = defineProps({
+defineProps({
   show: { type: Boolean, default: false },
   title: { type: String, default: 'Delete?' },
   /** Plain text body; ignored if default slot "body" is used. */
@@ -37,7 +37,7 @@ const props = defineProps({
   confirmLabel: { type: String, default: 'Delete' },
   cancelLabel: { type: String, default: 'Cancel' },
   loadingLabel: { type: String, default: 'Deleting…' },
-  loading: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['confirm', 'cancel'])

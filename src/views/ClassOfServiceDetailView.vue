@@ -53,7 +53,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = editCluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -75,7 +76,7 @@ async function fetchCosrule() {
     const c = cosrule.value
     const clusterRaw = c?.cluster ?? 'default'
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
-    editActive.value = (c?.active === 'NO') ? 'NO' : 'YES'
+    editActive.value = c?.active === 'NO' ? 'NO' : 'YES'
     editCname.value = c?.cname ?? ''
     editDescription.value = c?.description ?? ''
     editDialplan.value = c?.dialplan ?? ''
@@ -174,15 +175,14 @@ const panelTitleTenantSuffix = computed(() => {
     <PanelBackLink :to="{ name: 'cosrules' }" label="Class of Service">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit Class of Service {{ displayName }}{{ panelTitleTenantSuffix }}</h1>
-          <DetailActiveStatusBar
-            v-if="cosrule"
-            v-model="editActive"
-            toggle-id="edit-cos-active"
-          />
+          <h1 class="detail-panel-title">
+            Edit Class of Service {{ displayName }}{{ panelTitleTenantSuffix }}
+          </h1>
+          <DetailActiveStatusBar v-if="cosrule" v-model="editActive" toggle-id="edit-cos-active" />
         </div>
         <p v-if="cosrule && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
-          Inactive class-of-service rules do not apply until you activate this record and commit the change.
+          Inactive class-of-service rules do not apply until you activate this record and commit the
+          change.
         </p>
       </div>
     </PanelBackLink>
@@ -212,15 +212,52 @@ const panelTitleTenantSuffix = computed(() => {
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
             <template v-if="cosrule.shortuid != null && cosrule.shortuid !== ''">
-              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="cosrule.shortuid ?? '—'" class="readonly-identity" />
-              <FormField v-else id="edit-identity-shortuid" :model-value="cosrule.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
+              <FormReadonly
+                v-if="isReadOnly('shortuid')"
+                id="edit-identity-shortuid"
+                label="UID"
+                :value="cosrule.shortuid ?? '—'"
+                class="readonly-identity"
+              />
+              <FormField
+                v-else
+                id="edit-identity-shortuid"
+                :model-value="cosrule.shortuid ?? '—'"
+                label="UID"
+                disabled
+                class="readonly-identity"
+              />
             </template>
             <template v-if="cosrule.id != null && cosrule.id !== ''">
-              <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="cosrule.id ?? '—'" class="readonly-identity" />
-              <FormField v-else id="edit-identity-id" :model-value="cosrule.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
+              <FormReadonly
+                v-if="isReadOnly('id')"
+                id="edit-identity-id"
+                label="KSUID"
+                :value="cosrule.id ?? '—'"
+                class="readonly-identity"
+              />
+              <FormField
+                v-else
+                id="edit-identity-id"
+                :model-value="cosrule.id ?? '—'"
+                label="KSUID"
+                disabled
+                class="readonly-identity"
+              />
             </template>
-            <FormReadonly id="edit-identity-pkey" label="CoS key" :value="cosrule.pkey ?? '—'" class="readonly-identity" />
-            <FormField id="edit-cname" v-model="editCname" label="Common name" type="text" placeholder="Display name" />
+            <FormReadonly
+              id="edit-identity-pkey"
+              label="CoS key"
+              :value="cosrule.pkey ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              id="edit-cname"
+              v-model="editCname"
+              label="Common name"
+              type="text"
+              placeholder="Display name"
+            />
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"
@@ -246,8 +283,18 @@ const panelTitleTenantSuffix = computed(() => {
               placeholder="Dialplan fragment"
               :required="true"
             />
-            <FormReadonly id="edit-defaultopen" label="Default open" :value="cosrule.defaultopen ?? '—'" class="readonly-identity" />
-            <FormReadonly id="edit-defaultclosed" label="Default closed" :value="cosrule.defaultclosed ?? '—'" class="readonly-identity" />
+            <FormReadonly
+              id="edit-defaultopen"
+              label="Default open"
+              :value="cosrule.defaultopen ?? '—'"
+              class="readonly-identity"
+            />
+            <FormReadonly
+              id="edit-defaultclosed"
+              label="Default closed"
+              :value="cosrule.defaultclosed ?? '—'"
+              class="readonly-identity"
+            />
           </div>
 
           <div class="edit-actions">
@@ -274,31 +321,97 @@ const panelTitleTenantSuffix = computed(() => {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Class of Service rule <strong>{{ displayName }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Class of Service rule <strong>{{ displayName }}</strong> will be permanently deleted. This
+          cannot be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
 </template>
 
 <style scoped>
-.detail-view { max-width: 52rem; }
-.loading, .error { margin-top: 1rem; }
-.error { color: #dc2626; }
-.detail-content { margin-top: 1rem; }
-.detail-heading { font-size: 1rem; font-weight: 600; color: #334155; margin: 1.5rem 0 0.5rem 0; }
-.detail-heading:first-of-type { margin-top: 0; }
-.form-fields { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+.detail-view {
+  max-width: 52rem;
+}
+.loading,
+.error {
+  margin-top: 1rem;
+}
+.error {
+  color: #dc2626;
+}
+.detail-content {
+  margin-top: 1rem;
+}
+.detail-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.detail-heading:first-of-type {
+  margin-top: 0;
+}
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;
+}
 .readonly-identity :deep(.form-field-label),
-.readonly-identity :deep(.form-readonly) { color: #94a3b8; }
-.readonly-identity :deep(.form-readonly) { background-color: #f1f5f9; border-color: #e2e8f0; }
-.edit-form { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; max-width: 52rem; }
-.edit-actions { display: flex; gap: 0.5rem; }
-.edit-actions button { padding: 0.375rem 0.75rem; font-size: 0.875rem; font-weight: 500; border-radius: 0.375rem; cursor: pointer; }
-.edit-actions button[type="submit"] { color: #fff; background: #2563eb; border: none; }
-.edit-actions button[type="submit"]:disabled { opacity: 0.7; cursor: not-allowed; }
-.edit-actions button.secondary { color: #64748b; background: transparent; border: 1px solid #e2e8f0; }
-.edit-actions button.secondary:hover { background: #f1f5f9; }
-.edit-actions button.action-delete { color: #fff; background: #dc2626; border: none; }
-.edit-actions button.action-delete:hover:not(:disabled) { background: #b91c1c; }
-.edit-actions button.action-delete:disabled { opacity: 0.7; cursor: not-allowed; }
+.readonly-identity :deep(.form-readonly) {
+  color: #94a3b8;
+}
+.readonly-identity :deep(.form-readonly) {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+}
+.edit-form {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 52rem;
+}
+.edit-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.edit-actions button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.edit-actions button[type='submit'] {
+  color: #fff;
+  background: #2563eb;
+  border: none;
+}
+.edit-actions button[type='submit']:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.edit-actions button.secondary {
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+}
+.edit-actions button.secondary:hover {
+  background: #f1f5f9;
+}
+.edit-actions button.action-delete {
+  color: #fff;
+  background: #dc2626;
+  border: none;
+}
+.edit-actions button.action-delete:hover:not(:disabled) {
+  background: #b91c1c;
+}
+.edit-actions button.action-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 </style>

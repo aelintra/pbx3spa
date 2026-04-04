@@ -8,13 +8,7 @@ const { toasts } = storeToRefs(toastStore)
 
 <template>
   <div class="toast-container" aria-live="polite" aria-label="Notifications">
-    <div
-      v-for="t in toasts"
-      :key="t.id"
-      class="toast"
-      :class="'toast-' + t.variant"
-      role="status"
-    >
+    <div v-for="t in toasts" :key="t.id" class="toast" :class="'toast-' + t.variant" role="status">
       <span class="toast-message">{{ t.message }}</span>
       <button
         type="button"
@@ -50,7 +44,9 @@ const { toasts } = storeToRefs(toastStore)
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   font-size: 0.9375rem;
   background: white;
   border-left: 4px solid #22c55e;

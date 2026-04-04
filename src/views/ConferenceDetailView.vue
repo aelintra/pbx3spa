@@ -57,7 +57,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = editCluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -88,7 +89,7 @@ async function fetchConference() {
     const clusterRaw = c?.cluster ?? 'default'
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
     editPkey.value = c?.pkey != null && c?.pkey !== '' ? String(c.pkey) : ''
-    editActive.value = (c?.active === 'NO') ? 'NO' : 'YES'
+    editActive.value = c?.active === 'NO' ? 'NO' : 'YES'
     editCname.value = c?.cname ?? ''
     editDescription.value = c?.description ?? ''
     editType.value = typeOptions.includes(c?.type) ? c.type : 'simple'
@@ -127,7 +128,7 @@ function onKeydown(e) {
 function parsePin(v) {
   if (v === '' || v == null || v === 'None') return null
   const n = Number(v)
-  return isNaN(n) ? (String(v).trim() || null) : n
+  return isNaN(n) ? String(v).trim() || null : n
 }
 
 async function saveEdit(e) {
@@ -200,15 +201,22 @@ const panelTitleTenantSuffix = computed(() => {
     <PanelBackLink :to="{ name: 'conferences' }" label="Conferences">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit Conference {{ displayName }}{{ panelTitleTenantSuffix }}</h1>
+          <h1 class="detail-panel-title">
+            Edit Conference {{ displayName }}{{ panelTitleTenantSuffix }}
+          </h1>
           <DetailActiveStatusBar
             v-if="conference"
             v-model="editActive"
             toggle-id="edit-conference-active"
           />
         </div>
-        <p v-if="conference && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
-          Inactive conferences are not joinable until you activate this record and commit the change.
+        <p
+          v-if="conference && editActive === 'NO'"
+          class="detail-active-inactive-hint"
+          role="status"
+        >
+          Inactive conferences are not joinable until you activate this record and commit the
+          change.
         </p>
       </div>
     </PanelBackLink>
@@ -220,7 +228,9 @@ const panelTitleTenantSuffix = computed(() => {
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
 
         <form class="edit-form" @submit="saveEdit">
-          <p v-if="saveError" id="conference-edit-error" class="error" role="alert">{{ saveError }}</p>
+          <p v-if="saveError" id="conference-edit-error" class="error" role="alert">
+            {{ saveError }}
+          </p>
 
           <div class="edit-actions edit-actions-top">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
@@ -238,16 +248,63 @@ const panelTitleTenantSuffix = computed(() => {
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
             <template v-if="conference.shortuid != null && conference.shortuid !== ''">
-              <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="conference.shortuid ?? '—'" class="readonly-identity" />
-              <FormField v-else id="edit-identity-shortuid" :model-value="conference.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
+              <FormReadonly
+                v-if="isReadOnly('shortuid')"
+                id="edit-identity-shortuid"
+                label="UID"
+                :value="conference.shortuid ?? '—'"
+                class="readonly-identity"
+              />
+              <FormField
+                v-else
+                id="edit-identity-shortuid"
+                :model-value="conference.shortuid ?? '—'"
+                label="UID"
+                disabled
+                class="readonly-identity"
+              />
             </template>
             <template v-if="conference.id != null && conference.id !== ''">
-              <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="conference.id ?? '—'" class="readonly-identity" />
-              <FormField v-else id="edit-identity-id" :model-value="conference.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
+              <FormReadonly
+                v-if="isReadOnly('id')"
+                id="edit-identity-id"
+                label="KSUID"
+                :value="conference.id ?? '—'"
+                class="readonly-identity"
+              />
+              <FormField
+                v-else
+                id="edit-identity-id"
+                :model-value="conference.id ?? '—'"
+                label="KSUID"
+                disabled
+                class="readonly-identity"
+              />
             </template>
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Room number" :value="editPkey || '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" v-model="editPkey" label="Room number" type="text" inputmode="numeric" placeholder="e.g. 9000" hint="Unique per tenant. Positive number." />
-            <FormField id="edit-cname" v-model="editCname" label="Common name" type="text" placeholder="Display name" />
+            <FormReadonly
+              v-if="isReadOnly('pkey')"
+              id="edit-identity-pkey"
+              label="Room number"
+              :value="editPkey || '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-pkey"
+              v-model="editPkey"
+              label="Room number"
+              type="text"
+              inputmode="numeric"
+              placeholder="e.g. 9000"
+              hint="Unique per tenant. Positive number."
+            />
+            <FormField
+              id="edit-cname"
+              v-model="editCname"
+              label="Common name"
+              type="text"
+              placeholder="Display name"
+            />
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"
@@ -265,12 +322,7 @@ const panelTitleTenantSuffix = computed(() => {
 
           <h2 class="detail-heading">Settings</h2>
           <div class="form-fields">
-            <FormSelect
-              id="edit-type"
-              v-model="editType"
-              label="Type"
-              :options="typeOptions"
-            />
+            <FormSelect id="edit-type" v-model="editType" label="Type" :options="typeOptions" />
             <FormField
               id="edit-pin"
               v-model="editPin"
@@ -313,31 +365,97 @@ const panelTitleTenantSuffix = computed(() => {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Conference room <strong>{{ displayName }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Conference room <strong>{{ displayName }}</strong> will be permanently deleted. This
+          cannot be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
 </template>
 
 <style scoped>
-.detail-view { max-width: 52rem; }
-.loading, .error { margin-top: 1rem; }
-.error { color: #dc2626; }
-.detail-content { margin-top: 1rem; }
-.detail-heading { font-size: 1rem; font-weight: 600; color: #334155; margin: 1.5rem 0 0.5rem 0; }
-.detail-heading:first-of-type { margin-top: 0; }
-.form-fields { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+.detail-view {
+  max-width: 52rem;
+}
+.loading,
+.error {
+  margin-top: 1rem;
+}
+.error {
+  color: #dc2626;
+}
+.detail-content {
+  margin-top: 1rem;
+}
+.detail-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.detail-heading:first-of-type {
+  margin-top: 0;
+}
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;
+}
 .readonly-identity :deep(.form-field-label),
-.readonly-identity :deep(.form-readonly) { color: #94a3b8; }
-.readonly-identity :deep(.form-readonly) { background-color: #f1f5f9; border-color: #e2e8f0; }
-.edit-form { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; max-width: 52rem; }
-.edit-actions { display: flex; gap: 0.5rem; }
-.edit-actions button { padding: 0.375rem 0.75rem; font-size: 0.875rem; font-weight: 500; border-radius: 0.375rem; cursor: pointer; }
-.edit-actions button[type="submit"] { color: #fff; background: #2563eb; border: none; }
-.edit-actions button[type="submit"]:disabled { opacity: 0.7; cursor: not-allowed; }
-.edit-actions button.secondary { color: #64748b; background: transparent; border: 1px solid #e2e8f0; }
-.edit-actions button.secondary:hover { background: #f1f5f9; }
-.edit-actions button.action-delete { color: #fff; background: #dc2626; border: none; }
-.edit-actions button.action-delete:hover:not(:disabled) { background: #b91c1c; }
-.edit-actions button.action-delete:disabled { opacity: 0.7; cursor: not-allowed; }
+.readonly-identity :deep(.form-readonly) {
+  color: #94a3b8;
+}
+.readonly-identity :deep(.form-readonly) {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+}
+.edit-form {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 52rem;
+}
+.edit-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.edit-actions button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.edit-actions button[type='submit'] {
+  color: #fff;
+  background: #2563eb;
+  border: none;
+}
+.edit-actions button[type='submit']:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.edit-actions button.secondary {
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+}
+.edit-actions button.secondary:hover {
+  background: #f1f5f9;
+}
+.edit-actions button.action-delete {
+  color: #fff;
+  background: #dc2626;
+  border: none;
+}
+.edit-actions button.action-delete:hover:not(:disabled) {
+  background: #b91c1c;
+}
+.edit-actions button.action-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 </style>

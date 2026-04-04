@@ -5,7 +5,7 @@ import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 
 const props = defineProps({
-  logPath: { type: String, required: true },
+  logPath: { type: String, required: true }
 })
 
 const emit = defineEmits(['close'])
@@ -39,10 +39,10 @@ async function loadLog(loadOffset = 0) {
     const res = await getApiClient().get(`logs/${props.logPath}`, {
       params: {
         offset: loadOffset,
-        limit: limit.value,
-      },
+        limit: limit.value
+      }
     })
-    
+
     if (loadOffset === 0) {
       lines.value = res.lines || []
       offset.value = 0
@@ -50,7 +50,7 @@ async function loadLog(loadOffset = 0) {
       // Prepend older lines (they come before current offset)
       lines.value = [...(res.lines || []), ...lines.value]
     }
-    
+
     totalLines.value = res.totalLines || 0
     hasMore.value = res.hasMore || false
     offset.value = loadOffset + (res.lines?.length || 0)
@@ -67,12 +67,10 @@ async function loadLog(loadOffset = 0) {
 
 function handleScroll() {
   if (!scrollContainer.value || loadingMore.value || !hasMore.value) return
-  
+
   const el = scrollContainer.value
   const scrollTop = el.scrollTop
-  const scrollHeight = el.scrollHeight
-  const clientHeight = el.clientHeight
-  
+
   // Load more when scrolled to top (older lines)
   if (scrollTop < 200 && hasMore.value) {
     loadMore()
@@ -106,7 +104,9 @@ async function download() {
     const link = document.createElement('a')
     link.href = downloadUrl
     // Symbolic names don't have slashes, so use the name with .log extension
-    link.download = props.logPath.includes('/') ? props.logPath.split('/').pop() : `${props.logPath}.log`
+    link.download = props.logPath.includes('/')
+      ? props.logPath.split('/').pop()
+      : `${props.logPath}.log`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -145,9 +145,12 @@ onUnmounted(() => {
   }
 })
 
-watch(() => props.logPath, () => {
-  loadLog(0)
-})
+watch(
+  () => props.logPath,
+  () => {
+    loadLog(0)
+  }
+)
 </script>
 
 <template>
@@ -156,7 +159,7 @@ watch(() => props.logPath, () => {
       <div class="log-viewer-modal" role="dialog" aria-modal="true">
         <header class="modal-header">
           <h2 class="modal-title">{{ logPath }}</h2>
-          <button type="button" class="close-btn" @click="close" aria-label="Close">×</button>
+          <button type="button" class="close-btn" aria-label="Close" @click="close">×</button>
         </header>
 
         <div v-if="loading && lines.length === 0" class="modal-loading">
@@ -167,14 +170,8 @@ watch(() => props.logPath, () => {
           <p>{{ error }}</p>
         </div>
 
-        <div
-          v-else
-          ref="scrollContainer"
-          class="log-content"
-        >
-          <div v-if="loadingMore" class="loading-more">
-            Loading older lines…
-          </div>
+        <div v-else ref="scrollContainer" class="log-content">
+          <div v-if="loadingMore" class="loading-more">Loading older lines…</div>
           <div class="log-lines">
             <div
               v-for="(line, index) in displayLines"
@@ -195,7 +192,7 @@ watch(() => props.logPath, () => {
             <span v-else>—</span>
           </div>
           <div class="modal-actions">
-            <button type="button" class="action-btn" @click="refresh" :disabled="loading">
+            <button type="button" class="action-btn" :disabled="loading" @click="refresh">
               Refresh
             </button>
             <button type="button" class="action-btn action-btn-primary" @click="download">

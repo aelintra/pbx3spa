@@ -39,7 +39,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = cluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -150,7 +151,9 @@ async function onSubmit(e) {
       }
       if (errors.cluster) {
         clusterValidation.touched.value = true
-        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
+        clusterValidation.error.value = Array.isArray(errors.cluster)
+          ? errors.cluster[0]
+          : errors.cluster
       }
     }
     error.value = firstErrorMessage(err, 'Failed to create greeting')
@@ -227,8 +230,17 @@ async function onSubmit(e) {
       <h2 class="detail-heading">Audio</h2>
       <div class="form-fields">
         <label class="file-label" for="greetingFile">Audio file (.wav or .mp3)</label>
-        <input id="greetingFile" type="file" accept=".wav,.mp3,audio/wav,audio/mpeg" :disabled="loading" @change="onFileChange" />
-        <p class="hint">The original upload name is stored in the greeting record. The file will be saved as <strong>usergreeting{pkey}.wav/mp3</strong> in the tenant's sounds folder.</p>
+        <input
+          id="greetingFile"
+          type="file"
+          accept=".wav,.mp3,audio/wav,audio/mpeg"
+          :disabled="loading"
+          @change="onFileChange"
+        />
+        <p class="hint">
+          The original upload name is stored in the greeting record. The file will be saved as
+          <strong>usergreeting{pkey}.wav/mp3</strong> in the tenant's sounds folder.
+        </p>
       </div>
 
       <div class="actions">
@@ -242,20 +254,75 @@ async function onSubmit(e) {
 </template>
 
 <style scoped>
-.create-view { max-width: 52rem; }
-.form { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
-.detail-heading { font-size: 1rem; font-weight: 600; color: #334155; margin: 1.5rem 0 0.5rem 0; }
-.detail-heading:first-of-type { margin-top: 0; }
-.form-fields { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
-.error { color: #dc2626; font-size: 0.875rem; margin: 0; }
-.actions { display: flex; gap: 0.75rem; margin-top: 0.25rem; }
-.actions button { padding: 0.5rem 1rem; font-size: 0.9375rem; font-weight: 500; border-radius: 0.375rem; cursor: pointer; }
-.actions button[type="submit"] { color: #fff; background: #2563eb; border: none; }
-.actions button[type="submit"]:hover:not(:disabled) { background: #1d4ed8; }
-.actions button[type="submit"]:disabled { opacity: 0.7; cursor: not-allowed; }
-.actions button.secondary { color: #64748b; background: transparent; border: 1px solid #e2e8f0; }
-.actions button.secondary:hover { background: #f1f5f9; }
-.file-label { font-size: 0.875rem; font-weight: 500; color: #0f172a; }
-.hint { margin: 0; font-size: 0.875rem; color: #64748b; }
+.create-view {
+  max-width: 52rem;
+}
+.form {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.detail-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.detail-heading:first-of-type {
+  margin-top: 0;
+}
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin: 0;
+}
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+.actions button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.actions button[type='submit'] {
+  color: #fff;
+  background: #2563eb;
+  border: none;
+}
+.actions button[type='submit']:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+.actions button[type='submit']:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.actions button.secondary {
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+}
+.actions button.secondary:hover {
+  background: #f1f5f9;
+}
+.file-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0f172a;
+}
+.hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
 </style>
-

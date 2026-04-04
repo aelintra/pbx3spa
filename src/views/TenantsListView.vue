@@ -34,7 +34,7 @@ function localUidDisplay(t) {
 
 /** Timer status: masteroclo or effective default AUTO */
 function timerStatusDisplay(t) {
-  return (t.masteroclo != null && t.masteroclo !== '') ? t.masteroclo : 'AUTO'
+  return t.masteroclo != null && t.masteroclo !== '' ? t.masteroclo : 'AUTO'
 }
 
 // --- Filter ---
@@ -51,7 +51,16 @@ const filteredTenants = computed(() => {
     const chanmax = (t.chanmax ?? '').toString().toLowerCase()
     const timer = (t.masteroclo ?? '').toString().toLowerCase()
     const active = (t.active ?? '').toString().toLowerCase()
-    return pkey.includes(q) || shortuid.includes(q) || desc.includes(q) || clid.includes(q) || abstime.includes(q) || chanmax.includes(q) || timer.includes(q) || active.includes(q)
+    return (
+      pkey.includes(q) ||
+      shortuid.includes(q) ||
+      desc.includes(q) ||
+      clid.includes(q) ||
+      abstime.includes(q) ||
+      chanmax.includes(q) ||
+      timer.includes(q) ||
+      active.includes(q)
+    )
   })
 })
 
@@ -180,8 +189,22 @@ onMounted(() => {
       <h1>Tenants</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'tenant-create' }" class="add-btn">Create</router-link>
-        <button type="button" class="export-btn" :disabled="sortedTenants.length === 0" @click="doExportCsv">Export CSV</button>
-        <button type="button" class="export-btn" :disabled="sortedTenants.length === 0 || exportPdfLoading" @click="doExportPdf">{{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}</button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedTenants.length === 0"
+          @click="doExportCsv"
+        >
+          Export CSV
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedTenants.length === 0 || exportPdfLoading"
+          @click="doExportPdf"
+        >
+          {{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}
+        </button>
         <input
           v-model="filterText"
           type="search"
@@ -196,7 +219,9 @@ onMounted(() => {
       <ListLoadingState v-if="loading" message="Loading tenants from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
-      <div v-else-if="tenants.length === 0" class="empty">No tenants. (API returned an empty list.)</div>
+      <div v-else-if="tenants.length === 0" class="empty">
+        No tenants. (API returned an empty list.)
+      </div>
     </section>
 
     <section v-else class="list-body">
@@ -206,36 +231,112 @@ onMounted(() => {
         :filtered="filteredTenants.length"
         :active-count="tenantsActiveInFilter"
       />
-      <p v-if="filterText && filteredTenants.length === 0" class="empty">No tenants match the filter.</p>
+      <p v-if="filterText && filteredTenants.length === 0" class="empty">
+        No tenants match the filter.
+      </p>
       <table v-else class="table">
         <thead>
           <tr>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('pkey')"
+              @click="setSort('pkey')"
+            >
               name
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('shortuid')"
+              @click="setSort('shortuid')"
+            >
               UID
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('active')"
+              @click="setSort('active')"
+            >
               Active
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('description')" @click="setSort('description')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('description')"
+              @click="setSort('description')"
+            >
               description
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('clusterclid')" @click="setSort('clusterclid')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('clusterclid')"
+              @click="setSort('clusterclid')"
+            >
               CLID
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('abstimeout')" @click="setSort('abstimeout')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('abstimeout')"
+              @click="setSort('abstimeout')"
+            >
               Abstime
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('chanmax')" @click="setSort('chanmax')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('chanmax')"
+              @click="setSort('chanmax')"
+            >
               ChanMax
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('masteroclo')" @click="setSort('masteroclo')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('masteroclo')"
+              @click="setSort('masteroclo')"
+            >
               Timer status
             </th>
-            <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
-            <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></th>
+            <th class="th-actions" title="Edit">
+              <span class="action-icon" aria-hidden="true"
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+              ></span>
+            </th>
+            <th class="th-actions" title="Delete">
+              <span class="action-icon" aria-hidden="true"
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  <line x1="10" x2="10" y1="11" y2="17" />
+                  <line x1="14" x2="14" y1="11" y2="17" /></svg
+              ></span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -249,8 +350,26 @@ onMounted(() => {
             <td>{{ t.chanmax != null && t.chanmax !== '' ? t.chanmax : '—' }}</td>
             <td>{{ timerStatusDisplay(t) }}</td>
             <td>
-              <router-link :to="{ name: 'tenant-detail', params: { pkey: t.pkey } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
-                <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
+              <router-link
+                :to="{ name: 'tenant-detail', params: { pkey: t.pkey } }"
+                class="cell-link cell-link-icon"
+                title="Edit"
+                aria-label="Edit"
+              >
+                <span class="action-icon" aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+                ></span>
               </router-link>
             </td>
             <td>
@@ -263,8 +382,44 @@ onMounted(() => {
                 :disabled="deletingPkey === t.pkey"
                 @click="askConfirmDelete(t.pkey)"
               >
-                <span v-if="deletingPkey === t.pkey" class="action-icon action-icon-spin" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg></span>
-                <span v-else class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span>
+                <span
+                  v-if="deletingPkey === t.pkey"
+                  class="action-icon action-icon-spin"
+                  aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                    <path d="M16 21h5v-5" /></svg
+                ></span>
+                <span v-else class="action-icon" aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    <line x1="10" x2="10" y1="11" y2="17" />
+                    <line x1="14" x2="14" y1="11" y2="17" /></svg
+                ></span>
               </button>
               <span v-else class="cell-no-action">—</span>
             </td>
@@ -281,7 +436,10 @@ onMounted(() => {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Tenant <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Tenant <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot
+          be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>

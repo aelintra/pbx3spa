@@ -103,7 +103,9 @@ const filteredExtensions = computed(() => {
   return list.filter((e) => {
     const pkey = (e.pkey ?? '').toString().toLowerCase()
     const clusterRaw = (e.cluster ?? '').toString().toLowerCase()
-    const tenantPkey = (e.tenant_pkey ?? map.get(String(e.cluster)) ?? e.cluster ?? '').toString().toLowerCase()
+    const tenantPkey = (e.tenant_pkey ?? map.get(String(e.cluster)) ?? e.cluster ?? '')
+      .toString()
+      .toLowerCase()
     const desc = (e.desc ?? e.description ?? e.cname ?? '').toString().toLowerCase()
     return pkey.includes(q) || clusterRaw.includes(q) || tenantPkey.includes(q) || desc.includes(q)
   })
@@ -180,11 +182,11 @@ const extensionExportColumns = computed(() => [
   { key: 'active', label: 'Active' },
   { key: 'desc', label: 'User', getValue: (e) => userDisplay(e) },
   { key: 'extension_type', label: 'Type' },
-  { key: 'device', label: 'Device', getValue: (e) => (e.device ?? e.technology ?? '—') },
+  { key: 'device', label: 'Device', getValue: (e) => e.device ?? e.technology ?? '—' },
   { key: 'macaddr', label: 'MAC', getValue: (e) => (e.macaddr ? e.macaddr : 'N/A') },
   { key: 'ip', label: 'IP', getValue: (e) => ipDisplay(e) },
   { key: 'status', label: 'Latency', getValue: (e) => statusDisplay(e) },
-  { key: 'transport', label: 'Transport' },
+  { key: 'transport', label: 'Transport' }
 ])
 
 function doExportCsv() {
@@ -238,9 +240,7 @@ async function loadLiveData() {
   try {
     const liveResponse = await getApiClient().get('extensions/live')
     const raw = liveResponse?.data ?? liveResponse
-    liveData.value = typeof raw === 'object' && raw !== null && !Array.isArray(raw)
-      ? raw
-      : {}
+    liveData.value = typeof raw === 'object' && raw !== null && !Array.isArray(raw) ? raw : {}
   } catch {
     liveData.value = {}
   } finally {
@@ -282,10 +282,20 @@ onMounted(loadExtensions)
       <h1>Extensions</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'extension-create' }" class="add-btn">Create</router-link>
-        <button type="button" class="export-btn" :disabled="sortedExtensions.length === 0" @click="doExportCsv">
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedExtensions.length === 0"
+          @click="doExportCsv"
+        >
           Export CSV
         </button>
-        <button type="button" class="export-btn" :disabled="sortedExtensions.length === 0 || exportPdfLoading" @click="doExportPdf">
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedExtensions.length === 0 || exportPdfLoading"
+          @click="doExportPdf"
+        >
           {{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}
         </button>
         <input
@@ -298,11 +308,16 @@ onMounted(loadExtensions)
       </p>
     </header>
 
-    <section v-if="loading || error || deleteError || (!loading && extensions.length === 0)" class="list-states">
+    <section
+      v-if="loading || error || deleteError || (!loading && extensions.length === 0)"
+      class="list-states"
+    >
       <ListLoadingState v-if="loading" message="Loading extensions from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
-      <div v-else-if="!loading && extensions.length === 0" class="empty">No extensions. (API returned an empty list.)</div>
+      <div v-else-if="!loading && extensions.length === 0" class="empty">
+        No extensions. (API returned an empty list.)
+      </div>
     </section>
 
     <section v-else class="list-body">
@@ -316,32 +331,74 @@ onMounted(loadExtensions)
         />
         <LiveDataFetchNotice :show="liveLoading" />
       </div>
-      <p v-if="filterText && filteredExtensions.length === 0" class="empty">No extensions match the filter.</p>
+      <p v-if="filterText && filteredExtensions.length === 0" class="empty">
+        No extensions match the filter.
+      </p>
       <table v-else class="table" :aria-busy="liveLoading">
         <thead>
           <tr>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('pkey')"
+              @click="setSort('pkey')"
+            >
               Ext
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('shortuid')"
+              @click="setSort('shortuid')"
+            >
               SIP Identity
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('cluster')"
+              @click="setSort('cluster')"
+            >
               Tenant
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('active')"
+              @click="setSort('active')"
+            >
               Active?
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('desc')" @click="setSort('desc')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('desc')"
+              @click="setSort('desc')"
+            >
               User
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('extension_type')" @click="setSort('extension_type')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('extension_type')"
+              @click="setSort('extension_type')"
+            >
               Type
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('device')" @click="setSort('device')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('device')"
+              @click="setSort('device')"
+            >
               Device
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('macaddr')" @click="setSort('macaddr')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('macaddr')"
+              @click="setSort('macaddr')"
+            >
               MAC
             </th>
             <th :title="liveLoading ? 'Loading from Asterisk…' : 'From Asterisk'">
@@ -350,11 +407,50 @@ onMounted(loadExtensions)
             <th :title="liveLoading ? 'Loading from Asterisk…' : 'Round-trip time from Asterisk'">
               Latency{{ liveLoading ? ' (…)' : '' }}
             </th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('transport')" @click="setSort('transport')">
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('transport')"
+              @click="setSort('transport')"
+            >
               Transport
             </th>
-            <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
-            <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></th>
+            <th class="th-actions" title="Edit">
+              <span class="action-icon" aria-hidden="true"
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+              ></span>
+            </th>
+            <th class="th-actions" title="Delete">
+              <span class="action-icon" aria-hidden="true"
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  <line x1="10" x2="10" y1="11" y2="17" />
+                  <line x1="14" x2="14" y1="11" y2="17" /></svg
+              ></span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -366,18 +462,45 @@ onMounted(loadExtensions)
             <td class="cell-immutable" title="Immutable">{{ sipIdentityDisplay(e) }}</td>
             <td>{{ tenantPkeyDisplay(e) }}</td>
             <ListActiveChip :active="e.active" />
-            <td :title="(e.desc ?? e.cname ?? e.description ?? '')">{{ userDisplay(e) }}</td>
+            <td :title="e.desc ?? e.cname ?? e.description ?? ''">{{ userDisplay(e) }}</td>
             <td>{{ e.extension_type ?? '—' }}</td>
             <td class="cell-immutable" title="Immutable">{{ e.device ?? e.technology ?? '—' }}</td>
-            <td class="cell-immutable" :title="e.macaddr ? 'Immutable' : undefined">{{ e.macaddr ? e.macaddr : 'N/A' }}</td>
+            <td class="cell-immutable" :title="e.macaddr ? 'Immutable' : undefined">
+              {{ e.macaddr ? e.macaddr : 'N/A' }}
+            </td>
             <td>{{ ipDisplay(e) }}</td>
             <ListLiveLatencyChip :status="statusDisplay(e)" />
             <td>{{ e.transport ?? '—' }}</td>
             <td>
-              <router-link v-if="e.shortuid" :to="{ name: 'extension-detail', params: { shortuid: e.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
-                <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
+              <router-link
+                v-if="e.shortuid"
+                :to="{ name: 'extension-detail', params: { shortuid: e.shortuid } }"
+                class="cell-link cell-link-icon"
+                title="Edit"
+                aria-label="Edit"
+              >
+                <span class="action-icon" aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+                ></span>
               </router-link>
-              <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot edit" style="opacity: 0.5;">—</span>
+              <span
+                v-else
+                class="cell-link cell-link-icon"
+                title="No shortuid - cannot edit"
+                style="opacity: 0.5"
+                >—</span
+              >
             </td>
             <td>
               <button
@@ -389,10 +512,52 @@ onMounted(loadExtensions)
                 :disabled="deletingPkey === e.shortuid"
                 @click="askConfirmDelete(e.shortuid)"
               >
-                <span v-if="deletingPkey === e.shortuid" class="action-icon action-icon-spin" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg></span>
-                <span v-else class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span>
+                <span
+                  v-if="deletingPkey === e.shortuid"
+                  class="action-icon action-icon-spin"
+                  aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                    <path d="M16 21h5v-5" /></svg
+                ></span>
+                <span v-else class="action-icon" aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    <line x1="10" x2="10" y1="11" y2="17" />
+                    <line x1="14" x2="14" y1="11" y2="17" /></svg
+                ></span>
               </button>
-              <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot delete" style="opacity: 0.5;">—</span>
+              <span
+                v-else
+                class="cell-link cell-link-icon"
+                title="No shortuid - cannot delete"
+                style="opacity: 0.5"
+                >—</span
+              >
             </td>
           </tr>
         </tbody>
@@ -407,7 +572,10 @@ onMounted(loadExtensions)
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Extension <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Extension <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This
+          cannot be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>

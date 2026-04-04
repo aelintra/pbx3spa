@@ -18,13 +18,11 @@ const tenantSecondary = computed(() => {
 </script>
 
 <template>
-  <div
-    v-if="show"
-    class="session-context-chips"
-    role="group"
-    aria-label="Connected PBX context"
-  >
-    <span class="context-chip context-chip--instance" title="Instance FQDN from Instance Globals (sysglobals.fqdn)">
+  <div v-if="show" class="session-context-chips" role="group" aria-label="Connected PBX context">
+    <span
+      class="context-chip context-chip--instance"
+      title="Instance FQDN from Instance Globals (sysglobals.fqdn)"
+    >
       <span class="context-chip-k">Instance</span>
       <span class="context-chip-v">{{ auth.displayInstanceLabel }}</span>
     </span>
@@ -34,7 +32,9 @@ const tenantSecondary = computed(() => {
       :title="tenantSecondary ? `Tenant: ${tenantSecondary}` : 'Tenant in focus'"
     >
       <span class="context-chip-k">Tenant</span>
-      <span class="context-chip-v">{{ (auth.tenantContext.label || auth.tenantContext.pkey || '').trim() || '—' }}</span>
+      <span class="context-chip-v">{{
+        (auth.tenantContext.label || auth.tenantContext.pkey || '').trim() || '—'
+      }}</span>
     </span>
   </div>
 </template>

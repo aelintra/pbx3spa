@@ -140,12 +140,7 @@ onMounted(async () => {
           placeholder="e.g. Yealink_T46"
           @blur="pkeyValidation.onBlur"
         />
-        <FormField
-          id="desc"
-          v-model="desc"
-          label="Description"
-          placeholder="Optional"
-        />
+        <FormField id="desc" v-model="desc" label="Description" placeholder="Optional" />
       </div>
 
       <h2 class="detail-heading">Settings</h2>
@@ -156,12 +151,7 @@ onMounted(async () => {
           label="Technology"
           :options="TECHNOLOGY_OPTIONS"
         />
-        <FormField
-          id="owner"
-          v-model="owner"
-          label="Owner"
-          placeholder="Optional"
-        />
+        <FormField id="owner" v-model="owner" label="Owner" placeholder="Optional" />
       </div>
 
       <div class="longtext-section">
@@ -229,15 +219,15 @@ onMounted(async () => {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.actions button[type="submit"] {
+.actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.actions button[type="submit"]:hover:not(:disabled) {
+.actions button[type='submit']:hover:not(:disabled) {
   background: #1d4ed8;
 }
-.actions button[type="submit"]:disabled {
+.actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

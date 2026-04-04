@@ -49,7 +49,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = cluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -151,11 +152,15 @@ async function onSubmit(e) {
       }
       if (errors.cluster) {
         clusterValidation.touched.value = true
-        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
+        clusterValidation.error.value = Array.isArray(errors.cluster)
+          ? errors.cluster[0]
+          : errors.cluster
       }
       if (errors.dialplan) {
         dialplanValidation.touched.value = true
-        dialplanValidation.error.value = Array.isArray(errors.dialplan) ? errors.dialplan[0] : errors.dialplan
+        dialplanValidation.error.value = Array.isArray(errors.dialplan)
+          ? errors.dialplan[0]
+          : errors.dialplan
       }
       await nextTick()
       focusFirstError(
@@ -296,30 +301,10 @@ onMounted(async () => {
 
       <h2 class="detail-heading">Paths (trunks)</h2>
       <div class="form-fields">
-        <FormSelect
-          id="path1"
-          v-model="path1"
-          label="Path 1"
-          :options="pathOptions"
-        />
-        <FormSelect
-          id="path2"
-          v-model="path2"
-          label="Path 2"
-          :options="pathOptions"
-        />
-        <FormSelect
-          id="path3"
-          v-model="path3"
-          label="Path 3"
-          :options="pathOptions"
-        />
-        <FormSelect
-          id="path4"
-          v-model="path4"
-          label="Path 4"
-          :options="pathOptions"
-        />
+        <FormSelect id="path1" v-model="path1" label="Path 1" :options="pathOptions" />
+        <FormSelect id="path2" v-model="path2" label="Path 2" :options="pathOptions" />
+        <FormSelect id="path3" v-model="path3" label="Path 3" :options="pathOptions" />
+        <FormSelect id="path4" v-model="path4" label="Path 4" :options="pathOptions" />
       </div>
 
       <div class="actions">
@@ -374,15 +359,15 @@ onMounted(async () => {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.actions button[type="submit"] {
+.actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.actions button[type="submit"]:hover:not(:disabled) {
+.actions button[type='submit']:hover:not(:disabled) {
   background: #1d4ed8;
 }
-.actions button[type="submit"]:disabled {
+.actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

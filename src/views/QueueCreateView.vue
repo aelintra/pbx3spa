@@ -52,12 +52,20 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = cluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
 const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'default']
-const strategyOptions = ['ringall', 'roundrobin', 'leastrecent', 'fewestcalls', 'random', 'rrmemory']
+const strategyOptions = [
+  'ringall',
+  'roundrobin',
+  'leastrecent',
+  'fewestcalls',
+  'random',
+  'rrmemory'
+]
 
 async function loadTenants() {
   tenantsLoading.value = true
@@ -195,7 +203,9 @@ async function onSubmit(e) {
       }
       if (errors.cluster) {
         clusterValidation.touched.value = true
-        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
+        clusterValidation.error.value = Array.isArray(errors.cluster)
+          ? errors.cluster[0]
+          : errors.cluster
       }
       await nextTick()
       focusFirstError(validations, (id) => {
@@ -453,15 +463,15 @@ async function onSubmit(e) {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.actions button[type="submit"] {
+.actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.actions button[type="submit"]:hover:not(:disabled) {
+.actions button[type='submit']:hover:not(:disabled) {
   background: #1d4ed8;
 }
-.actions button[type="submit"]:disabled {
+.actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

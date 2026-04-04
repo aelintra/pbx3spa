@@ -59,7 +59,16 @@ function parseRuleLine(line, pendingCommentLine = null) {
 }
 
 function ruleToLine(r) {
-  const base = [r.action, r.source, r.dest, r.proto, r.destports, r.sport, r.origdest, r.connrate].join(' ')
+  const base = [
+    r.action,
+    r.source,
+    r.dest,
+    r.proto,
+    r.destports,
+    r.sport,
+    r.origdest,
+    r.connrate
+  ].join(' ')
   return r.description ? `${base} # ${r.description}` : base
 }
 
@@ -134,7 +143,12 @@ async function fetchIpv4() {
     const rules = data?.rules ?? []
     const raw = Array.isArray(rules) ? rules.join('\n') : String(rules)
     ipv4Rules.value = raw
-    parseLines(raw.split(/\r?\n/).map((l) => l.trimEnd()), parsedRules, preambleLines, postambleLines)
+    parseLines(
+      raw.split(/\r?\n/).map((l) => l.trimEnd()),
+      parsedRules,
+      preambleLines,
+      postambleLines
+    )
   } catch (err) {
     ipv4Rules.value = ''
     error.value = err?.data?.message || err?.message || 'Failed to load IPv4 firewall rules'
@@ -147,8 +161,13 @@ async function fetchIpv6() {
     const rules = data?.rules ?? []
     const raw = Array.isArray(rules) ? rules.join('\n') : String(rules)
     ipv6Rules.value = raw
-    parseLines(raw.split(/\r?\n/).map((l) => l.trimEnd()), parsedRules6, preambleLines6, postambleLines6)
-  } catch (err) {
+    parseLines(
+      raw.split(/\r?\n/).map((l) => l.trimEnd()),
+      parsedRules6,
+      preambleLines6,
+      postambleLines6
+    )
+  } catch {
     ipv6Rules.value = ''
     // Don't overwrite IPv4 error; IPv6 failure is non-fatal
   }
@@ -220,6 +239,26 @@ function syncTableFromRaw6() {
   parseLines(rulesToArray(ipv6Rules.value), parsedRules6, preambleLines6, postambleLines6)
 }
 
+function setIpv4ViewTable() {
+  viewMode.value = 'table'
+  syncTableFromRaw()
+}
+
+function setIpv4ViewRaw() {
+  viewMode.value = 'raw'
+  syncRawFromTable()
+}
+
+function setIpv6ViewTable() {
+  viewMode6.value = 'table'
+  syncTableFromRaw6()
+}
+
+function setIpv6ViewRaw() {
+  viewMode6.value = 'raw'
+  syncRawFromTable6()
+}
+
 function showResultModal(title, body, isError = false) {
   modalTitle.value = title
   modalBody.value = body
@@ -235,7 +274,9 @@ async function save() {
   saving.value = true
   try {
     const rules =
-      viewMode.value === 'table' ? serializeToLines(parsedRules, preambleLines, postambleLines) : rulesToArray(ipv4Rules.value)
+      viewMode.value === 'table'
+        ? serializeToLines(parsedRules, preambleLines, postambleLines)
+        : rulesToArray(ipv4Rules.value)
     await getApiClient().post('firewalls/ipv4', { rules })
     showResultModal(
       'IPv4 rules saved',
@@ -244,7 +285,9 @@ async function save() {
     )
   } catch (err) {
     const detail = err?.data?.detail
-    const msg = detail ? `${err?.data?.message || err?.message}: ${detail}` : (err?.data?.message || err?.message || 'Save failed')
+    const msg = detail
+      ? `${err?.data?.message || err?.message}: ${detail}`
+      : err?.data?.message || err?.message || 'Save failed'
     showResultModal('IPv4 save failed', msg, true)
   } finally {
     saving.value = false
@@ -255,7 +298,9 @@ async function save6() {
   saving6.value = true
   try {
     const rules =
-      viewMode6.value === 'table' ? serializeToLines(parsedRules6, preambleLines6, postambleLines6) : rulesToArray(ipv6Rules.value)
+      viewMode6.value === 'table'
+        ? serializeToLines(parsedRules6, preambleLines6, postambleLines6)
+        : rulesToArray(ipv6Rules.value)
     await getApiClient().post('firewalls/ipv6', { rules })
     showResultModal(
       'IPv6 rules saved',
@@ -264,7 +309,9 @@ async function save6() {
     )
   } catch (err) {
     const detail = err?.data?.detail
-    const msg = detail ? `${err?.data?.message || err?.message}: ${detail}` : (err?.data?.message || err?.message || 'Save failed')
+    const msg = detail
+      ? `${err?.data?.message || err?.message}: ${detail}`
+      : err?.data?.message || err?.message || 'Save failed'
     showResultModal('IPv6 save failed', msg, true)
   } finally {
     saving6.value = false
@@ -272,7 +319,11 @@ async function save6() {
 }
 
 async function restart() {
-  if (!confirm('Restart the IPv4 firewall now? Shorewall will validate the rules and apply them, or report errors.')) {
+  if (
+    !confirm(
+      'Restart the IPv4 firewall now? Shorewall will validate the rules and apply them, or report errors.'
+    )
+  ) {
     return
   }
   restarting.value = true
@@ -285,7 +336,11 @@ async function restart() {
     )
   } catch (err) {
     const body = err?.data
-    const msg = Array.isArray(body) ? body.join('\n') : (body?.detail ? `${body?.message || err?.message}: ${body.detail}` : (body?.message || err?.message || 'Restart failed'))
+    const msg = Array.isArray(body)
+      ? body.join('\n')
+      : body?.detail
+        ? `${body?.message || err?.message}: ${body.detail}`
+        : body?.message || err?.message || 'Restart failed'
     showResultModal('IPv4 restart failed', msg, true)
   } finally {
     restarting.value = false
@@ -293,7 +348,11 @@ async function restart() {
 }
 
 async function restart6() {
-  if (!confirm('Restart the IPv6 firewall now? Shorewall6 will validate the rules and apply them, or report errors.')) {
+  if (
+    !confirm(
+      'Restart the IPv6 firewall now? Shorewall6 will validate the rules and apply them, or report errors.'
+    )
+  ) {
     return
   }
   restarting6.value = true
@@ -306,7 +365,11 @@ async function restart6() {
     )
   } catch (err) {
     const body = err?.data
-    const msg = Array.isArray(body) ? body.join('\n') : (body?.detail ? `${body?.message || err?.message}: ${body.detail}` : (body?.message || err?.message || 'Restart failed'))
+    const msg = Array.isArray(body)
+      ? body.join('\n')
+      : body?.detail
+        ? `${body?.message || err?.message}: ${body.detail}`
+        : body?.message || err?.message || 'Restart failed'
     showResultModal('IPv6 restart failed', msg, true)
   } finally {
     restarting6.value = false
@@ -319,7 +382,11 @@ onMounted(load)
 <template>
   <div class="firewall-view">
     <h1>Firewall</h1>
-    <p class="firewall-intro">Edit Shorewall rules (IPv4 and IPv6). Save writes the file; Restart runs <code>shorewall check</code> (or <code>shorewall6 check</code> for IPv6) then applies if valid. Shorewall will accept or reject the config on restart.</p>
+    <p class="firewall-intro">
+      Edit Shorewall rules (IPv4 and IPv6). Save writes the file; Restart runs
+      <code>shorewall check</code> (or <code>shorewall6 check</code> for IPv6) then applies if
+      valid. Shorewall will accept or reject the config on restart.
+    </p>
 
     <p v-if="loading" class="loading">Loading rules…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
@@ -333,7 +400,7 @@ onMounted(load)
               type="button"
               class="toggle-btn"
               :class="{ active: viewMode === 'table' }"
-              @click="viewMode = 'table'; syncTableFromRaw()"
+              @click="setIpv4ViewTable"
             >
               Table
             </button>
@@ -341,7 +408,7 @@ onMounted(load)
               type="button"
               class="toggle-btn"
               :class="{ active: viewMode === 'raw' }"
-              @click="viewMode = 'raw'; syncRawFromTable()"
+              @click="setIpv4ViewRaw"
             >
               Raw
             </button>
@@ -350,92 +417,121 @@ onMounted(load)
 
         <template v-if="viewMode === 'table'">
           <div class="rules-table-wrap">
-          <div class="rules-table">
-            <div class="rules-row rules-header">
-              <span class="rule-cell rule-source">Source</span>
-              <span class="rule-cell rule-proto">Proto</span>
-              <span class="rule-cell rule-destports">Dest ports</span>
-              <span class="rule-cell rule-connrate">Conn rate</span>
-              <span class="rule-cell rule-desc">Description</span>
-              <span class="rule-cell rule-del" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></span>
+            <div class="rules-table">
+              <div class="rules-row rules-header">
+                <span class="rule-cell rule-source">Source</span>
+                <span class="rule-cell rule-proto">Proto</span>
+                <span class="rule-cell rule-destports">Dest ports</span>
+                <span class="rule-cell rule-connrate">Conn rate</span>
+                <span class="rule-cell rule-desc">Description</span>
+                <span class="rule-cell rule-del" title="Delete"
+                  ><span class="action-icon" aria-hidden="true"
+                    ><svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                      <line x1="10" x2="10" y1="11" y2="17" />
+                      <line x1="14" x2="14" y1="11" y2="17" /></svg></span
+                ></span>
+              </div>
+              <div v-for="(r, idx) in parsedRules" :key="idx" class="rules-row rule-row-fields">
+                <div class="rule-cell rule-source">
+                  <FormField
+                    :id="'fw-source-' + idx"
+                    v-model="r.source"
+                    label="Source"
+                    type="text"
+                    hide-label
+                    placeholder="e.g. net"
+                    aria-label="Source"
+                  />
+                </div>
+                <div class="rule-cell rule-proto">
+                  <FormSelect
+                    :id="'fw-proto-' + idx"
+                    v-model="r.proto"
+                    label="Proto"
+                    hide-label
+                    :options="PROTO_OPTIONS"
+                    aria-label="Proto"
+                  />
+                </div>
+                <div class="rule-cell rule-destports">
+                  <FormField
+                    :id="'fw-destports-' + idx"
+                    v-model="r.destports"
+                    label="Dest ports"
+                    type="text"
+                    hide-label
+                    placeholder="e.g. 5060"
+                    aria-label="Dest ports"
+                  />
+                </div>
+                <div class="rule-cell rule-connrate">
+                  <FormField
+                    :id="'fw-connrate-' + idx"
+                    v-model="r.connrate"
+                    label="Conn rate"
+                    type="text"
+                    hide-label
+                    placeholder="-"
+                    aria-label="Conn rate"
+                  />
+                </div>
+                <div class="rule-cell rule-desc">
+                  <FormField
+                    :id="'fw-desc-' + idx"
+                    v-model="r.description"
+                    label="Description"
+                    type="text"
+                    hide-label
+                    placeholder="Comment"
+                    aria-label="Description"
+                  />
+                </div>
+                <div class="rule-cell rule-del">
+                  <button
+                    type="button"
+                    class="cell-link cell-link-delete cell-link-icon"
+                    title="Delete rule"
+                    :aria-label="'Delete rule ' + (idx + 1)"
+                    @click="removeRule(idx)"
+                  >
+                    <span class="action-icon" aria-hidden="true"
+                      ><svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="1em"
+                        height="1em"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        <line x1="10" x2="10" y1="11" y2="17" />
+                        <line x1="14" x2="14" y1="11" y2="17" /></svg
+                    ></span>
+                  </button>
+                </div>
+              </div>
             </div>
-            <div
-              v-for="(r, idx) in parsedRules"
-              :key="idx"
-              class="rules-row rule-row-fields"
-            >
-              <div class="rule-cell rule-source">
-                <FormField
-                  :id="'fw-source-' + idx"
-                  v-model="r.source"
-                  label="Source"
-                  type="text"
-                  hide-label
-                  placeholder="e.g. net"
-                  aria-label="Source"
-                />
-              </div>
-              <div class="rule-cell rule-proto">
-                <FormSelect
-                  :id="'fw-proto-' + idx"
-                  v-model="r.proto"
-                  label="Proto"
-                  hide-label
-                  :options="PROTO_OPTIONS"
-                  aria-label="Proto"
-                />
-              </div>
-              <div class="rule-cell rule-destports">
-                <FormField
-                  :id="'fw-destports-' + idx"
-                  v-model="r.destports"
-                  label="Dest ports"
-                  type="text"
-                  hide-label
-                  placeholder="e.g. 5060"
-                  aria-label="Dest ports"
-                />
-              </div>
-              <div class="rule-cell rule-connrate">
-                <FormField
-                  :id="'fw-connrate-' + idx"
-                  v-model="r.connrate"
-                  label="Conn rate"
-                  type="text"
-                  hide-label
-                  placeholder="-"
-                  aria-label="Conn rate"
-                />
-              </div>
-              <div class="rule-cell rule-desc">
-                <FormField
-                  :id="'fw-desc-' + idx"
-                  v-model="r.description"
-                  label="Description"
-                  type="text"
-                  hide-label
-                  placeholder="Comment"
-                  aria-label="Description"
-                />
-              </div>
-              <div class="rule-cell rule-del">
-                <button
-                  type="button"
-                  class="cell-link cell-link-delete cell-link-icon"
-                  title="Delete rule"
-                  :aria-label="'Delete rule ' + (idx + 1)"
-                  @click="removeRule(idx)"
-                >
-                  <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span>
-                </button>
-              </div>
-            </div>
-          </div>
           </div>
           <div class="rules-table-actions">
-            <button type="button" class="btn-add-rule" @click="addRule">
-              Add rule
-            </button>
+            <button type="button" class="btn-add-rule" @click="addRule">Add rule</button>
           </div>
         </template>
 
@@ -467,7 +563,7 @@ onMounted(load)
               type="button"
               class="toggle-btn"
               :class="{ active: viewMode6 === 'table' }"
-              @click="viewMode6 = 'table'; syncTableFromRaw6()"
+              @click="setIpv6ViewTable"
             >
               Table
             </button>
@@ -475,7 +571,7 @@ onMounted(load)
               type="button"
               class="toggle-btn"
               :class="{ active: viewMode6 === 'raw' }"
-              @click="viewMode6 = 'raw'; syncRawFromTable6()"
+              @click="setIpv6ViewRaw"
             >
               Raw
             </button>
@@ -484,92 +580,121 @@ onMounted(load)
 
         <template v-if="viewMode6 === 'table'">
           <div class="rules-table-wrap">
-          <div class="rules-table">
-            <div class="rules-row rules-header">
-              <span class="rule-cell rule-source">Source</span>
-              <span class="rule-cell rule-proto">Proto</span>
-              <span class="rule-cell rule-destports">Dest ports</span>
-              <span class="rule-cell rule-connrate">Conn rate</span>
-              <span class="rule-cell rule-desc">Description</span>
-              <span class="rule-cell rule-del" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></span>
+            <div class="rules-table">
+              <div class="rules-row rules-header">
+                <span class="rule-cell rule-source">Source</span>
+                <span class="rule-cell rule-proto">Proto</span>
+                <span class="rule-cell rule-destports">Dest ports</span>
+                <span class="rule-cell rule-connrate">Conn rate</span>
+                <span class="rule-cell rule-desc">Description</span>
+                <span class="rule-cell rule-del" title="Delete"
+                  ><span class="action-icon" aria-hidden="true"
+                    ><svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                      <line x1="10" x2="10" y1="11" y2="17" />
+                      <line x1="14" x2="14" y1="11" y2="17" /></svg></span
+                ></span>
+              </div>
+              <div v-for="(r, idx) in parsedRules6" :key="idx" class="rules-row rule-row-fields">
+                <div class="rule-cell rule-source">
+                  <FormField
+                    :id="'fw6-source-' + idx"
+                    v-model="r.source"
+                    label="Source"
+                    type="text"
+                    hide-label
+                    placeholder="e.g. net"
+                    aria-label="Source"
+                  />
+                </div>
+                <div class="rule-cell rule-proto">
+                  <FormSelect
+                    :id="'fw6-proto-' + idx"
+                    v-model="r.proto"
+                    label="Proto"
+                    hide-label
+                    :options="PROTO_OPTIONS"
+                    aria-label="Proto"
+                  />
+                </div>
+                <div class="rule-cell rule-destports">
+                  <FormField
+                    :id="'fw6-destports-' + idx"
+                    v-model="r.destports"
+                    label="Dest ports"
+                    type="text"
+                    hide-label
+                    placeholder="e.g. 5060"
+                    aria-label="Dest ports"
+                  />
+                </div>
+                <div class="rule-cell rule-connrate">
+                  <FormField
+                    :id="'fw6-connrate-' + idx"
+                    v-model="r.connrate"
+                    label="Conn rate"
+                    type="text"
+                    hide-label
+                    placeholder="-"
+                    aria-label="Conn rate"
+                  />
+                </div>
+                <div class="rule-cell rule-desc">
+                  <FormField
+                    :id="'fw6-desc-' + idx"
+                    v-model="r.description"
+                    label="Description"
+                    type="text"
+                    hide-label
+                    placeholder="Comment"
+                    aria-label="Description"
+                  />
+                </div>
+                <div class="rule-cell rule-del">
+                  <button
+                    type="button"
+                    class="cell-link cell-link-delete cell-link-icon"
+                    title="Delete rule"
+                    :aria-label="'Delete rule ' + (idx + 1)"
+                    @click="removeRule6(idx)"
+                  >
+                    <span class="action-icon" aria-hidden="true"
+                      ><svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="1em"
+                        height="1em"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        <line x1="10" x2="10" y1="11" y2="17" />
+                        <line x1="14" x2="14" y1="11" y2="17" /></svg
+                    ></span>
+                  </button>
+                </div>
+              </div>
             </div>
-            <div
-              v-for="(r, idx) in parsedRules6"
-              :key="idx"
-              class="rules-row rule-row-fields"
-            >
-              <div class="rule-cell rule-source">
-                <FormField
-                  :id="'fw6-source-' + idx"
-                  v-model="r.source"
-                  label="Source"
-                  type="text"
-                  hide-label
-                  placeholder="e.g. net"
-                  aria-label="Source"
-                />
-              </div>
-              <div class="rule-cell rule-proto">
-                <FormSelect
-                  :id="'fw6-proto-' + idx"
-                  v-model="r.proto"
-                  label="Proto"
-                  hide-label
-                  :options="PROTO_OPTIONS"
-                  aria-label="Proto"
-                />
-              </div>
-              <div class="rule-cell rule-destports">
-                <FormField
-                  :id="'fw6-destports-' + idx"
-                  v-model="r.destports"
-                  label="Dest ports"
-                  type="text"
-                  hide-label
-                  placeholder="e.g. 5060"
-                  aria-label="Dest ports"
-                />
-              </div>
-              <div class="rule-cell rule-connrate">
-                <FormField
-                  :id="'fw6-connrate-' + idx"
-                  v-model="r.connrate"
-                  label="Conn rate"
-                  type="text"
-                  hide-label
-                  placeholder="-"
-                  aria-label="Conn rate"
-                />
-              </div>
-              <div class="rule-cell rule-desc">
-                <FormField
-                  :id="'fw6-desc-' + idx"
-                  v-model="r.description"
-                  label="Description"
-                  type="text"
-                  hide-label
-                  placeholder="Comment"
-                  aria-label="Description"
-                />
-              </div>
-              <div class="rule-cell rule-del">
-                <button
-                  type="button"
-                  class="cell-link cell-link-delete cell-link-icon"
-                  title="Delete rule"
-                  :aria-label="'Delete rule ' + (idx + 1)"
-                  @click="removeRule6(idx)"
-                >
-                  <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span>
-                </button>
-              </div>
-            </div>
-          </div>
           </div>
           <div class="rules-table-actions">
-            <button type="button" class="btn-add-rule" @click="addRule6">
-              Add rule
-            </button>
+            <button type="button" class="btn-add-rule" @click="addRule6">Add rule</button>
           </div>
         </template>
 
@@ -596,7 +721,13 @@ onMounted(load)
 
     <Teleport to="body">
       <div v-if="modalShow" class="firewall-modal-overlay" @click.self="closeModal">
-        <div class="firewall-modal" :class="{ 'firewall-modal-error': modalIsError }" role="dialog" aria-modal="true" aria-labelledby="firewall-modal-title">
+        <div
+          class="firewall-modal"
+          :class="{ 'firewall-modal-error': modalIsError }"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="firewall-modal-title"
+        >
           <h2 id="firewall-modal-title" class="firewall-modal-title">{{ modalTitle }}</h2>
           <p class="firewall-modal-body">{{ modalBody }}</p>
           <div class="firewall-modal-actions">
@@ -701,7 +832,9 @@ onMounted(load)
 .rules-row {
   display: grid;
   /* Source fits net:192.168.112.244/32; Proto, Dest ports, Conn rate, Description, Delete */
-  grid-template-columns: minmax(15rem, 2fr) 5rem minmax(9rem, 2fr) minmax(5rem, 1fr) minmax(10rem, 3fr) 4rem;
+  grid-template-columns:
+    minmax(15rem, 2fr) 5rem minmax(9rem, 2fr) minmax(5rem, 1fr) minmax(10rem, 3fr)
+    4rem;
   gap: 0.5rem 1rem;
   align-items: center;
   min-width: 0;

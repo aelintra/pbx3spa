@@ -47,7 +47,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = cluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -113,7 +114,9 @@ async function onSubmit(e) {
       ...(span.value && { span: span.value }),
       ...(active.value && { active: active.value }),
       ...(striptags.value && { striptags: striptags.value }),
-      ...(parseIntOrNull(directdial.value) !== null && { directdial: parseIntOrNull(directdial.value) }),
+      ...(parseIntOrNull(directdial.value) !== null && {
+        directdial: parseIntOrNull(directdial.value)
+      }),
       ...(extcode.value !== '' && { extcode: extcode.value })
     }
     const cleaned = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined))
@@ -132,7 +135,9 @@ async function onSubmit(e) {
       }
       if (errors.cluster) {
         clusterValidation.touched.value = true
-        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
+        clusterValidation.error.value = Array.isArray(errors.cluster)
+          ? errors.cluster[0]
+          : errors.cluster
       }
       error.value = firstErrorMessage(err, 'Failed to create custom app')
       await nextTick()
@@ -162,7 +167,16 @@ function onKeydown(e) {
 onMounted(async () => {
   await ensureFetched()
   await loadTenants()
-  applySchemaDefaults('customapps', { active, cluster, span, striptags, directdial, description, cname, extcode })
+  applySchemaDefaults('customapps', {
+    active,
+    cluster,
+    span,
+    striptags,
+    directdial,
+    description,
+    cname,
+    extcode
+  })
   nextTick().then(() => pkeyInput.value?.focus())
 })
 </script>
@@ -201,14 +215,14 @@ onMounted(async () => {
           label="Display name"
           :model-value="cname"
           placeholder="Optional"
-          @update:modelValue="(v) => (cname.value = v)"
+          @update:model-value="(v) => (cname.value = v)"
         />
         <FormField
           id="description"
           label="Description"
           :model-value="description"
           placeholder="Optional"
-          @update:modelValue="(v) => (description.value = v)"
+          @update:model-value="(v) => (description.value = v)"
         />
       </div>
 
@@ -222,27 +236,27 @@ onMounted(async () => {
           required
           :error="clusterValidation.error.value"
           :touched="clusterValidation.touched.value"
-          @update:modelValue="(v) => (cluster.value = v)"
+          @update:model-value="(v) => (cluster.value = v)"
           @blur="clusterValidation.onBlur"
         />
         <FormToggle
           id="active"
           label="Active?"
           :model-value="active"
-          @update:modelValue="(v) => (active.value = v)"
+          @update:model-value="(v) => (active.value = v)"
         />
         <FormSelect
           id="span"
           label="Span"
           :model-value="span"
           :options="spanOptions"
-          @update:modelValue="(v) => (span.value = v)"
+          @update:model-value="(v) => (span.value = v)"
         />
         <FormToggle
           id="striptags"
           label="Strip tags?"
           :model-value="striptags"
-          @update:modelValue="(v) => (striptags.value = v)"
+          @update:model-value="(v) => (striptags.value = v)"
         />
         <FormField
           id="directdial"
@@ -250,7 +264,7 @@ onMounted(async () => {
           type="number"
           :model-value="directdial"
           placeholder="Optional (integer)"
-          @update:modelValue="(v) => (directdial.value = v)"
+          @update:model-value="(v) => (directdial.value = v)"
         />
       </div>
 
@@ -264,7 +278,7 @@ onMounted(async () => {
           :rows="20"
           placeholder="Asterisk extensions.conf code"
           hint="Asterisk extensions.conf dialplan code (long text)."
-          @update:modelValue="(v) => (extcode.value = v)"
+          @update:model-value="(v) => (extcode.value = v)"
         />
       </div>
 
@@ -320,15 +334,15 @@ onMounted(async () => {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.actions button[type="submit"] {
+.actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.actions button[type="submit"]:hover:not(:disabled) {
+.actions button[type='submit']:hover:not(:disabled) {
   background: #1d4ed8;
 }
-.actions button[type="submit"]:disabled {
+.actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

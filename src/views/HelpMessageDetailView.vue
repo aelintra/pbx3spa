@@ -136,14 +136,24 @@ async function confirmDelete() {
 
       <h2 class="detail-heading">Identity</h2>
       <div class="form-fields">
-        <FormReadonly id="edit-identity-pkey" label="Message key" :value="messageRow?.pkey ?? pkey ?? '—'" class="readonly-identity" />
+        <FormReadonly
+          id="edit-identity-pkey"
+          label="Message key"
+          :value="messageRow?.pkey ?? pkey ?? '—'"
+          class="readonly-identity"
+        />
         <FormField
           v-if="!isReadOnly('displayname')"
           id="displayname"
           v-model="editDisplayname"
           label="Display name"
         />
-        <FormReadonly v-else id="displayname" label="Display name" :value="messageRow?.displayname ?? '—'" />
+        <FormReadonly
+          v-else
+          id="displayname"
+          label="Display name"
+          :value="messageRow?.displayname ?? '—'"
+        />
       </div>
 
       <h2 class="detail-heading">System</h2>
@@ -185,7 +195,10 @@ async function confirmDelete() {
       @cancel="() => (confirmDeleteOpen = false)"
     >
       <template #body>
-        <p>Help message <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Help message <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be
+          undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -235,12 +248,12 @@ async function confirmDelete() {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.edit-actions button[type="submit"] {
+.edit-actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.edit-actions button[type="submit"]:disabled {
+.edit-actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

@@ -55,14 +55,26 @@ const filteredRoutes = computed(() => {
   return list.filter((r) => {
     const pkey = (r.pkey ?? '').toString().toLowerCase()
     const shortuid = (r.shortuid ?? '').toString().toLowerCase()
-    const tenantPkey = (r.tenant_pkey ?? map.get(String(r.cluster)) ?? r.cluster ?? '').toString().toLowerCase()
+    const tenantPkey = (r.tenant_pkey ?? map.get(String(r.cluster)) ?? r.cluster ?? '')
+      .toString()
+      .toLowerCase()
     const trunkname = (r.trunkname ?? '').toString().toLowerCase()
     const openroute = (r.openroute ?? '').toString().toLowerCase()
     const closeroute = (r.closeroute ?? '').toString().toLowerCase()
     const technology = (r.technology ?? '').toString().toLowerCase()
     const desc = (r.desc ?? r.description ?? '').toString().toLowerCase()
     const active = (r.active ?? '').toString().toLowerCase()
-    return pkey.includes(q) || shortuid.includes(q) || tenantPkey.includes(q) || trunkname.includes(q) || openroute.includes(q) || closeroute.includes(q) || technology.includes(q) || desc.includes(q) || active.includes(q)
+    return (
+      pkey.includes(q) ||
+      shortuid.includes(q) ||
+      tenantPkey.includes(q) ||
+      trunkname.includes(q) ||
+      openroute.includes(q) ||
+      closeroute.includes(q) ||
+      technology.includes(q) ||
+      desc.includes(q) ||
+      active.includes(q)
+    )
   })
 })
 
@@ -188,8 +200,22 @@ onMounted(loadInboundRoutes)
       <h1>Inbound routes</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'inbound-route-create' }" class="add-btn">Create</router-link>
-        <button type="button" class="export-btn" :disabled="sortedRoutes.length === 0" @click="doExportCsv">Export CSV</button>
-        <button type="button" class="export-btn" :disabled="sortedRoutes.length === 0 || exportPdfLoading" @click="doExportPdf">{{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}</button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedRoutes.length === 0"
+          @click="doExportCsv"
+        >
+          Export CSV
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedRoutes.length === 0 || exportPdfLoading"
+          @click="doExportPdf"
+        >
+          {{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}
+        </button>
         <input
           v-model="filterText"
           type="search"
@@ -200,11 +226,16 @@ onMounted(loadInboundRoutes)
       </p>
     </header>
 
-    <section v-if="loading || error || deleteError || inboundRoutes.length === 0" class="list-states">
+    <section
+      v-if="loading || error || deleteError || inboundRoutes.length === 0"
+      class="list-states"
+    >
       <ListLoadingState v-if="loading" message="Loading inbound routes from API…" />
       <p v-else-if="error" class="error">{{ error }}</p>
       <p v-if="deleteError" class="error">{{ deleteError }}</p>
-      <div v-else-if="inboundRoutes.length === 0" class="empty">No inbound routes. (API returned an empty list.)</div>
+      <div v-else-if="inboundRoutes.length === 0" class="empty">
+        No inbound routes. (API returned an empty list.)
+      </div>
     </section>
 
     <section v-else class="list-body">
@@ -214,24 +245,119 @@ onMounted(loadInboundRoutes)
         :filtered="filteredRoutes.length"
         :active-count="inboundActiveInFilter"
       />
-      <p v-if="filterText && filteredRoutes.length === 0" class="empty">No inbound routes match the filter.</p>
+      <p v-if="filterText && filteredRoutes.length === 0" class="empty">
+        No inbound routes match the filter.
+      </p>
       <table v-else class="table">
         <thead>
           <tr>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('pkey')" @click="setSort('pkey')">DiD/CLiD</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('shortuid')" @click="setSort('shortuid')">UID</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('cluster')" @click="setSort('cluster')">Tenant</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('active')" @click="setSort('active')">Active?</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('trunkname')" @click="setSort('trunkname')">Name</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('openroute')" @click="setSort('openroute')">Open</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('closeroute')" @click="setSort('closeroute')">Closed</th>
-            <th class="th-sortable" title="Click to sort" :class="sortClass('technology')" @click="setSort('technology')">Type</th>
-            <th class="th-actions" title="Edit"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span></th>
-            <th class="th-actions" title="Delete"><span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span></th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('pkey')"
+              @click="setSort('pkey')"
+            >
+              DiD/CLiD
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('shortuid')"
+              @click="setSort('shortuid')"
+            >
+              UID
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('cluster')"
+              @click="setSort('cluster')"
+            >
+              Tenant
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('active')"
+              @click="setSort('active')"
+            >
+              Active?
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('trunkname')"
+              @click="setSort('trunkname')"
+            >
+              Name
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('openroute')"
+              @click="setSort('openroute')"
+            >
+              Open
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('closeroute')"
+              @click="setSort('closeroute')"
+            >
+              Closed
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('technology')"
+              @click="setSort('technology')"
+            >
+              Type
+            </th>
+            <th class="th-actions" title="Edit">
+              <span class="action-icon" aria-hidden="true"
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+              ></span>
+            </th>
+            <th class="th-actions" title="Delete">
+              <span class="action-icon" aria-hidden="true"
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  <line x1="10" x2="10" y1="11" y2="17" />
+                  <line x1="14" x2="14" y1="11" y2="17" /></svg
+              ></span>
+            </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="r in sortedRoutes" :key="r.shortuid || r.id || (r.cluster || '') + '-' + (r.pkey || '')">
+          <tr
+            v-for="r in sortedRoutes"
+            :key="r.shortuid || r.id || (r.cluster || '') + '-' + (r.pkey || '')"
+          >
             <td>{{ r.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ localUidDisplay(r) }}</td>
             <td>{{ tenantPkeyDisplay(r) }}</td>
@@ -241,10 +367,35 @@ onMounted(loadInboundRoutes)
             <td>{{ r.closeroute ?? '—' }}</td>
             <td>{{ r.technology ?? '—' }}</td>
             <td>
-              <router-link v-if="r.shortuid" :to="{ name: 'inbound-route-detail', params: { shortuid: r.shortuid } }" class="cell-link cell-link-icon" title="Edit" aria-label="Edit">
-                <span class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></span>
+              <router-link
+                v-if="r.shortuid"
+                :to="{ name: 'inbound-route-detail', params: { shortuid: r.shortuid } }"
+                class="cell-link cell-link-icon"
+                title="Edit"
+                aria-label="Edit"
+              >
+                <span class="action-icon" aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+                ></span>
               </router-link>
-              <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot edit" style="opacity: 0.5;">—</span>
+              <span
+                v-else
+                class="cell-link cell-link-icon"
+                title="No shortuid - cannot edit"
+                style="opacity: 0.5"
+                >—</span
+              >
             </td>
             <td>
               <button
@@ -256,10 +407,52 @@ onMounted(loadInboundRoutes)
                 :disabled="deletingPkey === r.shortuid"
                 @click="askConfirmDelete(r.shortuid)"
               >
-                <span v-if="deletingPkey === r.shortuid" class="action-icon action-icon-spin" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg></span>
-                <span v-else class="action-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span>
+                <span
+                  v-if="deletingPkey === r.shortuid"
+                  class="action-icon action-icon-spin"
+                  aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                    <path d="M16 21h5v-5" /></svg
+                ></span>
+                <span v-else class="action-icon" aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    <line x1="10" x2="10" y1="11" y2="17" />
+                    <line x1="14" x2="14" y1="11" y2="17" /></svg
+                ></span>
               </button>
-              <span v-else class="cell-link cell-link-icon" title="No shortuid - cannot delete" style="opacity: 0.5;">—</span>
+              <span
+                v-else
+                class="cell-link cell-link-icon"
+                title="No shortuid - cannot delete"
+                style="opacity: 0.5"
+                >—</span
+              >
             </td>
           </tr>
         </tbody>
@@ -274,7 +467,10 @@ onMounted(loadInboundRoutes)
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Inbound route <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Inbound route <strong>{{ confirmDeletePkey }}</strong> will be permanently deleted. This
+          cannot be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>

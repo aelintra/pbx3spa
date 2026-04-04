@@ -5,7 +5,11 @@ import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
-import { validateInboundRoutePkey, validateTenant, validateInboundCarrier } from '@/utils/validation'
+import {
+  validateInboundRoutePkey,
+  validateTenant,
+  validateInboundCarrier
+} from '@/utils/validation'
 import { normalizeList } from '@/utils/listResponse'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
@@ -42,7 +46,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = cluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -50,10 +55,18 @@ const tenantOptionsForSelect = computed(() => {
 function toDestArrays(d) {
   if (!d || typeof d !== 'object') return {}
   return {
-    Queues: Array.isArray(d.Queues) ? d.Queues : (Array.isArray(d.queues) ? d.queues : []),
-    Extensions: Array.isArray(d.Extensions) ? d.Extensions : (Array.isArray(d.extensions) ? d.extensions : []),
-    IVRs: Array.isArray(d.IVRs) ? d.IVRs : (Array.isArray(d.ivrs) ? d.ivrs : []),
-    CustomApps: Array.isArray(d.CustomApps) ? d.CustomApps : (Array.isArray(d.customApps) ? d.customApps : [])
+    Queues: Array.isArray(d.Queues) ? d.Queues : Array.isArray(d.queues) ? d.queues : [],
+    Extensions: Array.isArray(d.Extensions)
+      ? d.Extensions
+      : Array.isArray(d.extensions)
+        ? d.extensions
+        : [],
+    IVRs: Array.isArray(d.IVRs) ? d.IVRs : Array.isArray(d.ivrs) ? d.ivrs : [],
+    CustomApps: Array.isArray(d.CustomApps)
+      ? d.CustomApps
+      : Array.isArray(d.customApps)
+        ? d.customApps
+        : []
   }
 }
 
@@ -62,7 +75,10 @@ const destinationGroups = computed(() => {
   const clusterVal = cluster.value
   const routeList = routes.value || []
   const routesForCluster = clusterVal
-    ? routeList.filter((r) => (r.cluster ?? r.tenant_pkey ?? '') === clusterVal).map((r) => r.pkey).filter(Boolean)
+    ? routeList
+        .filter((r) => (r.cluster ?? r.tenant_pkey ?? '') === clusterVal)
+        .map((r) => r.pkey)
+        .filter(Boolean)
     : []
   const base = toDestArrays(d)
   return {
@@ -103,7 +119,8 @@ async function loadDestinations() {
       getApiClient().get('destinations', { params: { cluster: c } }),
       getApiClient().get('routes')
     ])
-    const destBody = destResponse && typeof destResponse === 'object' ? (destResponse.data ?? destResponse) : null
+    const destBody =
+      destResponse && typeof destResponse === 'object' ? (destResponse.data ?? destResponse) : null
     destinations.value = destBody && typeof destBody === 'object' ? destBody : null
     routes.value = normalizeList(routeResponse, 'routes')
   } catch {
@@ -161,8 +178,8 @@ async function onSubmit(e) {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
       technology: carrier.value.trim(),
-      openroute: (openroute.value && openroute.value !== 'None') ? openroute.value : 'None',
-      closeroute: (closeroute.value && closeroute.value !== 'None') ? closeroute.value : 'None'
+      openroute: openroute.value && openroute.value !== 'None' ? openroute.value : 'None',
+      closeroute: closeroute.value && closeroute.value !== 'None' ? closeroute.value : 'None'
     }
     await getApiClient().post('inboundroutes', body)
     toast.show(`Inbound route ${pkey.value.trim()} created`)
@@ -178,11 +195,16 @@ async function onSubmit(e) {
       }
       if (errors.cluster) {
         clusterValidation.touched.value = true
-        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
+        clusterValidation.error.value = Array.isArray(errors.cluster)
+          ? errors.cluster[0]
+          : errors.cluster
       }
       if (errors.technology || errors.carrier) {
         carrierValidation.touched.value = true
-        carrierValidation.error.value = Array.isArray(errors.technology) ? errors.technology[0] : (errors.technology || (Array.isArray(errors.carrier) ? errors.carrier[0] : errors.carrier))
+        carrierValidation.error.value = Array.isArray(errors.technology)
+          ? errors.technology[0]
+          : errors.technology ||
+            (Array.isArray(errors.carrier) ? errors.carrier[0] : errors.carrier)
       }
       await nextTick()
       focusFirstError(
@@ -342,15 +364,15 @@ function onKeydown(e) {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.actions button[type="submit"] {
+.actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.actions button[type="submit"]:hover:not(:disabled) {
+.actions button[type='submit']:hover:not(:disabled) {
   background: #1d4ed8;
 }
-.actions button[type="submit"]:disabled {
+.actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

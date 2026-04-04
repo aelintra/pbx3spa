@@ -26,7 +26,9 @@ export function firstErrorMessage(err, fallback = '') {
   }
   const errors = fieldErrors(err)
   if (errors) {
-    const first = Object.values(errors).flat().find((m) => typeof m === 'string')
+    const first = Object.values(errors)
+      .flat()
+      .find((m) => typeof m === 'string')
     if (first) return first
   }
   return err?.data?.message ?? err?.data?.Error ?? err?.message ?? fallback

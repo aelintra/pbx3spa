@@ -14,10 +14,7 @@ import PanelBackLink from '@/components/PanelBackLink.vue'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
-const { getSchema, ensureFetched } = useSchema()
-function isReadOnly(field) {
-  return getSchema('holidaytimers')?.read_only?.includes(field) ?? false
-}
+const { ensureFetched } = useSchema()
 
 const holidaytimer = ref(null)
 const tenants = ref([])
@@ -55,7 +52,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = editCluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -63,10 +61,18 @@ const tenantOptionsForSelect = computed(() => {
 function toDestArrays(d) {
   if (!d || typeof d !== 'object') return {}
   return {
-    Queues: Array.isArray(d.Queues) ? d.Queues : (Array.isArray(d.queues) ? d.queues : []),
-    Extensions: Array.isArray(d.Extensions) ? d.Extensions : (Array.isArray(d.extensions) ? d.extensions : []),
-    IVRs: Array.isArray(d.IVRs) ? d.IVRs : (Array.isArray(d.ivrs) ? d.ivrs : []),
-    CustomApps: Array.isArray(d.CustomApps) ? d.CustomApps : (Array.isArray(d.customApps) ? d.customApps : [])
+    Queues: Array.isArray(d.Queues) ? d.Queues : Array.isArray(d.queues) ? d.queues : [],
+    Extensions: Array.isArray(d.Extensions)
+      ? d.Extensions
+      : Array.isArray(d.extensions)
+        ? d.extensions
+        : [],
+    IVRs: Array.isArray(d.IVRs) ? d.IVRs : Array.isArray(d.ivrs) ? d.ivrs : [],
+    CustomApps: Array.isArray(d.CustomApps)
+      ? d.CustomApps
+      : Array.isArray(d.customApps)
+        ? d.customApps
+        : []
   }
 }
 
@@ -133,12 +139,14 @@ async function fetchHolidaytimer() {
   loading.value = true
   error.value = ''
   try {
-    holidaytimer.value = await getApiClient().get(`holidaytimers/${encodeURIComponent(shortuid.value)}`)
+    holidaytimer.value = await getApiClient().get(
+      `holidaytimers/${encodeURIComponent(shortuid.value)}`
+    )
     const h = holidaytimer.value
     const clusterRaw = h?.cluster ?? 'default'
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
     editDescription.value = h?.description ?? ''
-    editRoute.value = (h?.route && String(h.route).trim() !== '') ? String(h.route).trim() : ''
+    editRoute.value = h?.route && String(h.route).trim() !== '' ? String(h.route).trim() : ''
     startLocal.value = epochToDatetimeLocal(h?.stime)
     endLocal.value = epochToDatetimeLocal(h?.etime)
   } catch (err) {
@@ -199,7 +207,7 @@ async function saveEdit(e) {
     const body = {
       cluster: editCluster.value.trim(),
       description: editDescription.value.trim() || null,
-      route: (editRoute.value && editRoute.value.trim() !== '') ? editRoute.value.trim() : null,
+      route: editRoute.value && editRoute.value.trim() !== '' ? editRoute.value.trim() : null,
       stime: stime ?? undefined,
       etime: etime ?? undefined
     }
@@ -237,7 +245,9 @@ async function confirmAndDelete() {
   }
 }
 
-const displayName = computed(() => holidaytimer.value?.description || holidaytimer.value?.shortuid || '')
+const displayName = computed(
+  () => holidaytimer.value?.description || holidaytimer.value?.shortuid || ''
+)
 
 const panelTitleTenantSuffix = computed(() => {
   if (!holidaytimer.value) return ''
@@ -250,7 +260,9 @@ const panelTitleTenantSuffix = computed(() => {
 <template>
   <div class="detail-view" @keydown="onKeydown">
     <PanelBackLink :to="{ name: 'holidaytimers' }" label="Holiday Timers">
-      <h1>Edit Holiday timer{{ displayName ? ` — ${displayName}` : '' }}{{ panelTitleTenantSuffix }}</h1>
+      <h1>
+        Edit Holiday timer{{ displayName ? ` — ${displayName}` : '' }}{{ panelTitleTenantSuffix }}
+      </h1>
     </PanelBackLink>
 
     <p v-if="loading" class="loading">Loading…</p>
@@ -260,7 +272,9 @@ const panelTitleTenantSuffix = computed(() => {
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
 
         <form class="edit-form" @submit="saveEdit">
-          <p v-if="saveError" id="holidaytimer-edit-error" class="error" role="alert">{{ saveError }}</p>
+          <p v-if="saveError" id="holidaytimer-edit-error" class="error" role="alert">
+            {{ saveError }}
+          </p>
 
           <div class="edit-actions edit-actions-top">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
@@ -277,9 +291,27 @@ const panelTitleTenantSuffix = computed(() => {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="holidaytimer.shortuid != null && holidaytimer.shortuid !== ''" id="edit-shortuid" label="UID" :value="holidaytimer.shortuid" class="readonly-identity" />
-            <FormReadonly v-if="holidaytimer.id != null && holidaytimer.id !== ''" id="edit-id" label="KSUID" :value="holidaytimer.id" class="readonly-identity" />
-            <FormReadonly v-if="stateDisplay(holidaytimer)" id="edit-state" label="State" :value="stateDisplay(holidaytimer)" class="readonly-identity" />
+            <FormReadonly
+              v-if="holidaytimer.shortuid != null && holidaytimer.shortuid !== ''"
+              id="edit-shortuid"
+              label="UID"
+              :value="holidaytimer.shortuid"
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="holidaytimer.id != null && holidaytimer.id !== ''"
+              id="edit-id"
+              label="KSUID"
+              :value="holidaytimer.id"
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="stateDisplay(holidaytimer)"
+              id="edit-state"
+              label="State"
+              :value="stateDisplay(holidaytimer)"
+              class="readonly-identity"
+            />
           </div>
 
           <h2 class="detail-heading">Holiday</h2>
@@ -350,31 +382,97 @@ const panelTitleTenantSuffix = computed(() => {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Holiday timer <strong>{{ displayName || shortuid }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Holiday timer <strong>{{ displayName || shortuid }}</strong> will be permanently deleted.
+          This cannot be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
 </template>
 
 <style scoped>
-.detail-view { max-width: 52rem; }
-.loading, .error { margin-top: 1rem; }
-.error { color: #dc2626; }
-.detail-content { margin-top: 1rem; }
-.detail-heading { font-size: 1rem; font-weight: 600; color: #334155; margin: 1.5rem 0 0.5rem 0; }
-.detail-heading:first-of-type { margin-top: 0; }
-.form-fields { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+.detail-view {
+  max-width: 52rem;
+}
+.loading,
+.error {
+  margin-top: 1rem;
+}
+.error {
+  color: #dc2626;
+}
+.detail-content {
+  margin-top: 1rem;
+}
+.detail-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.detail-heading:first-of-type {
+  margin-top: 0;
+}
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;
+}
 .readonly-identity :deep(.form-field-label),
-.readonly-identity :deep(.form-readonly) { color: #94a3b8; }
-.readonly-identity :deep(.form-readonly) { background-color: #f1f5f9; border-color: #e2e8f0; }
-.edit-form { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; max-width: 52rem; }
-.edit-actions { display: flex; gap: 0.5rem; }
-.edit-actions button { padding: 0.375rem 0.75rem; font-size: 0.875rem; font-weight: 500; border-radius: 0.375rem; cursor: pointer; }
-.edit-actions button[type="submit"] { color: #fff; background: #2563eb; border: none; }
-.edit-actions button[type="submit"]:disabled { opacity: 0.7; cursor: not-allowed; }
-.edit-actions button.secondary { color: #64748b; background: transparent; border: 1px solid #e2e8f0; }
-.edit-actions button.secondary:hover { background: #f1f5f9; }
-.edit-actions button.action-delete { color: #fff; background: #dc2626; border: none; }
-.edit-actions button.action-delete:hover:not(:disabled) { background: #b91c1c; }
-.edit-actions button.action-delete:disabled { opacity: 0.7; cursor: not-allowed; }
+.readonly-identity :deep(.form-readonly) {
+  color: #94a3b8;
+}
+.readonly-identity :deep(.form-readonly) {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+}
+.edit-form {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 52rem;
+}
+.edit-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.edit-actions button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.edit-actions button[type='submit'] {
+  color: #fff;
+  background: #2563eb;
+  border: none;
+}
+.edit-actions button[type='submit']:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.edit-actions button.secondary {
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+}
+.edit-actions button.secondary:hover {
+  background: #f1f5f9;
+}
+.edit-actions button.action-delete {
+  color: #fff;
+  background: #dc2626;
+  border: none;
+}
+.edit-actions button.action-delete:hover:not(:disabled) {
+  background: #b91c1c;
+}
+.edit-actions button.action-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 </style>

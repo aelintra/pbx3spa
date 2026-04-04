@@ -76,7 +76,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = editCluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -93,10 +94,18 @@ function normalizeDevicerec(v) {
 function toDestArrays(d) {
   if (!d || typeof d !== 'object') return {}
   return {
-    Queues: Array.isArray(d.Queues) ? d.Queues : (Array.isArray(d.queues) ? d.queues : []),
-    Extensions: Array.isArray(d.Extensions) ? d.Extensions : (Array.isArray(d.extensions) ? d.extensions : []),
-    IVRs: Array.isArray(d.IVRs) ? d.IVRs : (Array.isArray(d.ivrs) ? d.ivrs : []),
-    CustomApps: Array.isArray(d.CustomApps) ? d.CustomApps : (Array.isArray(d.customApps) ? d.customApps : [])
+    Queues: Array.isArray(d.Queues) ? d.Queues : Array.isArray(d.queues) ? d.queues : [],
+    Extensions: Array.isArray(d.Extensions)
+      ? d.Extensions
+      : Array.isArray(d.extensions)
+        ? d.extensions
+        : [],
+    IVRs: Array.isArray(d.IVRs) ? d.IVRs : Array.isArray(d.ivrs) ? d.ivrs : [],
+    CustomApps: Array.isArray(d.CustomApps)
+      ? d.CustomApps
+      : Array.isArray(d.customApps)
+        ? d.customApps
+        : []
   }
 }
 
@@ -105,7 +114,10 @@ const destinationGroups = computed(() => {
   const clusterVal = editCluster.value
   const routeList = routes.value || []
   const routesForCluster = clusterVal
-    ? routeList.filter((r) => (r.cluster ?? r.tenant_pkey ?? '') === clusterVal).map((r) => r.pkey).filter(Boolean)
+    ? routeList
+        .filter((r) => (r.cluster ?? r.tenant_pkey ?? '') === clusterVal)
+        .map((r) => r.pkey)
+        .filter(Boolean)
     : []
   const base = toDestArrays(d)
   return {
@@ -130,7 +142,8 @@ async function loadDestinations() {
       getApiClient().get('destinations', { params: { cluster: c } }),
       getApiClient().get('routes')
     ])
-    const destBody = destResponse && typeof destResponse === 'object' ? (destResponse.data ?? destResponse) : null
+    const destBody =
+      destResponse && typeof destResponse === 'object' ? (destResponse.data ?? destResponse) : null
     destinations.value = destBody && typeof destBody === 'object' ? destBody : null
     routes.value = normalizeList(routeResponse, 'routes')
   } catch {
@@ -156,7 +169,8 @@ function syncEditFromRoute() {
   const tenantPkey = r.tenant_pkey ?? tenantPkeyDisplay(r.cluster)
   editCluster.value = tenantPkey ?? 'default'
   editPkey.value = r.pkey ?? ''
-  editTechnology.value = (r.technology && technologyOptions.includes(r.technology)) ? r.technology : 'DiD'
+  editTechnology.value =
+    r.technology && technologyOptions.includes(r.technology) ? r.technology : 'DiD'
   editDescription.value = r.description ?? r.desc ?? ''
   editActive.value = r.active ?? 'YES'
   editOpenroute.value = r.openroute ?? 'None'
@@ -164,7 +178,7 @@ function syncEditFromRoute() {
   editAlertinfo.value = r.alertinfo ?? ''
   editCname.value = r.cname ?? ''
   editDevicerec.value = normalizeDevicerec(r.devicerec)
-  editMoh.value = (r.moh === 'YES') ? 'YES' : 'NO'
+  editMoh.value = r.moh === 'YES' ? 'YES' : 'NO'
   editSwoclip.value = r.swoclip ?? 'YES'
   editDisa.value = r.disa?.trim() || 'None'
   editDisapass.value = r.disapass ?? ''
@@ -177,7 +191,9 @@ async function fetchInboundRoute() {
   loading.value = true
   error.value = ''
   try {
-    inboundRoute.value = await getApiClient().get(`inboundroutes/${encodeURIComponent(shortuid.value)}`)
+    inboundRoute.value = await getApiClient().get(
+      `inboundroutes/${encodeURIComponent(shortuid.value)}`
+    )
     syncEditFromRoute()
     if (editCluster.value) loadDestinations()
   } catch (err) {
@@ -218,21 +234,27 @@ async function saveEdit(e) {
   saveError.value = ''
   saving.value = true
   try {
-    const inprefixVal = editInprefix.value.trim() === '' ? undefined : parseInt(editInprefix.value, 10)
+    const inprefixVal =
+      editInprefix.value.trim() === '' ? undefined : parseInt(editInprefix.value, 10)
     const body = {
       pkey: editPkey.value.trim(),
       active: editActive.value,
       cluster: editCluster.value.trim(),
       technology: editTechnology.value,
       description: editDescription.value.trim() || undefined,
-      openroute: (editOpenroute.value && editOpenroute.value !== 'None') ? editOpenroute.value : 'None',
-      closeroute: (editCloseroute.value && editCloseroute.value !== 'None') ? editCloseroute.value : 'None',
+      openroute:
+        editOpenroute.value && editOpenroute.value !== 'None' ? editOpenroute.value : 'None',
+      closeroute:
+        editCloseroute.value && editCloseroute.value !== 'None' ? editCloseroute.value : 'None',
       alertinfo: editAlertinfo.value.trim() || undefined,
       cname: editCname.value.trim() || undefined,
       devicerec: editDevicerec.value || 'None',
       moh: editMoh.value,
       swoclip: editSwoclip.value,
-      disa: (editDisa.value.trim() && editDisa.value.trim() !== 'None') ? editDisa.value.trim() : undefined,
+      disa:
+        editDisa.value.trim() && editDisa.value.trim() !== 'None'
+          ? editDisa.value.trim()
+          : undefined,
       disapass: editDisapass.value.trim() || undefined,
       inprefix: inprefixVal !== undefined && !isNaN(inprefixVal) ? inprefixVal : undefined,
       tag: editTag.value.trim() || undefined
@@ -284,15 +306,22 @@ const panelTitleTenantSuffix = computed(() => {
     <PanelBackLink :to="{ name: 'inbound-routes' }" label="Inbound Routes">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit Inbound Route {{ inboundRoute?.pkey ?? '…' }}{{ panelTitleTenantSuffix }}</h1>
+          <h1 class="detail-panel-title">
+            Edit Inbound Route {{ inboundRoute?.pkey ?? '…' }}{{ panelTitleTenantSuffix }}
+          </h1>
           <DetailActiveStatusBar
             v-if="inboundRoute"
             v-model="editActive"
             toggle-id="edit-inbound-active"
           />
         </div>
-        <p v-if="inboundRoute && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
-          Inactive inbound routes do not match calls until you activate this record and commit the change.
+        <p
+          v-if="inboundRoute && editActive === 'NO'"
+          class="detail-active-inactive-hint"
+          role="status"
+        >
+          Inactive inbound routes do not match calls until you activate this record and commit the
+          change.
         </p>
       </div>
     </PanelBackLink>
@@ -304,7 +333,9 @@ const panelTitleTenantSuffix = computed(() => {
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
 
         <form class="edit-form" @submit="saveEdit">
-          <p v-if="saveError" id="inbound-route-edit-error" class="error" role="alert">{{ saveError }}</p>
+          <p v-if="saveError" id="inbound-route-edit-error" class="error" role="alert">
+            {{ saveError }}
+          </p>
 
           <div class="edit-actions edit-actions-top">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
@@ -321,10 +352,36 @@ const panelTitleTenantSuffix = computed(() => {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="inboundRoute.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="inboundRoute.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="inboundRoute.id ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-id" :model-value="inboundRoute.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
+            <FormReadonly
+              v-if="isReadOnly('shortuid')"
+              id="edit-identity-shortuid"
+              label="UID"
+              :value="inboundRoute.shortuid ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-shortuid"
+              :model-value="inboundRoute.shortuid ?? '—'"
+              label="UID"
+              disabled
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="isReadOnly('id')"
+              id="edit-identity-id"
+              label="KSUID"
+              :value="inboundRoute.id ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-id"
+              :model-value="inboundRoute.id ?? '—'"
+              label="KSUID"
+              disabled
+              class="readonly-identity"
+            />
             <FormField
               v-if="!isReadOnly('pkey')"
               id="edit-identity-pkey"
@@ -334,7 +391,13 @@ const panelTitleTenantSuffix = computed(() => {
               placeholder="e.g. 0123456789 or _2XXX"
               hint="Digits, pattern _XZN.! (e.g. _2XXX), or special s/i/t. Cannot be single 0."
             />
-            <FormReadonly v-else id="edit-identity-pkey" label="DiD/CLiD" :value="inboundRoute.pkey ?? '—'" class="readonly-identity" />
+            <FormReadonly
+              v-else
+              id="edit-identity-pkey"
+              label="DiD/CLiD"
+              :value="inboundRoute.pkey ?? '—'"
+              class="readonly-identity"
+            />
             <FormSelect
               id="edit-technology"
               v-model="editTechnology"
@@ -382,13 +445,7 @@ const panelTitleTenantSuffix = computed(() => {
               label="Alert info (optional)"
               type="text"
             />
-            <FormToggle
-              id="edit-moh"
-              v-model="editMoh"
-              label="MOH"
-              yes-value="YES"
-              no-value="NO"
-            />
+            <FormToggle id="edit-moh" v-model="editMoh" label="MOH" yes-value="YES" no-value="NO" />
             <FormToggle
               id="edit-swoclip"
               v-model="editSwoclip"
@@ -418,18 +475,8 @@ const panelTitleTenantSuffix = computed(() => {
               min="0"
               step="1"
             />
-            <FormField
-              id="edit-tag"
-              v-model="editTag"
-              label="Tag (optional)"
-              type="text"
-            />
-            <FormField
-              id="edit-cname"
-              v-model="editCname"
-              label="CNAME"
-              type="text"
-            />
+            <FormField id="edit-tag" v-model="editTag" label="Tag (optional)" type="text" />
+            <FormField id="edit-cname" v-model="editCname" label="CNAME" type="text" />
             <FormSelect
               id="edit-devicerec"
               v-model="editDevicerec"
@@ -462,7 +509,10 @@ const panelTitleTenantSuffix = computed(() => {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Inbound route <strong>{{ inboundRoute?.pkey ?? '—' }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Inbound route <strong>{{ inboundRoute?.pkey ?? '—' }}</strong> will be permanently
+          deleted. This cannot be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -523,12 +573,12 @@ const panelTitleTenantSuffix = computed(() => {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.edit-actions button[type="submit"] {
+.edit-actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.edit-actions button[type="submit"]:disabled {
+.edit-actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

@@ -96,7 +96,7 @@ const hintId = computed(() => `${props.id}-hint`)
         role="radiogroup"
         :aria-label="ariaLabel || label"
         :aria-invalid="hasError"
-        :aria-describedby="hasError ? errorId : (hint ? hintId : null)"
+        :aria-describedby="hasError ? errorId : hint ? hintId : null"
         :aria-required="required"
         class="pill-group"
         tabindex="-1"
@@ -120,19 +120,10 @@ const hintId = computed(() => `${props.id}-hint`)
           {{ displayLabel(opt) }}
         </button>
       </div>
-      <p
-        v-if="hasError"
-        :id="errorId"
-        class="form-field-error"
-        role="alert"
-      >
+      <p v-if="hasError" :id="errorId" class="form-field-error" role="alert">
         {{ error }}
       </p>
-      <p
-        v-else-if="hint"
-        :id="hintId"
-        class="form-field-hint"
-      >
+      <p v-else-if="hint" :id="hintId" class="form-field-hint">
         {{ hint }}
       </p>
     </div>
@@ -181,7 +172,9 @@ const hintId = computed(() => `${props.id}-hint`)
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 .pill:hover:not(:disabled):not(.pill-selected) {
   background: #e2e8f0;
@@ -225,7 +218,7 @@ const hintId = computed(() => `${props.id}-hint`)
   gap: 0.25rem;
 }
 .form-field-error::before {
-  content: "⚠";
+  content: '⚠';
   font-size: 0.875rem;
   flex-shrink: 0;
 }

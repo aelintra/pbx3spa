@@ -51,7 +51,7 @@ const globalsHeading = computed(() => {
 function syncEditFromSysglobal() {
   if (!sysglobal.value) return
   const g = sysglobal.value
-  
+
   // API returns lowercase keys (schema standardised on lowercase)
   editAbstimeout.value = g.abstimeout != null ? String(g.abstimeout) : ''
   editEdomain.value = g.edomain ?? ''
@@ -111,33 +111,76 @@ async function saveEdit(e) {
   e.preventDefault()
   saveError.value = ''
   saving.value = true
-  
+
   try {
     const body = {}
-    
+
     // Send all fields - empty strings become null for nullable fields
-    body.abstimeout = editAbstimeout.value !== '' && editAbstimeout.value != null ? parseInt(editAbstimeout.value, 10) : null
-    body.emergency = editEmergency.value && editEmergency.value.trim() !== '' ? editEmergency.value.trim() : null
-    body.language = editLanguage.value && editLanguage.value.trim() !== '' ? editLanguage.value.trim() : null
-    body.loglevel = editLoglevel.value !== '' && editLoglevel.value != null ? parseInt(editLoglevel.value, 10) : null
-    body.logopts = editLogopts.value && editLogopts.value.trim() !== '' ? editLogopts.value.trim() : null
-    body.logsipdispsize = editLogsipdispsize.value !== '' && editLogsipdispsize.value != null ? parseInt(editLogsipdispsize.value, 10) : null
-    body.logsipnumfiles = editLogsipnumfiles.value !== '' && editLogsipnumfiles.value != null ? parseInt(editLogsipnumfiles.value, 10) : null
-    body.logsipfilesize = editLogsipfilesize.value !== '' && editLogsipfilesize.value != null ? parseInt(editLogsipfilesize.value, 10) : null
-    body.maxin = editMaxin.value !== '' && editMaxin.value != null ? parseInt(editMaxin.value, 10) : null
-    body.maxout = editMaxout.value !== '' && editMaxout.value != null ? parseInt(editMaxout.value, 10) : null
-    body.operator = editOperator.value !== '' && editOperator.value != null ? parseInt(editOperator.value, 10) : null
-    body.recfiledlim = editRecfiledlim.value && editRecfiledlim.value.trim() !== '' ? editRecfiledlim.value.trim() : null
-    body.reclimit = editReclimit.value && editReclimit.value.trim() !== '' ? editReclimit.value.trim() : null
-    body.recmount = editRecmount.value && editRecmount.value.trim() !== '' ? editRecmount.value.trim() : null
-    body.recqdither = editRecqdither.value && editRecqdither.value.trim() !== '' ? editRecqdither.value.trim() : null
-    body.recqsearchlim = editRecqsearchlim.value && editRecqsearchlim.value.trim() !== '' ? editRecqsearchlim.value.trim() : null
-    body.sessiontimout = editSessiontimout.value !== '' && editSessiontimout.value != null ? parseInt(editSessiontimout.value, 10) : null
-    body.sendedomain = editSendedomain.value && editSendedomain.value.trim() !== '' ? editSendedomain.value.trim() : null
-    body.sipflood = editSipflood.value && editSipflood.value.trim() !== '' ? editSipflood.value.trim() : null
-    body.sysop = editSysop.value !== '' && editSysop.value != null ? parseInt(editSysop.value, 10) : null
-    body.voipmax = editVoipmax.value !== '' && editVoipmax.value != null ? parseInt(editVoipmax.value, 10) : null
-    
+    body.abstimeout =
+      editAbstimeout.value !== '' && editAbstimeout.value != null
+        ? parseInt(editAbstimeout.value, 10)
+        : null
+    body.emergency =
+      editEmergency.value && editEmergency.value.trim() !== '' ? editEmergency.value.trim() : null
+    body.language =
+      editLanguage.value && editLanguage.value.trim() !== '' ? editLanguage.value.trim() : null
+    body.loglevel =
+      editLoglevel.value !== '' && editLoglevel.value != null
+        ? parseInt(editLoglevel.value, 10)
+        : null
+    body.logopts =
+      editLogopts.value && editLogopts.value.trim() !== '' ? editLogopts.value.trim() : null
+    body.logsipdispsize =
+      editLogsipdispsize.value !== '' && editLogsipdispsize.value != null
+        ? parseInt(editLogsipdispsize.value, 10)
+        : null
+    body.logsipnumfiles =
+      editLogsipnumfiles.value !== '' && editLogsipnumfiles.value != null
+        ? parseInt(editLogsipnumfiles.value, 10)
+        : null
+    body.logsipfilesize =
+      editLogsipfilesize.value !== '' && editLogsipfilesize.value != null
+        ? parseInt(editLogsipfilesize.value, 10)
+        : null
+    body.maxin =
+      editMaxin.value !== '' && editMaxin.value != null ? parseInt(editMaxin.value, 10) : null
+    body.maxout =
+      editMaxout.value !== '' && editMaxout.value != null ? parseInt(editMaxout.value, 10) : null
+    body.operator =
+      editOperator.value !== '' && editOperator.value != null
+        ? parseInt(editOperator.value, 10)
+        : null
+    body.recfiledlim =
+      editRecfiledlim.value && editRecfiledlim.value.trim() !== ''
+        ? editRecfiledlim.value.trim()
+        : null
+    body.reclimit =
+      editReclimit.value && editReclimit.value.trim() !== '' ? editReclimit.value.trim() : null
+    body.recmount =
+      editRecmount.value && editRecmount.value.trim() !== '' ? editRecmount.value.trim() : null
+    body.recqdither =
+      editRecqdither.value && editRecqdither.value.trim() !== ''
+        ? editRecqdither.value.trim()
+        : null
+    body.recqsearchlim =
+      editRecqsearchlim.value && editRecqsearchlim.value.trim() !== ''
+        ? editRecqsearchlim.value.trim()
+        : null
+    body.sessiontimout =
+      editSessiontimout.value !== '' && editSessiontimout.value != null
+        ? parseInt(editSessiontimout.value, 10)
+        : null
+    body.sendedomain =
+      editSendedomain.value && editSendedomain.value.trim() !== ''
+        ? editSendedomain.value.trim()
+        : null
+    body.sipflood =
+      editSipflood.value && editSipflood.value.trim() !== '' ? editSipflood.value.trim() : null
+    body.sysop =
+      editSysop.value !== '' && editSysop.value != null ? parseInt(editSysop.value, 10) : null
+    body.voipmax =
+      editVoipmax.value !== '' && editVoipmax.value != null ? parseInt(editVoipmax.value, 10) : null
+
     await getApiClient().put('sysglobals', body)
     toast.show('Instance globals saved')
     await fetchSysglobal()
@@ -163,16 +206,18 @@ onMounted(fetchSysglobal)
 
     <section v-else-if="error" class="error-state">
       <p class="error">{{ error }}</p>
-      <button type="button" @click="fetchSysglobal" class="btn btn-primary">Retry</button>
+      <button type="button" class="btn btn-primary" @click="fetchSysglobal">Retry</button>
     </section>
 
-    <form v-else @submit="saveEdit" class="edit-form">
+    <form v-else class="edit-form" @submit="saveEdit">
       <p v-if="saveError" class="form-error">{{ saveError }}</p>
 
       <p class="scope-note">
-        These values are stored in the instance <strong>globals</strong> table (one row per server). Per-tenant
-        limits, MOH, LDAP, call-control flags, and tenant passwords are on each tenant —
-        <router-link :to="{ name: 'tenant-detail', params: { pkey: 'default' } }">Default tenant</router-link>
+        These values are stored in the instance <strong>globals</strong> table (one row per server).
+        Per-tenant limits, MOH, LDAP, call-control flags, and tenant passwords are on each tenant —
+        <router-link :to="{ name: 'tenant-detail', params: { pkey: 'default' } }"
+          >Default tenant</router-link
+        >
         or
         <router-link :to="{ name: 'tenants' }">Tenants</router-link>.
       </p>
@@ -181,7 +226,9 @@ onMounted(fetchSysglobal)
         <button type="submit" :disabled="saving" class="btn btn-primary">
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
-        <button type="button" @click="cancelEdit" :disabled="saving" class="btn btn-secondary">Cancel</button>
+        <button type="button" :disabled="saving" class="btn btn-secondary" @click="cancelEdit">
+          Cancel
+        </button>
       </div>
 
       <h2 class="detail-heading">This Instance Identity</h2>
@@ -200,7 +247,11 @@ onMounted(fetchSysglobal)
         <FormReadonly
           id="edit-identity-ksuid"
           label="KSUID"
-          :value="sysglobal?.id != null && String(sysglobal.id).trim() !== '' ? String(sysglobal.id).trim() : '—'"
+          :value="
+            sysglobal?.id != null && String(sysglobal.id).trim() !== ''
+              ? String(sysglobal.id).trim()
+              : '—'
+          "
           class="readonly-identity"
           hide-help
         />
@@ -230,50 +281,22 @@ onMounted(fetchSysglobal)
 
       <h2 class="detail-heading">SIP</h2>
       <div class="form-fields">
-        <FormField
-          id="edit-sipflood"
-          v-model="editSipflood"
-          label="SIP Flood Protection"
-        />
+        <FormField id="edit-sipflood" v-model="editSipflood" label="SIP Flood Protection" />
         <FormField
           id="edit-abstimeout"
           v-model="editAbstimeout"
           type="number"
           label="Absolute Timeout"
         />
-        <FormField
-          id="edit-maxin"
-          v-model="editMaxin"
-          type="number"
-          label="Max In"
-        />
-        <FormField
-          id="edit-maxout"
-          v-model="editMaxout"
-          type="number"
-          label="Max Out"
-        />
-        <FormField
-          id="edit-voipmax"
-          v-model="editVoipmax"
-          type="number"
-          label="VoIP Max"
-        />
+        <FormField id="edit-maxin" v-model="editMaxin" type="number" label="Max In" />
+        <FormField id="edit-maxout" v-model="editMaxout" type="number" label="Max Out" />
+        <FormField id="edit-voipmax" v-model="editVoipmax" type="number" label="VoIP Max" />
       </div>
 
       <h2 class="detail-heading">Logging</h2>
       <div class="form-fields">
-        <FormField
-          id="edit-loglevel"
-          v-model="editLoglevel"
-          type="number"
-          label="Log Level"
-        />
-        <FormField
-          id="edit-logopts"
-          v-model="editLogopts"
-          label="Log Options"
-        />
+        <FormField id="edit-loglevel" v-model="editLoglevel" type="number" label="Log Level" />
+        <FormField id="edit-logopts" v-model="editLogopts" label="Log Options" />
         <FormField
           id="edit-logsipdispsize"
           v-model="editLogsipdispsize"
@@ -296,26 +319,10 @@ onMounted(fetchSysglobal)
 
       <h2 class="detail-heading">Recording</h2>
       <div class="form-fields">
-        <FormField
-          id="edit-recmount"
-          v-model="editRecmount"
-          label="Recording Mount"
-        />
-        <FormField
-          id="edit-reclimit"
-          v-model="editReclimit"
-          label="Recording Limit"
-        />
-        <FormField
-          id="edit-recfiledlim"
-          v-model="editRecfiledlim"
-          label="Recording File Limit"
-        />
-        <FormField
-          id="edit-recqdither"
-          v-model="editRecqdither"
-          label="Recording Q Dither"
-        />
+        <FormField id="edit-recmount" v-model="editRecmount" label="Recording Mount" />
+        <FormField id="edit-reclimit" v-model="editReclimit" label="Recording Limit" />
+        <FormField id="edit-recfiledlim" v-model="editRecfiledlim" label="Recording File Limit" />
+        <FormField id="edit-recqdither" v-model="editRecqdither" label="Recording Q Dither" />
         <FormField
           id="edit-recqsearchlim"
           v-model="editRecqsearchlim"
@@ -330,34 +337,24 @@ onMounted(fetchSysglobal)
           label="Email Domain"
           :value="editEdomain.trim() !== '' ? editEdomain : '—'"
         />
-        <FormField
-          id="edit-sendedomain"
-          v-model="editSendedomain"
-          label="Send Domain"
-        />
-        <FormField
-          id="edit-language"
-          v-model="editLanguage"
-          label="Language"
-        />
+        <FormField id="edit-sendedomain" v-model="editSendedomain" label="Send Domain" />
+        <FormField id="edit-language" v-model="editLanguage" label="Language" />
         <FormField
           id="edit-sessiontimout"
           v-model="editSessiontimout"
           type="number"
           label="Session Timeout"
         />
-        <FormField
-          id="edit-emergency"
-          v-model="editEmergency"
-          label="Emergency"
-        />
+        <FormField id="edit-emergency" v-model="editEmergency" label="Emergency" />
       </div>
 
       <div class="edit-actions">
         <button type="submit" :disabled="saving" class="btn btn-primary">
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
-        <button type="button" @click="cancelEdit" :disabled="saving" class="btn btn-secondary">Cancel</button>
+        <button type="button" :disabled="saving" class="btn btn-secondary" @click="cancelEdit">
+          Cancel
+        </button>
       </div>
     </form>
   </div>

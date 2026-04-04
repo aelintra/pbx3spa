@@ -71,7 +71,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = editCluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -84,7 +85,9 @@ function pathOptions(currentValue) {
   const base = ['None', ...trunkPkeys.value]
   if (!currentValue || currentValue === 'None') return base
   if (base.includes(currentValue)) return base
-  return [currentValue, ...base].sort((a, b) => (a === 'None' ? -1 : b === 'None' ? 1 : String(a).localeCompare(String(b))))
+  return [currentValue, ...base].sort((a, b) =>
+    a === 'None' ? -1 : b === 'None' ? 1 : String(a).localeCompare(String(b))
+  )
 }
 
 async function fetchTenants() {
@@ -237,14 +240,20 @@ const panelTitleTenantSuffix = computed(() => {
     <PanelBackLink :to="{ name: 'routes' }" label="Routes">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit Route {{ routeData?.pkey ?? '…' }}{{ panelTitleTenantSuffix }}</h1>
+          <h1 class="detail-panel-title">
+            Edit Route {{ routeData?.pkey ?? '…' }}{{ panelTitleTenantSuffix }}
+          </h1>
           <DetailActiveStatusBar
             v-if="routeData"
             v-model="editActive"
             toggle-id="edit-route-active"
           />
         </div>
-        <p v-if="routeData && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
+        <p
+          v-if="routeData && editActive === 'NO'"
+          class="detail-active-inactive-hint"
+          role="status"
+        >
           Inactive routes are not used until you activate this record and commit the change.
         </p>
       </div>
@@ -274,9 +283,25 @@ const panelTitleTenantSuffix = computed(() => {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly id="edit-identity-shortuid" label="UID" :value="routeData.shortuid ?? '—'" class="readonly-identity" />
-            <FormReadonly id="edit-identity-id" label="KSUID" :value="routeData.id ?? '—'" class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Route name" :value="routeData.pkey ?? '—'" class="readonly-identity" />
+            <FormReadonly
+              id="edit-identity-shortuid"
+              label="UID"
+              :value="routeData.shortuid ?? '—'"
+              class="readonly-identity"
+            />
+            <FormReadonly
+              id="edit-identity-id"
+              label="KSUID"
+              :value="routeData.id ?? '—'"
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="isReadOnly('pkey')"
+              id="edit-identity-pkey"
+              label="Route name"
+              :value="routeData.pkey ?? '—'"
+              class="readonly-identity"
+            />
             <FormField
               v-else
               id="edit-identity-pkey"
@@ -393,7 +418,10 @@ const panelTitleTenantSuffix = computed(() => {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Route <strong>{{ routeData?.pkey ?? '—' }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Route <strong>{{ routeData?.pkey ?? '—' }}</strong> will be permanently deleted. This
+          cannot be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -454,12 +482,12 @@ const panelTitleTenantSuffix = computed(() => {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.edit-actions button[type="submit"] {
+.edit-actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.edit-actions button[type="submit"]:disabled {
+.edit-actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

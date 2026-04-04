@@ -90,7 +90,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = editCluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -125,13 +126,14 @@ async function fetchExtension() {
     editCellphone.value = ext?.cellphone != null ? String(ext.cellphone) : ''
     editCelltwin.value = ext?.celltwin ?? 'OFF'
     const rawDevicerec = ext?.devicerec
-    editDevicerec.value = (rawDevicerec === 'OTR' || rawDevicerec === 'OTRR') ? 'Both' : (rawDevicerec ?? 'None')
+    editDevicerec.value =
+      rawDevicerec === 'OTR' || rawDevicerec === 'OTRR' ? 'Both' : (rawDevicerec ?? 'None')
     editDvrvmail.value = ext?.dvrvmail ?? ''
     editExtalert.value = ext?.extalert ?? ''
     editMacaddr.value = ext?.macaddr != null ? String(ext.macaddr).trim() : ''
     editProtocol.value = ext?.protocol ?? 'IPV4'
     editProvision.value = ext?.provision ?? ''
-    editProvisionwith.value = (ext?.provisionwith === 'FQDN') ? 'FQDN' : 'IP'
+    editProvisionwith.value = ext?.provisionwith === 'FQDN' ? 'FQDN' : 'IP'
     editTechnology.value = ext?.technology ?? 'SIP'
     editVmailfwd.value = ext?.vmailfwd ?? ''
   } catch (err) {
@@ -146,7 +148,9 @@ async function fetchRuntime() {
   if (!shortuid.value) return
   runtimeError.value = ''
   try {
-    runtime.value = await getApiClient().get(`extensions/${encodeURIComponent(shortuid.value)}/runtime`)
+    runtime.value = await getApiClient().get(
+      `extensions/${encodeURIComponent(shortuid.value)}/runtime`
+    )
     editCfim.value = runtime.value?.cfim ?? ''
     editCfbs.value = runtime.value?.cfbs ?? ''
     editRingdelay.value = runtime.value?.ringdelay != null ? String(runtime.value.ringdelay) : ''
@@ -205,7 +209,9 @@ async function saveEdit(e) {
       devicerec: editDevicerec.value,
       dvrvmail: editDvrvmail.value.trim() || undefined,
       extalert: editExtalert.value.trim() || undefined,
-      macaddr: editMacaddr.value.trim() ? editMacaddr.value.trim().replace(/[^0-9a-fA-F]/g, '') : null,
+      macaddr: editMacaddr.value.trim()
+        ? editMacaddr.value.trim().replace(/[^0-9a-fA-F]/g, '')
+        : null,
       protocol: editProtocol.value,
       provision: editProvision.value.trim() || undefined,
       provisionwith: editProvisionwith.value,
@@ -269,7 +275,9 @@ async function confirmRegenerateSip() {
       Object.assign(extension.value, data)
     }
     confirmRegenerateSipOpen.value = false
-    toast.show('SIP password regenerated. Copy the new value into the phone before it can register again.')
+    toast.show(
+      'SIP password regenerated. Copy the new value into the phone before it can register again.'
+    )
   } catch (err) {
     regenerateSipError.value = firstErrorMessage(err, 'Failed to regenerate SIP password')
   } finally {
@@ -323,7 +331,9 @@ const panelTitleTenantSuffix = computed(() => {
     <PanelBackLink :to="{ name: 'extensions' }" label="Extensions">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit Extension {{ extension?.pkey ?? '…' }}{{ panelTitleTenantSuffix }}</h1>
+          <h1 class="detail-panel-title">
+            Edit Extension {{ extension?.pkey ?? '…' }}{{ panelTitleTenantSuffix }}
+          </h1>
           <DetailActiveStatusBar
             v-if="extension"
             v-model="editActive"
@@ -335,7 +345,8 @@ const panelTitleTenantSuffix = computed(() => {
           class="detail-active-inactive-hint"
           role="status"
         >
-          Inactive extensions do not take calls until you activate this record and commit the change.
+          Inactive extensions do not take calls until you activate this record and commit the
+          change.
         </p>
       </div>
     </PanelBackLink>
@@ -345,7 +356,13 @@ const panelTitleTenantSuffix = computed(() => {
       <p class="error">{{ error }}</p>
       <div class="error-actions">
         <button type="button" class="btn secondary" @click="goBack">Back to extensions</button>
-        <button type="button" class="btn btn-primary" @click="() => fetchExtension().then(() => extension.value && fetchRuntime())">Retry</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          @click="() => fetchExtension().then(() => extension.value && fetchRuntime())"
+        >
+          Retry
+        </button>
       </div>
     </div>
     <template v-else-if="extension">
@@ -353,7 +370,9 @@ const panelTitleTenantSuffix = computed(() => {
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
 
         <form class="edit-form" @submit="saveEdit">
-          <p v-if="saveError" id="extension-edit-error" class="error" role="alert">{{ saveError }}</p>
+          <p v-if="saveError" id="extension-edit-error" class="error" role="alert">
+            {{ saveError }}
+          </p>
 
           <div class="edit-actions edit-actions-top">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
@@ -370,14 +389,66 @@ const panelTitleTenantSuffix = computed(() => {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="extension.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="extension.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="extension.id ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-id" :model-value="extension.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Ext Dial" :value="extension.pkey ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" :model-value="extension.pkey ?? '—'" label="Ext Dial" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-sip-user" label="SIP User" :value="extension.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-sip-user" :model-value="extension.shortuid ?? '—'" label="SIP User" disabled class="readonly-identity" />
+            <FormReadonly
+              v-if="isReadOnly('shortuid')"
+              id="edit-identity-shortuid"
+              label="UID"
+              :value="extension.shortuid ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-shortuid"
+              :model-value="extension.shortuid ?? '—'"
+              label="UID"
+              disabled
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="isReadOnly('id')"
+              id="edit-identity-id"
+              label="KSUID"
+              :value="extension.id ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-id"
+              :model-value="extension.id ?? '—'"
+              label="KSUID"
+              disabled
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="isReadOnly('pkey')"
+              id="edit-identity-pkey"
+              label="Ext Dial"
+              :value="extension.pkey ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-pkey"
+              :model-value="extension.pkey ?? '—'"
+              label="Ext Dial"
+              disabled
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="isReadOnly('shortuid')"
+              id="edit-identity-sip-user"
+              label="SIP User"
+              :value="extension.shortuid ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-sip-user"
+              :model-value="extension.shortuid ?? '—'"
+              label="SIP User"
+              disabled
+              class="readonly-identity"
+            />
             <div class="form-field sip-passwd-field readonly-identity">
               <label for="edit-identity-passwd" class="form-field-label">SIP Password</label>
               <div class="form-field-input-wrapper">
@@ -400,7 +471,13 @@ const panelTitleTenantSuffix = computed(() => {
                 </div>
               </div>
             </div>
-            <FormReadonly v-if="isReadOnly('macaddr')" id="edit-identity-macaddr" label="MAC address" :value="extension.macaddr?.trim() || '—'" class="readonly-identity" />
+            <FormReadonly
+              v-if="isReadOnly('macaddr')"
+              id="edit-identity-macaddr"
+              label="MAC address"
+              :value="extension.macaddr?.trim() || '—'"
+              class="readonly-identity"
+            />
             <FormField
               v-else
               id="edit-identity-macaddr"
@@ -409,8 +486,21 @@ const panelTitleTenantSuffix = computed(() => {
               type="text"
               placeholder="12 hex digits or 00:11:22:33:44:55"
             />
-            <FormReadonly v-if="isReadOnly('device')" id="edit-identity-device" label="Device" :value="extension.device ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-device" :model-value="extension.device ?? '—'" label="Device" disabled class="readonly-identity" />
+            <FormReadonly
+              v-if="isReadOnly('device')"
+              id="edit-identity-device"
+              label="Device"
+              :value="extension.device ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-device"
+              :model-value="extension.device ?? '—'"
+              label="Device"
+              disabled
+              class="readonly-identity"
+            />
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"
@@ -459,8 +549,20 @@ const panelTitleTenantSuffix = computed(() => {
               label="Callback to"
               :options="['desk', 'cell']"
             />
-            <FormField id="edit-callerid" v-model="editCallerid" label="Caller ID" type="text" inputmode="numeric" />
-            <FormField id="edit-cellphone" v-model="editCellphone" label="Cell phone" type="text" inputmode="numeric" />
+            <FormField
+              id="edit-callerid"
+              v-model="editCallerid"
+              label="Caller ID"
+              type="text"
+              inputmode="numeric"
+            />
+            <FormField
+              id="edit-cellphone"
+              v-model="editCellphone"
+              label="Cell phone"
+              type="text"
+              inputmode="numeric"
+            />
             <FormToggle
               id="edit-celltwin"
               v-model="editCelltwin"
@@ -474,8 +576,20 @@ const panelTitleTenantSuffix = computed(() => {
               label="Devicerec"
               :options="['default', 'None', 'Inbound', 'Outbound', 'Both']"
             />
-            <FormField id="edit-dvrvmail" v-model="editDvrvmail" label="DVR voicemail" type="text" />
-            <FormField id="edit-callmax" v-model="editCallmax" label="Call max" type="text" inputmode="numeric" placeholder="e.g. 3" />
+            <FormField
+              id="edit-dvrvmail"
+              v-model="editDvrvmail"
+              label="DVR voicemail"
+              type="text"
+            />
+            <FormField
+              id="edit-callmax"
+              v-model="editCallmax"
+              label="Call max"
+              type="text"
+              inputmode="numeric"
+              placeholder="e.g. 3"
+            />
             <FormField id="edit-extalert" v-model="editExtalert" label="Ext alert" type="text" />
             <FormSegmentedPill
               id="edit-protocol"
@@ -483,8 +597,21 @@ const panelTitleTenantSuffix = computed(() => {
               label="Protocol (IP version)"
               :options="['IPV4', 'IPV6']"
             />
-            <FormField id="edit-vmailfwd" v-model="editVmailfwd" label="Voicemail forward (email)" type="email" />
-            <FormField id="edit-provision" v-model="editProvision" label="Provision" type="text" placeholder="Provisioning string" :multiline="true" :rows="8" />
+            <FormField
+              id="edit-vmailfwd"
+              v-model="editVmailfwd"
+              label="Voicemail forward (email)"
+              type="email"
+            />
+            <FormField
+              id="edit-provision"
+              v-model="editProvision"
+              label="Provision"
+              type="text"
+              placeholder="Provisioning string"
+              :multiline="true"
+              :rows="8"
+            />
             <FormSelect
               id="edit-provisionwith"
               v-model="editProvisionwith"
@@ -510,7 +637,9 @@ const panelTitleTenantSuffix = computed(() => {
         <section class="detail-section">
           <h2 class="detail-heading">Runtime</h2>
           <p v-if="runtimeError" class="error">{{ runtimeError }}</p>
-          <p v-else-if="!runtime" class="muted">Runtime params appear after Asterisk config is regenerated.</p>
+          <p v-else-if="!runtime" class="muted">
+            Runtime params appear after Asterisk config is regenerated.
+          </p>
           <template v-else-if="runtime">
             <p v-if="!editingRuntime" class="toolbar">
               <button type="button" class="edit-btn" @click="startEditRuntime">Edit runtime</button>
@@ -539,7 +668,9 @@ const panelTitleTenantSuffix = computed(() => {
               />
               <p v-if="runtimeSaveError" class="error">{{ runtimeSaveError }}</p>
               <div class="edit-actions">
-                <button type="submit" :disabled="runtimeSaving">{{ runtimeSaving ? 'Saving…' : 'Save' }}</button>
+                <button type="submit" :disabled="runtimeSaving">
+                  {{ runtimeSaving ? 'Saving…' : 'Save' }}
+                </button>
                 <button type="button" class="secondary" @click="cancelEditRuntime">Cancel</button>
               </div>
             </form>
@@ -577,16 +708,21 @@ const panelTitleTenantSuffix = computed(() => {
           <h2 id="regenerate-sip-title" class="sip-modal-title">Regenerate SIP password?</h2>
           <div class="sip-modal-body">
             <p>
-              The current password will <strong>stop working immediately</strong>. This phone must be updated to the
-              new secret before it can register again.
+              The current password will <strong>stop working immediately</strong>. This phone must
+              be updated to the new secret before it can register again.
             </p>
             <p class="sip-modal-hint">
-              Use <strong>Commit</strong> when you are ready so Asterisk config matches the database.
+              Use <strong>Commit</strong> when you are ready so Asterisk config matches the
+              database.
             </p>
             <p v-if="regenerateSipError" class="error">{{ regenerateSipError }}</p>
           </div>
           <div class="sip-modal-actions">
-            <button type="button" class="sip-modal-btn sip-modal-btn-cancel" @click="cancelRegenerateSip">
+            <button
+              type="button"
+              class="sip-modal-btn sip-modal-btn-cancel"
+              @click="cancelRegenerateSip"
+            >
               Cancel
             </button>
             <button
@@ -610,7 +746,10 @@ const panelTitleTenantSuffix = computed(() => {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Extension <strong>{{ extension?.pkey ?? '—' }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Extension <strong>{{ extension?.pkey ?? '—' }}</strong> will be permanently deleted. This
+          cannot be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -744,12 +883,12 @@ const panelTitleTenantSuffix = computed(() => {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.edit-actions button[type="submit"] {
+.edit-actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.edit-actions button[type="submit"]:disabled {
+.edit-actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

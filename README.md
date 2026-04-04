@@ -29,3 +29,14 @@ A full description of the API (methods, auth, and all resources) is in **pbx3api
 | **index.md** | Introduction, background, and requirements (pbx3 V65, PHP 8.2+, Laravel 11). |
 
 When building the frontend, use **pbx3api/docs** as the source of truth for all endpoints and payloads.
+
+## Development
+
+From this directory:
+
+- **`npm run dev`** — Vite dev server.
+- **`npm run build`** — production bundle.
+- **`npm run lint`** / **`npm run lint:fix`** — ESLint (Vue + JS; flat config in `eslint.config.js`).
+- **`npm run format`** / **`npm run format:check`** — Prettier on `src/**/*.{js,vue,css}`.
+
+Before opening a PR, run **`lint`** and **`format:check`** (or **`format`** to apply). See **`workingdocs/PBX3SPA_CODEBASE_ANALYSIS.md`** for the phased cleanup plan.

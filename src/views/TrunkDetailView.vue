@@ -50,7 +50,7 @@ const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'Outbound', 'Both']
 const sipPjsipregOptions = [
   { value: '', label: 'Trusted peer (no outbound registration)' },
   { value: 'RCV', label: 'Accept registration from provider' },
-  { value: 'SND', label: 'Send registration to provider' },
+  { value: 'SND', label: 'Send registration to provider' }
 ]
 
 function normalizePjsipregForSelect(v) {
@@ -181,7 +181,10 @@ async function saveEdit(e) {
             : null
           : null,
       devicerec: editDevicerec.value || 'None',
-      disa: (editDisa.value.trim() && editDisa.value.trim() !== 'None') ? editDisa.value.trim() : undefined,
+      disa:
+        editDisa.value.trim() && editDisa.value.trim() !== 'None'
+          ? editDisa.value.trim()
+          : undefined,
       disapass: editDisapass.value.trim() || undefined,
       transform: editTransform.value.trim() || undefined
     }
@@ -219,7 +222,6 @@ async function confirmAndDelete() {
     confirmDeleteOpen.value = false
   }
 }
-
 </script>
 
 <template>
@@ -228,14 +230,11 @@ async function confirmAndDelete() {
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
           <h1 class="detail-panel-title">Edit Trunk {{ trunk?.pkey ?? '…' }}</h1>
-          <DetailActiveStatusBar
-            v-if="trunk"
-            v-model="editActive"
-            toggle-id="edit-trunk-active"
-          />
+          <DetailActiveStatusBar v-if="trunk" v-model="editActive" toggle-id="edit-trunk-active" />
         </div>
         <p v-if="trunk && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
-          Inactive trunks are not used for calling until you activate this record and commit the change.
+          Inactive trunks are not used for calling until you activate this record and commit the
+          change.
         </p>
       </div>
     </PanelBackLink>
@@ -264,17 +263,88 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="trunk.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="trunk.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="trunk.id ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-id" :model-value="trunk.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Name" :value="editPkey || '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" v-model="editPkey" label="Name" type="text" placeholder="e.g. mytrunk" hint="Unique per tenant." />
-            <FormField id="edit-cname" v-model="editCname" label="Common name" type="text" placeholder="Display name" />
-            <FormReadonly v-if="isReadOnly('transport')" id="edit-identity-transport" label="Transport" :value="trunk.transport ?? 'udp'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-transport" :model-value="trunk.transport ?? 'udp'" label="Transport" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('technology')" id="edit-identity-technology" label="Technology" :value="editTechnology || '—'" class="readonly-identity" />
-            <FormSelect v-else id="edit-technology" v-model="editTechnology" label="Technology" :options="['SIP', 'IAX2']" />
+            <FormReadonly
+              v-if="isReadOnly('shortuid')"
+              id="edit-identity-shortuid"
+              label="UID"
+              :value="trunk.shortuid ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-shortuid"
+              :model-value="trunk.shortuid ?? '—'"
+              label="UID"
+              disabled
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="isReadOnly('id')"
+              id="edit-identity-id"
+              label="KSUID"
+              :value="trunk.id ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-id"
+              :model-value="trunk.id ?? '—'"
+              label="KSUID"
+              disabled
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="isReadOnly('pkey')"
+              id="edit-identity-pkey"
+              label="Name"
+              :value="editPkey || '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-pkey"
+              v-model="editPkey"
+              label="Name"
+              type="text"
+              placeholder="e.g. mytrunk"
+              hint="Unique per tenant."
+            />
+            <FormField
+              id="edit-cname"
+              v-model="editCname"
+              label="Common name"
+              type="text"
+              placeholder="Display name"
+            />
+            <FormReadonly
+              v-if="isReadOnly('transport')"
+              id="edit-identity-transport"
+              label="Transport"
+              :value="trunk.transport ?? 'udp'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-transport"
+              :model-value="trunk.transport ?? 'udp'"
+              label="Transport"
+              disabled
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="isReadOnly('technology')"
+              id="edit-identity-technology"
+              label="Technology"
+              :value="editTechnology || '—'"
+              class="readonly-identity"
+            />
+            <FormSelect
+              v-else
+              id="edit-technology"
+              v-model="editTechnology"
+              label="Technology"
+              :options="['SIP', 'IAX2']"
+            />
             <FormField
               id="edit-description"
               v-model="editDescription"
@@ -308,9 +378,27 @@ async function confirmAndDelete() {
               :required="true"
               placeholder="e.g. sip.example.com, IP, or dynamic (accept-reg)"
             />
-            <FormField id="edit-username" v-model="editUsername" label="Username" type="text" autocomplete="off" />
-            <FormField id="edit-peername" v-model="editPeername" label="Peername" type="text" autocomplete="off" />
-            <FormField id="edit-trunkname" v-model="editTrunkname" label="Trunkname" type="text" autocomplete="off" />
+            <FormField
+              id="edit-username"
+              v-model="editUsername"
+              label="Username"
+              type="text"
+              autocomplete="off"
+            />
+            <FormField
+              id="edit-peername"
+              v-model="editPeername"
+              label="Peername"
+              type="text"
+              autocomplete="off"
+            />
+            <FormField
+              id="edit-trunkname"
+              v-model="editTrunkname"
+              label="Trunkname"
+              type="text"
+              autocomplete="off"
+            />
             <FormField
               id="edit-password"
               v-model="editPassword"
@@ -320,8 +408,20 @@ async function confirmAndDelete() {
               autocomplete="new-password"
             />
             <FormToggle id="edit-moh" v-model="editMoh" label="MOH" yes-value="YES" no-value="NO" />
-            <FormToggle id="edit-callprogress" v-model="editCallprogress" label="Call progress" yes-value="YES" no-value="NO" />
-            <FormToggle id="edit-swoclip" v-model="editSwoclip" label="SWOCLIP" yes-value="YES" no-value="NO" />
+            <FormToggle
+              id="edit-callprogress"
+              v-model="editCallprogress"
+              label="Call progress"
+              yes-value="YES"
+              no-value="NO"
+            />
+            <FormToggle
+              id="edit-swoclip"
+              v-model="editSwoclip"
+              label="SWOCLIP"
+              yes-value="YES"
+              no-value="NO"
+            />
           </div>
 
           <h2 class="detail-heading">Advanced</h2>
@@ -332,7 +432,12 @@ async function confirmAndDelete() {
             <FormField id="edit-match" v-model="editMatch" label="Match" type="text" />
             <FormField id="edit-tag" v-model="editTag" label="Tag" type="text" />
             <FormField id="edit-callback" v-model="editCallback" label="Callback" type="text" />
-            <FormField id="edit-privileged" v-model="editPrivileged" label="Privileged" type="text" />
+            <FormField
+              id="edit-privileged"
+              v-model="editPrivileged"
+              label="Privileged"
+              type="text"
+            />
             <FormField id="edit-iaxreg" v-model="editIaxreg" label="IAX reg" type="text" />
             <FormSelect
               id="edit-devicerec"
@@ -346,7 +451,13 @@ async function confirmAndDelete() {
               label="DISA"
               :options="['None', 'DISA', 'CALLBACK']"
             />
-            <FormField id="edit-disapass" v-model="editDisapass" label="DISA pass" type="text" autocomplete="off" />
+            <FormField
+              id="edit-disapass"
+              v-model="editDisapass"
+              label="DISA pass"
+              type="text"
+              autocomplete="off"
+            />
             <FormField id="edit-transform" v-model="editTransform" label="Transform" type="text" />
           </div>
 
@@ -374,7 +485,10 @@ async function confirmAndDelete() {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Trunk <strong>{{ trunk?.pkey ?? '—' }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Trunk <strong>{{ trunk?.pkey ?? '—' }}</strong> will be permanently deleted. This cannot
+          be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -436,12 +550,12 @@ async function confirmAndDelete() {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.edit-actions button[type="submit"] {
+.edit-actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.edit-actions button[type="submit"]:disabled {
+.edit-actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

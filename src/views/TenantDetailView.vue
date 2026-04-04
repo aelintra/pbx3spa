@@ -69,9 +69,7 @@ const tenantHeading = computed(() => {
   return f ? `${base} (${f})` : base
 })
 
-const formAdvanced = reactive(
-  Object.fromEntries(ADVANCED_KEYS.map((k) => [k, '']))
-)
+const formAdvanced = reactive(Object.fromEntries(ADVANCED_KEYS.map((k) => [k, ''])))
 const formCallControl = reactive(Object.fromEntries(CALL_CONTROL_KEYS.map((k) => [k, ''])))
 const formCallRecording = reactive(Object.fromEntries(CALL_RECORDING_KEYS.map((k) => [k, ''])))
 const formTimers = reactive(Object.fromEntries(TIMERS_KEYS.map((k) => [k, ''])))
@@ -159,7 +157,9 @@ async function saveEdit(e) {
     await getApiClient().put(`tenants/${encodeURIComponent(pkey.value)}`, {
       description: editDescription.value.trim() || undefined,
       clusterclid: editClusterclid.value.trim() ? editClusterclid.value.trim() : null,
-      ...(parseNum(editLocalarea.value) !== undefined && { localarea: parseNum(editLocalarea.value) }),
+      ...(parseNum(editLocalarea.value) !== undefined && {
+        localarea: parseNum(editLocalarea.value)
+      }),
       ...(editLocaldplan.value.trim() !== '' && { localdplan: editLocaldplan.value.trim() }),
       chanmax: editChanmax.value.trim() ? editChanmax.value.trim() : undefined,
       ...(parseNum(editMaxin.value) !== undefined && { maxin: parseNum(editMaxin.value) }),
@@ -202,13 +202,13 @@ async function confirmAndDelete() {
     toast.show(`Tenant ${pkey.value} deleted`)
     router.push({ name: 'tenants' })
   } catch (err) {
-    deleteError.value = err.data?.message ?? err.data?.Error ?? err.message ?? 'Failed to delete tenant'
+    deleteError.value =
+      err.data?.message ?? err.data?.Error ?? err.message ?? 'Failed to delete tenant'
   } finally {
     deleting.value = false
     confirmDeleteOpen.value = false
   }
 }
-
 </script>
 
 <template>
@@ -242,19 +242,62 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="isReadOnly('shortuid')" id="edit-identity-shortuid" label="UID" :value="tenant.shortuid ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-shortuid" :model-value="tenant.shortuid ?? '—'" label="UID" disabled class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('id')" id="edit-identity-id" label="KSUID" :value="tenant.id ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-id" :model-value="tenant.id ?? '—'" label="KSUID" disabled class="readonly-identity" />
+            <FormReadonly
+              v-if="isReadOnly('shortuid')"
+              id="edit-identity-shortuid"
+              label="UID"
+              :value="tenant.shortuid ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-shortuid"
+              :model-value="tenant.shortuid ?? '—'"
+              label="UID"
+              disabled
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="isReadOnly('id')"
+              id="edit-identity-id"
+              label="KSUID"
+              :value="tenant.id ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-id"
+              :model-value="tenant.id ?? '—'"
+              label="KSUID"
+              disabled
+              class="readonly-identity"
+            />
             <FormReadonly
               id="edit-identity-fqdn"
               label="FQDN"
-              :value="tenant.fqdn != null && String(tenant.fqdn).trim() !== '' ? String(tenant.fqdn).trim() : '—'"
+              :value="
+                tenant.fqdn != null && String(tenant.fqdn).trim() !== ''
+                  ? String(tenant.fqdn).trim()
+                  : '—'
+              "
               class="readonly-identity"
               hide-help
             />
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Name" :value="tenant.pkey ?? '—'" class="readonly-identity" />
-            <FormField v-else id="edit-identity-pkey" :model-value="tenant.pkey ?? '—'" label="Name" disabled class="readonly-identity" />
+            <FormReadonly
+              v-if="isReadOnly('pkey')"
+              id="edit-identity-pkey"
+              label="Name"
+              :value="tenant.pkey ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-pkey"
+              :model-value="tenant.pkey ?? '—'"
+              label="Name"
+              disabled
+              class="readonly-identity"
+            />
             <FormField
               id="edit-description"
               v-model="editDescription"
@@ -372,51 +415,51 @@ async function confirmAndDelete() {
           <h2 class="detail-heading">Advanced</h2>
           <div class="form-fields advanced-fields">
             <template v-for="f in ADVANCED_FIELDS" :key="f.key">
-                <FormToggle
-                  v-if="f.type === 'boolean'"
-                  :id="`edit-adv-${f.key}`"
-                  v-model="formAdvanced[f.key]"
-                  :label="f.label"
-                  :help-pkey="f.helpPkey ?? f.key"
-                  yes-value="YES"
-                  no-value="NO"
-                />
-                <FormToggle
-                  v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
-                  :id="`edit-adv-${f.key}`"
-                  v-model="formAdvanced[f.key]"
-                  :label="f.label"
-                  :help-pkey="f.helpPkey ?? f.key"
-                  :yes-value="f.options[0]"
-                  :no-value="f.options[1]"
-                />
-                <FormSelect
-                  v-else-if="f.type === 'pill'"
-                  :id="`edit-adv-${f.key}`"
-                  v-model="formAdvanced[f.key]"
-                  :label="f.label"
-                  :help-pkey="f.helpPkey ?? f.key"
-                  :options="f.options"
-                  :required="false"
-                />
-                <FormField
-                  v-else-if="f.type === 'number'"
-                  :id="`edit-adv-${f.key}`"
-                  v-model="formAdvanced[f.key]"
-                  :label="f.label"
-                  :help-pkey="f.helpPkey ?? f.key"
-                  type="number"
-                  :placeholder="f.placeholder || 'number'"
-                />
-                <FormField
-                  v-else
-                  :id="`edit-adv-${f.key}`"
-                  v-model="formAdvanced[f.key]"
-                  :label="f.label"
-                  :help-pkey="f.helpPkey ?? f.key"
-                  type="text"
-                  :placeholder="f.placeholder || ''"
-                />
+              <FormToggle
+                v-if="f.type === 'boolean'"
+                :id="`edit-adv-${f.key}`"
+                v-model="formAdvanced[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                yes-value="YES"
+                no-value="NO"
+              />
+              <FormToggle
+                v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
+                :id="`edit-adv-${f.key}`"
+                v-model="formAdvanced[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                :yes-value="f.options[0]"
+                :no-value="f.options[1]"
+              />
+              <FormSelect
+                v-else-if="f.type === 'pill'"
+                :id="`edit-adv-${f.key}`"
+                v-model="formAdvanced[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                :options="f.options"
+                :required="false"
+              />
+              <FormField
+                v-else-if="f.type === 'number'"
+                :id="`edit-adv-${f.key}`"
+                v-model="formAdvanced[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                type="number"
+                :placeholder="f.placeholder || 'number'"
+              />
+              <FormField
+                v-else
+                :id="`edit-adv-${f.key}`"
+                v-model="formAdvanced[f.key]"
+                :label="f.label"
+                :help-pkey="f.helpPkey ?? f.key"
+                type="text"
+                :placeholder="f.placeholder || ''"
+              />
             </template>
           </div>
 
@@ -437,7 +480,11 @@ async function confirmAndDelete() {
                 :id="`edit-rec-${f.key}`"
                 :label="f.label"
                 :help-pkey="f.helpPkey ?? f.key"
-                :value="formCallRecording[f.key] !== '' && formCallRecording[f.key] != null ? String(formCallRecording[f.key]) : '—'"
+                :value="
+                  formCallRecording[f.key] !== '' && formCallRecording[f.key] != null
+                    ? String(formCallRecording[f.key])
+                    : '—'
+                "
               />
               <FormToggle
                 v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
@@ -631,7 +678,9 @@ async function confirmAndDelete() {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Tenant <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Tenant <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -699,12 +748,12 @@ async function confirmAndDelete() {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.edit-actions button[type="submit"] {
+.edit-actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.edit-actions button[type="submit"]:disabled {
+.edit-actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

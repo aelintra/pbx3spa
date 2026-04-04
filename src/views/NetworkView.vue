@@ -70,8 +70,8 @@ async function fetchData(options = {}) {
       editSmtpMailhub.value = s.mailhub ?? ''
       editSmtpUser.value = s.auth_user ?? ''
       editSmtpPass.value = s.auth_pass ?? ''
-      editSmtpUseTls.value = (s.use_tls === 'YES') ? 'YES' : 'NO'
-      editSmtpUseStarttls.value = (s.use_starttls === 'YES') ? 'YES' : 'NO'
+      editSmtpUseTls.value = s.use_tls === 'YES' ? 'YES' : 'NO'
+      editSmtpUseStarttls.value = s.use_starttls === 'YES' ? 'YES' : 'NO'
     } else {
       editSmtpMailhub.value = ''
       editSmtpUser.value = ''
@@ -132,17 +132,18 @@ async function saveEdit(e) {
     }
     const newDnsList = (editDns.value ?? '')
       .split('\n')
-      .map(s => s.trim())
+      .map((s) => s.trim())
       .filter(Boolean)
     const currentDns = sysnotes.value?.dns ?? []
-    const dnsChanged = newDnsList.length !== currentDns.length ||
-      newDnsList.some((ip, i) => ip !== currentDns[i])
+    const dnsChanged =
+      newDnsList.length !== currentDns.length || newDnsList.some((ip, i) => ip !== currentDns[i])
     if (dnsChanged && newDnsList.length > 0) {
       await getApiClient().put('syscommands/dns', { nameservers: newDnsList })
     }
     if (sysnotes.value?.smtp) {
       const cur = sysnotes.value.smtp
-      const smtpChanged = editSmtpMailhub.value?.trim() !== (cur.mailhub ?? '') ||
+      const smtpChanged =
+        editSmtpMailhub.value?.trim() !== (cur.mailhub ?? '') ||
         editSmtpUser.value?.trim() !== (cur.auth_user ?? '') ||
         editSmtpPass.value !== (cur.auth_pass ?? '') ||
         editSmtpUseTls.value !== (cur.use_tls ?? 'NO') ||
@@ -159,7 +160,9 @@ async function saveEdit(e) {
     }
     const currentTz = sysnotes.value?.timezone ?? ''
     if (editTimezone.value?.trim() !== currentTz) {
-      await getApiClient().put('syscommands/timezone', { timezone: editTimezone.value?.trim() || 'UTC' })
+      await getApiClient().put('syscommands/timezone', {
+        timezone: editTimezone.value?.trim() || 'UTC'
+      })
     }
     const newIcmp = editIcmp.value === 'YES'
     if (newIcmp !== sysnotes.value?.icmp) {
@@ -168,7 +171,10 @@ async function saveEdit(e) {
     const body = {
       bindport: editBindport.value?.trim() || null,
       staticipv4: editStaticipv4.value?.trim() || null,
-      tlsport: editTlsport.value !== '' && editTlsport.value != null ? parseInt(editTlsport.value, 10) : null,
+      tlsport:
+        editTlsport.value !== '' && editTlsport.value != null
+          ? parseInt(editTlsport.value, 10)
+          : null,
       sitename: editSitename.value?.trim() || null
     }
     await getApiClient().put('sysglobals', body)
@@ -198,91 +204,48 @@ onMounted(fetchData)
 
     <section v-else-if="error" class="error-state">
       <p class="error">{{ error }}</p>
-      <button type="button" @click="fetchData" class="btn btn-primary">Retry</button>
+      <button type="button" class="btn btn-primary" @click="fetchData">Retry</button>
     </section>
 
-    <form v-else @submit="saveEdit" class="edit-form">
+    <form v-else class="edit-form" @submit="saveEdit">
       <p v-if="saveError" class="form-error">{{ saveError }}</p>
 
       <div class="edit-actions edit-actions-top">
         <button type="submit" :disabled="saving || discarding" class="btn btn-primary">
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
-        <button type="button" @click="cancelEdit" :disabled="saving || discarding" class="btn btn-secondary">
+        <button
+          type="button"
+          :disabled="saving || discarding"
+          class="btn btn-secondary"
+          @click="cancelEdit"
+        >
           {{ discarding ? 'Restoring…' : 'Cancel' }}
         </button>
       </div>
 
       <h2 class="detail-heading">System</h2>
       <div class="form-fields">
-        <FormField
-          id="ip-sitename"
-          v-model="editSitename"
-          label="Site Name"
-        />
-        <FormField
-          id="ip-hostname"
-          v-model="editHostname"
-          label="Hostname"
-        />
-        <FormReadonly
-          id="ip-localip"
-          label="Local IP"
-          :value="network?.local_ip ?? '—'"
-        />
-        <FormField
-          id="ip-staticipv4"
-          v-model="editStaticipv4"
-          label="Static IPv4"
-        />
-        <FormReadonly
-          id="ip-publicip"
-          label="Public IP"
-          :value="network?.public_ip ?? '—'"
-        />
-        <FormReadonly
-          id="ip-mac"
-          label="MAC"
-          :value="network?.mac ?? '—'"
-          hide-help
-        />
-        <FormField
-          id="ip-dns"
-          v-model="editDns"
-          label="DNS servers"
-          multiline
-          :rows="6"
-        />
+        <FormField id="ip-sitename" v-model="editSitename" label="Site Name" />
+        <FormField id="ip-hostname" v-model="editHostname" label="Hostname" />
+        <FormReadonly id="ip-localip" label="Local IP" :value="network?.local_ip ?? '—'" />
+        <FormField id="ip-staticipv4" v-model="editStaticipv4" label="Static IPv4" />
+        <FormReadonly id="ip-publicip" label="Public IP" :value="network?.public_ip ?? '—'" />
+        <FormReadonly id="ip-mac" label="MAC" :value="network?.mac ?? '—'" hide-help />
+        <FormField id="ip-dns" v-model="editDns" label="DNS servers" multiline :rows="6" />
       </div>
 
       <h2 class="detail-heading">SIP Binding</h2>
       <div class="form-fields">
-        <FormField
-          id="ip-bindport"
-          v-model="editBindport"
-          label="Bind Port"
-        />
-        <FormField
-          id="ip-tlsport"
-          v-model="editTlsport"
-          type="number"
-          label="TLS Port"
-        />
+        <FormField id="ip-bindport" v-model="editBindport" label="Bind Port" />
+        <FormField id="ip-tlsport" v-model="editTlsport" type="number" label="TLS Port" />
       </div>
 
       <template v-if="sysnotes?.smtp">
         <h2 class="detail-heading">SMTP</h2>
         <div class="form-fields">
-          <FormField
-            id="ip-smtp-mailhub"
-            v-model="editSmtpMailhub"
-            label="Mail hub"
-          />
-          <FormField
-            id="ip-smtp-user"
-            v-model="editSmtpUser"
-            label="Auth user"
-          />
+          <FormField id="ip-smtp-mailhub" v-model="editSmtpMailhub" label="Mail hub" />
+          <FormField id="ip-smtp-user" v-model="editSmtpUser" label="Auth user" />
           <FormField
             id="ip-smtp-pass"
             v-model="editSmtpPass"
@@ -311,7 +274,7 @@ onMounted(fetchData)
           v-model="editTimezone"
           label="Timezone"
           :options="timezoneOptions"
-          emptyText="—"
+          empty-text="—"
         />
       </div>
 
@@ -329,7 +292,12 @@ onMounted(fetchData)
         <button type="submit" :disabled="saving || discarding" class="btn btn-primary">
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
-        <button type="button" @click="cancelEdit" :disabled="saving || discarding" class="btn btn-secondary">
+        <button
+          type="button"
+          :disabled="saving || discarding"
+          class="btn btn-secondary"
+          @click="cancelEdit"
+        >
           {{ discarding ? 'Restoring…' : 'Cancel' }}
         </button>
       </div>

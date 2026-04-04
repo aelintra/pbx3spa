@@ -51,7 +51,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = editCluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -279,9 +280,27 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Identity</h2>
           <div class="form-fields">
-            <FormReadonly v-if="agent.shortuid != null && agent.shortuid !== ''" id="edit-identity-shortuid" label="UID" :value="agent.shortuid ?? '—'" class="readonly-identity" />
-            <FormReadonly v-if="agent.id != null && agent.id !== ''" id="edit-identity-id" label="KSUID" :value="agent.id ?? '—'" class="readonly-identity" />
-            <FormReadonly v-if="isReadOnly('pkey')" id="edit-identity-pkey" label="Agent number" :value="agent.pkey ?? '—'" class="readonly-identity" />
+            <FormReadonly
+              v-if="agent.shortuid != null && agent.shortuid !== ''"
+              id="edit-identity-shortuid"
+              label="UID"
+              :value="agent.shortuid ?? '—'"
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="agent.id != null && agent.id !== ''"
+              id="edit-identity-id"
+              label="KSUID"
+              :value="agent.id ?? '—'"
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="isReadOnly('pkey')"
+              id="edit-identity-pkey"
+              label="Agent number"
+              :value="agent.pkey ?? '—'"
+              class="readonly-identity"
+            />
             <FormField
               v-else
               id="edit-identity-pkey"
@@ -391,31 +410,97 @@ async function confirmAndDelete() {
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Agent <strong>{{ agent?.pkey ?? '—' }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Agent <strong>{{ agent?.pkey ?? '—' }}</strong> will be permanently deleted. This cannot
+          be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
 </template>
 
 <style scoped>
-.detail-view { max-width: 52rem; }
-.loading, .error { margin-top: 1rem; }
-.error { color: #dc2626; }
-.detail-content { margin-top: 1rem; }
-.detail-heading { font-size: 1rem; font-weight: 600; color: #334155; margin: 1.5rem 0 0.5rem 0; }
-.detail-heading:first-of-type { margin-top: 0; }
-.form-fields { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+.detail-view {
+  max-width: 52rem;
+}
+.loading,
+.error {
+  margin-top: 1rem;
+}
+.error {
+  color: #dc2626;
+}
+.detail-content {
+  margin-top: 1rem;
+}
+.detail-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 1.5rem 0 0.5rem 0;
+}
+.detail-heading:first-of-type {
+  margin-top: 0;
+}
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0.5rem;
+}
 .readonly-identity :deep(.form-field-label),
-.readonly-identity :deep(.form-readonly) { color: #94a3b8; }
-.readonly-identity :deep(.form-readonly) { background-color: #f1f5f9; border-color: #e2e8f0; }
-.edit-form { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; max-width: 52rem; }
-.edit-actions { display: flex; gap: 0.5rem; }
-.edit-actions button { padding: 0.375rem 0.75rem; font-size: 0.875rem; font-weight: 500; border-radius: 0.375rem; cursor: pointer; }
-.edit-actions button[type="submit"] { color: #fff; background: #2563eb; border: none; }
-.edit-actions button[type="submit"]:disabled { opacity: 0.7; cursor: not-allowed; }
-.edit-actions button.secondary { color: #64748b; background: transparent; border: 1px solid #e2e8f0; }
-.edit-actions button.secondary:hover { background: #f1f5f9; }
-.edit-actions button.action-delete { color: #fff; background: #dc2626; border: none; }
-.edit-actions button.action-delete:hover:not(:disabled) { background: #b91c1c; }
-.edit-actions button.action-delete:disabled { opacity: 0.7; cursor: not-allowed; }
+.readonly-identity :deep(.form-readonly) {
+  color: #94a3b8;
+}
+.readonly-identity :deep(.form-readonly) {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+}
+.edit-form {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 52rem;
+}
+.edit-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.edit-actions button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.edit-actions button[type='submit'] {
+  color: #fff;
+  background: #2563eb;
+  border: none;
+}
+.edit-actions button[type='submit']:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.edit-actions button.secondary {
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+}
+.edit-actions button.secondary:hover {
+  background: #f1f5f9;
+}
+.edit-actions button.action-delete {
+  color: #fff;
+  background: #dc2626;
+  border: none;
+}
+.edit-actions button.action-delete:hover:not(:disabled) {
+  background: #b91c1c;
+}
+.edit-actions button.action-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 </style>

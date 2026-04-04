@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
@@ -57,7 +57,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = editCluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -205,7 +206,9 @@ const panelTitleTenantSuffix = computed(() => {
     <PanelBackLink :to="{ name: 'customapps' }" label="Custom Apps">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
-          <h1 class="detail-panel-title">Edit Custom App {{ app?.pkey ?? shortuid }}{{ panelTitleTenantSuffix }}</h1>
+          <h1 class="detail-panel-title">
+            Edit Custom App {{ app?.pkey ?? shortuid }}{{ panelTitleTenantSuffix }}
+          </h1>
           <DetailActiveStatusBar
             v-if="app"
             v-model="editActive"
@@ -214,7 +217,8 @@ const panelTitleTenantSuffix = computed(() => {
           />
         </div>
         <p v-if="app && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
-          Inactive custom apps are not invoked by the dialplan until you activate this record and commit the change.
+          Inactive custom apps are not invoked by the dialplan until you activate this record and
+          commit the change.
         </p>
       </div>
     </PanelBackLink>
@@ -239,10 +243,20 @@ const panelTitleTenantSuffix = computed(() => {
       <h2 class="detail-heading">Identity</h2>
       <div class="form-fields">
         <template v-if="app?.shortuid != null && app?.shortuid !== ''">
-          <FormReadonly id="edit-identity-shortuid" label="UID" :value="app.shortuid ?? '—'" class="readonly-identity" />
+          <FormReadonly
+            id="edit-identity-shortuid"
+            label="UID"
+            :value="app.shortuid ?? '—'"
+            class="readonly-identity"
+          />
         </template>
         <template v-if="app?.id != null && app?.id !== ''">
-          <FormReadonly id="edit-identity-id" label="KSUID" :value="app.id ?? '—'" class="readonly-identity" />
+          <FormReadonly
+            id="edit-identity-id"
+            label="KSUID"
+            :value="app.id ?? '—'"
+            class="readonly-identity"
+          />
         </template>
         <FormField
           v-if="!isReadOnly('pkey')"
@@ -253,7 +267,13 @@ const panelTitleTenantSuffix = computed(() => {
           placeholder="e.g. MyApp_1"
           help-pkey="context"
         />
-        <FormReadonly v-else id="edit-identity-pkey" label="App name" :value="app?.pkey ?? '—'" class="readonly-identity" />
+        <FormReadonly
+          v-else
+          id="edit-identity-pkey"
+          label="App name"
+          :value="app?.pkey ?? '—'"
+          class="readonly-identity"
+        />
         <FormField
           v-if="!isReadOnly('cname')"
           id="cname"
@@ -268,7 +288,12 @@ const panelTitleTenantSuffix = computed(() => {
           v-model="editDescription"
           label="Description"
         />
-        <FormReadonly v-else id="description" label="Description" :value="app?.description ?? '—'" />
+        <FormReadonly
+          v-else
+          id="description"
+          label="Description"
+          :value="app?.description ?? '—'"
+        />
       </div>
 
       <h2 class="detail-heading">Settings</h2>
@@ -281,7 +306,12 @@ const panelTitleTenantSuffix = computed(() => {
           :options="tenantOptionsForSelect"
           :disabled="tenantsLoading"
         />
-        <FormReadonly v-else id="cluster" label="Tenant" :value="resolveClusterToTenantPkey(app?.cluster) || '—'" />
+        <FormReadonly
+          v-else
+          id="cluster"
+          label="Tenant"
+          :value="resolveClusterToTenantPkey(app?.cluster) || '—'"
+        />
 
         <FormSelect
           v-if="!isReadOnly('span')"
@@ -342,7 +372,10 @@ const panelTitleTenantSuffix = computed(() => {
       @cancel="() => (confirmDeleteOpen.value = false)"
     >
       <template #body>
-        <p>Custom app <strong>{{ app?.pkey ?? shortuid }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Custom app <strong>{{ app?.pkey ?? shortuid }}</strong> will be permanently deleted. This
+          cannot be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -392,12 +425,12 @@ const panelTitleTenantSuffix = computed(() => {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.edit-actions button[type="submit"] {
+.edit-actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.edit-actions button[type="submit"]:disabled {
+.edit-actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

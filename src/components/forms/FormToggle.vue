@@ -64,12 +64,7 @@ function handleChange(event) {
     </label>
     <div class="form-field-input-wrapper">
       <label class="toggle-pill-ios" :aria-label="ariaLabel || label">
-        <input
-          :id="id"
-          type="checkbox"
-          :checked="isChecked"
-          @change="handleChange"
-        />
+        <input :id="id" type="checkbox" :checked="isChecked" @change="handleChange" />
         <span class="toggle-pill-track"><span class="toggle-pill-thumb"></span></span>
       </label>
       <p v-if="hint" class="form-field-hint">
@@ -110,7 +105,7 @@ function handleChange(event) {
   user-select: none;
 }
 
-.toggle-pill-ios input[type="checkbox"] {
+.toggle-pill-ios input[type='checkbox'] {
   position: absolute;
   opacity: 0;
   width: 0;
@@ -138,19 +133,19 @@ function handleChange(event) {
   transition: transform 0.2s ease;
 }
 
-.toggle-pill-ios input[type="checkbox"]:checked + .toggle-pill-track {
+.toggle-pill-ios input[type='checkbox']:checked + .toggle-pill-track {
   background-color: #22c55e;
 }
 
-.toggle-pill-ios input[type="checkbox"]:checked + .toggle-pill-track .toggle-pill-thumb {
+.toggle-pill-ios input[type='checkbox']:checked + .toggle-pill-track .toggle-pill-thumb {
   transform: translateX(1.25rem);
 }
 
-.toggle-pill-ios input[type="checkbox"]:focus + .toggle-pill-track {
+.toggle-pill-ios input[type='checkbox']:focus + .toggle-pill-track {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.toggle-pill-ios input[type="checkbox"]:disabled + .toggle-pill-track {
+.toggle-pill-ios input[type='checkbox']:disabled + .toggle-pill-track {
   opacity: 0.5;
   cursor: not-allowed;
 }

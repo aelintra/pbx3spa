@@ -41,7 +41,8 @@ export function createApiClient(baseUrl, token) {
   }
 
   async function request(method, path, body) {
-    const isGetWithParams = method === 'GET' && body && typeof body === 'object' && !Array.isArray(body)
+    const isGetWithParams =
+      method === 'GET' && body && typeof body === 'object' && !Array.isArray(body)
     const url = buildUrl(path, isGetWithParams ? body : undefined)
     const options = {
       method,

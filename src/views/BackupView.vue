@@ -22,7 +22,7 @@
           <input
             type="file"
             accept=".zip"
-            style="display: none;"
+            style="display: none"
             :disabled="uploadingBackup"
             @change="handleFileUpload"
           />
@@ -43,13 +43,28 @@
         <table class="table">
           <thead>
             <tr>
-              <th class="th-sortable" title="Click to sort" :class="sortClass('filename')" @click="setSort('filename')">
+              <th
+                class="th-sortable"
+                title="Click to sort"
+                :class="sortClass('filename')"
+                @click="setSort('filename')"
+              >
                 Filename
               </th>
-              <th class="th-sortable" title="Click to sort" :class="sortClass('date')" @click="setSort('date')">
+              <th
+                class="th-sortable"
+                title="Click to sort"
+                :class="sortClass('date')"
+                @click="setSort('date')"
+              >
                 Date
               </th>
-              <th class="th-sortable" title="Click to sort" :class="sortClass('size')" @click="setSort('size')">
+              <th
+                class="th-sortable"
+                title="Click to sort"
+                :class="sortClass('size')"
+                @click="setSort('size')"
+              >
                 Size
               </th>
               <th class="th-actions">Actions</th>
@@ -68,11 +83,44 @@
                   :disabled="downloadingBackup === backup.filename"
                   @click="downloadBackup(backup.filename)"
                 >
-                  <span v-if="downloadingBackup === backup.filename" class="action-icon action-icon-spin" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                  <span
+                    v-if="downloadingBackup === backup.filename"
+                    class="action-icon action-icon-spin"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                      <path d="M16 21h5v-5" />
+                    </svg>
                   </span>
                   <span v-else class="action-icon" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" x2="12" y1="15" y2="3" />
+                    </svg>
                   </span>
                 </button>
                 <button
@@ -82,11 +130,45 @@
                   :disabled="restoringBackup === backup.filename"
                   @click="openRestoreModal(backup.filename)"
                 >
-                  <span v-if="restoringBackup === backup.filename" class="action-icon action-icon-spin" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                  <span
+                    v-if="restoringBackup === backup.filename"
+                    class="action-icon action-icon-spin"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                      <path d="M16 21h5v-5" />
+                    </svg>
                   </span>
                   <span v-else class="action-icon" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                      <path d="M21 3v5h-5" />
+                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                      <path d="M8 16H3v5" />
+                    </svg>
                   </span>
                 </button>
                 <button
@@ -96,11 +178,46 @@
                   :disabled="deletingBackup === backup.filename"
                   @click="askConfirmDelete(backup.filename)"
                 >
-                  <span v-if="deletingBackup === backup.filename" class="action-icon action-icon-spin" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                  <span
+                    v-if="deletingBackup === backup.filename"
+                    class="action-icon action-icon-spin"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                      <path d="M16 21h5v-5" />
+                    </svg>
                   </span>
                   <span v-else class="action-icon" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                      <line x1="10" x2="10" y1="11" y2="17" />
+                      <line x1="14" x2="14" y1="11" y2="17" />
+                    </svg>
                   </span>
                 </button>
               </td>
@@ -130,7 +247,7 @@
           <input
             type="file"
             accept=".db"
-            style="display: none;"
+            style="display: none"
             :disabled="uploadingSnapshot"
             @change="handleSnapshotUpload"
           />
@@ -145,19 +262,36 @@
         <span>Loading snapshots…</span>
       </div>
       <p v-else-if="snapshotsError" class="error">{{ snapshotsError }}</p>
-      <div v-else-if="!snapshotsLoading && snapshots.length === 0" class="empty">No snapshots found.</div>
+      <div v-else-if="!snapshotsLoading && snapshots.length === 0" class="empty">
+        No snapshots found.
+      </div>
 
       <div v-else class="backup-list">
         <table class="table">
           <thead>
             <tr>
-              <th class="th-sortable" title="Click to sort" :class="snapshotSortClass('filename')" @click="setSnapshotSort('filename')">
+              <th
+                class="th-sortable"
+                title="Click to sort"
+                :class="snapshotSortClass('filename')"
+                @click="setSnapshotSort('filename')"
+              >
                 Filename
               </th>
-              <th class="th-sortable" title="Click to sort" :class="snapshotSortClass('date')" @click="setSnapshotSort('date')">
+              <th
+                class="th-sortable"
+                title="Click to sort"
+                :class="snapshotSortClass('date')"
+                @click="setSnapshotSort('date')"
+              >
                 Date
               </th>
-              <th class="th-sortable" title="Click to sort" :class="snapshotSortClass('size')" @click="setSnapshotSort('size')">
+              <th
+                class="th-sortable"
+                title="Click to sort"
+                :class="snapshotSortClass('size')"
+                @click="setSnapshotSort('size')"
+              >
                 Size
               </th>
               <th class="th-actions">Actions</th>
@@ -176,11 +310,44 @@
                   :disabled="downloadingSnapshot === snapshot.filename"
                   @click="downloadSnapshot(snapshot.filename)"
                 >
-                  <span v-if="downloadingSnapshot === snapshot.filename" class="action-icon action-icon-spin" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                  <span
+                    v-if="downloadingSnapshot === snapshot.filename"
+                    class="action-icon action-icon-spin"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                      <path d="M16 21h5v-5" />
+                    </svg>
                   </span>
                   <span v-else class="action-icon" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" x2="12" y1="15" y2="3" />
+                    </svg>
                   </span>
                 </button>
                 <button
@@ -190,11 +357,45 @@
                   :disabled="restoringSnapshot === snapshot.filename"
                   @click="restoreSnapshot(snapshot.filename)"
                 >
-                  <span v-if="restoringSnapshot === snapshot.filename" class="action-icon action-icon-spin" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                  <span
+                    v-if="restoringSnapshot === snapshot.filename"
+                    class="action-icon action-icon-spin"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                      <path d="M16 21h5v-5" />
+                    </svg>
                   </span>
                   <span v-else class="action-icon" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                      <path d="M21 3v5h-5" />
+                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                      <path d="M8 16H3v5" />
+                    </svg>
                   </span>
                 </button>
                 <button
@@ -204,11 +405,46 @@
                   :disabled="deletingSnapshot === snapshot.filename"
                   @click="askConfirmDeleteSnapshot(snapshot.filename)"
                 >
-                  <span v-if="deletingSnapshot === snapshot.filename" class="action-icon action-icon-spin" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+                  <span
+                    v-if="deletingSnapshot === snapshot.filename"
+                    class="action-icon action-icon-spin"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                      <path d="M16 21h5v-5" />
+                    </svg>
                   </span>
                   <span v-else class="action-icon" aria-hidden="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                      <line x1="10" x2="10" y1="11" y2="17" />
+                      <line x1="14" x2="14" y1="11" y2="17" />
+                    </svg>
                   </span>
                 </button>
               </td>
@@ -224,41 +460,29 @@
         <div class="modal modal-restore" role="dialog" aria-modal="true">
           <h2 class="modal-title">Restore Backup</h2>
           <div class="modal-body">
-            <p>Select what to restore from <strong>{{ restoreBackupName }}</strong>:</p>
+            <p>
+              Select what to restore from <strong>{{ restoreBackupName }}</strong
+              >:
+            </p>
             <div class="restore-options">
               <label class="restore-option">
-                <input
-                  type="checkbox"
-                  v-model="restoreOptions.restoredb"
-                />
+                <input v-model="restoreOptions.restoredb" type="checkbox" />
                 <span>Database</span>
               </label>
               <label class="restore-option">
-                <input
-                  type="checkbox"
-                  v-model="restoreOptions.restoreasterisk"
-                />
+                <input v-model="restoreOptions.restoreasterisk" type="checkbox" />
                 <span>Asterisk files</span>
               </label>
               <label class="restore-option">
-                <input
-                  type="checkbox"
-                  v-model="restoreOptions.restoreusergreeting"
-                />
+                <input v-model="restoreOptions.restoreusergreeting" type="checkbox" />
                 <span>User greetings</span>
               </label>
               <label class="restore-option">
-                <input
-                  type="checkbox"
-                  v-model="restoreOptions.restorevmail"
-                />
+                <input v-model="restoreOptions.restorevmail" type="checkbox" />
                 <span>Voicemail</span>
               </label>
               <label class="restore-option">
-                <input
-                  type="checkbox"
-                  v-model="restoreOptions.restoreldap"
-                />
+                <input v-model="restoreOptions.restoreldap" type="checkbox" />
                 <span>LDAP contacts</span>
               </label>
             </div>
@@ -289,7 +513,10 @@
       @cancel="cancelConfirmDelete"
     >
       <template #body>
-        <p>Backup <strong>{{ confirmDeleteBackup }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Backup <strong>{{ confirmDeleteBackup }}</strong> will be permanently deleted. This cannot
+          be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
 
@@ -301,7 +528,10 @@
       @cancel="cancelConfirmDeleteSnapshot"
     >
       <template #body>
-        <p>Snapshot <strong>{{ confirmDeleteSnapshot }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Snapshot <strong>{{ confirmDeleteSnapshot }}</strong> will be permanently deleted. This
+          cannot be undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -341,10 +571,13 @@ const downloadingSnapshot = ref(null)
 const restoringSnapshot = ref(null)
 const deletingSnapshot = ref(null)
 const confirmDeleteSnapshot = ref(null)
-const { sortKey: snapshotSortKey, sortOrder: snapshotSortOrder } = useStickySort('backup-snapshots', {
-  defaultKey: 'date',
-  defaultOrder: 'desc'
-})
+const { sortKey: snapshotSortKey, sortOrder: snapshotSortOrder } = useStickySort(
+  'backup-snapshots',
+  {
+    defaultKey: 'date',
+    defaultOrder: 'desc'
+  }
+)
 
 const showRestoreModal = ref(false)
 const restoreBackupName = ref('')
@@ -356,10 +589,13 @@ const restoreOptions = ref({
   restoreldap: false
 })
 
-const { sortKey, sortOrder } = useStickySort('backup-backups', { defaultKey: 'date', defaultOrder: 'desc' })
+const { sortKey, sortOrder } = useStickySort('backup-backups', {
+  defaultKey: 'date',
+  defaultOrder: 'desc'
+})
 
 const hasRestoreOptionSelected = computed(() => {
-  return Object.values(restoreOptions.value).some(v => v === true)
+  return Object.values(restoreOptions.value).some((v) => v === true)
 })
 
 function formatBytes(bytes) {
@@ -523,7 +759,11 @@ async function confirmRestore() {
     restoreError.value = 'Please select at least one option to restore'
     return
   }
-  if (!confirm(`Restore selected items from ${restoreBackupName.value}? This will overwrite existing data.`)) {
+  if (
+    !confirm(
+      `Restore selected items from ${restoreBackupName.value}? This will overwrite existing data.`
+    )
+  ) {
     return
   }
   restoringBackup.value = restoreBackupName.value
@@ -1066,7 +1306,7 @@ onMounted(() => {
   background: #f8fafc;
 }
 
-.restore-option input[type="checkbox"] {
+.restore-option input[type='checkbox'] {
   width: 1rem;
   height: 1rem;
   cursor: pointer;

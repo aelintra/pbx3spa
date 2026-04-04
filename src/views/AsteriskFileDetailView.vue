@@ -47,7 +47,9 @@ async function saveEdit(e) {
   saveError.value = ''
   saving.value = true
   try {
-    await getApiClient().put(`astfiles/${encodeURIComponent(filename.value)}`, { content: editContent.value })
+    await getApiClient().put(`astfiles/${encodeURIComponent(filename.value)}`, {
+      content: editContent.value
+    })
     toast.show('File updated')
     content.value = editContent.value
   } catch (err) {
@@ -117,9 +119,15 @@ watch(filename, loadFile)
   margin: 0;
 }
 .detail-states .loading,
-.detail-states .error { margin: 0; }
-.loading { color: #64748b; }
-.error { color: #b91c1c; }
+.detail-states .error {
+  margin: 0;
+}
+.loading {
+  color: #64748b;
+}
+.error {
+  color: #b91c1c;
+}
 .readonly-badge {
   margin: 0;
   font-size: 0.875rem;
@@ -142,12 +150,12 @@ watch(filename, loadFile)
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.edit-actions button[type="submit"] {
+.edit-actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.edit-actions button[type="submit"]:disabled {
+.edit-actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
@@ -159,7 +167,9 @@ watch(filename, loadFile)
 .edit-actions button.secondary:hover {
   background: #f1f5f9;
 }
-.field { margin: 0; }
+.field {
+  margin: 0;
+}
 .file-textarea,
 .file-pre {
   width: 100%;

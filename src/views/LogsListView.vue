@@ -114,7 +114,9 @@ onMounted(async () => {
 
     <section v-else class="list-body">
       <div v-if="logs.length === 0" class="empty">No log files found.</div>
-      <p v-else-if="filterText && filteredLogs.length === 0" class="empty">No logs match the filter.</p>
+      <p v-else-if="filterText && filteredLogs.length === 0" class="empty">
+        No logs match the filter.
+      </p>
       <table v-else class="table">
         <thead>
           <tr>
@@ -141,8 +143,8 @@ onMounted(async () => {
                 v-if="log.exists"
                 type="button"
                 class="download-btn"
-                @click="downloadLog(log.path, $event)"
                 title="Download log file"
+                @click="downloadLog(log.path, $event)"
               >
                 Download
               </button>
@@ -153,11 +155,7 @@ onMounted(async () => {
       </table>
     </section>
 
-    <LogViewerModal
-      v-if="selectedLogPath"
-      :log-path="selectedLogPath"
-      @close="closeLogModal"
-    />
+    <LogViewerModal v-if="selectedLogPath" :log-path="selectedLogPath" @close="closeLogModal" />
   </div>
 </template>
 

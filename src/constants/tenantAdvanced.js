@@ -99,7 +99,12 @@ export const MONITORING_FIELDS = [
 ]
 
 export const CALL_RECORDING_FIELDS = [
-  { key: 'callrecord_1', label: 'Call record 1', type: 'pill', options: ['None', 'In', 'Out', 'Both'] },
+  {
+    key: 'callrecord_1',
+    label: 'Call record 1',
+    type: 'pill',
+    options: ['None', 'In', 'Out', 'Both']
+  },
   { key: 'rec_age', label: 'Rec age', type: 'number' },
   { key: 'rec_final_dest', label: 'Rec final dest', type: 'text' },
   { key: 'rec_file_dlim', label: 'Rec file dlim', type: 'text' },
@@ -123,7 +128,12 @@ export const CALL_CONTROL_KEYS = [
 ]
 
 export const CALL_CONTROL_FIELDS = [
-  { key: 'allow_hash_xfer', label: 'Allow hash transfer', type: 'pill', options: ['enabled', 'disabled'] },
+  {
+    key: 'allow_hash_xfer',
+    label: 'Allow hash transfer',
+    type: 'pill',
+    options: ['enabled', 'disabled']
+  },
   { key: 'cfwd_progress', label: 'CFWD progress', type: 'pill', options: ['enabled', 'disabled'] },
   { key: 'cfwd_answer', label: 'CFWD answer', type: 'pill', options: ['enabled', 'disabled'] },
   { key: 'lterm', label: 'Lterm', type: 'boolean' },
@@ -135,7 +145,13 @@ export const CALL_CONTROL_FIELDS = [
 
 // LDAP section (rendered last in tenant create/detail).
 export const LDAP_KEYS = [
-  'ldapbase', 'ldaphost', 'ldapou', 'ldapuser', 'ldappass', 'ldaptls', 'ldapanonbind'
+  'ldapbase',
+  'ldaphost',
+  'ldapou',
+  'ldapuser',
+  'ldappass',
+  'ldaptls',
+  'ldapanonbind'
 ]
 
 export const LDAP_FIELDS = [
@@ -150,11 +166,16 @@ export const LDAP_FIELDS = [
 
 // Advanced field keys (same order as API updateableColumns for advanced section).
 export const ADVANCED_KEYS = [
-  'countrycode', 'emergency',
+  'countrycode',
+  'emergency',
   'language',
   'operator',
-  'spy_pass', 'sysop', 'syspass',
-  'usemohcustom', 'vmail_age', 'voice_instr'
+  'spy_pass',
+  'sysop',
+  'syspass',
+  'usemohcustom',
+  'vmail_age',
+  'voice_instr'
 ]
 
 // Field config for Advanced section: label and type (text, number, pill, boolean).
@@ -190,63 +211,75 @@ export function parseNum(v) {
  * Booleans become 'YES'/'NO'; other values stringified.
  */
 export function buildInitialFormAdvanced() {
-  return Object.fromEntries(ADVANCED_KEYS.map((k) => {
-    const def = CLUSTER_CREATE_DEFAULTS[k]
-    if (def === true || def === false) return [k, def ? 'YES' : 'NO']
-    return [k, def != null ? def : '']
-  }))
+  return Object.fromEntries(
+    ADVANCED_KEYS.map((k) => {
+      const def = CLUSTER_CREATE_DEFAULTS[k]
+      if (def === true || def === false) return [k, def ? 'YES' : 'NO']
+      return [k, def != null ? def : '']
+    })
+  )
 }
 
 /**
  * Initial LDAP subsection state (same defaults source as advanced).
  */
 export function buildInitialFormLdap() {
-  return Object.fromEntries(LDAP_KEYS.map((k) => {
-    const def = CLUSTER_CREATE_DEFAULTS[k]
-    if (def === true || def === false) return [k, def ? 'YES' : 'NO']
-    return [k, def != null ? def : '']
-  }))
+  return Object.fromEntries(
+    LDAP_KEYS.map((k) => {
+      const def = CLUSTER_CREATE_DEFAULTS[k]
+      if (def === true || def === false) return [k, def ? 'YES' : 'NO']
+      return [k, def != null ? def : '']
+    })
+  )
 }
 
 /**
  * Initial Call control subsection state.
  */
 export function buildInitialFormCallControl() {
-  return Object.fromEntries(CALL_CONTROL_KEYS.map((k) => {
-    const def = CLUSTER_CREATE_DEFAULTS[k]
-    if (def === true || def === false) return [k, def ? 'YES' : 'NO']
-    return [k, def != null ? def : '']
-  }))
+  return Object.fromEntries(
+    CALL_CONTROL_KEYS.map((k) => {
+      const def = CLUSTER_CREATE_DEFAULTS[k]
+      if (def === true || def === false) return [k, def ? 'YES' : 'NO']
+      return [k, def != null ? def : '']
+    })
+  )
 }
 
 /**
  * Initial Call recording subsection state.
  */
 export function buildInitialFormCallRecording() {
-  return Object.fromEntries(CALL_RECORDING_KEYS.map((k) => {
-    const def = CLUSTER_CREATE_DEFAULTS[k]
-    if (def === true || def === false) return [k, def ? 'YES' : 'NO']
-    return [k, def != null ? def : '']
-  }))
+  return Object.fromEntries(
+    CALL_RECORDING_KEYS.map((k) => {
+      const def = CLUSTER_CREATE_DEFAULTS[k]
+      if (def === true || def === false) return [k, def ? 'YES' : 'NO']
+      return [k, def != null ? def : '']
+    })
+  )
 }
 
 export function buildInitialFormMonitoring() {
-  return Object.fromEntries(MONITORING_KEYS.map((k) => {
-    const def = CLUSTER_CREATE_DEFAULTS[k]
-    if (def === true || def === false) return [k, def ? 'YES' : 'NO']
-    return [k, def != null ? def : '']
-  }))
+  return Object.fromEntries(
+    MONITORING_KEYS.map((k) => {
+      const def = CLUSTER_CREATE_DEFAULTS[k]
+      if (def === true || def === false) return [k, def ? 'YES' : 'NO']
+      return [k, def != null ? def : '']
+    })
+  )
 }
 
 /**
  * Initial Timers subsection state.
  */
 export function buildInitialFormTimers() {
-  return Object.fromEntries(TIMERS_KEYS.map((k) => {
-    const def = CLUSTER_CREATE_DEFAULTS[k]
-    if (def === true || def === false) return [k, def ? 'YES' : 'NO']
-    return [k, def != null ? def : '']
-  }))
+  return Object.fromEntries(
+    TIMERS_KEYS.map((k) => {
+      const def = CLUSTER_CREATE_DEFAULTS[k]
+      if (def === true || def === false) return [k, def ? 'YES' : 'NO']
+      return [k, def != null ? def : '']
+    })
+  )
 }
 
 /**

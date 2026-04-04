@@ -54,12 +54,32 @@ const options = ref({
   option11: 'None'
 })
 const tags = ref({
-  tag0: '', tag1: '', tag2: '', tag3: '', tag4: '', tag5: '',
-  tag6: '', tag7: '', tag8: '', tag9: '', tag10: '', tag11: ''
+  tag0: '',
+  tag1: '',
+  tag2: '',
+  tag3: '',
+  tag4: '',
+  tag5: '',
+  tag6: '',
+  tag7: '',
+  tag8: '',
+  tag9: '',
+  tag10: '',
+  tag11: ''
 })
 const alerts = ref({
-  alert0: '', alert1: '', alert2: '', alert3: '', alert4: '', alert5: '',
-  alert6: '', alert7: '', alert8: '', alert9: '', alert10: '', alert11: ''
+  alert0: '',
+  alert1: '',
+  alert2: '',
+  alert3: '',
+  alert4: '',
+  alert5: '',
+  alert6: '',
+  alert7: '',
+  alert8: '',
+  alert9: '',
+  alert10: '',
+  alert11: ''
 })
 const greetings = ref([])
 const greetingsLoading = ref(false)
@@ -76,7 +96,10 @@ const greetingOptions = computed(() => {
   return [...new Set(nums)].sort((a, b) => a - b)
 })
 
-const greetingOptionsWithNone = computed(() => ['None', ...greetingOptions.value.map((n) => String(n))])
+const greetingOptionsWithNone = computed(() => [
+  'None',
+  ...greetingOptions.value.map((n) => String(n))
+])
 
 const tenantOptions = computed(() => {
   const list = tenants.value.map((t) => t.pkey).filter(Boolean)
@@ -86,7 +109,8 @@ const tenantOptions = computed(() => {
 const tenantOptionsForSelect = computed(() => {
   const list = tenantOptions.value
   const cur = cluster.value
-  if (cur && !list.includes(cur)) return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
+  if (cur && !list.includes(cur))
+    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
 
@@ -156,17 +180,46 @@ function resetForm() {
   timeout.value = 'operator'
   listenforext.value = 'NO'
   options.value = {
-    option0: 'None', option1: 'None', option2: 'None', option3: 'None',
-    option4: 'None', option5: 'None', option6: 'None', option7: 'None',
-    option8: 'None', option9: 'None', option10: 'None', option11: 'None'
+    option0: 'None',
+    option1: 'None',
+    option2: 'None',
+    option3: 'None',
+    option4: 'None',
+    option5: 'None',
+    option6: 'None',
+    option7: 'None',
+    option8: 'None',
+    option9: 'None',
+    option10: 'None',
+    option11: 'None'
   }
   tags.value = {
-    tag0: '', tag1: '', tag2: '', tag3: '', tag4: '', tag5: '',
-    tag6: '', tag7: '', tag8: '', tag9: '', tag10: '', tag11: ''
+    tag0: '',
+    tag1: '',
+    tag2: '',
+    tag3: '',
+    tag4: '',
+    tag5: '',
+    tag6: '',
+    tag7: '',
+    tag8: '',
+    tag9: '',
+    tag10: '',
+    tag11: ''
   }
   alerts.value = {
-    alert0: '', alert1: '', alert2: '', alert3: '', alert4: '', alert5: '',
-    alert6: '', alert7: '', alert8: '', alert9: '', alert10: '', alert11: ''
+    alert0: '',
+    alert1: '',
+    alert2: '',
+    alert3: '',
+    alert4: '',
+    alert5: '',
+    alert6: '',
+    alert7: '',
+    alert8: '',
+    alert9: '',
+    alert10: '',
+    alert11: ''
   }
   pkeyValidation.reset()
   clusterValidation.reset()
@@ -185,14 +238,14 @@ watch(cluster, () => {
 async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
-  
+
   // Validate all fields before submitting
   const validations = [
     { ...pkeyValidation, fieldId: 'pkey' },
     { ...clusterValidation, fieldId: 'cluster' },
     { ...greetnumValidation, fieldId: 'greetnum' }
   ]
-  
+
   if (!validateAll(validations)) {
     // Focus first error field
     await nextTick()
@@ -202,7 +255,7 @@ async function onSubmit(e) {
     })
     return
   }
-  
+
   loading.value = true
   try {
     const body = {
@@ -230,11 +283,15 @@ async function onSubmit(e) {
       }
       if (errors.cluster) {
         clusterValidation.touched.value = true
-        clusterValidation.error.value = Array.isArray(errors.cluster) ? errors.cluster[0] : errors.cluster
+        clusterValidation.error.value = Array.isArray(errors.cluster)
+          ? errors.cluster[0]
+          : errors.cluster
       }
       if (errors.greetnum) {
         greetnumValidation.touched.value = true
-        greetnumValidation.error.value = Array.isArray(errors.greetnum) ? errors.greetnum[0] : errors.greetnum
+        greetnumValidation.error.value = Array.isArray(errors.greetnum)
+          ? errors.greetnum[0]
+          : errors.greetnum
       }
       await nextTick()
       focusFirstError(validations, (id) => {
@@ -261,7 +318,15 @@ function onKeydown(e) {
 
 onMounted(async () => {
   await ensureFetched()
-  applySchemaDefaults('ivrs', { cluster, active, cname, description, greetnum, timeout, listenforext })
+  applySchemaDefaults('ivrs', {
+    cluster,
+    active,
+    cname,
+    description,
+    greetnum,
+    timeout,
+    listenforext
+  })
   await loadTenants()
   await loadDestinations()
   await loadGreetings()
@@ -280,7 +345,10 @@ onMounted(async () => {
       <p v-if="error" id="ivr-create-error" class="error" role="alert">{{ error }}</p>
 
       <div class="actions actions-top">
-        <button type="submit" :disabled="loading || tenantsLoading || destinationsLoading || greetingsLoading">
+        <button
+          type="submit"
+          :disabled="loading || tenantsLoading || destinationsLoading || greetingsLoading"
+        >
           {{ loading ? 'Creating…' : 'Create' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
@@ -356,7 +424,7 @@ onMounted(async () => {
           id="listenforext"
           v-model="listenforext"
           label="Listen for extension dial?"
-          hint="If on, the IVR listens for an extension number as well as key presses. This can slow response; you can use a separate sub-IVR for extension entry (e.g. &quot;press star to enter extension&quot;)."
+          hint='If on, the IVR listens for an extension number as well as key presses. This can slow response; you can use a separate sub-IVR for extension entry (e.g. "press star to enter extension").'
         />
         <FormSelect
           id="dest-timeout"
@@ -378,7 +446,10 @@ onMounted(async () => {
             <span class="dest-cell dest-alert">Alert</span>
           </div>
           <template v-for="item in OPTION_ENTRIES" :key="item.key">
-            <div class="destinations-row dest-row-fields" :class="{ 'destinations-row-none': options[item.key] === 'None' }">
+            <div
+              class="destinations-row dest-row-fields"
+              :class="{ 'destinations-row-none': options[item.key] === 'None' }"
+            >
               <span class="dest-cell dest-key">{{ item.label }}</span>
               <div class="dest-cell dest-action">
                 <FormSelect
@@ -422,7 +493,10 @@ onMounted(async () => {
       </section>
 
       <div class="actions">
-        <button type="submit" :disabled="loading || tenantsLoading || destinationsLoading || greetingsLoading">
+        <button
+          type="submit"
+          :disabled="loading || tenantsLoading || destinationsLoading || greetingsLoading"
+        >
           {{ loading ? 'Creating…' : 'Create' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
@@ -534,15 +608,15 @@ onMounted(async () => {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.actions button[type="submit"] {
+.actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.actions button[type="submit"]:hover:not(:disabled) {
+.actions button[type='submit']:hover:not(:disabled) {
   background: #1d4ed8;
 }
-.actions button[type="submit"]:disabled {
+.actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

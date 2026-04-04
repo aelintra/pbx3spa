@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
@@ -152,13 +152,13 @@ async function confirmDelete() {
 
       <h2 class="detail-heading">Identity</h2>
       <div class="form-fields">
-        <FormReadonly id="edit-identity-pkey" label="Template name" :value="deviceRow?.pkey ?? pkey ?? '—'" class="readonly-identity" />
-        <FormField
-          v-if="!isReadOnly('desc')"
-          id="desc"
-          v-model="editDesc"
-          label="Description"
+        <FormReadonly
+          id="edit-identity-pkey"
+          label="Template name"
+          :value="deviceRow?.pkey ?? pkey ?? '—'"
+          class="readonly-identity"
         />
+        <FormField v-if="!isReadOnly('desc')" id="desc" v-model="editDesc" label="Description" />
         <FormReadonly v-else id="desc" label="Description" :value="deviceRow?.desc ?? '—'" />
       </div>
 
@@ -171,14 +171,14 @@ async function confirmDelete() {
           label="Technology"
           :options="technologyOptionsForSelect"
         />
-        <FormReadonly v-else id="technology" label="Technology" :value="deviceRow?.technology ?? '—'" />
-
-        <FormField
-          v-if="!isReadOnly('owner')"
-          id="owner"
-          v-model="editOwner"
-          label="Owner"
+        <FormReadonly
+          v-else
+          id="technology"
+          label="Technology"
+          :value="deviceRow?.technology ?? '—'"
         />
+
+        <FormField v-if="!isReadOnly('owner')" id="owner" v-model="editOwner" label="Owner" />
         <FormReadonly v-else id="owner" label="Owner" :value="deviceRow?.owner ?? '—'" />
       </div>
 
@@ -199,7 +199,12 @@ async function confirmDelete() {
             multiline
             :rows="16"
           />
-          <FormReadonly v-else id="provision" label="Provision" :value="deviceRow?.provision ?? ''" />
+          <FormReadonly
+            v-else
+            id="provision"
+            label="Provision"
+            :value="deviceRow?.provision ?? ''"
+          />
         </div>
       </div>
 
@@ -220,7 +225,10 @@ async function confirmDelete() {
       @cancel="() => (confirmDeleteOpen = false)"
     >
       <template #body>
-        <p>Device template <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be undone.</p>
+        <p>
+          Device template <strong>{{ pkey }}</strong> will be permanently deleted. This cannot be
+          undone.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -270,12 +278,12 @@ async function confirmDelete() {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.edit-actions button[type="submit"] {
+.edit-actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.edit-actions button[type="submit"]:disabled {
+.edit-actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

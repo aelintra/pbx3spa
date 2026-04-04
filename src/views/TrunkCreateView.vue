@@ -34,7 +34,7 @@ const technologyOptions = ['SIP', 'IAX2']
 const sipRegModeOptions = [
   { value: 'SND', label: 'Send registration to provider' },
   { value: 'RCV', label: 'Accept registration from provider' },
-  { value: 'TRUSTED', label: 'Trusted peer (no outbound registration)' },
+  { value: 'TRUSTED', label: 'Trusted peer (no outbound registration)' }
 ]
 const isSIP = computed(() => technology.value === 'SIP')
 const typeChosen = computed(() => !!technology.value)
@@ -90,7 +90,8 @@ async function onSubmit(e) {
         return
       }
       if (isSipSendReg.value && host.value.trim().toLowerCase() === 'dynamic') {
-        error.value = 'Send-registration cannot use host “dynamic”. Choose “Accept registration” or “Trusted peer”.'
+        error.value =
+          'Send-registration cannot use host “dynamic”. Choose “Accept registration” or “Trusted peer”.'
         return
       }
       if (isSipTrusted.value && host.value.trim().toLowerCase() === 'dynamic') {
@@ -113,7 +114,7 @@ async function onSubmit(e) {
       technology: technology.value,
       cluster: cluster.value.trim(),
       username: pkey.value.trim(),
-      host: isSipAcceptReg.value ? 'dynamic' : host.value.trim(),
+      host: isSipAcceptReg.value ? 'dynamic' : host.value.trim()
     }
     if (cname.value.trim()) body.cname = cname.value.trim()
     if (description.value.trim()) body.description = description.value.trim()
@@ -136,9 +137,8 @@ async function onSubmit(e) {
         pkeyValidation.error.value = Array.isArray(errors.pkey) ? errors.pkey[0] : errors.pkey
       }
       await nextTick()
-      focusFirstError(
-        [{ ...pkeyValidation, fieldId: 'pkey' }],
-        (id) => (id === 'pkey' && pkeyInput.value ? pkeyInput.value : document.getElementById(id))
+      focusFirstError([{ ...pkeyValidation, fieldId: 'pkey' }], (id) =>
+        id === 'pkey' && pkeyInput.value ? pkeyInput.value : document.getElementById(id)
       )
     }
     error.value = firstErrorMessage(err, 'Failed to create trunk')
@@ -236,7 +236,10 @@ function onKeydown(e) {
         <h2 class="detail-heading">Connection</h2>
         <div class="form-fields">
           <template v-if="isSipAcceptReg">
-            <p class="form-hint form-hint-block">Host is set to <strong>dynamic</strong> for trunks that accept registration from the provider.</p>
+            <p class="form-hint form-hint-block">
+              Host is set to <strong>dynamic</strong> for trunks that accept registration from the
+              provider.
+            </p>
           </template>
           <FormField
             v-else
@@ -247,7 +250,9 @@ function onKeydown(e) {
             placeholder="e.g. sip.example.com, IP, or FQDN"
             :required="true"
           />
-          <p v-if="isSIP && !isSipAcceptReg" class="form-hint">Not “dynamic” unless you selected “Accept registration from provider”.</p>
+          <p v-if="isSIP && !isSipAcceptReg" class="form-hint">
+            Not “dynamic” unless you selected “Accept registration from provider”.
+          </p>
           <FormSelect
             v-if="isSIP"
             id="transport"
@@ -262,7 +267,9 @@ function onKeydown(e) {
             v-model="password"
             label="Password"
             type="password"
-            :placeholder="isSipTrusted ? 'Optional for trusted peer' : 'Required for send/accept registration'"
+            :placeholder="
+              isSipTrusted ? 'Optional for trusted peer' : 'Required for send/accept registration'
+            "
             autocomplete="new-password"
           />
         </div>
@@ -329,15 +336,15 @@ function onKeydown(e) {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.actions button[type="submit"] {
+.actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.actions button[type="submit"]:hover:not(:disabled) {
+.actions button[type='submit']:hover:not(:disabled) {
   background: #1d4ed8;
 }
-.actions button[type="submit"]:disabled {
+.actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

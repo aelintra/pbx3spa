@@ -106,7 +106,9 @@ const inputValue = computed({
 })
 
 const hasError = computed(() => props.error && props.touched)
-const isValid = computed(() => !props.error && props.touched && String(props.modelValue ?? '').trim() !== '')
+const isValid = computed(
+  () => !props.error && props.touched && String(props.modelValue ?? '').trim() !== ''
+)
 const errorId = computed(() => `${props.id}-error`)
 const hintId = computed(() => `${props.id}-hint`)
 
@@ -125,9 +127,9 @@ function handleBlur() {
     <div class="form-field-input-wrapper">
       <input
         v-if="!multiline"
+        :id="id"
         :key="inputKey ?? id"
         ref="inputRef"
-        :id="id"
         v-model="inputValue"
         :type="type"
         :placeholder="placeholder"
@@ -137,8 +139,8 @@ function handleBlur() {
           'form-input-valid': isValid
         }"
         :aria-invalid="hasError"
-        :aria-label="hideLabel ? (ariaLabel || label) : null"
-        :aria-describedby="hasError ? errorId : (hint ? hintId : null)"
+        :aria-label="hideLabel ? ariaLabel || label : null"
+        :aria-describedby="hasError ? errorId : hint ? hintId : null"
         :aria-required="required"
         :required="required"
         :disabled="disabled"
@@ -150,9 +152,9 @@ function handleBlur() {
       />
       <textarea
         v-else
+        :id="id"
         :key="inputKey ?? id"
         ref="inputRef"
-        :id="id"
         v-model="inputValue"
         :placeholder="placeholder"
         :rows="rows"
@@ -163,26 +165,17 @@ function handleBlur() {
           'form-input-valid': isValid
         }"
         :aria-invalid="hasError"
-        :aria-label="hideLabel ? (ariaLabel || label) : null"
-        :aria-describedby="hasError ? errorId : (hint ? hintId : null)"
+        :aria-label="hideLabel ? ariaLabel || label : null"
+        :aria-describedby="hasError ? errorId : hint ? hintId : null"
         :aria-required="required"
         :required="required"
         :disabled="disabled"
         @blur="handleBlur"
       />
-      <p
-        v-if="hasError"
-        :id="errorId"
-        class="form-field-error"
-        role="alert"
-      >
+      <p v-if="hasError" :id="errorId" class="form-field-error" role="alert">
         {{ error }}
       </p>
-      <p
-        v-else-if="hint"
-        :id="hintId"
-        class="form-field-hint"
-      >
+      <p v-else-if="hint" :id="hintId" class="form-field-hint">
         {{ hint }}
       </p>
     </div>
@@ -222,7 +215,9 @@ function handleBlur() {
   background-color: var(--pbx-panel);
   border: 1px solid var(--pbx-border);
   border-radius: 0.375rem;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .form-input-textarea {
@@ -272,7 +267,7 @@ function handleBlur() {
 }
 
 .form-field-error::before {
-  content: "⚠";
+  content: '⚠';
   font-size: 0.875rem;
   flex-shrink: 0;
 }

@@ -13,12 +13,21 @@
         <h2>Let's Encrypt</h2>
       </div>
       <p class="section-explanation">
-        A certificate for this host's hostname (e.g. <code>myhost.mydomain.com</code>) is issued and renewed automatically via HTTP-01.
-        Port 80 must be reachable from the internet only during issuance or renewal (a few minutes); you can leave it closed the rest of the time. No DNS API — just an A record for this host's FQDN.
+        A certificate for this host's hostname (e.g. <code>myhost.mydomain.com</code>) is issued and
+        renewed automatically via HTTP-01. Port 80 must be reachable from the internet only during
+        issuance or renewal (a few minutes); you can leave it closed the rest of the time. No DNS
+        API — just an A record for this host's FQDN.
       </p>
       <p class="section-help">
-        <strong>Before getting a certificate:</strong> Create an A record (and optionally AAAA) for this host's hostname pointing to this server's IP. Ensure port 80 can reach this server from the internet (we open it only during issuance and renewal).
-        <a href="https://letsencrypt.org/docs/challenge-types/#http-01-challenge" target="_blank" rel="noopener noreferrer">Learn about HTTP-01</a>.
+        <strong>Before getting a certificate:</strong> Create an A record (and optionally AAAA) for
+        this host's hostname pointing to this server's IP. Ensure port 80 can reach this server from
+        the internet (we open it only during issuance and renewal).
+        <a
+          href="https://letsencrypt.org/docs/challenge-types/#http-01-challenge"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Learn about HTTP-01</a
+        >.
       </p>
 
       <div v-if="leLoading" class="loading">
@@ -49,7 +58,10 @@
         <p v-if="renewError" class="error">{{ renewError }}</p>
       </template>
       <template v-else>
-        <p class="not-configured">Enable Let's Encrypt by entering this host's hostname (FQDN) and an email for expiry notices.</p>
+        <p class="not-configured">
+          Enable Let's Encrypt by entering this host's hostname (FQDN) and an email for expiry
+          notices.
+        </p>
         <div class="le-setup-form">
           <label class="form-label">
             Hostname (FQDN)
@@ -93,7 +105,8 @@
         <h2>Purchased certificate</h2>
       </div>
       <p class="section-explanation">
-        Upload your own certificate (fullchain.pem) and private key (privkey.pem) from a commercial CA.
+        Upload your own certificate (fullchain.pem) and private key (privkey.pem) from a commercial
+        CA.
       </p>
 
       <div v-if="customLoading" class="loading">
@@ -160,7 +173,10 @@
       @cancel="showRemoveConfirm = false"
     >
       <template #body>
-        <p>The purchased certificate will be removed. The system will use Let's Encrypt (if configured) or the default snakeoil certificate.</p>
+        <p>
+          The purchased certificate will be removed. The system will use Let's Encrypt (if
+          configured) or the default snakeoil certificate.
+        </p>
       </template>
     </DeleteConfirmModal>
   </div>
@@ -232,7 +248,7 @@ async function fetchLetsEncrypt() {
   try {
     leStatus.value = await getApiClient().get('certificates/letsencrypt')
   } catch (err) {
-    leError.value = firstErrorMessage(err, 'Failed to load Let\'s Encrypt status')
+    leError.value = firstErrorMessage(err, "Failed to load Let's Encrypt status")
     leStatus.value = null
   } finally {
     leLoading.value = false
@@ -267,7 +283,7 @@ async function setupLetsEncrypt() {
   try {
     const data = await getApiClient().post('certificates/letsencrypt/setup', {
       fqdn: leSetupFqdn.value,
-      email: leSetupEmail.value,
+      email: leSetupEmail.value
     })
     setupSuccess.value = data?.message ?? 'Certificate obtained.'
     toast.show(setupSuccess.value)
@@ -500,7 +516,9 @@ onMounted(() => {
   animation: cert-spin 0.7s linear infinite;
 }
 @keyframes cert-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 .cert-upload {
   display: flex;

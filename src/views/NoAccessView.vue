@@ -11,7 +11,10 @@ function goHome() {
 <template>
   <div class="no-access">
     <h2>No access</h2>
-    <p>Your account does not have permission to use this area. Contact an administrator if you need access.</p>
+    <p>
+      Your account does not have permission to use this area. Contact an administrator if you need
+      access.
+    </p>
     <button type="button" class="btn-home" @click="goHome">Go to Home</button>
   </div>
 </template>

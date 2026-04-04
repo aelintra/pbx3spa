@@ -95,9 +95,7 @@ async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
 
-  const validations = [
-    { ...pkeyValidation, fieldId: 'pkey' }
-  ]
+  const validations = [{ ...pkeyValidation, fieldId: 'pkey' }]
   if (!validateAll(validations)) {
     await nextTick()
     focusFirstError(validations, (id) => {
@@ -112,7 +110,9 @@ async function onSubmit(e) {
     const body = {
       pkey: pkey.value.trim(),
       description: description.value.trim(),
-      ...(parseNum(clusterclid.value) !== undefined && { clusterclid: parseNum(clusterclid.value) }),
+      ...(parseNum(clusterclid.value) !== undefined && {
+        clusterclid: parseNum(clusterclid.value)
+      }),
       ...(parseNum(localarea.value) !== undefined && { localarea: parseNum(localarea.value) }),
       ...(localdplan.value.trim() !== '' && { localdplan: localdplan.value.trim() }),
       ...(parseNum(chanmax.value) !== undefined && { chanmax: parseNum(chanmax.value) }),
@@ -125,7 +125,9 @@ async function onSubmit(e) {
       ...buildCallControlPayload(formCallControl),
       ...buildLdapPayload(formLdap)
     }
-    const cleaned = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined && v !== ''))
+    const cleaned = Object.fromEntries(
+      Object.entries(body).filter(([, v]) => v !== undefined && v !== '')
+    )
     const createdPkey = pkey.value.trim()
     await getApiClient().post('tenants', cleaned)
     toast.show(`Tenant ${createdPkey} created`)
@@ -171,8 +173,7 @@ onMounted(async () => {
     const g = await getApiClient().get('sysglobals')
     auth.setGlobalsFqdnFromSysglobal(g)
     const raw = g?.domain
-    globalsDomain.value =
-      raw != null && String(raw).trim() !== '' ? String(raw).trim() : ''
+    globalsDomain.value = raw != null && String(raw).trim() !== '' ? String(raw).trim() : ''
   } catch {
     globalsDomain.value = ''
   } finally {
@@ -261,10 +262,13 @@ onMounted(async () => {
           hide-help
         />
         <p v-if="globalsFetchDone && globalsDomain" class="auto-host-note">
-          <code>&lt;tenant UID&gt;</code> is the short UID assigned when you click Create; both fields use that
-          hostname.
+          <code>&lt;tenant UID&gt;</code> is the short UID assigned when you click Create; both
+          fields use that hostname.
         </p>
-        <p v-else-if="globalsFetchDone && !globalsDomain" class="auto-host-note auto-host-note-warn">
+        <p
+          v-else-if="globalsFetchDone && !globalsDomain"
+          class="auto-host-note auto-host-note-warn"
+        >
           Set <strong>Domain</strong> on
           <router-link :to="{ name: 'sysglobals' }">Instance Globals</router-link>
           to auto-assign each new tenant’s domain and FQDN.
@@ -280,13 +284,7 @@ onMounted(async () => {
           type="number"
           placeholder="integer"
         />
-        <FormField
-          id="maxin"
-          v-model="maxin"
-          label="Max in"
-          type="number"
-          placeholder="integer"
-        />
+        <FormField id="maxin" v-model="maxin" label="Max in" type="number" placeholder="integer" />
         <FormField
           id="voip-max"
           v-model="voipMax"
@@ -352,46 +350,46 @@ onMounted(async () => {
       <h2 class="detail-heading">Advanced</h2>
       <div class="form-fields">
         <template v-for="f in ADVANCED_FIELDS" :key="f.key">
-            <FormToggle
-              v-if="f.type === 'boolean'"
-              :id="`adv-${f.key}`"
-              v-model="formAdvanced[f.key]"
-              :label="f.label"
-              yes-value="YES"
-              no-value="NO"
-            />
-            <FormToggle
-              v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
-              :id="`adv-${f.key}`"
-              v-model="formAdvanced[f.key]"
-              :label="f.label"
-              :yes-value="f.options[0]"
-              :no-value="f.options[1]"
-            />
-            <FormSelect
-              v-else-if="f.type === 'pill'"
-              :id="`adv-${f.key}`"
-              v-model="formAdvanced[f.key]"
-              :label="f.label"
-              :options="f.options"
-              :required="false"
-            />
-            <FormField
-              v-else-if="f.type === 'number'"
-              :id="`adv-${f.key}`"
-              v-model="formAdvanced[f.key]"
-              :label="f.label"
-              type="number"
-              :placeholder="f.placeholder || 'number'"
-            />
-            <FormField
-              v-else
-              :id="`adv-${f.key}`"
-              v-model="formAdvanced[f.key]"
-              :label="f.label"
-              type="text"
-              :placeholder="f.placeholder || ''"
-            />
+          <FormToggle
+            v-if="f.type === 'boolean'"
+            :id="`adv-${f.key}`"
+            v-model="formAdvanced[f.key]"
+            :label="f.label"
+            yes-value="YES"
+            no-value="NO"
+          />
+          <FormToggle
+            v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
+            :id="`adv-${f.key}`"
+            v-model="formAdvanced[f.key]"
+            :label="f.label"
+            :yes-value="f.options[0]"
+            :no-value="f.options[1]"
+          />
+          <FormSelect
+            v-else-if="f.type === 'pill'"
+            :id="`adv-${f.key}`"
+            v-model="formAdvanced[f.key]"
+            :label="f.label"
+            :options="f.options"
+            :required="false"
+          />
+          <FormField
+            v-else-if="f.type === 'number'"
+            :id="`adv-${f.key}`"
+            v-model="formAdvanced[f.key]"
+            :label="f.label"
+            type="number"
+            :placeholder="f.placeholder || 'number'"
+          />
+          <FormField
+            v-else
+            :id="`adv-${f.key}`"
+            v-model="formAdvanced[f.key]"
+            :label="f.label"
+            type="text"
+            :placeholder="f.placeholder || ''"
+          />
         </template>
       </div>
 
@@ -410,7 +408,11 @@ onMounted(async () => {
             v-else-if="f.type === 'readonly'"
             :id="`rec-${f.key}`"
             :label="f.label"
-            :value="formCallRecording[f.key] !== '' && formCallRecording[f.key] != null ? String(formCallRecording[f.key]) : '—'"
+            :value="
+              formCallRecording[f.key] !== '' && formCallRecording[f.key] != null
+                ? String(formCallRecording[f.key])
+                : '—'
+            "
           />
           <FormToggle
             v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
@@ -613,15 +615,15 @@ onMounted(async () => {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.actions button[type="submit"] {
+.actions button[type='submit'] {
   color: #fff;
   background: #2563eb;
   border: none;
 }
-.actions button[type="submit"]:hover:not(:disabled) {
+.actions button[type='submit']:hover:not(:disabled) {
   background: #1d4ed8;
 }
-.actions button[type="submit"]:disabled {
+.actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

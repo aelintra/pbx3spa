@@ -38,9 +38,12 @@ onMounted(() => {
   fetchCommitStatus()
 })
 
-watch(() => route.path, () => {
-  fetchCommitStatus()
-})
+watch(
+  () => route.path,
+  () => {
+    fetchCommitStatus()
+  }
+)
 
 defineExpose({ refreshCommitStatus: fetchCommitStatus })
 </script>
@@ -54,7 +57,7 @@ defineExpose({ refreshCommitStatus: fetchCommitStatus })
     :title="commitDirty ? 'Uncommitted changes – run generator and reload' : 'Config is in sync'"
     @click="runCommit"
   >
-    {{ actionBusy ? 'Running…' : (commitDirty ? 'Commit (pending)' : 'Commit') }}
+    {{ actionBusy ? 'Running…' : commitDirty ? 'Commit (pending)' : 'Commit' }}
   </button>
 </template>
 
