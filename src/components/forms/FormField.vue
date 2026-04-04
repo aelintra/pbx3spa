@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import { deriveHelpPkeyFromFieldId } from '@/utils/formHelpPkey'
 
@@ -74,11 +74,6 @@ const props = defineProps({
     type: [String, Number],
     default: null
   },
-  /** If true, log modelValue when it is '' or 'default' (for debugging form reset). */
-  debugReset: {
-    type: Boolean,
-    default: false
-  },
   /** If true, render a textarea for freeform multi-line text (e.g. code fragment). */
   multiline: {
     type: Boolean,
@@ -118,11 +113,6 @@ const hintId = computed(() => `${props.id}-hint`)
 function handleBlur() {
   emit('blur')
 }
-
-// Debug form reset: when debugReset is true, log when this field receives empty/default
-watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
-  if (dbg && (v === '' || v === 'default')) console.log('[FormField]', props.id, 'modelValue', JSON.stringify(v))
-}, { immediate: true })
 </script>
 
 <template>

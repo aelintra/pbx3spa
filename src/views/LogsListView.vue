@@ -36,7 +36,6 @@ async function loadLogs() {
   error.value = ''
   try {
     const res = await getApiClient().get('logs')
-    console.log('Logs API response:', res) // Debug
     // Handle both old format { Log: 'Master.csv' } and new format { logs: [...] }
     if (res.logs && Array.isArray(res.logs)) {
       logs.value = res.logs

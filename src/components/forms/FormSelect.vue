@@ -1,5 +1,5 @@
 <script setup>
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import { deriveHelpPkeyFromFieldId } from '@/utils/formHelpPkey'
 
@@ -72,11 +72,6 @@ const props = defineProps({
     type: [String, Number],
     default: null
   },
-  /** If true, log modelValue when it is '' or 'default' (for debugging form reset). */
-  debugReset: {
-    type: Boolean,
-    default: false
-  },
   /** When true, hide the label (e.g. for inline use in list rows or grids). Use ariaLabel or label for a11y. */
   hideLabel: {
     type: Boolean,
@@ -127,11 +122,6 @@ function optionAttrValue(opt) {
   if (v === null || v === undefined) return ''
   return String(v)
 }
-
-// Debug form reset: when debugReset is true, log when this select receives empty/default
-watch(() => [props.debugReset, props.modelValue], ([dbg, v]) => {
-  if (dbg && (v === '' || v === 'default')) console.log('[FormSelect]', props.id, 'modelValue', JSON.stringify(v))
-}, { immediate: true })
 </script>
 
 <template>
