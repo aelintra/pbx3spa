@@ -247,6 +247,11 @@ onMounted(() => {
   border-radius: 0.5rem;
   border: 1px solid #e2e8f0;
 }
+.sysnotes-section {
+  /* Stack columns when *this* card is narrow (sidebar shrinks main; viewport can still be “wide”). */
+  container-type: inline-size;
+  container-name: sysnotes;
+}
 .detail-heading {
   font-size: 1rem;
   font-weight: 600;
@@ -312,8 +317,22 @@ onMounted(() => {
 }
 .sysnotes-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.5rem;
+}
+/* Stack only when this card is fairly narrow; 80rem matched almost all real mains → always 1 col. */
+@container sysnotes (max-width: 52rem) {
+  .sysnotes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* No container queries: use viewport (imperfect with sidebar, but better than never stacking on phones). */
+@supports not (container-type: inline-size) {
+  @media (max-width: 52rem) {
+    .sysnotes-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 }
 .sysnotes-col-heading {
   margin: 0 0 0.5rem 0;
@@ -324,17 +343,25 @@ onMounted(() => {
 .sysnotes-dl {
   margin: 0;
   font-size: 0.875rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 1.25rem;
+  row-gap: 0.35rem;
+  align-items: baseline;
 }
 .sysnotes-dl dt {
-  margin-top: 0.5rem;
+  margin: 0;
   color: #64748b;
   font-weight: 500;
 }
-.sysnotes-dl dt:first-child {
-  margin-top: 0;
+.sysnotes-dl dt::after {
+  content: ':';
 }
 .sysnotes-dl dd {
-  margin: 0.15rem 0 0 0;
+  margin: 0;
   color: #0f172a;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 </style>
