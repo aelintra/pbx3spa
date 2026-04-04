@@ -40,6 +40,7 @@ const spaReleaseRows = computed(() => {
   const r = spaReleases
   return [
     { label: 'PBX3 Admin UI', value: r.pbx3spa },
+    { label: 'Node.js (build)', value: r.node },
     { label: 'Vue', value: r.vue },
     { label: 'Vue Router', value: r.vueRouter },
     { label: 'Pinia', value: r.pinia }
@@ -130,7 +131,7 @@ onMounted(() => {
 
 <template>
   <div class="dashboard">
-    <h1>Home Instance {{ display(sysnotes?.system?.instance) }}</h1>
+    <h1>Home</h1>
 
     <section class="actions-section">
       <h2 class="detail-heading">Actions</h2>
@@ -172,13 +173,11 @@ onMounted(() => {
           <h3 class="sysnotes-col-heading">System</h3>
           <dl class="sysnotes-dl">
             <template v-if="sysnotes.system">
-              <dt>Instance</dt>
-              <dd>{{ display(sysnotes.system.instance) }}</dd>
               <dt>Distro</dt>
               <dd>{{ display(sysnotes.system.distro) }}</dd>
               <dt>Asterisk release</dt>
               <dd>{{ display(sysnotes.system.asterisk_release) }}</dd>
-              <dt>App release</dt>
+              <dt>PBX3 release</dt>
               <dd>{{ display(sysnotes.system.app_release) }}</dd>
               <dt>PHP (API)</dt>
               <dd>{{ display(sysnotes.system.php_version) }}</dd>

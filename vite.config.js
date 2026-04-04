@@ -7,6 +7,8 @@ const pkgPath = fileURLToPath(new URL('./package.json', import.meta.url))
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
 const spaReleasesJson = JSON.stringify({
   pbx3spa: pkg.version,
+  /** Node used to run Vite / produce this bundle (not a browser runtime). */
+  node: process.version,
   vue: pkg.dependencies.vue ?? '',
   vueRouter: pkg.dependencies['vue-router'] ?? '',
   pinia: pkg.dependencies.pinia ?? ''
