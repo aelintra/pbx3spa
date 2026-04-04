@@ -12,7 +12,7 @@
 
 The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/create/detail patterns, `normalizeList`, schema-driven mutability (`useSchema`), sticky list filters, and a central API client. **Strengths** are cohesion of patterns, pragmatic **sessionStorage** for token and tenant context, and a **small runtime dependency surface** (low supply-chain noise).
 
-**Main gaps:** no automated tests, no ESLint/TypeScript, **coarse-grained authorisation** in the router (binary `admin` gate), **inherent duplication** across many similar Vue files (mitigated by shared utils, not eliminated), and **production build shape** (single large JS chunk; no route lazy loading). **Phase A** removed dead **`HomeView` / `counter`**, list-view debug **`console.log`**, and **`debugReset`** on form components; optional **`console.error`** remains on some list error paths. **Users** area lacks a detail/edit route and sticky list filters. **Native `window.confirm()`** is used in several flows while lists often use **`DeleteConfirmModal`** — inconsistent UX. Several topics are already tracked in workingdocs (permissions roadmap, panel parity, extension provisioning).
+**Main gaps:** no automated tests, no ESLint/TypeScript, **coarse-grained authorisation** in the router (binary `admin` gate), **inherent duplication** across many similar Vue files (mitigated by shared utils, not eliminated), and **production build shape** (single large JS chunk; no route lazy loading). **Phase A** removed dead **`HomeView` / `counter`**, list-view debug **`console.log`**, and **`debugReset`** on form components; optional **`console.error`** remains on some list error paths. **Phase B** centralised **401** handling in **`api/client.js`** via **`clearSessionAndGoLogin()`** (`request`, **`getBlob`**, **`postFile`**). **Users** area lacks a detail/edit route and sticky list filters. **Native `window.confirm()`** is used in several flows while lists often use **`DeleteConfirmModal`** — inconsistent UX. Several topics are already tracked in workingdocs (permissions roadmap, panel parity, extension provisioning).
 
 ---
 
@@ -40,7 +40,7 @@ The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/c
 **Weaknesses / notes**
 
 1. **Single ability gate:** `router/index.js` allows all non-public routes only if `auth.can('admin')`. Non-admin users hit `/no-access`. Abilities exist on the user object but are **not** used per route or per nav item. Future `view_*` / `edit_*` abilities need nav + route guards (see **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** — Phase 1+). Introducing non-admin roles will require a coordinated sweep of **router meta**, **AppLayout** `navGroups`, and **pbx3api** unless phased deliberately.
-2. **Full reload on 401:** `window.location.replace('/login')` in `api/client.js` clears Vue state abruptly; acceptable for admin tools but harsh for in-flight edits (user loses unsaved work unless the app adds “dirty” warnings later).
+2. **Full reload on 401:** `clearSessionAndGoLogin()` in `api/client.js` clears credentials and uses `window.location.replace('/login')`, which drops SPA state abruptly; acceptable for admin tools but harsh for in-flight edits (user loses unsaved work unless the app adds “dirty” warnings later).
 3. **Login / whoami:** `LoginView` uses `createApiClient(baseUrl, '')` for `auth/login` (correct). After login it loads **`auth/whoami`** in a try/catch where failure is ignored. If whoami fails transiently, the user can be **logged in without `user` populated** until navigation triggers another fetch — edge case worth knowing when debugging “half-empty” auth state.
 4. **Dev-only globals:** `main.js` exposes `createApiClient`, `getApiClient`, `useAuthStore` on `window` when `import.meta.env.DEV` — useful for debugging; must never ship enabled in production builds (current guard is correct).
 
@@ -55,10 +55,7 @@ The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/c
 - `getApiClient()` ties requests to Pinia auth — correct for post-login usage.
 - **GET with query params** is supported via `get(path, { params })` in `request()`; callers must stay consistent.
 - Error objects attach `status`, `response` text, and parsed `data` when JSON — aligns with `formErrors.js`.
-
-**Minor debt**
-
-- Duplicated 401 handling across `request`, `getBlob`, and `postFile` in `client.js` — three similar blocks; could be one internal `clearSessionAndGoLogin()` (or `handleUnauthorized()`) helper.
+- **401:** Module-level **`clearSessionAndGoLogin()`** is used from **`request`**, **`getBlob`**, and **`postFile`** (Phase B).
 
 ---
 
@@ -87,6 +84,8 @@ The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/c
 ## 6. Dead code, debug noise, and unreachable paths
 
 **Phase A cleanup (applied):** Removed `HomeView.vue`, `stores/counter.js`, noisy `console.log` / `console.warn` in `AgentsListView.vue` and `LogsListView.vue`, and the **`debugReset`** prop plus `watch` + `console.log` paths in **`FormField.vue`** and **`FormSelect.vue`**.
+
+**Phase B cleanup (applied):** **`clearSessionAndGoLogin()`** in **`src/api/client.js`**; used for **401** on **`request`**, **`getBlob`**, and **`postFile`**.
 
 | Item | Location | Note |
 |------|----------|------|
@@ -121,13 +120,12 @@ These are **known follow-ups**, not bugs in the SPA alone:
 
 ## 9. Prioritised recommendations
 
-1. **Deduplicate 401 handling** in `api/client.js` (small refactor).
-2. **Add ESLint** (`eslint-plugin-vue`) + **Prettier**; optional **Vitest** for `utils/formErrors.js`, `listResponse.js`, `validation.js`.
-3. **Users:** add **sticky filter** (and sort if desired) to **UsersListView**; when API allows, add **user detail/edit** route and view.
-4. **Optional:** Vue Router **lazy imports** per route to shrink initial JS and silence chunk-size warnings.
-5. **When adding non-admin roles:** extend router + nav with granular `can()` checks per **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** / **ADMIN_PANELS_AND_PERMISSIONS.md**.
-6. **Longer term:** TypeScript or strict JSDoc + `checkJs`; optional **shared confirm modal** to replace scattered `window.confirm()`.
-7. **Optional hygiene:** Remove or dev-gate remaining **`console.error`** in **Agents** / **Logs** list catch blocks if you want a silent console in production.
+1. **Add ESLint** (`eslint-plugin-vue`) + **Prettier**; optional **Vitest** for `utils/formErrors.js`, `listResponse.js`, `validation.js`.
+2. **Users:** add **sticky filter** (and sort if desired) to **UsersListView**; when API allows, add **user detail/edit** route and view.
+3. **Optional:** Vue Router **lazy imports** per route to shrink initial JS and silence chunk-size warnings.
+4. **When adding non-admin roles:** extend router + nav with granular `can()` checks per **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** / **ADMIN_PANELS_AND_PERMISSIONS.md**.
+5. **Longer term:** TypeScript or strict JSDoc + `checkJs`; optional **shared confirm modal** to replace scattered `window.confirm()`.
+6. **Optional hygiene:** Remove or dev-gate remaining **`console.error`** in **Agents** / **Logs** list catch blocks if you want a silent console in production.
 
 ---
 

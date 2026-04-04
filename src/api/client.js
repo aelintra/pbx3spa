@@ -5,6 +5,11 @@
 
 import { useAuthStore } from '@/stores/auth'
 
+function clearSessionAndGoLogin() {
+  useAuthStore().clearCredentials()
+  window.location.replace('/login')
+}
+
 /**
  * Returns an API client configured with the auth store's baseUrl and token.
  * Use this for all API calls after login; credentials come from the store.
@@ -51,10 +56,7 @@ export function createApiClient(baseUrl, token) {
     const res = await fetch(url, options)
     const text = await res.text()
     if (!res.ok) {
-      if (res.status === 401) {
-        useAuthStore().clearCredentials()
-        window.location.replace('/login')
-      }
+      if (res.status === 401) clearSessionAndGoLogin()
       const err = new Error(`API ${method} ${path}: ${res.status} ${res.statusText}`)
       err.status = res.status
       err.response = text
@@ -77,10 +79,7 @@ export function createApiClient(baseUrl, token) {
     const url = path.startsWith('http') ? path : `${base}/${path.replace(/^\//, '')}`
     const res = await fetch(url, { method: 'GET', headers: { ...headers } })
     if (!res.ok) {
-      if (res.status === 401) {
-        useAuthStore().clearCredentials()
-        window.location.replace('/login')
-      }
+      if (res.status === 401) clearSessionAndGoLogin()
       const text = await res.text()
       const err = new Error(`API GET ${path}: ${res.status} ${res.statusText}`)
       err.status = res.status
@@ -107,10 +106,7 @@ export function createApiClient(baseUrl, token) {
     })
     const text = await res.text()
     if (!res.ok) {
-      if (res.status === 401) {
-        useAuthStore().clearCredentials()
-        window.location.replace('/login')
-      }
+      if (res.status === 401) clearSessionAndGoLogin()
       const err = new Error(`API POST ${path}: ${res.status} ${res.statusText}`)
       err.status = res.status
       err.response = text
