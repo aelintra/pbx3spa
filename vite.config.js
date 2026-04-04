@@ -1,6 +1,16 @@
+import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+
+const pkgPath = fileURLToPath(new URL('./package.json', import.meta.url))
+const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
+const spaReleasesJson = JSON.stringify({
+  pbx3spa: pkg.version,
+  vue: pkg.dependencies.vue ?? '',
+  vueRouter: pkg.dependencies['vue-router'] ?? '',
+  pinia: pkg.dependencies.pinia ?? ''
+})
 
 export default defineConfig(({ mode }) => {
   // Load env so VITE_API_PROXY_TARGET is available when config runs (Vite doesn't load .env before config by default)
@@ -10,6 +20,9 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8000'
 
   return {
+    define: {
+      'import.meta.env.VITE_SPA_RELEASES_JSON': JSON.stringify(spaReleasesJson)
+    },
     plugins: [vue()],
     resolve: {
       alias: {

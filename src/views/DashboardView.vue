@@ -1,7 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import ConfirmModal from '@/components/ConfirmModal.vue'
+import { getSpaReleases } from '@/config/spaReleases.js'
+
+const spaReleases = getSpaReleases()
 
 const actionMessage = ref('')
 const actionError = ref('')
@@ -32,6 +35,16 @@ function displayBytes(val) {
   if (n >= 1024) return (n / 1024).toFixed(1) + ' KB'
   return n + ' B'
 }
+
+const spaReleaseRows = computed(() => {
+  const r = spaReleases
+  return [
+    { label: 'PBX3 Admin UI', value: r.pbx3spa },
+    { label: 'Vue', value: r.vue },
+    { label: 'Vue Router', value: r.vueRouter },
+    { label: 'Pinia', value: r.pinia }
+  ]
+})
 
 async function fetchSysnotes() {
   sysnotesLoading.value = true
@@ -167,6 +180,14 @@ onMounted(() => {
               <dd>{{ display(sysnotes.system.asterisk_release) }}</dd>
               <dt>App release</dt>
               <dd>{{ display(sysnotes.system.app_release) }}</dd>
+              <dt>PHP (API)</dt>
+              <dd>{{ display(sysnotes.system.php_version) }}</dd>
+              <dt>Laravel (API)</dt>
+              <dd>{{ display(sysnotes.system.laravel_version) }}</dd>
+              <template v-for="row in spaReleaseRows" :key="row.label">
+                <dt>{{ row.label }}</dt>
+                <dd>{{ display(row.value) }}</dd>
+              </template>
               <dt>Endpoints defined</dt>
               <dd>{{ display(sysnotes.system.endpoints_defined) }}</dd>
             </template>
