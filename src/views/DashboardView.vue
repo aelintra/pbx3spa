@@ -1,10 +1,18 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
 const actionMessage = ref('')
 const actionError = ref('')
 const actionBusy = ref(null)
+
+const actionConfirmShow = ref(false)
+const actionConfirmTitle = ref('Please confirm')
+const actionConfirmBody = ref('')
+const actionConfirmLabel = ref('OK')
+const actionConfirmVariant = ref('primary')
+const pendingSysCommand = ref(null)
 
 const sysnotes = ref(null)
 const sysnotesLoading = ref(true)
@@ -38,8 +46,12 @@ async function fetchSysnotes() {
   }
 }
 
-async function runCommand(command, confirmMessage) {
-  if (confirmMessage && !confirm(confirmMessage)) return
+function cancelActionConfirm() {
+  actionConfirmShow.value = false
+  pendingSysCommand.value = null
+}
+
+async function executeSysCommand(command) {
   actionError.value = ''
   actionMessage.value = ''
   actionBusy.value = command
@@ -56,18 +68,45 @@ async function runCommand(command, confirmMessage) {
   }
 }
 
+function openActionConfirm(command, body, options = {}) {
+  pendingSysCommand.value = command
+  actionConfirmBody.value = body
+  actionConfirmLabel.value = options.confirmLabel ?? 'OK'
+  actionConfirmVariant.value = options.variant ?? 'primary'
+  actionConfirmTitle.value = options.title ?? 'Please confirm'
+  actionConfirmShow.value = true
+}
+
+function confirmAction() {
+  const command = pendingSysCommand.value
+  actionConfirmShow.value = false
+  pendingSysCommand.value = null
+  if (command) void executeSysCommand(command)
+}
+
 function startPbx() {
-  runCommand('start', 'Start the PBX?')
+  openActionConfirm('start', 'Start the PBX?', {
+    confirmLabel: 'Start',
+    variant: 'primary'
+  })
 }
 
 function stopPbx() {
-  runCommand('stop', 'Stop the PBX?')
+  openActionConfirm('stop', 'Stop the PBX?', {
+    confirmLabel: 'Stop',
+    variant: 'primary'
+  })
 }
 
 function reboot() {
-  runCommand(
+  openActionConfirm(
     'reboot',
-    'Reboot the PBX instance? The system will restart and active calls may drop. This cannot be undone.'
+    'Reboot the PBX instance? The system will restart and active calls may drop. This cannot be undone.',
+    {
+      title: 'Reboot instance?',
+      confirmLabel: 'Reboot',
+      variant: 'danger'
+    }
   )
 }
 
@@ -98,6 +137,18 @@ onMounted(() => {
         </button>
       </div>
     </section>
+
+    <ConfirmModal
+      :show="actionConfirmShow"
+      :title="actionConfirmTitle"
+      :body-text="actionConfirmBody"
+      :confirm-label="actionConfirmLabel"
+      :variant="actionConfirmVariant"
+      :loading="actionBusy != null"
+      loading-label="Running…"
+      @confirm="confirmAction"
+      @cancel="cancelActionConfirm"
+    />
 
     <section class="sysnotes-section">
       <h2 class="detail-heading">System info</h2>

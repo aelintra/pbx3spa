@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
 const ipv4Rules = ref('')
 const ipv6Rules = ref('')
@@ -19,6 +20,16 @@ const modalShow = ref(false)
 const modalTitle = ref('')
 const modalBody = ref('')
 const modalIsError = ref(false)
+
+const restartConfirmShow = ref(false)
+const restartConfirmKind = ref(null) // 'ipv4' | 'ipv6'
+
+const restartConfirmBody = computed(() => {
+  if (restartConfirmKind.value === 'ipv6') {
+    return 'Restart the IPv6 firewall now? Shorewall6 will validate the rules and apply them, or report errors.'
+  }
+  return 'Restart the IPv4 firewall now? Shorewall will validate the rules and apply them, or report errors.'
+})
 
 const PROTO_OPTIONS = ['tcp', 'udp', 'icmp', 'all']
 
@@ -318,14 +329,30 @@ async function save6() {
   }
 }
 
-async function restart() {
-  if (
-    !confirm(
-      'Restart the IPv4 firewall now? Shorewall will validate the rules and apply them, or report errors.'
-    )
-  ) {
-    return
-  }
+function restart() {
+  restartConfirmKind.value = 'ipv4'
+  restartConfirmShow.value = true
+}
+
+function restart6() {
+  restartConfirmKind.value = 'ipv6'
+  restartConfirmShow.value = true
+}
+
+function cancelRestartConfirm() {
+  restartConfirmShow.value = false
+  restartConfirmKind.value = null
+}
+
+async function onRestartConfirmed() {
+  const kind = restartConfirmKind.value
+  restartConfirmShow.value = false
+  restartConfirmKind.value = null
+  if (kind === 'ipv4') await doRestartIpv4()
+  else if (kind === 'ipv6') await doRestartIpv6()
+}
+
+async function doRestartIpv4() {
   restarting.value = true
   try {
     await getApiClient().put('firewalls/ipv4')
@@ -347,14 +374,7 @@ async function restart() {
   }
 }
 
-async function restart6() {
-  if (
-    !confirm(
-      'Restart the IPv6 firewall now? Shorewall6 will validate the rules and apply them, or report errors.'
-    )
-  ) {
-    return
-  }
+async function doRestartIpv6() {
   restarting6.value = true
   try {
     await getApiClient().put('firewalls/ipv6')
@@ -718,6 +738,18 @@ onMounted(load)
         </div>
       </section>
     </template>
+
+    <ConfirmModal
+      :show="restartConfirmShow"
+      title="Restart firewall?"
+      :body-text="restartConfirmBody"
+      confirm-label="Restart"
+      variant="primary"
+      :loading="restarting || restarting6"
+      loading-label="Restarting…"
+      @confirm="onRestartConfirmed"
+      @cancel="cancelRestartConfirm"
+    />
 
     <Teleport to="body">
       <div v-if="modalShow" class="firewall-modal-overlay" @click.self="closeModal">

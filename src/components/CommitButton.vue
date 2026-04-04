@@ -4,12 +4,14 @@ import { useRoute } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
 const route = useRoute()
 const toast = useToastStore()
 
 const commitDirty = ref(false)
 const actionBusy = ref(false)
+const showCommitConfirm = ref(false)
 
 async function fetchCommitStatus() {
   try {
@@ -20,8 +22,16 @@ async function fetchCommitStatus() {
   }
 }
 
+function openCommitConfirm() {
+  showCommitConfirm.value = true
+}
+
+function cancelCommitConfirm() {
+  showCommitConfirm.value = false
+}
+
 async function runCommit() {
-  if (!confirm('Apply configuration (run Asterisk file generator)?')) return
+  showCommitConfirm.value = false
   actionBusy.value = true
   try {
     await getApiClient().get('syscommands/commit')
@@ -55,10 +65,22 @@ defineExpose({ refreshCommitStatus: fetchCommitStatus })
     :class="{ 'commit-btn-dirty': commitDirty }"
     :disabled="actionBusy"
     :title="commitDirty ? 'Uncommitted changes – run generator and reload' : 'Config is in sync'"
-    @click="runCommit"
+    @click="openCommitConfirm"
   >
     {{ actionBusy ? 'Running…' : commitDirty ? 'Commit (pending)' : 'Commit' }}
   </button>
+
+  <ConfirmModal
+    :show="showCommitConfirm"
+    title="Apply configuration?"
+    body-text="Apply configuration (run Asterisk file generator)?"
+    confirm-label="Apply"
+    :loading="actionBusy"
+    loading-label="Running…"
+    variant="primary"
+    @confirm="runCommit"
+    @cancel="cancelCommitConfirm"
+  />
 </template>
 
 <style scoped>

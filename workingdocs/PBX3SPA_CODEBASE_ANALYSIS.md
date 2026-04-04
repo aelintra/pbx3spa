@@ -12,7 +12,9 @@
 
 The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/create/detail patterns, `normalizeList`, schema-driven mutability (`useSchema`), sticky list filters, and a central API client. **Strengths** are cohesion of patterns, pragmatic **sessionStorage** for token and tenant context, and a **small runtime dependency surface** (low supply-chain noise).
 
-**Main gaps:** no TypeScript, **coarse-grained authorisation** in the router (binary `admin` gate), **inherent duplication** across many similar Vue files (mitigated by shared utils, not eliminated), **no component tests** yet, and **production build shape** (single large JS chunk; no route lazy loading). **Phase A** removed dead **`HomeView` / `counter`**, list-view debug **`console.log`**, and **`debugReset`** on form components; optional **`console.error`** remains on some list error paths. **Phase B** centralised **401** handling in **`api/client.js`** via **`clearSessionAndGoLogin()`** (`request`, **`getBlob`**, **`postFile`**). **Phase C** added **ESLint** (flat config, `eslint-plugin-vue` recommended + **`vue/multi-word-component-names` off**), **Prettier** (`.prettierrc.json`), **`npm run lint`** / **`lint:fix`**, **`format`** / **`format:check`**, and formatted **`src/`**; small lint-driven fixes (unused imports, **`DeleteConfirmModal`** `defineProps`, **`HolidayTimersListView`** sort numeric guard, etc.). **Firewall** view toggles use named handlers so Prettier does not emit invalid multi-statement **`@click`** fragments. **Phase D** added **Vitest** (**`vitest.config.js`**, **`npm run test`** / **`test:watch`**) and unit tests for **`formErrors`**, **`listResponse`**, and **`validation`** (`src/utils/*.test.js`, Node environment). **Users** list uses **sticky filter + sort** (Phase E); **user detail/edit** route is still outstanding when the API supports it. **Native `window.confirm()`** is used in several flows while lists often use **`DeleteConfirmModal`** — inconsistent UX. Several topics are already tracked in workingdocs (permissions roadmap, panel parity, extension provisioning).
+**Main gaps:** no TypeScript (**by design** for now), **coarse-grained authorisation** in the router (binary `admin` gate), **inherent duplication** across many similar Vue files (mitigated by shared utils, not eliminated), **no component tests** yet, and **production build shape** (single large JS chunk; **lazy loading deferred** until needed — see **Phase H**). **Phase A** removed dead **`HomeView` / `counter`**, list-view debug **`console.log`**, and **`debugReset`** on form components; optional **`console.error`** remains on some list error paths. **Phase B** centralised **401** handling in **`api/client.js`** via **`clearSessionAndGoLogin()`** (`request`, **`getBlob`**, **`postFile`**). **Phase C** added **ESLint** (flat config, `eslint-plugin-vue` recommended + **`vue/multi-word-component-names` off**), **Prettier** (`.prettierrc.json`), **`npm run lint`** / **`lint:fix`**, **`format`** / **`format:check`**, and formatted **`src/`**; small lint-driven fixes (unused imports, **`DeleteConfirmModal`** `defineProps`, **`HolidayTimersListView`** sort numeric guard, etc.). **Firewall** view toggles use named handlers so Prettier does not emit invalid multi-statement **`@click`** fragments. **Phase D** added **Vitest** (**`vitest.config.js`**, **`npm run test`** / **`test:watch`**) and unit tests for **`formErrors`**, **`listResponse`**, and **`validation`** (`src/utils/*.test.js`, Node environment). **Users** list uses **sticky filter + sort** (Phase E); **user detail/edit** route is still outstanding when the API supports it. **Phase I** added **`ConfirmModal.vue`** (primary / danger variants) and replaced **`window.confirm()`** in **DashboardView**, **CommitButton**, **FirewallView**, and **BackupView**; list deletes still use **`DeleteConfirmModal`**. Several topics are already tracked in workingdocs (permissions roadmap, panel parity, extension provisioning).
+
+**Project stance (2026):** The app is expected to stay **relatively small** (a few more panels at most). **Phase F** (granular SPA permissions) is **deferred until the wider permissions upgrade** with **pbx3api** — do not start Phase F in isolation. **Phase G** (**TypeScript** / strict **`checkJs`**) is **not a near-term goal**: the stack stays **plain JavaScript** so the code stays **easy to read and tinker with**; revisit TS only if maintenance pain justifies it. **Phase H** (**route lazy loading**) is **deferred**: real-world impact (e.g. **cloud** hosting) is unknown until measured; the bundle is **acceptable for now** — add **`import()`** routes when profiling or UX shows it is **worth the complexity**.
 
 ---
 
@@ -20,12 +22,12 @@ The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/c
 
 | Area | Finding |
 |------|---------|
-| **TypeScript** | Not used. JSDoc appears in places (`client.js`, `useSchema.js`) but most code is untyped JS. Refactors and API shape drift are catch-at-runtime only. |
+| **TypeScript** | **Not used — intentional.** Plain JS + Vue SFCs for contributor accessibility. JSDoc appears in places (`client.js`, `useSchema.js`); most code is untyped. **Phase G** (TS / `checkJs`) is **deferred** unless needs change. |
 | **Lint / format** | **ESLint 10** + **`eslint-plugin-vue`** (flat **`eslint.config.js`**) + **`eslint-config-prettier`**. **Prettier** with **`.prettierrc.json`** (`semi: false`, `singleQuote: true`). Scripts: **`npm run lint`**, **`lint:fix`**, **`format`**, **`format:check`**. No Stylelint. |
 | **Tests** | **Vitest** + **`npm run test`** / **`test:watch`**. **`src/utils/*.test.js`** cover **`formErrors`**, **`listResponse`**, **`validation`**. No Vue component / E2E tests yet. |
-| **Build** | Vite 6 + `@vitejs/plugin-vue` — modern and appropriate. **`npm run build`** emits a **single main JS chunk** on the order of **~650 kB** minified (~**150 kB** gzip); Vite warns about the 500 kB threshold. There is **no route-based lazy loading** (`() => import(...)`) yet. Acceptable on a LAN admin app; optional improvement for slow links. |
+| **Build** | Vite 6 + `@vitejs/plugin-vue` — modern and appropriate. **`npm run build`** emits a **single main JS chunk** on the order of **~650 kB** minified (~**150 kB** gzip); Vite warns about the 500 kB threshold. **Route lazy loading** (**Phase H**) is **deferred** until **cloud / real-world** behaviour shows it is needed. Fine for current LAN-style use. |
 
-**Debt level:** Lint/format (Phase C) and **utils** unit tests (Phase D) are in place. Next low-cost wins: more **`src/utils`** or composable tests, **`@vue/test-utils`** for components, then gradual **TS** or **`vue-tsc`** / JSDoc **`checkJs`**.
+**Debt level:** Lint/format (Phase C) and **utils** unit tests (Phase D) are in place. Next low-cost wins: more **`src/utils`** or composable tests, optional **`@vue/test-utils`**. **No TS migration planned** for now (see **Project stance** above).
 
 ---
 
@@ -39,7 +41,7 @@ The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/c
 
 **Weaknesses / notes**
 
-1. **Single ability gate:** `router/index.js` allows all non-public routes only if `auth.can('admin')`. Non-admin users hit `/no-access`. Abilities exist on the user object but are **not** used per route or per nav item. Future `view_*` / `edit_*` abilities need nav + route guards (see **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** — Phase 1+). Introducing non-admin roles will require a coordinated sweep of **router meta**, **AppLayout** `navGroups`, and **pbx3api** unless phased deliberately.
+1. **Single ability gate:** `router/index.js` allows all non-public routes only if `auth.can('admin')`. Non-admin users hit `/no-access`. Abilities exist on the user object but are **not** used per route or per nav item. **Granular SPA permissions are Phase F** — **deferred until the wider permissions upgrade** with **pbx3api** (see **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** / **ADMIN_PANELS_AND_PERMISSIONS.md**); do not implement Phase F alone.
 2. **Full reload on 401:** `clearSessionAndGoLogin()` in `api/client.js` clears credentials and uses `window.location.replace('/login')`, which drops SPA state abruptly; acceptable for admin tools but harsh for in-flight edits (user loses unsaved work unless the app adds “dirty” warnings later).
 3. **Login / whoami:** `LoginView` uses `createApiClient(baseUrl, '')` for `auth/login` (correct). After login it loads **`auth/whoami`** in a try/catch where failure is ignored. If whoami fails transiently, the user can be **logged in without `user` populated** until navigation triggers another fetch — edge case worth knowing when debugging “half-empty” auth state.
 4. **Dev-only globals:** `main.js` exposes `createApiClient`, `getApiClient`, `useAuthStore` on `window` when `import.meta.env.DEV` — useful for debugging; must never ship enabled in production builds (current guard is correct).
@@ -76,7 +78,7 @@ The SPA is a **large, consistent CRUD shell** around the PBX3 API: shared list/c
 
 1. **Many large single-file views:** List + Create + Detail per resource multiplies similar `<script setup>` blocks (fetch, save, delete, tenant maps). Shared pieces (`tenantAdvanced.js`, `ivrDestinations.js`, composables) help but **do not remove** the file-per-resource cost.
 2. **Validation split:** `utils/validation.js` holds named validators; `composables/useFormValidation.js` wraps refs; some resources duplicate patterns — acceptable but easy to drift.
-3. **Confirm vs modal:** **`window.confirm()`** is used in **DashboardView** (PBX commands), **CommitButton**, **FirewallView**, and **BackupView**, while destructive list actions often use **`DeleteConfirmModal`**. Inconsistent affordance; harder to style, a11y-test, or theme than a shared confirmation component.
+3. **Confirm vs modal (Phase I applied):** **`ConfirmModal.vue`** covers **DashboardView** (PBX commands), **CommitButton**, **FirewallView** restarts, and **BackupView** create/restore flows; **`DeleteConfirmModal`** remains for list delete confirmations.
 4. **Users feature parity:** **`UsersListView`** uses **`useStickyFilter('users')`**, **`useStickySort`** (name / email / abilities), **`ListViewMeta`**, and filter-empty messaging — aligned with other lists. Routes remain **`/users`** and **`/users/new`** only — **no** `users/:id` detail/edit or **`UserDetailView.vue`** until the API exposes stable GET/PUT for a single admin user.
 
 ---
@@ -130,18 +132,19 @@ These are **known follow-ups**, not bugs in the SPA alone:
 ## 9. Prioritised recommendations
 
 1. **Users (remaining):** when API allows, add **`users/:id`** route and **user detail/edit** view.
-2. **Optional:** Vue Router **lazy imports** per route to shrink initial JS and silence chunk-size warnings.
-3. **When adding non-admin roles:** extend router + nav with granular `can()` checks per **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** / **ADMIN_PANELS_AND_PERMISSIONS.md**.
-4. **Longer term:** TypeScript or strict JSDoc + `checkJs`; optional **shared confirm modal** to replace scattered `window.confirm()`.
+2. **Phase H (lazy routes):** **Defer.** Revisit after **cloud** (or other) deployment and **measurement**; adopt **`import()`** when the benefit is **obvious**.
+3. **Permissions / Phase F:** **Defer** until the **wider permissions upgrade** (SPA + **pbx3api** together). Then extend router + nav with granular **`can()`** per **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** / **ADMIN_PANELS_AND_PERMISSIONS.md**.
+4. ~~**Optional UX:** shared confirm modal~~ **Done (Phase I):** **`ConfirmModal.vue`** + migrations above.
 5. **Optional hygiene:** Remove or dev-gate remaining **`console.error`** in **Agents** / **Logs** list catch blocks if you want a silent console in production.
 6. **Expand tests:** more **`utils`** / composables; optional **`@vue/test-utils`** for components.
 7. **Phase J (final toolchain pass):** Align **Node.js** with tool **`engines`** (e.g. **`.nvmrc`** + **`package.json` `engines`**) and review **`npm audit`** / upgrades on a schedule (see **Phase J** below).
+8. **TypeScript / Phase G:** **No action** unless the codebase or team outgrows plain JS; optional light **JSDoc** on new tricky modules is enough.
 
 ---
 
 ## 10. Step-by-step worklist (proposed changes)
 
-Work through in order unless you skip an entire phase. All steps are **pbx3spa-only** except **Phase F**, which requires **pbx3api** (and possibly policy docs) in lockstep. **Phase J** is an optional **final** pass: **Node** alignment and **`npm audit`** hygiene (do after **Phase C** or whenever devDependencies change materially).
+Work through in order unless you skip an entire phase. **Phase F** is **on hold** until the **wider permissions upgrade** — treat it as one coordinated **pbx3api + pbx3spa** effort, not a standalone SPA task. **Phase G** (**TypeScript**) is **out of scope for now** (stay on plain JS). **Phase H** (**lazy-loaded routes**) is **deferred** until real-world performance (e.g. **cloud**) justifies it. **Phase J** is an optional **final** pass: **Node** alignment and **`npm audit`** hygiene (do after **Phase C** or whenever devDependencies change materially).
 
 ### Phase A — Quick hygiene (same day)
 
@@ -191,7 +194,9 @@ Work through in order unless you skip an entire phase. All steps are **pbx3spa-o
 1. **Remaining (API-dependent):** Add **`users/:id`** route, **`UserDetailView.vue`** (or edit view), and API wiring when **pbx3api** exposes stable GET/PUT for a single admin user.
 2. **Commit** user detail in a separate change when ready; list parity commit e.g. `feat(users): sticky filter and sort on users list`.
 
-### Phase F — Granular permissions (later; cross-repo)
+### Phase F — Granular permissions (cross-repo) — **deferred**
+
+**Do not start until** the **wider permissions upgrade** is scheduled; **pbx3api** and **pbx3spa** should move together (abilities, `whoami`, middleware, router, nav).
 
 1. Read **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** and **ADMIN_PANELS_AND_PERMISSIONS.md** in `pbx3spa/workingdocs/`.
 2. **pbx3api:** Add or confirm abilities in `config/abilities.php`, middleware on route groups, and `whoami` payload.
@@ -199,23 +204,27 @@ Work through in order unless you skip an entire phase. All steps are **pbx3spa-o
 4. Add or adjust **NoAccess** / limited home UX for users without panel abilities.
 5. **Commit** in each repo with linked messages or a short cross-repo note in workingdocs.
 
-### Phase G — Type safety (longer term)
+### Phase G — Type safety — **deferred / not planned (plain JS policy)**
 
-1. Enable **`// @ts-check`** or migrate `src` to TypeScript incrementally (rename files, add `vue-tsc`).
-2. Start with **`api/client.js`** and **`utils/*.js`** where API contracts matter most.
-3. Keep scope small per PR to avoid a Big Bang migration.
+**Current decision:** Keep **JavaScript** (no **TypeScript**, no mandatory **`checkJs`**) so the repo stays approachable for contributors and casual tinkerers. The app is not expected to grow into a large front-end codebase.
 
-### Phase H — Route lazy loading (optional)
+1. **Optional later:** Revisit only if types would clearly reduce bugs or onboarding cost.
+2. If revisiting: prefer incremental **`// @ts-check`** or **`vue-tsc`** on a **small** subset (e.g. **`api/client.js`**) rather than a full migration.
+3. Until then, occasional **JSDoc** on public helpers is enough.
 
-1. In `src/router/index.js`, replace static component imports with `() => import('@/views/...vue')` for list/create/detail routes (or at least for heavier views) to split chunks and reduce initial parse time.
-2. Run `npm run build` and confirm chunk layout and that all routes still load.
+### Phase H — Route lazy loading — **deferred**
+
+**Current decision:** Keep **eager** route imports until **cloud** (or other) deployment and **profiling** show that a **~650 kB** (gz **~150 kB**) initial JS payload is a **real problem**. Lazy loading adds **complexity** (chunk boundaries, loading states); it will be **obvious** when operators or metrics need it.
+
+1. When triggered: in **`src/router/index.js`**, replace static component imports with **`() => import('@/views/...vue')`** for routes (or heaviest views first).
+2. Run **`npm run build`**, confirm **multiple chunks** and that every route still loads.
 3. **Commit** e.g. `perf: lazy-load route components`.
 
-### Phase I — Confirm dialog consistency (optional, later)
+### Phase I — Confirm dialog consistency — **applied**
 
-1. Introduce a small reusable **confirm modal** composable or component (match **DeleteConfirmModal** patterns).
-2. Replace **`window.confirm()`** in **DashboardView**, **CommitButton**, **FirewallView**, and **BackupView** incrementally; keep copy and danger styling per action.
-3. **Commit** in small PRs per area to ease review.
+1. **`src/components/ConfirmModal.vue`** — Teleport, **`useId`** for **`aria-labelledby`**, **`variant`** `primary` | `danger`, optional **`loading`** / slot body (same layout cues as **`DeleteConfirmModal`**).
+2. Replaced **`window.confirm()`** in **DashboardView**, **CommitButton**, **FirewallView** (IPv4/IPv6 restart), and **BackupView** (create backup/snapshot, restore backup/snapshot); copy and danger vs primary actions preserved.
+3. **BackupView** uses a small **`openGenericConfirm`** helper for the shared modal instance; other views wire **`ConfirmModal`** directly or via local state.
 
 ### Phase J — Node engines and dependency audit (final toolchain hygiene)
 
@@ -281,7 +290,7 @@ Run commands from the **`pbx3spa`** directory. Use **`npm run lint`**, **`npm ru
 | | **Sort:** if added, persistence matches other sorted lists. |
 | **User detail/edit (when implemented):** `npm run build` | Open **`/users/:id`** from list; save/cancel; no router errors. |
 
-**Phase F — Granular permissions (cross-repo)**
+**Phase F — Granular permissions (cross-repo)** — run **only** when the **permissions upgrade** is active.
 
 | Automated | Manual |
 |-----------|--------|
@@ -289,18 +298,13 @@ Run commands from the **`pbx3spa`** directory. Use **`npm run lint`**, **`npm ru
 | | **SPA:** user with **`admin`** (or full ability set) sees expected nav and routes; limited user sees **`/no-access`** or trimmed nav per design. |
 | | Run **pbx3api** (and any other service) test/CI suites if the repo defines them. |
 
-**Phase G — Type safety**
+**Phase G — Type safety** — **skipped** under current policy; if policy changes, add checks here (e.g. `vue-tsc --noEmit`).
+
+**Phase H — Route lazy loading** — **deferred**; run verification **only** after adopting lazy routes.
 
 | Automated | Manual |
 |-----------|--------|
-| Whatever you adopt: e.g. `vue-tsc --noEmit`, `tsc --noEmit`, or build with **`checkJs`** | Fix reported diagnostics until clean (or document suppressions). |
-| `npm run build` | — |
-
-**Phase H — Route lazy loading**
-
-| Automated | Manual |
-|-----------|--------|
-| `npm run build` — inspect **`dist/assets/`**: **multiple** JS chunks (not a single monolithic app bundle only). | Hard refresh, log in, visit several **different** routes; Network tab shows lazy chunks loading; no blank views. |
+| `npm run build` — inspect **`dist/assets/`**: **multiple** JS chunks. | Hard refresh, log in, visit several **different** routes; Network tab shows lazy chunks loading; no blank views. |
 
 **Phase I — Confirm dialog consistency**
 
@@ -326,10 +330,10 @@ Run commands from the **`pbx3spa`** directory. Use **`npm run lint`**, **`npm ru
 | C | `npm run lint` and `npm run format:check` clean; `npm run build` green |
 | D | `npm run test` green; utils tests maintained when changing **`formErrors`** / **`listResponse`** / **`validation`** |
 | E | List: sticky filter + sort + meta (**done**); detail route/view when API + route exist (**if done**) |
-| F | API + SPA aligned on abilities (when you start non-admin users) |
-| G | Policy decided: TS vs JSDoc + checkJs |
-| H | Smaller initial chunk or acceptable chunk map (if adopted) |
-| I | Critical actions use in-app confirm (if adopted) |
+| F | **Deferred** until wider **permissions** upgrade with **pbx3api**; then API + SPA aligned on abilities |
+| G | **N/A (deferred):** staying on **plain JS**; revisit TS only if justified |
+| H | **Deferred** until **cloud** / measurement shows need; then smaller initial chunk + chunk map OK |
+| I | **`ConfirmModal`** + no **`window.confirm`** on Dashboard / Commit / Firewall / Backup flows (**done**) |
 | J | Node version pinned (`.nvmrc` + `package.json` engines); README/CI aligned; `npm audit` reviewed and follow-ups documented or fixed |
 
 ---

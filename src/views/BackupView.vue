@@ -505,6 +505,16 @@
       </div>
     </Teleport>
 
+    <ConfirmModal
+      :show="genericConfirmShow"
+      :title="genericConfirmTitle"
+      :body-text="genericConfirmBody"
+      :confirm-label="genericConfirmLabel"
+      :variant="genericConfirmVariant"
+      @confirm="onGenericConfirm"
+      @cancel="cancelGenericConfirm"
+    />
+
     <DeleteConfirmModal
       :show="!!confirmDeleteBackup"
       title="Delete backup?"
@@ -544,8 +554,37 @@ import { useToastStore } from '@/stores/toast'
 import { useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
 const toast = useToastStore()
+
+const genericConfirmShow = ref(false)
+const genericConfirmTitle = ref('Confirm')
+const genericConfirmBody = ref('')
+const genericConfirmLabel = ref('OK')
+const genericConfirmVariant = ref('primary')
+let genericConfirmRunner = null
+
+function openGenericConfirm(opts) {
+  genericConfirmTitle.value = opts.title ?? 'Confirm'
+  genericConfirmBody.value = opts.body
+  genericConfirmLabel.value = opts.confirmLabel ?? 'OK'
+  genericConfirmVariant.value = opts.variant ?? 'primary'
+  genericConfirmRunner = opts.onConfirm
+  genericConfirmShow.value = true
+}
+
+function cancelGenericConfirm() {
+  genericConfirmShow.value = false
+  genericConfirmRunner = null
+}
+
+async function onGenericConfirm() {
+  const run = genericConfirmRunner
+  genericConfirmRunner = null
+  genericConfirmShow.value = false
+  if (run) await run()
+}
 const backups = ref([])
 const loading = ref(true)
 const error = ref('')
@@ -667,8 +706,17 @@ async function loadBackups() {
   }
 }
 
-async function createBackup() {
-  if (!confirm('Create a new backup? This may take a moment.')) return
+function createBackup() {
+  openGenericConfirm({
+    title: 'Create backup?',
+    body: 'Create a new backup? This may take a moment.',
+    confirmLabel: 'Create',
+    variant: 'primary',
+    onConfirm: runCreateBackup
+  })
+}
+
+async function runCreateBackup() {
   creatingBackup.value = true
   actionError.value = ''
   actionMessage.value = ''
@@ -754,27 +802,30 @@ function closeRestoreModal() {
   restoreError.value = ''
 }
 
-async function confirmRestore() {
+function confirmRestore() {
   if (!hasRestoreOptionSelected.value) {
     restoreError.value = 'Please select at least one option to restore'
     return
   }
-  if (
-    !confirm(
-      `Restore selected items from ${restoreBackupName.value}? This will overwrite existing data.`
-    )
-  ) {
-    return
-  }
-  restoringBackup.value = restoreBackupName.value
+  const name = restoreBackupName.value
+  openGenericConfirm({
+    title: 'Restore backup?',
+    body: `Restore selected items from ${name}? This will overwrite existing data.`,
+    confirmLabel: 'Restore',
+    variant: 'danger',
+    onConfirm: () => runRestoreBackup(name)
+  })
+}
+
+async function runRestoreBackup(filename) {
+  restoringBackup.value = filename
   restoreError.value = ''
   try {
-    // Convert boolean values to 1/0 for API
     const payload = {}
     for (const [key, value] of Object.entries(restoreOptions.value)) {
       payload[key] = value ? 1 : 0
     }
-    await getApiClient().put(`backups/${restoreBackupName.value}`, payload)
+    await getApiClient().put(`backups/${filename}`, payload)
     toast.show('Backup restored successfully')
     closeRestoreModal()
     await loadBackups()
@@ -871,8 +922,17 @@ async function loadSnapshots() {
   }
 }
 
-async function createSnapshot() {
-  if (!confirm('Create a new snapshot? This will copy the current database.')) return
+function createSnapshot() {
+  openGenericConfirm({
+    title: 'Create snapshot?',
+    body: 'Create a new snapshot? This will copy the current database.',
+    confirmLabel: 'Create',
+    variant: 'primary',
+    onConfirm: runCreateSnapshot
+  })
+}
+
+async function runCreateSnapshot() {
   creatingSnapshot.value = true
   snapshotActionError.value = ''
   snapshotActionMessage.value = ''
@@ -939,10 +999,17 @@ async function downloadSnapshot(filename) {
   }
 }
 
-async function restoreSnapshot(filename) {
-  if (!confirm(`Restore database from ${filename}? This will overwrite the current database.`)) {
-    return
-  }
+function restoreSnapshot(filename) {
+  openGenericConfirm({
+    title: 'Restore snapshot?',
+    body: `Restore database from ${filename}? This will overwrite the current database.`,
+    confirmLabel: 'Restore',
+    variant: 'danger',
+    onConfirm: () => runRestoreSnapshot(filename)
+  })
+}
+
+async function runRestoreSnapshot(filename) {
   restoringSnapshot.value = filename
   snapshotActionError.value = ''
   try {
