@@ -1,6 +1,6 @@
 # Standardized Panel Design Pattern
 
-**Last Updated**: 2026-03-07  
+**Last Updated**: 2026-04-02  
 **Based on**: IVR CRUD panels implementation (refactored with reusable components)  
 **Status**: Pattern established and documented, ready for application to all panels
 
@@ -38,6 +38,7 @@ List/detail/create views render inside the **main content** column; they should 
 - **Sidebar scroll persistence:** **`scrollTop`** for the sidebar is saved to **`sessionStorage`** (`key: pbx3spa-sidebar-scroll`) on scroll (throttled with `requestAnimationFrame`) and **restored** after load and after **route changes** (with `nextTick` so DOM matches the active nav group). Implementation: `src/layouts/AppLayout.vue`.
 - **Accordion nav (one open group):** Section headings use **expand/collapse**; only **one** group is expanded at a time (see `ensureCurrentGroupOpen` / toggle). Opening another heading **closes** the previous group. **Tradeoff:** this keeps the nav compact but can feel disjointed when combined with sidebar scroll persistence — persistence remembers **vertical scroll** but not **which groups were expanded**. **Future (if feedback warrants):** persist expanded group ids in `sessionStorage`, or allow **multiple** sections open; decide after real usage.
 - **Commit / help:** **`CommitButton`** and **`useHelp`** prefetch live in this layout; see **SESSION_HANDOFF** for behaviour.
+- **Top bar context (instance / tenant):** **`SessionContextChips`** in **AppLayout** shows **Instance** (prefer **`sysglobals.fqdn`**) and optional **Tenant** when tenant detail is open. Implementation: **`auth`** store, **`useSessionContext`**, **`sessionContext.js`**; see **SESSION_HANDOFF** § Latest session.
 
 ---
 
@@ -50,6 +51,7 @@ Every resource has **exactly three panels** (List, Create, Edit) unless a resour
 1. **Main list** (`{Resource}ListView.vue`) – Table (or list) of all items. Toolbar: Create button, filter. Rows: columns + Edit action + Delete action. **Action column icons (Edit, Delete, Play, Download, etc.) must be SVG only** — see “List action icons” in the Important section; do not use emoji. See **Optional: List export (CSV / PDF)** below for adding Export CSV and Export PDF to the toolbar.
 2. **Create** (`{Resource}CreateView.vue`) – Single form to create one item. **Top navigation:** wrap the page `<h1>` in **`PanelBackLink`** (`src/components/PanelBackLink.vue`) with `← {List title}` and `:to="{ name: '<list-route>' }"` so users can return to the list without relying on Cancel alone. **Action buttons (Save—or submit label—and Cancel) must appear at both the top and bottom of the form.**
 3. **Edit** (`{Resource}DetailView.vue`) – Single form to view and edit one item (immutable fields with FormReadonly, editable with FormField/FormSelect/FormToggle). **Same top `PanelBackLink`** as Create, pointing at the resource list. **All edit panels must have three buttons (Save, Cancel, Delete) at both the top and bottom of the form.** Delete is placed alongside Save and Cancel in `.edit-actions`, not in a toolbar at the top. No separate "view" panel; no link from the list that goes to a different "item list" panel.
+   - **Active flag + list column:** If the **list** shows an **Active** column (`ListActiveChip` / YES–NO), the **edit** panel should expose **`active`** in the **header**, not only buried in the form: use **`div.detail-panel-head`** → **`div.detail-title-status-row`** containing **`h1.detail-panel-title`** (page title) and **`DetailActiveStatusBar`** (`src/components/DetailActiveStatusBar.vue`) with **`v-model="editActive"`** (`YES`/`NO`), **`toggle-id`** unique per view, and **`:readonly="isReadOnly('active')"`** when the schema marks `active` read-only. When inactive, add a full-width **`p.detail-active-inactive-hint`** *below* the title row (inside `detail-panel-head`) with a short entity-specific sentence — **left-aligned** muted text; do **not** use the removed **`.detail-inactive-banner`** orange box. Sync **`editActive`** from the API on load; include **`active`** in **PUT** when editable. Global CSS: **`main.css`** (`.detail-title-status-row` uses **`flex-wrap: nowrap`** and **`.detail-panel-title { min-width: 0 }`** so long titles do not wrap the pill to the next line). **Reference:** Extension, Queue, Trunk, Inbound route, Day timer, IVR, etc.
 
 There is **no fourth panel** (e.g. no "item list" or intermediate list). Navigation is: **List ↔ Create** and **List ↔ Edit** only.
 

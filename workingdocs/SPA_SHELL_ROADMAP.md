@@ -6,6 +6,13 @@
 
 ---
 
+## Stage 2 — shipped (committed, Apr 2026)
+
+- **Context chips:** Instance (**`sysglobals.fqdn`**) + optional tenant on tenant detail; **`SessionContextChips.vue`**, **`auth`** store, **`useSessionContext`**, sync points in layout / sysglobals / tenant views. See **SESSION_HANDOFF.md** § Latest session.
+- **Detail edit — Active in header:** **`DetailActiveStatusBar`** + **`detail-active-inactive-hint`** + **`main.css`** title-row nowrap; day timer edit includes **`active`**.
+
+---
+
 ## Stage 1 — shipped (committed)
 
 Theme: *light sidebar strip + nav polish* (commit subject includes `SPA shell stage 1`).
@@ -18,18 +25,18 @@ Theme: *light sidebar strip + nav polish* (commit subject includes `SPA shell st
 
 ---
 
-## Proposed next (not committed — pick in any order)
+## Proposed next (remaining ideas — pick in any order)
 
-Rough **effort**: S = small (hours), M = moderate (day or so), L = larger.
+Rough **effort**: S = small (hours), M = moderate (day or so), L = larger. *(Nav icons, scroll-active-into-view, focus-visible, wider sidebar, and context chips are already on **`main`** — see Stage 2 above and **Suggested order** strikethroughs.)*
 
 ### Nav / shell
 
 | Idea | What it does | Effort |
 |------|----------------|--------|
-| **Nav icons** | Icon beside Home, groups, or high-traffic links — strongest visual “modern app” cue after stage 1. | M |
-| **Collapsible sidebar** | Narrow icon-only rail on small widths; expand on hover or toggle. | L |
+| **Nav icons** | **Done on main** (`NavIcon.vue` + `AppLayout`). | — |
+| **Collapsible sidebar** | Narrow icon-only rail on small widths; expand on hover or toggle. Defer with **adaptive / responsive** layout pass. | L |
 | **⌘K / quick open** | Modal: type to filter and jump to any nav destination (and maybe recent routes). | M |
-| **Scroll active link into view** | When a group opens or route lands deep, ensure the active `.nav-link` is visible in the scrollable sidebar. | S |
+| **Scroll active link into view** | **Done on main** (`AppLayout.vue`). | — |
 
 ### Clarity
 
@@ -42,14 +49,14 @@ Rough **effort**: S = small (hours), M = moderate (day or so), L = larger.
 
 | Idea | What it does | Effort |
 |------|----------------|--------|
-| **`:focus-visible`** | Clear keyboard focus rings on sidebar links, top bar buttons, and Commit — accessibility and power users. | S |
-| **Wider sidebar** | e.g. `13.5rem` if labels like “Queues / Ring groups” wrap awkwardly. | S |
+| **`:focus-visible`** | **Done on main** (`main.css`, `CommitButton`). | — |
+| **Wider sidebar** | **Done on main** (`13.5rem` in `AppLayout`). | — |
 
 ### Product / safety
 
 | Idea | What it does | Effort |
 |------|----------------|--------|
-| **Context chip in top bar** | **Shipped (SPA).** Instance = **`sysglobals.fqdn`** (refreshed on layout mount and when Instance Globals / Network / tenant-create loads `GET sysglobals`). Fallback: whoami `instance_label` / `instance_name`, then API URL host. Tenant pill when **Tenant detail** is open. | M |
+| **Context chip in top bar** | **Shipped (Stage 2).** Instance = **`sysglobals.fqdn`**; tenant on tenant detail. | — |
 
 ---
 
