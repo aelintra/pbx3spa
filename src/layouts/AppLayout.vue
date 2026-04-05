@@ -311,8 +311,10 @@ async function logout() {
     </aside>
     <div class="main">
       <header class="topbar">
-        <div class="topbar-leading">
+        <div class="topbar-left">
           <h1 class="logo">PBX3 Admin</h1>
+        </div>
+        <div class="topbar-center">
           <SessionContextChips />
         </div>
         <div class="topbar-right">
@@ -333,6 +335,7 @@ async function logout() {
 
 <style scoped>
 .app-layout {
+  --pbx-shell-sidebar-width: 15.75rem;
   display: flex;
   height: 100vh;
   overflow: hidden;
@@ -340,7 +343,7 @@ async function logout() {
 .sidebar {
   display: flex;
   flex-direction: column;
-  width: 15.75rem;
+  width: var(--pbx-shell-sidebar-width);
   flex-shrink: 0;
   height: 100vh;
   min-height: 0;
@@ -480,7 +483,6 @@ async function logout() {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: 0.5rem 1.25rem;
   padding: 0.75rem 1.5rem;
   background: var(--pbx-canvas);
@@ -489,13 +491,29 @@ async function logout() {
   top: 0;
   z-index: 10;
 }
-.topbar-leading {
+/* Equal flex wings (absolute center is out of flow, so each wing spans ~half the bar) */
+.topbar-left {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-start;
   gap: 0.65rem 1rem;
+}
+/* Center on viewport, not on .main only (sidebar shifts main’s geometric center right) */
+.topbar-center {
+  position: absolute;
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 0;
-  flex: 1 1 auto;
+  max-width: min(42rem, calc(100% - 2rem));
+  transform: translateX(calc(-50% - var(--pbx-shell-sidebar-width) / 2));
 }
 .logo {
   font-size: 1.25rem;
@@ -505,10 +523,15 @@ async function logout() {
   flex-shrink: 0;
 }
 .topbar-right {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 1rem;
-  flex-shrink: 0;
 }
 .user {
   font-size: 0.875rem;
