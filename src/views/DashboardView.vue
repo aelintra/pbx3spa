@@ -49,6 +49,17 @@ const spaReleaseRows = computed(() => {
   ]
 })
 
+/** Normalize API system block (snake_case + rare camelCase). */
+const systemInfo = computed(() => {
+  const s = sysnotes.value?.system
+  if (!s || typeof s !== 'object') return null
+  return {
+    ...s,
+    php_version: s.php_version ?? s.phpVersion,
+    laravel_version: s.laravel_version ?? s.laravelVersion
+  }
+})
+
 async function fetchSysnotes() {
   sysnotesLoading.value = true
   sysnotesError.value = ''
@@ -180,23 +191,23 @@ onMounted(() => {
         <div class="sysnotes-col">
           <h3 class="sysnotes-col-heading">System</h3>
           <dl class="sysnotes-dl">
-            <template v-if="sysnotes.system">
+            <template v-if="systemInfo">
               <dt>Distro</dt>
-              <dd>{{ display(sysnotes.system.distro) }}</dd>
+              <dd>{{ display(systemInfo.distro) }}</dd>
               <dt>Asterisk release</dt>
-              <dd>{{ display(sysnotes.system.asterisk_release) }}</dd>
+              <dd>{{ display(systemInfo.asterisk_release) }}</dd>
               <dt>PBX3 release</dt>
-              <dd>{{ display(sysnotes.system.app_release) }}</dd>
+              <dd>{{ display(systemInfo.app_release) }}</dd>
               <dt>PHP (API)</dt>
-              <dd>{{ display(sysnotes.system.php_version) }}</dd>
+              <dd>{{ display(systemInfo.php_version) }}</dd>
               <dt>Laravel (API)</dt>
-              <dd>{{ display(sysnotes.system.laravel_version) }}</dd>
+              <dd>{{ display(systemInfo.laravel_version) }}</dd>
               <template v-for="row in spaReleaseRows" :key="row.label">
                 <dt>{{ row.label }}</dt>
                 <dd>{{ display(row.value) }}</dd>
               </template>
               <dt>Endpoints defined</dt>
-              <dd>{{ display(sysnotes.system.endpoints_defined) }}</dd>
+              <dd>{{ display(systemInfo.endpoints_defined) }}</dd>
             </template>
           </dl>
         </div>

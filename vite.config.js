@@ -5,14 +5,15 @@ import vue from '@vitejs/plugin-vue'
 
 const pkgPath = fileURLToPath(new URL('./package.json', import.meta.url))
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
-const spaReleasesJson = JSON.stringify({
+/** Injected into import.meta.env — must be a plain object (not pre-JSON.stringify’d). */
+const spaReleasesEmbedded = {
   pbx3spa: pkg.version,
   /** Node used to run Vite / produce this bundle (not a browser runtime). */
   node: process.version,
   vue: pkg.dependencies.vue ?? '',
   vueRouter: pkg.dependencies['vue-router'] ?? '',
   pinia: pkg.dependencies.pinia ?? ''
-})
+}
 
 export default defineConfig(({ mode }) => {
   // Load env so VITE_API_PROXY_TARGET is available when config runs (Vite doesn't load .env before config by default)
@@ -23,7 +24,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     define: {
-      'import.meta.env.VITE_SPA_RELEASES_JSON': JSON.stringify(spaReleasesJson)
+      'import.meta.env.VITE_SPA_RELEASES_JSON': spaReleasesEmbedded
     },
     plugins: [vue()],
     resolve: {
