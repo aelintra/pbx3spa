@@ -252,6 +252,7 @@ async function logout() {
 <template>
   <div class="app-layout">
     <aside class="sidebar">
+      <div class="sidebar-top-spacer" aria-hidden="true" />
       <nav ref="sidebarRef" class="nav" @scroll.passive="onSidebarScroll">
         <template v-if="auth.can('admin')">
           <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">
@@ -339,7 +340,7 @@ async function logout() {
 .sidebar {
   display: flex;
   flex-direction: column;
-  width: 13.5rem;
+  width: 15.75rem;
   flex-shrink: 0;
   height: 100vh;
   min-height: 0;
@@ -348,13 +349,19 @@ async function logout() {
   color: var(--pbx-sidebar-fg);
   border-right: 1px solid var(--pbx-border);
 }
+/* Same vertical offset as former sidebar PBX³ block: pad + 2rem × 1.25 line */
+.sidebar-top-spacer {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  min-height: calc(0.75rem * 2 + 2rem * 1.25);
+}
 .nav {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  padding: 1rem 0.375rem;
+  padding: 0.65rem 0.375rem 1rem;
 }
 .sidebar-footer {
   flex: 0 0 auto;
