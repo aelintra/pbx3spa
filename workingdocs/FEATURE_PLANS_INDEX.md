@@ -18,6 +18,6 @@
 | Trunk/route multitenancy | TRUNK_ROUTE_MULTITENANCY.md | reference |
 | Data-driven list policy | DATA_DRIVEN_LIST_POLICY_PROJECT.md | deferred |
 | SPA bundle size / cloud perf | SESSION_HANDOFF.md § Other to-dos, PROJECT_PLAN § Current state | watch (revisit in cloud) |
-| SPA shell (nav / chrome) | SPA_SHELL_ROADMAP.md, SESSION_HANDOFF.md § Latest session | Stage 1 + **context chips** (instance FQDN, tenant) + **detail active header** pattern committed on **`main`**; collapsible sidebar / ⌘K still optional (see roadmap) |
+| SPA shell (nav / chrome) | SPA_SHELL_ROADMAP.md, SESSION_HANDOFF.md § Shell / topbar + Latest session | Stage 1 + Stage 2 on **`main`**: context chips (**viewport-centered** top bar, **`--pbx-shell-sidebar-width`**), **PBX3 Admin** title left, **sidebar top spacer** (no rail logo yet), **detail active header**; collapsible sidebar / ⌘K still optional |
 
 **Source of truth:** Schema and code. Verify against repo when implementing; this index may be outdated.

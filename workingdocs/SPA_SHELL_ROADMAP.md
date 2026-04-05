@@ -10,6 +10,8 @@
 
 - **Context chips:** Instance (**`sysglobals.fqdn`**) + optional tenant on tenant detail; **`SessionContextChips.vue`**, **`auth`** store, **`useSessionContext`**, sync points in layout / sysglobals / tenant views. See **SESSION_HANDOFF.md** § Latest session.
 - **Detail edit — Active in header:** **`DetailActiveStatusBar`** + **`detail-active-inactive-hint`** + **`main.css`** title-row nowrap; day timer edit includes **`active`**.
+- **Top bar layout (later Apr 2026):** Three zones — **`PBX3 Admin`** (left), chips (**center**, viewport-centered), actions (right). Chips use **`position: absolute`** + transform **`calc(-50% - var(--pbx-shell-sidebar-width) / 2)`** so they align with **window** center, not only the main column. **`--pbx-shell-sidebar-width: 15.75rem`** on **`.app-layout`**; sidebar **`width`** uses the same variable. Wings stay **`z-index: 1`**, chips **`z-index: 2`** — avoid opaque wing **`background`** over chips.
+- **Sidebar:** **`15.75rem`** wide; **no** logo/wordmark in the rail (proper logo asset deferred). **`.sidebar-top-spacer`** keeps the nav’s top offset where it was with the old header line.
 
 ---
 
@@ -50,7 +52,7 @@ Rough **effort**: S = small (hours), M = moderate (day or so), L = larger. *(Nav
 | Idea | What it does | Effort |
 |------|----------------|--------|
 | **`:focus-visible`** | **Done on main** (`main.css`, `CommitButton`). | — |
-| **Wider sidebar** | **Done on main** (`13.5rem` in `AppLayout`). | — |
+| **Wider sidebar** | **Done on main** (**`15.75rem`**, **`--pbx-shell-sidebar-width`** in **`AppLayout`**). | — |
 
 ### Product / safety
 
@@ -63,7 +65,7 @@ Rough **effort**: S = small (hours), M = moderate (day or so), L = larger. *(Nav
 ## Suggested order if you want a default sequence
 
 1. ~~**Scroll active into view** + **focus-visible**~~ — **Done:** `AppLayout.vue` (`scrollActiveNavIntoView` on route change, after group toggle, after mount); `main.css` (`:focus-visible` on nav links + group buttons + logout); `CommitButton.vue` (`:focus-visible` on Commit).  
-2. **Nav icons** — **Done:** `NavIcon.vue` + `AppLayout.vue` (`icon` per group and link; sidebar `13.5rem`). **⌘K quick open** — still optional.  
+2. **Nav icons** — **Done:** `NavIcon.vue` + `AppLayout.vue` (`icon` per group and link; sidebar **`15.75rem`** via **`--pbx-shell-sidebar-width`**). **⌘K quick open** — still optional.  
 3. **Breadcrumbs** — skipped (redundant with `PanelBackLink` and two-level IA).  
 4. **Collapsible sidebar** — defer until an **adaptive / responsive** layout pass (narrow breakpoints, icon rail, etc.).  
 5. **Instance + tenant context chip** in the top bar — **done** (see Product / safety table): instance = **`sysglobals.fqdn`**; tenant when editing a tenant; tenant cleared on list and when leaving detail.
