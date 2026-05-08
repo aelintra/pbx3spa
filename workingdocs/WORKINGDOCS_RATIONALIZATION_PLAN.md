@@ -50,7 +50,7 @@
 | **PBX3API_INSTALLER_NGINX_ADDITIONS.md** | Checklist: what to add to pbx3api installer for nginx | Implementation checklist; references nginx-api-site-reference.conf. |
 | **PBX3API_INSTALLER_HEALTHCHECK_NOTE.md** | Health-check follow-up (e.g. HTTPS) | Small; could live inside APACHE_CONFIG or TODO. |
 | **nginx-api-site-reference.conf** | Reference nginx server block for API | Config asset; keep. |
-| **LETSENCRYPT_PLAN.md** | LE cert flow, port 80, scripts, panel behaviour | Cross-refs pbx3spa CERTIFICATES_ADOPTION_PLAN. |
+| **TLS_AND_CERTIFICATES.md** (pbx3) | Host TLS index + overview | See **CERTIFICATES_PANEL_AND_API.md** and **LETSENCRYPT_PER_TENANT_FQDN.md** in same repo. |
 | **PHP_SCRIPTS_AND_MODULES.md** | PHP utilities and modules in pbx3 | Reference. |
 | **DB_PBX3_VS_PBX3API_VARIANCE.md** | Schema differences between pbx3 and Laravel/pbx3api | Reference for schema work. |
 | **DEBIAN_PACKAGE_IMPROVEMENTS.md** | Package/deb improvements | Backlog. |
@@ -80,7 +80,7 @@
 | **Panel / UX pattern** | PANEL_PATTERN.md, PANEL_PATTERN_DEPARTURES.md, LIST_EXPORT_PDF_CSV.md, SIDEBAR_NAV_GROUPING.md, STYLING_PATTERN.md, CREATE_PANELS_STANDARDIZATION.md, SINGLE_PANEL_SCREENS.md | PANEL_PATTERN is canonical (~3200 lines). Others are supplements or snapshots. |
 | **Refactor / technical debt** | PANEL_REFACTOR_STRATEGY.md, AGENT_HANDOFF_TECHNICAL_DEBT.md, TECHNICAL_DEBT_ANALYSIS.md, TECHNICAL_DEBT_TENANT_PANELS.md, TECHNICAL_DEBT_AGENTS_PANEL.md, EDIT_PANEL_FIELD_PARITY_AUDIT.md | Several debt docs; some are point-in-time audits (could be archived when addressed). |
 | **Port / migration** | SAIL65_PANEL_PORT_PLAN.md | Single clear doc. |
-| **Feature-specific** | EXTENSION_PROVISIONING_QUICKSTART.md, EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md, EXTENSION_PROVISIONING_ISSUES.md, DATABASE_CHANGES_FOR_PROVISIONING.md, OLD_SYSTEM_EXTENSION_CREATE_REFERENCE.md, EXTENSIONS_LIVE_DATA.md, TRUNK_IMPLEMENTATION_PLAN.md, TRUNK_ROUTE_MULTITENANCY.md, CERTIFICATES_ADOPTION_PLAN.md, DDI_CREATE_PLAN.md, PERMISSIONS_MINIMAL_DEPLOY_PLAN.md, ADMIN_PANELS_AND_PERMISSIONS.md, AUTH_PATTERNS.md, FIELD_MUTABILITY_API_PLAN.md, BOOLEAN_STANDARDISATION.md, SCHEMA_MISSING_DEFAULTS.md, PILLS_RETROFIT_LIST.md, DATA_DRIVEN_LIST_POLICY_PROJECT.md, REMOTE_CONSOLE_XTERM_ASSESSMENT.md, PKEY_ROUTING_ISSUE.md | Many small-scope plans; some done, some deferred. |
+| **Feature-specific** | EXTENSION_PROVISIONING_QUICKSTART.md, EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md, EXTENSION_PROVISIONING_ISSUES.md, DATABASE_CHANGES_FOR_PROVISIONING.md, OLD_SYSTEM_EXTENSION_CREATE_REFERENCE.md, EXTENSIONS_LIVE_DATA.md, TRUNK_IMPLEMENTATION_PLAN.md, TRUNK_ROUTE_MULTITENANCY.md, CERTIFICATES_ADOPTION_PLAN.md (stub → **pbx3** `CERTIFICATES_PANEL_AND_API.md`), DDI_CREATE_PLAN.md, PERMISSIONS_MINIMAL_DEPLOY_PLAN.md, ADMIN_PANELS_AND_PERMISSIONS.md, AUTH_PATTERNS.md, FIELD_MUTABILITY_API_PLAN.md, BOOLEAN_STANDARDISATION.md, SCHEMA_MISSING_DEFAULTS.md, PILLS_RETROFIT_LIST.md, DATA_DRIVEN_LIST_POLICY_PROJECT.md, REMOTE_CONSOLE_XTERM_ASSESSMENT.md, PKEY_ROUTING_ISSUE.md | Many small-scope plans; some done, some deferred. |
 | **UX / assessment** | UX_APPROACH.md, UX_IMPROVEMENTS_IVR.md, UX_AI_REVIEW.md, HOLISTIC_ASSESSMENT.md | Principles vs IVR-specific vs review. |
 | **Environment / how-to** | DEV_ENVIRONMENT.md, DEPLOYMENT_BASICS.md, SPA_BASICS.md, STACK_CHOICE.md | Dev and deployment; STACK_CHOICE is historical. |
 | **reference/** | README.md, sark-extensions-page-source.html, EXTENSIONS_API_FIELDS.md, UI_TRENDS_IN ADMIN_PANELS | Legacy reference; one filename has space. |
@@ -116,7 +116,7 @@
 | **Single entry** | AGENT_HANDOFF.md | Keep **AGENT_HANDOFF.md** as the **only** entry. Add at top: “**AI: read this first.**” Include a **Read order by task** table (see below). |
 | **Merge** | PBX3_CLEANUP_CONTEXT.md | Fold layout/discoveries into CLEANUP_PLAN or into AGENT_HANDOFF in a short § “Repo layout”; delete PBX3_CLEANUP_CONTEXT.md to avoid duplicate context. |
 | **Merge** | PBX3API_INSTALLER_HEALTHCHECK_NOTE.md | Merge into TODO.md or APACHE_CONFIG_TO_PBX3API.md as one bullet; delete standalone. |
-| **Keep** | TODO.md, CLEANUP_PLAN.md, LETSENCRYPT_PLAN.md, APACHE_CONFIG_TO_PBX3API.md, PBX3API_INSTALLER_NGINX_ADDITIONS.md, nginx-api-site-reference.conf, PHP_SCRIPTS_AND_MODULES.md, DB_PBX3_VS_PBX3API_VARIANCE.md, DEBIAN_PACKAGE_IMPROVEMENTS.md, copilot-instructions.md | No change. |
+| **Keep** | TODO.md, CLEANUP_PLAN.md, TLS_AND_CERTIFICATES.md, CERTIFICATES_PANEL_AND_API.md, LETSENCRYPT_PER_TENANT_FQDN.md, APACHE_CONFIG_TO_PBX3API.md, PBX3API_INSTALLER_NGINX_ADDITIONS.md, nginx-api-site-reference.conf, PHP_SCRIPTS_AND_MODULES.md, DB_PBX3_VS_PBX3API_VARIANCE.md, DEBIAN_PACKAGE_IMPROVEMENTS.md, copilot-instructions.md | Certificate docs consolidated in **pbx3** `workingdocs/`. |
 | **README** | — | Add **README.md**: “**AI:** Read AGENT_HANDOFF.md first. It contains current state and read-order by task.” No long table of all docs. |
 
 **Read-order table to add in AGENT_HANDOFF.md:**
@@ -126,7 +126,7 @@
 | Any / first time | This file, then TODO.md |
 | Cleanup / installer | CLEANUP_PLAN.md, APACHE_CONFIG_TO_PBX3API.md, PBX3API_INSTALLER_NGINX_ADDITIONS.md |
 | Schema / DB | DB_PBX3_VS_PBX3API_VARIANCE.md; for API alignment see pbx3api/workingdocs/PLAN_MODELS_AND_VALIDATION_HARMONISATION.md |
-| TLS / LE | LETSENCRYPT_PLAN.md; SPA cert UI: pbx3spa/workingdocs/CERTIFICATES_ADOPTION_PLAN.md |
+| TLS / certificates | **pbx3** `workingdocs/TLS_AND_CERTIFICATES.md` (index) → **CERTIFICATES_PANEL_AND_API.md** → **LETSENCRYPT_PER_TENANT_FQDN.md**; **pbx3spa** stubs only |
 
 **Result:** One entry (AGENT_HANDOFF); no duplicate context doc; entry gives task → read order.
 

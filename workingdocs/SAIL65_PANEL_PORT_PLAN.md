@@ -151,7 +151,7 @@ From `php/` in sail65 (sail-6/opt/sark/php):
 | sarktrunk      | Trunks                   | trunks             | ✓ |
 | sarkuser       | Users                    | auth/users         | ✓ |
 | sarkddi        | Inbound routes           | inboundroutes      | ✓ (likely) |
-| sarkcert       | Certificates             | certificates (active, letsencrypt, letsencrypt/setup, letsencrypt/renew, custom) | ✓ **Done** – single-screen: LE setup (FQDN + email, Get certificate), status, Renew now; purchased cert install/remove. See CERTIFICATES_ADOPTION_PLAN.md, LETSENCRYPT_PLAN.md. |
+| sarkcert       | Certificates             | certificates (active, letsencrypt, letsencrypt/setup, letsencrypt/renew, custom) | ✓ **Done** – single-screen: LE setup (FQDN + email, Get certificate), status, Renew now; purchased cert install/remove. See **pbx3/workingdocs/TLS_AND_CERTIFICATES.md**, **CERTIFICATES_PANEL_AND_API.md**. |
 
 ---
 
@@ -174,7 +174,7 @@ These sail65 panels do **not** currently have a full SPA + API CRUD (or single-s
 
 **Certificates / Security / Network**
 
-- ~~**sarkcert**~~ – **Done.** Certificates panel: single-screen at `/certificates` with two sections. **Let's Encrypt:** when not configured, form (Hostname FQDN + Email) + “Get certificate” (POST setup → le-first-cert.sh); when configured, status + “Renew now” (le-renew-with-80.sh). **Purchased certificate:** upload cert/key, Install, Remove. Port 80 opened only during issuance/renewal (pbx3 scripts). API: certificates/active, letsencrypt, letsencrypt/setup, letsencrypt/renew, custom (GET/POST/DELETE). See CERTIFICATES_ADOPTION_PLAN.md, LETSENCRYPT_PLAN.md.
+- ~~**sarkcert**~~ – **Done.** Certificates panel: single-screen at `/certificates` with two sections. **Let's Encrypt:** when not configured, form (Hostname FQDN + Email) + “Get certificate” (POST setup → le-first-cert.sh); when configured, status + “Renew now” (le-renew-with-80.sh). **Purchased certificate:** upload cert/key, Install, Remove. Port 80 opened only during issuance/renewal (pbx3 scripts). API: certificates/active, letsencrypt, letsencrypt/setup, letsencrypt/renew, custom (GET/POST/DELETE). See **pbx3/workingdocs/TLS_AND_CERTIFICATES.md**, **CERTIFICATES_PANEL_AND_API.md**.
 - **sark3pcerts** – 3rd-party certs (provisioning verification – Snom, Yealink, etc.). Separate panel/route from main Certificates; create a mini project for provisioning.
 - ~~**sarknetwork**~~ – **Done.** IP Settings panel at `/ip-settings`: System (hostname editable, Local IP/Public IP/MAC read-only), DNS servers (textarea), Binding (bindport, tlsport, staticipv4), NAT, Site, SMTP (when ssmtp present), NTP (timezone dropdown), Ping (ICMP). No FQDN/fqdninspect/fqdnprov (moving elsewhere). Audit: pbx3api/workingdocs/NETWORK_AUDIT_PROTOTYPE.md.
 

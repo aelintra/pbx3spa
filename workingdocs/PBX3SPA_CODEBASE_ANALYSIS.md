@@ -125,7 +125,7 @@ These are **known follow-ups**, not bugs in the SPA alone:
 
 - **Extension provisioning** (MAC, Save vs Commit): documented under **EXTENSION_PROVISIONING_*.md**.
 - **Commit / generator bridge:** **CommitButton** calls `syscommands/commit` and `commitstatus` — wiring to instance generator is a system concern; **HOLISTIC_ASSESSMENT.md** discusses operational strain.
-- **Certificates / HTTPS:** SPA cert UI plans live in **CERTIFICATES_ADOPTION_PLAN.md**; aligns with pbx3/pbx3api TLS work.
+- **Certificates / HTTPS:** **pbx3** `workingdocs/TLS_AND_CERTIFICATES.md` (index), `CERTIFICATES_PANEL_AND_API.md` (panel/API).
 
 ---
 

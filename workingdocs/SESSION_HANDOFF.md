@@ -76,11 +76,11 @@
 
 ### Previous milestone (Certificates panel + Let's Encrypt)
 
-- **Certificates panel (pbx3spa):** Single view at `/certificates` with two sections: **Let's Encrypt** and **Purchased certificate**. When LE not configured: form **Hostname (FQDN)** + **Email (Let's Encrypt)** and button **Get certificate** (POST `/certificates/letsencrypt/setup`). When configured: Hostname, Expires, Issuer + **Renew now** (POST `/certificates/letsencrypt/renew`). Help text: A record + port 80 reachable; we open 80 only during issuance/renewal. Purchased: upload cert/key, Install, Remove. See **CERTIFICATES_ADOPTION_PLAN.md**, **SINGLE_PANEL_SCREENS.md**.
+- **Certificates panel (pbx3spa):** Single view at `/certificates` with two sections: **Let's Encrypt** and **Purchased certificate**. When LE not configured: form **Hostname (FQDN)** + **Email (Let's Encrypt)** and button **Get certificate** (POST `/certificates/letsencrypt/setup`). When configured: Hostname, Expires, Issuer + **Renew now** (POST `/certificates/letsencrypt/renew`). Help text: A record + port 80 reachable; we open 80 only during issuance/renewal. Purchased: upload cert/key, Install, Remove. See **pbx3/workingdocs/TLS_AND_CERTIFICATES.md** (index), **pbx3/workingdocs/CERTIFICATES_PANEL_AND_API.md**, **SINGLE_PANEL_SCREENS.md**.
 - **Certificates API (pbx3api):** GET active, GET letsencrypt, POST letsencrypt/setup (fqdn, email → le-first-cert.sh), POST letsencrypt/renew (le-renew-with-80.sh), GET/POST/DELETE custom. Setup and renew need PBX3_SYSCMD_TIMEOUT ≥ 90.
 - **pbx3 scripts:** le-port80-open.sh, le-port80-close.sh (Shorewall managed rule); le-renew-with-80.sh (open 80, certbot renew, close 80); le-first-cert.sh (first-time: open 80, certonly --standalone, write le-domain, apply-active-cert, close 80). Cron: twice daily LE renewal when le-domain exists. apply-active-cert.sh unchanged (custom → LE → snakeoil for nginx + Asterisk).
-- **Docs:** LETSENCRYPT_PLAN.md (panel setup, port 80 control, scripts), CERTIFICATES_ADOPTION_PLAN.md (API table, panel behaviour). Shipped on **`main`** (pbx3, pbx3api, pbx3spa).
-- **Per-tenant FQDN + LE options plan:** **LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md** is complete. It covers: Option A (multi-SAN LE cert), firewall FQDN inspection (inline rules per tenant), data model (FQDNs in tenants, domain_name in globals), purchased certs (§6: wildcard/single multi-SAN supported via custom path; multiple individual purchased certs = future extension). **§11 gate:** Panel integration is on **`main`**; re-read §11 prerequisites table, then **§12** Phases 1–4 before starting implementation.
+- **Docs:** **pbx3/workingdocs/TLS_AND_CERTIFICATES.md** (index), **pbx3/workingdocs/CERTIFICATES_PANEL_AND_API.md**, **pbx3/workingdocs/LETSENCRYPT_PER_TENANT_FQDN.md** (Option A §12). **pbx3spa** stub files redirect to **pbx3**. Shipped on **`main`** (pbx3, pbx3api, pbx3spa).
+- **Per-tenant FQDN + LE:** **pbx3/workingdocs/LETSENCRYPT_PER_TENANT_FQDN.md** is complete (this repo’s **LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md** is a redirect). It covers: Option A (multi-SAN LE cert), firewall FQDN inspection (inline rules per tenant), data model (FQDNs in tenants, domain_name in globals), purchased certs (§6: wildcard/single multi-SAN supported via custom path; multiple individual purchased certs = future extension). **§11 gate:** Panel integration is on **`main`**; re-read §11 prerequisites table, then **§12** Phases 1–4 before starting implementation.
 - **For next agent:** Certificates panel and LE flow are complete. Deploy: ensure scripts are executable (chmod +x le-*.sh); set PBX3_SYSCMD_TIMEOUT=90 for setup/renew from panel. Local test: don't create le-domain so no LE renewal runs.
 
 ### Previous sessions (condensed)
@@ -104,7 +104,7 @@ Holiday Timers, Extension harmonisation, Queue audit, Custom Apps, Help messages
 
 ### Let's Encrypt per-tenant FQDN (multi-SAN cert)
 
-- **Plan:** **LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md** — multi-SAN LE cert (node + all tenant FQDNs), manual “Sync with tenant list”, firewall INLINE rules per FQDN, purchased certs (§6). **Gate (§11):** Prerequisite panel work is on **`main`**; confirm §11 checklist (schema/sysglobals/tenant create) then follow **§12** Phases 1–4 (pbx3 scripts + NetHelper + update-fqdn-inline; API domain list from tenants + sysglobals; SPA Certificates “Cert covers” + Sync; cron/runbook).
+- **Plan:** **pbx3/workingdocs/LETSENCRYPT_PER_TENANT_FQDN.md** — multi-SAN LE cert (node + all tenant FQDNs), manual “Sync with tenant list”, firewall INLINE rules per FQDN, purchased certs (§6). **Gate (§11):** Prerequisite panel work is on **`main`**; confirm §11 checklist (schema/sysglobals/tenant create) then follow **§12** Phases 1–4 (pbx3 scripts + NetHelper + update-fqdn-inline; API domain list from tenants + sysglobals; SPA Certificates “Cert covers” + Sync; cron/runbook).
 
 ### Future project: data-driven list policy
 
@@ -168,5 +168,6 @@ Holiday Timers, Extension harmonisation, Queue audit, Custom Apps, Help messages
 - **TRUNK_ROUTE_MULTITENANCY.md** — Trunk/route ownership (collective vs private), allocation, migration mechanics; read when working on trunks, outbound routes, or tenant migration.
 - **wizardnotes/** — add-wizard.md, agent-brief-spa.md per resource (DDI, extension, trunk, ivr).
 - **SYSTEM_CONTEXT.md**, **README.md** — context and setup.
-- **CERTIFICATES_ADOPTION_PLAN.md** — Certificates panel: LE setup (FQDN + email, Get certificate), status, Renew now, custom cert install/remove; API design (setup, renew, custom), SPA sections, port 80 control.
-- **LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md** — Per-tenant FQDNs + TLS: options (multi-SAN, wildcard, SNI), recommendation (Option A + manual sync), firewall FQDN inspection (§9), purchased certs (§6), prerequisites and gate (§11), implementation plan (§12). Read when implementing LE multi-SAN or tenant hostnames.
+- **pbx3/workingdocs/TLS_AND_CERTIFICATES.md** — TLS documentation index + overview (**pbx3** repo).
+- **pbx3/workingdocs/CERTIFICATES_PANEL_AND_API.md** — Panel + **`/certificates/*`** API + code checklist.
+- **pbx3/workingdocs/LETSENCRYPT_PER_TENANT_FQDN.md** — **Option A** full spec, firewall §9, **§11–§12** phases. **pbx3spa** `CERTIFICATES_ADOPTION_PLAN.md` / `LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md` redirect to **pbx3**.
