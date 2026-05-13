@@ -7,7 +7,10 @@ import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
+import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+
+const YESNO_OPTIONS = ['YES', 'NO']
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -41,6 +44,7 @@ const editSendedomain = ref('')
 const editSipflood = ref('')
 const editSysop = ref('')
 const editVoipmax = ref('')
+const editFqdninspect = ref('NO')
 
 const globalsHeading = computed(() => {
   const raw = sysglobal.value?.fqdn
@@ -75,6 +79,9 @@ function syncEditFromSysglobal() {
   editSipflood.value = g.sipflood ?? ''
   editSysop.value = g.sysop != null ? String(g.sysop) : ''
   editVoipmax.value = g.voipmax != null ? String(g.voipmax) : ''
+  const fi = g.fqdninspect
+  editFqdninspect.value =
+    fi === true || fi === 1 || fi === 'YES' || fi === 'yes' ? 'YES' : 'NO'
 }
 
 async function fetchSysglobal() {
@@ -180,6 +187,7 @@ async function saveEdit(e) {
       editSysop.value !== '' && editSysop.value != null ? parseInt(editSysop.value, 10) : null
     body.voipmax =
       editVoipmax.value !== '' && editVoipmax.value != null ? parseInt(editVoipmax.value, 10) : null
+    body.fqdninspect = editFqdninspect.value === 'YES' ? 'YES' : 'NO'
 
     await getApiClient().put('sysglobals', body)
     toast.show('Instance globals saved')
@@ -277,6 +285,16 @@ onMounted(fetchSysglobal)
           class="readonly-identity"
           hide-help
         />
+        <FormSegmentedPill
+          id="edit-fqdninspect"
+          v-model="editFqdninspect"
+          label="FQDN inspect (SIP / Shorewall)"
+          :options="YESNO_OPTIONS"
+        />
+        <p class="scope-note">
+          <strong>YES</strong> = Shorewall may match SIP against configured FQDNs (see pbx3
+          <code>LETSENCRYPT_PER_TENANT_FQDN.md</code>). Inline refresh from the API is Phase 1–2.
+        </p>
       </div>
 
       <h2 class="detail-heading">SIP</h2>
