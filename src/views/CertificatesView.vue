@@ -55,7 +55,8 @@
           </button>
         </div>
         <p v-if="renewMessage" class="action-message">{{ renewMessage }}</p>
-        <p v-if="renewError" class="error">{{ renewError }}</p>
+        <p v-if="renewErrorMessage" class="error">{{ renewErrorMessage }}</p>
+        <pre v-if="renewErrorDetail" class="error-detail">{{ renewErrorDetail }}</pre>
       </template>
       <template v-else>
         <p class="not-configured">
@@ -93,7 +94,8 @@
               {{ settingUp ? 'Getting certificate…' : 'Get certificate' }}
             </button>
           </div>
-          <p v-if="setupError" class="error">{{ setupError }}</p>
+          <p v-if="setupErrorMessage" class="error">{{ setupErrorMessage }}</p>
+          <pre v-if="setupErrorDetail" class="error-detail">{{ setupErrorDetail }}</pre>
           <p v-if="setupSuccess" class="action-message">{{ setupSuccess }}</p>
         </div>
       </template>
@@ -187,6 +189,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { sanitizeLeSyscmdDetail } from '@/utils/leErrorDetail'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const toast = useToastStore()
@@ -200,11 +203,13 @@ const leLoading = ref(true)
 const leError = ref('')
 const renewing = ref(false)
 const renewMessage = ref('')
-const renewError = ref('')
+const renewErrorMessage = ref('')
+const renewErrorDetail = ref('')
 const leSetupFqdn = ref('')
 const leSetupEmail = ref('')
 const settingUp = ref(false)
-const setupError = ref('')
+const setupErrorMessage = ref('')
+const setupErrorDetail = ref('')
 const setupSuccess = ref('')
 
 const customInstalled = ref(false)
@@ -244,7 +249,8 @@ async function fetchLetsEncrypt() {
   leLoading.value = true
   leError.value = ''
   renewMessage.value = ''
-  renewError.value = ''
+  renewErrorMessage.value = ''
+  renewErrorDetail.value = ''
   try {
     leStatus.value = await getApiClient().get('certificates/letsencrypt')
   } catch (err) {
@@ -278,7 +284,8 @@ function refetchAll() {
 async function setupLetsEncrypt() {
   if (!leSetupFqdn.value || !leSetupEmail.value) return
   settingUp.value = true
-  setupError.value = ''
+  setupErrorMessage.value = ''
+  setupErrorDetail.value = ''
   setupSuccess.value = ''
   try {
     const data = await getApiClient().post('certificates/letsencrypt/setup', {
@@ -290,7 +297,10 @@ async function setupLetsEncrypt() {
     refetchAll()
   } catch (err) {
     const msg = err?.data?.message ?? firstErrorMessage(err, 'Setup failed')
-    setupError.value = err?.data?.detail ?? msg
+    const rawDetail = typeof err?.data?.detail === 'string' ? err.data.detail.trim() : ''
+    const detail = sanitizeLeSyscmdDetail(rawDetail)
+    setupErrorMessage.value = msg
+    setupErrorDetail.value = !detail || detail === msg ? '' : detail
     toast.show(msg, 'error')
   } finally {
     settingUp.value = false
@@ -300,7 +310,8 @@ async function setupLetsEncrypt() {
 async function renewNow() {
   renewing.value = true
   renewMessage.value = ''
-  renewError.value = ''
+  renewErrorMessage.value = ''
+  renewErrorDetail.value = ''
   try {
     const data = await getApiClient().post('certificates/letsencrypt/renew', {})
     renewMessage.value = data?.message ?? 'Renewal completed.'
@@ -308,7 +319,10 @@ async function renewNow() {
     refetchAll()
   } catch (err) {
     const msg = err?.data?.message ?? firstErrorMessage(err, 'Renewal failed')
-    renewError.value = msg
+    const rawDetail = typeof err?.data?.detail === 'string' ? err.data.detail.trim() : ''
+    const detail = sanitizeLeSyscmdDetail(rawDetail)
+    renewErrorMessage.value = msg
+    renewErrorDetail.value = !detail || detail === msg ? '' : detail
     toast.show(msg, 'error')
   } finally {
     renewing.value = false
@@ -468,6 +482,22 @@ onMounted(() => {
 .error {
   color: #dc2626;
   margin: 0.25rem 0;
+}
+.error-detail {
+  display: block;
+  margin: 0.25rem 0 0;
+  padding: 0.5rem 0.65rem;
+  max-height: 10rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
 }
 .not-configured,
 .not-installed-msg,

@@ -36,6 +36,25 @@
 
 **Repos:** **pbx3-master** is not a git repo; it is a placeholder folder containing the four repos: **pbx3**, **pbx3api**, **pbx3cagi**, **pbx3spa**. Commit in the relevant repo.
 
+## Morning pickup — TLS / Certificates (2026-05-08)
+
+**Where we stopped:** LE on the test node failed with `certbot: command not found` (fixed manually). Syscmd output mixed **Shorewall** with certbot; without API deploy, the SPA still showed Shorewall lines inside the red detail box.
+
+**In the tree (commit/push from each repo you touched):**
+
+- **pbx3api** — `CertificateController.php`: `leSyscmdDetailForClient()` removes lines mentioning Shorewall or `iptables-restore` / `ip6tables-restore` from LE setup/sync/renew **502** `detail`; caps length (~3500 chars).
+- **pbx3spa** — `src/utils/leErrorDetail.js` (`sanitizeLeSyscmdDetail`): same rules so the UI stays clean **before** API redeploy. `CertificatesView.vue`: setup + renew errors show `message` in a paragraph and `detail` in `<pre class="error-detail">` (scrollable).
+- **pbx3** — `pbx3-1/debian/control`: **`certbot`** added to **`Depends`** (new installs; existing nodes may still need `sudo apt install certbot` once).
+
+**Next session checklist:**
+
+1. **git status** in **pbx3**, **pbx3api**, **pbx3spa** — commit and push anything still local.
+2. Deploy **pbx3api** to the test PBX if not already (cleaner `detail` for all clients).
+3. Rebuild/deploy **pbx3spa** (client-side strip of Shorewall noise).
+4. Re-test **Get certificate** / **Renew now**: HTTP-01 (port 80, public DNS A/AAAA per name on the cert).
+
+**Docs:** `pbx3/workingdocs/TLS_AND_CERTIFICATES.md`, `TLS_IMPLEMENTATION_STEPS.md`, `CERTIFICATES_PANEL_AND_API.md`; TLS test scripts: `pbx3/scripts/tls-implementation-tests/`.
+
 ---
 
 ## Done
