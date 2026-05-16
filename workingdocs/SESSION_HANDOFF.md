@@ -2,14 +2,30 @@
 
 **AI: read this first.**
 
+## Session end 2026-05-17 — LE done; directory planning next
+
+**Completed:** Per-instance **Let's Encrypt Option A** (multi-SAN, HTTP-01 webroot) merged to **`main`** in **pbx3**, **pbx3api**, **pbx3spa**. Remote **`certificates`** branches removed. Test node **`08jzwn.pbx3.com`**: package **pbx3 0.0.3-9**, API on **`main`**, three tenant FQDNs on cert, **Sync** + **renew --dry-run** OK.
+
+**Dev pattern:** Local **pbx3spa** + `https://<instance-or-tenant-fqdn>:44300/api`. **`:44300/`** is Laravel only (welcome page) — not a missing cert.
+
+**Next priority:** **Instance directory** (Model B central admin) — planning reference:
+
+| Doc | Location |
+|-----|----------|
+| **PLANNING_HANDOFF.md** (start here) | **`pbx3/pbx3-directory/docs/`** |
+| **INSTANCE_DIRECTORY_NEXT.md** (pointer) | **pbx3spa/workingdocs/** |
+| **CENTRAL_ADMIN_DIRECTION.md** | **pbx3spa/workingdocs/** |
+
+---
+
 ## Quick start (next agent)
 
-1. **Repos / branch:** **`pbx3spa`** and **`pbx3api`** — default integration branch is **`main`** (Mar 2026: former `cleanup` work was merged to `main`; remote `cleanup` was deleted on GitHub; you may still have a local `cleanup` branch). **`pbx3-master`** is **not** a git repo; it is a folder holding four separate repos (**pbx3**, **pbx3api**, **pbx3cagi**, **pbx3spa**). **Commit and push from the repo you changed** — for SPA work, that is always **`pbx3spa`** (not the parent folder).
-2. **Read order:** This file → **PROJECT_PLAN.md** § Current state → **SYSTEM_CONTEXT.md** / **README.md** as needed. UI work: **PANEL_PATTERN.md** (especially §8 reference status, §2.2 lists, §3 create, list **UID** = `cell-immutable`). Cross-cutting features: **FEATURE_PLANS_INDEX.md**.
-3. **Recently shipped (sanity-check `git log`):** **Top bar context chips** (`SessionContextChips.vue`, `auth` store `globalsFqdn` + `tenantContext`, `useSessionContext`, `sessionContext.js`): **Instance** = **`sysglobals.fqdn`** (refresh on layout mount + when Instance Globals / Network / tenant-create loads sysglobals); **Tenant** pill on **Tenant detail**, cleared on tenants list and leaving detail. Chips sit in a **dedicated top-bar center zone**, **viewport-centered** (offset accounts for sidebar width — see **Done** § Shell / topbar below). **Title** in chrome: **`PBX3 Admin`** (left); **no** sidebar wordmark/logo for now — **`.sidebar-top-spacer`** keeps nav vertical offset where it was with the old line. **Sidebar width:** **`15.75rem`**, driven by **`--pbx-shell-sidebar-width`** on **`.app-layout`** (keep chip centering math in sync if you change width). **Detail edit headers:** resources with an **Active** list column use **`detail-panel-head`** + **`detail-title-status-row`** + **`h1.detail-panel-title`** + **`DetailActiveStatusBar`**; inactive copy is a full-width muted **`detail-active-inactive-hint`** below the row (see **PANEL_PATTERN** § App shell). **`main.css`:** title row **`flex-wrap: nowrap`** + title **`min-width: 0`** so long headings do not drop the pill to the next line. **Day timer edit** loads/saves **`active`** with the same header pattern. **Top back link on detail/create/settings:** **`PanelBackLink.vue`** — `← {Parent}` above the title row on resource views as before. **Asterisk file editor** Save/Cancel use **`.edit-actions`** / **`.edit-actions-top`**. **Commit** in **AppLayout** (`CommitButton.vue`); **sticky filter + sort**; **contextual help**; Extensions list **live** IP/Status; list **UID** **`cell-immutable`** where applicable. **App shell:** independent main scroll; sidebar scroll persistence; **nav** accordion (one group open). **SPA shell roadmap:** **SPA_SHELL_ROADMAP.md** (check doc + git).
-4. **What’s still open:** **Left to do** below; **SINGLE_PANEL_SCREENS.md** (Logs partial, 3rd-party certs / factory reset / SIP PCAP need API); **COMPLEX_CREATE_PLAN.md** (trunk **IAX2** deferred).
+1. **Repos / branch:** **`main`** on **pbx3**, **pbx3api**, **pbx3spa**. **`pbx3-master`** is **not** a git repo (four nested repos). Commit inside the repo you changed.
+2. **Directory work:** Read **`pbx3/pbx3-directory/docs/PLANNING_HANDOFF.md`** → **CENTRAL_ADMIN_DIRECTION.md** → v0 schema under **`pbx3/pbx3-directory/schema/`**.
+3. **Panel / UI work:** **PANEL_PATTERN.md**; **PROJECT_PLAN.md** § Current state; **FEATURE_PLANS_INDEX.md**.
+4. **TLS / certs (maintenance only):** **pbx3/workingdocs/TLS_AND_CERTIFICATES.md** — new tenant = DNS → **Sync**; do not re-run **Get certificate** if LE already configured.
 
-**Primary branch today:** **`main`** on **pbx3spa** and **pbx3api** (not `spanel`).
+**Primary branch:** **`main`** (all repos).
 
 ## Read order by task
 
@@ -23,8 +39,8 @@
 | Auth / permissions | AUTH_PATTERNS.md, ADMIN_PANELS_AND_PERMISSIONS.md, PERMISSIONS_MINIMAL_DEPLOY_PLAN.md |
 | Schema / API alignment | pbx3api/workingdocs/PLAN_MODELS_AND_VALIDATION_HARMONISATION.md + resource audit; pbx3 full_schema.sql |
 | Dev / run locally | DEV_ENVIRONMENT.md, SPA_BASICS.md |
-| Central admin / instance directory (future) | **CENTRAL_ADMIN_DIRECTION.md**; stub **`pbx3/pbx3-directory/`** (pbx3 repo) |
-| Per-instance TLS / LE (current track) | pbx3 **TLS_AND_CERTIFICATES.md**; branch **`certificates`** on pbx3 / pbx3api |
+| **Instance directory (next)** | **`pbx3/pbx3-directory/docs/PLANNING_HANDOFF.md`**; **INSTANCE_DIRECTORY_NEXT.md**; **CENTRAL_ADMIN_DIRECTION.md** |
+| Per-instance TLS / LE (shipped on main) | pbx3 **TLS_AND_CERTIFICATES.md**, **TLS_IMPLEMENTATION_STEPS.md** |
 
 **Source of truth:** Schema and code. Verify against pbx3 full_schema.sql and repo code when changing behaviour; workingdocs may be outdated.
 
@@ -40,32 +56,23 @@
 
 ## Direction of travel — central admin (2026-05-17)
 
-**Agreed:** **Model B** — one **central pbx3spa**; operators pick an **instance** from a **directory** (S3 index/map TBD), not a login URL field. Enables MSP instance list, central monitoring, tenant move between hosts, etc.
+**Agreed:** **Model B** — one **central pbx3spa**; operators pick an **instance** from a **directory** (S3 index/map TBD), not a login URL field.
 
-**Documented:** **`CENTRAL_ADMIN_DIRECTION.md`**. **Stub project:** **`pbx3/pbx3-directory/`** (schema + example `instance-index.v0.json`).
+**LE/TLS:** **Done** on test node; merged to **`main`**. See **Session end 2026-05-17** above.
 
-**Priority:** Finish **per-instance LE/TLS** (`certificates` branch) before directory/auth implementation. Dev login may still use **API base URL** until instance picker ships.
+**Directory planning:** **`pbx3/pbx3-directory/docs/PLANNING_HANDOFF.md`** (phases A–E, open questions, test node reference). Stub schema: **`pbx3/pbx3-directory/schema/`**.
+
+**Dev today:** API base URL at login until instance picker ships (**`DEV_ENVIRONMENT.md`**).
 
 ---
 
-## Morning pickup — TLS / Certificates (2026-05-08)
+## TLS / Certificates — shipped (2026-05-17)
 
-**Where we stopped:** LE on the test node failed with `certbot: command not found` (fixed manually). Syscmd output mixed **Shorewall** with certbot; without API deploy, the SPA still showed Shorewall lines inside the red detail box.
+**On `main`:** Multi-SAN LE (Option A), Certificates panel (**Sync**, cert covers), `tls-active.json`, webroot HTTP-01, **pbx3 0.0.3-9** (bash `apply-active-cert`, postinst `idpwgen`).
 
-**In the tree (commit/push from each repo you touched):**
+**Operator flow:** DNS per tenant FQDN → **Sync with tenant list** → verify `tls-active.json` → local SPA + `https://<fqdn>:44300/api`.
 
-- **pbx3api** — `CertificateController.php`: `leSyscmdDetailForClient()` removes lines mentioning Shorewall or `iptables-restore` / `ip6tables-restore` from LE setup/sync/renew **502** `detail`; caps length (~3500 chars).
-- **pbx3spa** — `src/utils/leErrorDetail.js` (`sanitizeLeSyscmdDetail`): same rules so the UI stays clean **before** API redeploy. `CertificatesView.vue`: setup + renew errors show `message` in a paragraph and `detail` in `<pre class="error-detail">` (scrollable).
-- **pbx3** — `pbx3-1/debian/control`: **`certbot`** added to **`Depends`** (new installs; existing nodes may still need `sudo apt install certbot` once).
-
-**Next session checklist:**
-
-1. **git status** in **pbx3**, **pbx3api**, **pbx3spa** — commit and push anything still local.
-2. Deploy **pbx3api** to the test PBX if not already (cleaner `detail` for all clients).
-3. Rebuild/deploy **pbx3spa** (client-side strip of Shorewall noise).
-4. Re-test **Get certificate** / **Renew now**: HTTP-01 (port 80, public DNS A/AAAA per name on the cert).
-
-**Docs:** `pbx3/workingdocs/TLS_AND_CERTIFICATES.md`, `TLS_IMPLEMENTATION_STEPS.md`, `CERTIFICATES_PANEL_AND_API.md`; TLS test scripts: `pbx3/scripts/tls-implementation-tests/`.
+**Optional node follow-on:** firewall `update-fqdn-inline` (Step 1.2–1.3 in **TLS_IMPLEMENTATION_STEPS.md**). Archive: **pbx3/workingdocs/HANDOFF_RESUME_LE_OPERATOR_FLOW.md** (pre-merge notes; Sync now in SPA).
 
 ---
 
@@ -133,9 +140,16 @@ Holiday Timers, Extension harmonisation, Queue audit, Custom Apps, Help messages
 
 **Done:** All six create panels (Extension, Trunk, Route, Queue, Agent, IVR) now match §3: Identity / Settings / optional Advanced grouping; defaults preset where applicable; FormToggle for booleans, FormSegmentedPill for 2–3 option fields, FormSelect for 4+. See **CREATE_PANELS_STANDARDIZATION.md** for status. Trunk type-chooser and conditional fields remain per COMPLEX_CREATE_PLAN.md.
 
-### Let's Encrypt per-tenant FQDN (multi-SAN cert)
+### Instance directory (Model B) — **next**
 
-- **Plan:** **pbx3/workingdocs/LETSENCRYPT_PER_TENANT_FQDN.md** — multi-SAN LE cert (node + all tenant FQDNs), manual “Sync with tenant list”, firewall INLINE rules per FQDN, purchased certs (§6). **Gate (§11):** Prerequisite panel work is on **`main`**; confirm §11 checklist (schema/sysglobals/tenant create) then follow **§12** Phases 1–4 (pbx3 scripts + NetHelper + update-fqdn-inline; API domain list from tenants + sysglobals; SPA Certificates “Cert covers” + Sync; cron/runbook).
+- **Planning:** **`pbx3/pbx3-directory/docs/PLANNING_HANDOFF.md`** — phases A–E, open questions, test node `08jzwn`.
+- **Product:** **CENTRAL_ADMIN_DIRECTION.md** — central SPA, instance picker, S3 index TBD.
+- **Pointer:** **INSTANCE_DIRECTORY_NEXT.md** (this repo).
+- **Not started:** SPA picker, central auth, directory write path, S3 publish.
+
+### Let's Encrypt per-tenant FQDN — **done on main** (maintenance)
+
+- **Spec:** **pbx3/workingdocs/LETSENCRYPT_PER_TENANT_FQDN.md**. New tenant: DNS → **Sync**. Optional: firewall `update-fqdn-inline` (**TLS_IMPLEMENTATION_STEPS.md** Step 1.2–1.3).
 
 ### Future project: data-driven list policy
 
@@ -201,4 +215,7 @@ Holiday Timers, Extension harmonisation, Queue audit, Custom Apps, Help messages
 - **SYSTEM_CONTEXT.md**, **README.md** — context and setup.
 - **pbx3/workingdocs/TLS_AND_CERTIFICATES.md** — TLS documentation index + overview (**pbx3** repo).
 - **pbx3/workingdocs/CERTIFICATES_PANEL_AND_API.md** — Panel + **`/certificates/*`** API + code checklist.
-- **pbx3/workingdocs/LETSENCRYPT_PER_TENANT_FQDN.md** — **Option A** full spec, firewall §9, **§11–§12** phases. **pbx3spa** `CERTIFICATES_ADOPTION_PLAN.md` / `LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md` redirect to **pbx3**.
+- **pbx3/workingdocs/LETSENCRYPT_PER_TENANT_FQDN.md** — **Option A** full spec, firewall §9. **pbx3spa** `CERTIFICATES_ADOPTION_PLAN.md` / `LETSENCRYPT_PER_TENANT_FQDN_OPTIONS.md` redirect to **pbx3**.
+- **pbx3/pbx3-directory/docs/PLANNING_HANDOFF.md** — **instance directory** planning (next session).
+- **INSTANCE_DIRECTORY_NEXT.md** — short pointer to directory docs.
+- **CENTRAL_ADMIN_DIRECTION.md** — Model B central admin.

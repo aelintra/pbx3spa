@@ -1,6 +1,6 @@
 # Central admin and instance directory — direction of travel
 
-**Status:** Agreed product direction (2026-05). **Not implemented** — finish **Let's Encrypt / per-instance TLS** (pbx3 `certificates` branch) before building the directory and central login UX.
+**Status:** Agreed product direction (2026-05). **LE/TLS shipped on `main`** (2026-05-17). **Directory + central login UX not implemented** — planning starts in **`pbx3/pbx3-directory/docs/PLANNING_HANDOFF.md`**.
 
 **Related stubs:** **`pbx3/pbx3-directory/`** (stub in **pbx3** repo — future service/repo). **`AUTH_PATTERNS.md`** §4 (federated auth contract). **`DEV_ENVIRONMENT.md`** §6 (dev-only API URL field).
 
@@ -71,12 +71,9 @@ Directory returns **which instances**; auth returns **who** and **what they may 
 
 ---
 
-## 6. What stays on the current LE / TLS track
+## 6. Per-instance LE / TLS (complete on test node)
 
-Until directory v0 exists, continue on the **per-instance** path (no conflict):
-
-- HTTP-01 webroot, multi-SAN Option A, Certificates panel, `tls-active.json`, **`44300`** API TLS.
-- Test with direct `https://{fqdn}:44300/api` or dev proxy.
+Shipped on **`main`** (multi-SAN Option A, Certificates Sync, `tls-active.json`, **pbx3 0.0.3-9**). Dev/test: local **pbx3spa** + `https://{fqdn}:44300/api`. Directory work does not change node LE scripts.
 
 Central admin does **not** require moving API to port **443** or installing SPA on every node for day-to-day ops.
 
