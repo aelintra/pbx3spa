@@ -39,6 +39,8 @@
         <dl class="cert-dl">
           <dt>Hostname</dt>
           <dd>{{ leStatus.domain }}</dd>
+          <dt v-if="certCovers.length">Cert covers</dt>
+          <dd v-if="certCovers.length">{{ certCovers.join(', ') }}</dd>
           <dt>Expires</dt>
           <dd>{{ leStatus.expires_at ?? '—' }}</dd>
           <dt>Issuer</dt>
@@ -53,24 +55,46 @@
           >
             {{ renewing ? 'Renewing…' : 'Renew now' }}
           </button>
+          <button
+            type="button"
+            class="action-btn action-btn-secondary"
+            :disabled="syncing || !leSyncEmail"
+            @click="syncLetsEncrypt"
+          >
+            {{ syncing ? 'Syncing…' : 'Sync with tenant list' }}
+          </button>
         </div>
+        <label class="form-label sync-email-label">
+          Email for sync / expiry notices
+          <input
+            v-model.trim="leSyncEmail"
+            type="email"
+            class="form-input"
+            placeholder="admin@example.com"
+            :disabled="syncing"
+          />
+        </label>
+        <p v-if="syncMessage" class="action-message">{{ syncMessage }}</p>
+        <p v-if="syncErrorMessage" class="error">{{ syncErrorMessage }}</p>
+        <pre v-if="syncErrorDetail" class="error-detail">{{ syncErrorDetail }}</pre>
         <p v-if="renewMessage" class="action-message">{{ renewMessage }}</p>
         <p v-if="renewErrorMessage" class="error">{{ renewErrorMessage }}</p>
         <pre v-if="renewErrorDetail" class="error-detail">{{ renewErrorDetail }}</pre>
       </template>
       <template v-else>
         <p class="not-configured">
-          Enable Let's Encrypt by entering this host's hostname (FQDN) and an email for expiry
-          notices.
+          Enable Let's Encrypt with your instance hostname and an email for expiry notices. The
+          hostname is taken from instance globals (tenant FQDNs are added when you sync).
         </p>
         <div class="le-setup-form">
           <label class="form-label">
-            Hostname (FQDN)
+            Hostname (from instance globals)
             <input
               v-model.trim="leSetupFqdn"
               type="text"
               class="form-input"
               placeholder="e.g. pbx.example.com"
+              readonly
               :disabled="settingUp"
             />
           </label>
@@ -88,7 +112,7 @@
             <button
               type="button"
               class="action-btn action-btn-primary"
-              :disabled="settingUp || !leSetupFqdn || !leSetupEmail"
+              :disabled="settingUp || !leSetupEmail"
               @click="setupLetsEncrypt"
             >
               {{ settingUp ? 'Getting certificate…' : 'Get certificate' }}
@@ -207,7 +231,12 @@ const renewErrorMessage = ref('')
 const renewErrorDetail = ref('')
 const leSetupFqdn = ref('')
 const leSetupEmail = ref('')
+const leSyncEmail = ref('')
 const settingUp = ref(false)
+const syncing = ref(false)
+const syncMessage = ref('')
+const syncErrorMessage = ref('')
+const syncErrorDetail = ref('')
 const setupErrorMessage = ref('')
 const setupErrorDetail = ref('')
 const setupSuccess = ref('')
@@ -229,6 +258,14 @@ const activeLabel = computed(() => {
   if (activeSource.value === 'letsencrypt') return "Let's Encrypt"
   if (activeSource.value === 'snakeoil') return 'Snakeoil'
   return ''
+})
+
+const certCovers = computed(() => {
+  const sans = leStatus.value?.cert_sans
+  if (Array.isArray(sans) && sans.length) return sans
+  const intended = leStatus.value?.domains
+  if (Array.isArray(intended) && intended.length) return intended
+  return []
 })
 
 async function fetchActive() {
@@ -253,6 +290,13 @@ async function fetchLetsEncrypt() {
   renewErrorDetail.value = ''
   try {
     leStatus.value = await getApiClient().get('certificates/letsencrypt')
+    const suggested =
+      leStatus.value?.suggested_fqdn ||
+      leStatus.value?.domain ||
+      ''
+    if (suggested && !leSetupFqdn.value) {
+      leSetupFqdn.value = String(suggested).trim()
+    }
   } catch (err) {
     leError.value = firstErrorMessage(err, "Failed to load Let's Encrypt status")
     leStatus.value = null
@@ -282,17 +326,17 @@ function refetchAll() {
 }
 
 async function setupLetsEncrypt() {
-  if (!leSetupFqdn.value || !leSetupEmail.value) return
+  if (!leSetupEmail.value) return
   settingUp.value = true
   setupErrorMessage.value = ''
   setupErrorDetail.value = ''
   setupSuccess.value = ''
   try {
     const data = await getApiClient().post('certificates/letsencrypt/setup', {
-      fqdn: leSetupFqdn.value,
       email: leSetupEmail.value
     })
     setupSuccess.value = data?.message ?? 'Certificate obtained.'
+    if (!leSyncEmail.value) leSyncEmail.value = leSetupEmail.value
     toast.show(setupSuccess.value)
     refetchAll()
   } catch (err) {
@@ -304,6 +348,31 @@ async function setupLetsEncrypt() {
     toast.show(msg, 'error')
   } finally {
     settingUp.value = false
+  }
+}
+
+async function syncLetsEncrypt() {
+  if (!leSyncEmail.value) return
+  syncing.value = true
+  syncMessage.value = ''
+  syncErrorMessage.value = ''
+  syncErrorDetail.value = ''
+  try {
+    const data = await getApiClient().post('certificates/letsencrypt/sync', {
+      email: leSyncEmail.value
+    })
+    syncMessage.value = data?.message ?? 'Certificate synced.'
+    toast.show(syncMessage.value)
+    refetchAll()
+  } catch (err) {
+    const msg = err?.data?.message ?? firstErrorMessage(err, 'Sync failed')
+    const rawDetail = typeof err?.data?.detail === 'string' ? err.data.detail.trim() : ''
+    const detail = sanitizeLeSyscmdDetail(rawDetail)
+    syncErrorMessage.value = msg
+    syncErrorDetail.value = !detail || detail === msg ? '' : detail
+    toast.show(msg, 'error')
+  } finally {
+    syncing.value = false
   }
 }
 
@@ -523,9 +592,27 @@ onMounted(() => {
   border-radius: 6px;
   font-size: 1rem;
 }
-.le-setup-form .form-input:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+.le-setup-form .form-input:disabled,
+.le-setup-form .form-input[readonly] {
+  opacity: 0.85;
+  cursor: default;
+  background: #f8fafc;
+}
+.sync-email-label {
+  display: block;
+  max-width: 28rem;
+  margin: 0.5rem 0;
+  font-weight: 500;
+  color: #334155;
+}
+.sync-email-label .form-input {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 1rem;
 }
 .installed-msg {
   color: #059669;
