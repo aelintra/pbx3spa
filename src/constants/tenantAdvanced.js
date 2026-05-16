@@ -206,6 +206,29 @@ export function parseNum(v) {
   return isNaN(n) ? undefined : n
 }
 
+/** cluster integer flags (lterm, play_*, voice_instr): API/SQLite use 0/1, UI uses YES/NO. */
+export function yesNoToApiInteger(v) {
+  if (v === true || v === 'YES' || v === 1 || v === '1') return 1
+  if (v === false || v === 'NO' || v === 0 || v === '0') return 0
+  return undefined
+}
+
+export function apiIntegerToYesNo(v) {
+  if (v === true || v === 1 || v === '1') return 'YES'
+  if (v === false || v === 0 || v === '0') return 'NO'
+  return ''
+}
+
+/** cluster columns stored as 0/1 but edited as YES/NO toggles */
+export const API_INTEGER_FLAG_KEYS = new Set([
+  'lterm',
+  'play_beep',
+  'play_busy',
+  'play_congested',
+  'play_transfer',
+  'voice_instr'
+])
+
 /**
  * Build initial advanced form state for Create view (from CLUSTER_CREATE_DEFAULTS).
  * Booleans become 'YES'/'NO'; other values stringified.
@@ -291,9 +314,8 @@ function buildPayloadFromFields(formState, fieldDefs) {
     if (f.type === 'readonly') continue
     const v = formState[f.key]
     if (f.type === 'boolean') {
-      if (v === true || v === false) out[f.key] = v
-      if (v === 'YES') out[f.key] = true
-      if (v === 'NO') out[f.key] = false
+      const flag = yesNoToApiInteger(v)
+      if (flag !== undefined) out[f.key] = flag
     } else if (f.type === 'number') {
       const n = parseNum(v)
       if (n !== undefined) out[f.key] = n

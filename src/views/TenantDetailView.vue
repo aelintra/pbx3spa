@@ -30,7 +30,9 @@ import {
   buildMonitoringPayload,
   buildTimersPayload,
   buildLdapPayload,
-  parseNum
+  parseNum,
+  apiIntegerToYesNo,
+  API_INTEGER_FLAG_KEYS
 } from '@/constants/tenantAdvanced'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { useSessionContext } from '@/composables/useSessionContext'
@@ -105,6 +107,10 @@ function syncEditFromTenant() {
   function syncKeysToForm(keys, form) {
     for (const k of keys) {
       const v = t[k]
+      if (API_INTEGER_FLAG_KEYS.has(k)) {
+        form[k] = apiIntegerToYesNo(v) || 'NO'
+        continue
+      }
       if (v === true || v === false) {
         form[k] = v ? 'YES' : 'NO'
       } else if (v != null && v !== '') {
