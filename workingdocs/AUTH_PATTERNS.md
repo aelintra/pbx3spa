@@ -32,6 +32,8 @@
 
 ## 4. Centralized auth / federated superuser (later)
 
+**Product direction (agreed):** **Model B** — one **central pbx3spa**, instance choice from an **instance directory** (S3 index/map — stub **`pbx3/pbx3-directory/`** in **pbx3** repo). See **`CENTRAL_ADMIN_DIRECTION.md`**.
+
 - This is a **federated system** of PBX instances. A future “superuser” layer may let admins see all instances, with a **centralized auth service** that every instance trusts.
 - **Do not** implement auth in a way that assumes the token is always issued by the same host as the API. The SPA only needs: a token and whoami returning user+abilities. You can later:
   - **Gateway:** Point `baseUrl` at a gateway that does login against central auth and proxies to instances; instances validate the token with the gateway/central. SPA unchanged.

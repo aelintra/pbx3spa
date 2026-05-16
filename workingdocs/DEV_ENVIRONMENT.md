@@ -62,7 +62,13 @@ To stop the server: **Ctrl+C** in the terminal.
 
 ---
 
-## 6. Dev proxy (self-signed API certs)
+## 6. Product direction vs dev login
+
+**Release target:** **Central admin (Model B)** — operators pick an **instance** from a directory after login; the SPA derives `api_base_url` (no raw URL field). See **`CENTRAL_ADMIN_DIRECTION.md`** and stub **`pbx3/pbx3-directory/`** (pbx3 repo). **Current engineering** may still use the API base URL field below until the instance picker exists. **Per-instance LE/TLS** work continues on each node first.
+
+---
+
+## 7. Dev proxy (self-signed API certs)
 
 If the PBX3 API uses a **self-signed certificate**, the browser blocks direct requests with `ERR_CERT_AUTHORITY_INVALID`. The Vite dev server **proxies** `/api` to your instance so the browser only talks to localhost (no cert error).
 
@@ -70,7 +76,7 @@ If the PBX3 API uses a **self-signed certificate**, the browser blocks direct re
 - Use **base URL** `http://localhost:5173/api` (same origin as the app) when logging in or setting credentials. Requests to `/api/*` are forwarded to the real API.
 - **Proxy target** defaults to `https://192.168.1.205:44300`. To use another instance, set **VITE_API_PROXY_TARGET** in `.env.development` (e.g. `VITE_API_PROXY_TARGET=https://other-host:44300`).
 
-### 6a. Two “targets” — proxy vs login (don’t forget)
+### 7a. Two “targets” — proxy vs login (don’t forget)
 
 There are two different places that refer to “which PBX3 instance” the app talks to. They do **not** override each other; they play different roles.
 
@@ -88,7 +94,7 @@ So: the SPA base URL (login) decides **where the browser sends the request**. On
 
 ---
 
-## 7. Other useful commands (from pbx3spa)
+## 8. Other useful commands (from pbx3spa)
 
 | Command | Purpose |
 |--------|--------|
@@ -98,7 +104,7 @@ So: the SPA base URL (login) decides **where the browser sends the request**. On
 
 ---
 
-## 8. Summary
+## 9. Summary
 
 1. Install **Node.js** (and npm) on macOS if needed.
 2. Open the project in **Cursor**; terminal at **pbx3spa**.

@@ -23,6 +23,8 @@
 | Auth / permissions | AUTH_PATTERNS.md, ADMIN_PANELS_AND_PERMISSIONS.md, PERMISSIONS_MINIMAL_DEPLOY_PLAN.md |
 | Schema / API alignment | pbx3api/workingdocs/PLAN_MODELS_AND_VALIDATION_HARMONISATION.md + resource audit; pbx3 full_schema.sql |
 | Dev / run locally | DEV_ENVIRONMENT.md, SPA_BASICS.md |
+| Central admin / instance directory (future) | **CENTRAL_ADMIN_DIRECTION.md**; stub **`pbx3/pbx3-directory/`** (pbx3 repo) |
+| Per-instance TLS / LE (current track) | pbx3 **TLS_AND_CERTIFICATES.md**; branch **`certificates`** on pbx3 / pbx3api |
 
 **Source of truth:** Schema and code. Verify against pbx3 full_schema.sql and repo code when changing behaviour; workingdocs may be outdated.
 
@@ -35,6 +37,16 @@
 **Single-screen panels:** Firewall (IPv4 + IPv6) and **Backup/restore (Backups + Snapshots)** are complete. See **SINGLE_PANEL_SCREENS.md** for the full list; **PANEL_PATTERN.md** § Single-screen panels with cascaded sections and § Table column alignment for layout rules.
 
 **Repos:** **pbx3-master** is not a git repo; it is a placeholder folder containing the four repos: **pbx3**, **pbx3api**, **pbx3cagi**, **pbx3spa**. Commit in the relevant repo.
+
+## Direction of travel — central admin (2026-05-17)
+
+**Agreed:** **Model B** — one **central pbx3spa**; operators pick an **instance** from a **directory** (S3 index/map TBD), not a login URL field. Enables MSP instance list, central monitoring, tenant move between hosts, etc.
+
+**Documented:** **`CENTRAL_ADMIN_DIRECTION.md`**. **Stub project:** **`pbx3/pbx3-directory/`** (schema + example `instance-index.v0.json`).
+
+**Priority:** Finish **per-instance LE/TLS** (`certificates` branch) before directory/auth implementation. Dev login may still use **API base URL** until instance picker ships.
+
+---
 
 ## Morning pickup — TLS / Certificates (2026-05-08)
 

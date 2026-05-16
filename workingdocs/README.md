@@ -8,4 +8,6 @@
 
 Schema yardstick: **pbx3/full_schema.sql**. For technical debt / panel conversion: **AGENT_HANDOFF_TECHNICAL_DEBT.md**, **PANEL_REFACTOR_STRATEGY.md**. For feature work: **FEATURE_PLANS_INDEX.md**.
 
+**Central admin (future):** **CENTRAL_ADMIN_DIRECTION.md** — Model B, instance directory; stub **`pbx3/pbx3-directory/`** (pbx3 repo). **LE/TLS on each node** remains the active track until that merges.
+
 **Naming note (2026-02-12):** Repo/component name is **pbx3spa** (was pbx3-frontend).
