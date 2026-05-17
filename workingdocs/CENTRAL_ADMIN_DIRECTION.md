@@ -1,6 +1,8 @@
 # Central admin and instance directory — direction of travel
 
-**Status:** Agreed product direction (2026-05). **LE/TLS shipped on `main`** (2026-05-17). **Directory + central login UX not implemented** — planning starts in **`pbx3/pbx3-directory/docs/PLANNING_HANDOFF.md`**.
+**Status:** Agreed product direction (2026-05). **LE/TLS shipped on `main`** (2026-05-17). **Directory + central login UX not implemented** — planning on branch **`directory`** in all three repos.
+
+**Design rules:** **`pbx3/pbx3-directory/docs/DESIGN_RULES.md`** — nodes never depend on directory for calls; directory is a human signpost; users must reach permitted instances when directory is down.
 
 **Related stubs:** **`pbx3/pbx3-directory/`** (stub in **pbx3** repo — future service/repo). **`AUTH_PATTERNS.md`** §4 (federated auth contract). **`DEV_ENVIRONMENT.md`** §6 (dev-only API URL field).
 
