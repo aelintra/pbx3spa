@@ -37,7 +37,7 @@
 
 **Purpose:** Canonical map of PBX instances and metadata for ACLs, monitoring, and orchestration (e.g. **tenant move** between hosts).
 
-**Initial store (TBD):** S3 object(s) — index/map — name and layout not final. Stub project: **`pbx3/pbx3-directory/`** (in **pbx3** repo).
+**Initial store (v0 default):** One **`instance-index.json`** at one HTTPS URL (static host or S3; CDN optional). Rare updates; SPA reads on login. Stub: **`pbx3/pbx3-directory/`**. See **`DESIGN_RULES.md`** § v0 delivery.
 
 **Each instance record should support (v0 sketch):**
 
