@@ -17,6 +17,8 @@
 
 **Release target:** **Model B** — one admin UI for many PBX nodes, plus a **directory** (S3 index/map or API backed by it) listing instances the user may access.
 
+**Solo / kick the tyres (Rule 6):** A minimal single-instance trial must **not** require S3, catalog setup, or central hosting. Same **pbx3spa**; omit `VITE_INSTANCE_DIRECTORY_URL` or use Model A (admin on the node URL). Fleet directory is **opt-in** when there are multiple instances. See **`pbx3/pbx3-directory/docs/DESIGN_RULES.md`** Rule 6.
+
 **Per-node stack unchanged:** Each instance still runs **pbx3** (DB, Asterisk, LE, scripts) and **pbx3api** (HTTPS **`:44300`**, Laravel API). The central SPA does not replace those; it **administers** them after instance selection.
 
 ---
@@ -29,7 +31,7 @@
 4. User picks e.g. **08jzwn** → SPA sets `baseUrl = https://08jzwn.pbx3.com:44300/api` (derived from directory record).
 5. Existing panels, `whoami`, Certificates, tenants, etc. run against **that** instance until the user switches instance or logs out.
 
-**Dev today:** `npm run dev` + optional **API base URL** field at login — supports any instance URL for engineering. **Product:** instance picker + hidden derived `api_base_url`; keep an advanced override only for support/engineering if needed.
+**Dev today:** `npm run dev` + **API base URL** at login — this **is** the solo product path until fleet mode is enabled. **Fleet product:** instance picker when directory URL is set and multiple rows exist; hide raw URL in production builds except support override.
 
 ---
 
