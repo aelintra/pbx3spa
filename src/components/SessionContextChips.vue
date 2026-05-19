@@ -24,7 +24,12 @@ const tenantSecondary = computed(() => {
       title="Instance FQDN from Instance Globals (sysglobals.fqdn)"
     >
       <span class="context-chip-k">Instance</span>
-      <span class="context-chip-v">{{ auth.displayInstanceLabel }}</span>
+      <span class="context-chip-v">
+        {{ auth.displayInstanceLabel }}
+        <template v-if="auth.displayInstanceEnvironment">
+          <span class="context-chip-env">({{ auth.displayInstanceEnvironment }})</span>
+        </template>
+      </span>
     </span>
     <span
       v-if="auth.tenantContext"
@@ -81,5 +86,10 @@ const tenantSecondary = computed(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+
+.context-chip-env {
+  font-weight: 500;
+  color: var(--pbx-text-muted, #64748b);
 }
 </style>

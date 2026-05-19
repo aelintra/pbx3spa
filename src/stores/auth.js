@@ -40,6 +40,8 @@ export const useAuthStore = defineStore('auth', {
     user: null,
     /** `sysglobals.fqdn` when loaded (session-only; refreshed after login and when globals are fetched). */
     globalsFqdn: '',
+    /** Catalog row for connected instance (session-only; from fleet picker). */
+    selectedInstance: null,
     /** Current tenant signpost { pkey, label } or null. */
     tenantContext: getStoredTenantContext()
   }),
@@ -59,9 +61,14 @@ export const useAuthStore = defineStore('auth', {
     displayInstanceLabel(state) {
       const fromGlobals = (state.globalsFqdn || '').trim()
       if (fromGlobals) return fromGlobals
+      const fromCatalog = (state.selectedInstance?.label || state.selectedInstance?.fqdn || '').trim()
+      if (fromCatalog) return fromCatalog
       const fromApi = state.user?.instance_label ?? state.user?.instance_name
       if (fromApi != null && String(fromApi).trim() !== '') return String(fromApi).trim()
       return defaultInstanceLabelFromBaseUrl(state.baseUrl) || ''
+    },
+    displayInstanceEnvironment(state) {
+      return (state.selectedInstance?.environment ?? '').trim()
     }
   },
 
@@ -88,6 +95,20 @@ export const useAuthStore = defineStore('auth', {
 
     setUser(user) {
       this.user = user
+    },
+
+    /** @param {import('@/utils/instanceCatalog').InstanceRecord | null} instance */
+    setSelectedInstance(instance) {
+      this.selectedInstance = instance
+        ? {
+            id: instance.id,
+            fqdn: instance.fqdn ?? '',
+            api_base_url: instance.api_base_url,
+            label: instance.label,
+            environment: instance.environment,
+            status: instance.status
+          }
+        : null
     },
 
     /**
@@ -135,6 +156,7 @@ export const useAuthStore = defineStore('auth', {
       this.token = ''
       this.user = null
       this.globalsFqdn = ''
+      this.selectedInstance = null
       this.clearTenantContext()
       try {
         sessionStorage.removeItem(STORAGE_KEY_BASE)

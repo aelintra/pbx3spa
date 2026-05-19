@@ -1,30 +1,172 @@
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { createApiClient, getApiClient } from '@/api/client'
 import { useAuthStore } from '@/stores/auth'
+import {
+  getInstanceDirectoryUrl,
+  getDefaultApiBaseUrl,
+  isFleetDirectoryEnabled
+} from '@/config/instanceDirectory'
+import { fetchInstanceCatalog, findInstanceById } from '@/utils/instanceCatalog'
+import { loadInstanceRecents, pushInstanceRecent } from '@/utils/instanceRecents'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 
-// API base URL is set by the user at login (e.g. http://host:port/api). No pre-fill.
-const baseUrl = ref('')
+const fleetMode = isFleetDirectoryEnabled()
+const directoryUrl = getInstanceDirectoryUrl()
+
+/** @type {import('vue').Ref<'loading'|'pick'|'credentials'>} */
+const step = ref(fleetMode ? 'loading' : 'credentials')
+
+const catalogLoading = ref(false)
+const catalogError = ref('')
+/** @type {import('vue').Ref<import('@/utils/instanceCatalog').InstanceRecord[]>} */
+const catalogInstances = ref([])
+const recents = ref(loadInstanceRecents())
+
+/** @type {import('vue').Ref<import('@/utils/instanceCatalog').InstanceRecord | null>} */
+const selectedInstance = ref(null)
+
+const showManualApiUrl = ref(!fleetMode)
+const baseUrl = ref(getDefaultApiBaseUrl() ?? '')
 const email = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
 
+const effectiveBaseUrl = computed(() => {
+  const fromPick = selectedInstance.value?.api_base_url?.trim()
+  if (fromPick) return fromPick
+  return baseUrl.value.trim()
+})
+
+const needsApiUrlField = computed(
+  () => showManualApiUrl.value || !selectedInstance.value
+)
+
+const selectedSummary = computed(() => {
+  const i = selectedInstance.value
+  if (!i) return ''
+  const parts = [i.label, i.fqdn].filter(Boolean)
+  if (i.environment) parts.push(i.environment)
+  return parts.join(' · ')
+})
+
+function goToCredentials(instance) {
+  selectedInstance.value = instance
+  if (instance?.api_base_url) {
+    baseUrl.value = instance.api_base_url
+  }
+  step.value = 'credentials'
+  error.value = ''
+}
+
+function pickInstance(instance) {
+  if ((instance.status ?? '').toLowerCase() === 'maintenance') {
+    const ok = window.confirm(
+      `${instance.label} is in maintenance. Open this instance anyway?`
+    )
+    if (!ok) return
+  }
+  goToCredentials(instance)
+}
+
+function pickRecent(instance) {
+  goToCredentials(instance)
+}
+
+function backToPicker() {
+  if (fleetMode && catalogInstances.value.length > 1) {
+    step.value = 'pick'
+    selectedInstance.value = null
+    error.value = ''
+  }
+}
+
+async function loadCatalog() {
+  if (!directoryUrl) return
+  catalogLoading.value = true
+  catalogError.value = ''
+  try {
+    const catalog = await fetchInstanceCatalog(directoryUrl)
+    catalogInstances.value = catalog.instances
+
+    const queryId = typeof route.query.instance === 'string' ? route.query.instance : ''
+    const fromQuery = queryId ? findInstanceById(catalog.instances, queryId) : null
+
+    if (fromQuery) {
+      goToCredentials(fromQuery)
+      return
+    }
+
+    if (catalog.instances.length === 1) {
+      goToCredentials(catalog.instances[0])
+      return
+    }
+
+    if (catalog.instances.length === 0) {
+      catalogError.value = 'Catalog has no instances. Enter an API URL below or fix the index file.'
+      showManualApiUrl.value = true
+      step.value = 'credentials'
+      return
+    }
+
+    step.value = 'pick'
+  } catch (err) {
+    catalogError.value =
+      err?.message || 'Could not load instance catalog. Use a recent instance or enter an API URL.'
+    showManualApiUrl.value = true
+    step.value = recents.value.length ? 'pick' : 'credentials'
+  } finally {
+    catalogLoading.value = false
+  }
+}
+
+async function refreshCatalog() {
+  step.value = 'loading'
+  selectedInstance.value = null
+  await loadCatalog()
+}
+
+onMounted(() => {
+  if (fleetMode) {
+    loadCatalog()
+  } else if (getDefaultApiBaseUrl()) {
+    baseUrl.value = getDefaultApiBaseUrl()
+  }
+})
+
 async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
+  const url = effectiveBaseUrl.value
+  if (!url) {
+    error.value = 'API base URL is required'
+    return
+  }
   loading.value = true
   try {
-    const client = createApiClient(baseUrl.value.trim(), '')
+    const client = createApiClient(url, '')
     const res = await client.post('auth/login', {
       email: email.value.trim(),
       password: password.value
     })
-    auth.setCredentials(baseUrl.value.trim(), res.accessToken)
+    auth.setCredentials(url, res.accessToken)
+    if (selectedInstance.value) {
+      auth.setSelectedInstance(selectedInstance.value)
+      pushInstanceRecent(selectedInstance.value)
+    } else {
+      auth.setSelectedInstance(null)
+      pushInstanceRecent({
+        id: url,
+        label: url,
+        fqdn: '',
+        api_base_url: url
+      })
+    }
     try {
       const user = await getApiClient().get('auth/whoami')
       auth.setUser(user)
@@ -48,42 +190,140 @@ async function onSubmit(e) {
   <div class="login">
     <form class="login-form" @submit="onSubmit">
       <h1>PBX3 Admin</h1>
-      <p class="subtitle">Sign in to your PBX3 instance</p>
 
-      <label for="baseUrl">API base URL</label>
-      <input
-        id="baseUrl"
-        v-model="baseUrl"
-        type="url"
-        placeholder="e.g. http://192.168.1.150:44300/api"
-        required
-      />
+      <p v-if="step === 'loading'" class="subtitle">Loading instance catalog…</p>
+      <p v-else-if="step === 'pick'" class="subtitle">Choose a PBX instance</p>
+      <p v-else class="subtitle">Sign in to your PBX3 instance</p>
 
-      <label for="email">Email</label>
-      <input
-        id="email"
-        v-model="email"
-        type="email"
-        placeholder="admin@pbx3.com"
-        required
-        autocomplete="email"
-      />
+      <p v-if="catalogError" class="catalog-warning" role="status">{{ catalogError }}</p>
 
-      <label for="password">Password</label>
-      <input
-        id="password"
-        v-model="password"
-        type="password"
-        placeholder="Password"
-        required
-        autocomplete="current-password"
-      />
+      <!-- Fleet picker -->
+      <section v-if="step === 'pick'" class="instance-section">
+        <ul class="instance-list" role="listbox" aria-label="Instances">
+          <li v-for="inst in catalogInstances" :key="inst.id">
+            <button type="button" class="instance-row" @click="pickInstance(inst)">
+              <span class="instance-row-label">{{ inst.label }}</span>
+              <span class="instance-row-meta">{{ inst.fqdn }}</span>
+              <span v-if="inst.environment || inst.status" class="instance-row-badges">
+                <span v-if="inst.environment" class="badge">{{ inst.environment }}</span>
+                <span
+                  v-if="inst.status"
+                  class="badge"
+                  :class="{ 'badge--warn': inst.status === 'maintenance' }"
+                >
+                  {{ inst.status }}
+                </span>
+              </span>
+            </button>
+          </li>
+        </ul>
 
-      <p v-if="error" class="error">{{ error }}</p>
+        <div v-if="recents.length" class="recents">
+          <p class="section-label">Recent</p>
+          <ul class="instance-list">
+            <li v-for="inst in recents" :key="'r-' + inst.id">
+              <button type="button" class="instance-row instance-row--compact" @click="pickRecent(inst)">
+                <span class="instance-row-label">{{ inst.label }}</span>
+                <span class="instance-row-meta">{{ inst.fqdn || inst.api_base_url }}</span>
+              </button>
+            </li>
+          </ul>
+        </div>
 
-      <button type="submit" :disabled="loading">
-        {{ loading ? 'Signing in…' : 'Sign in' }}
-      </button>
+        <button
+          type="button"
+          class="btn-secondary"
+          :disabled="catalogLoading"
+          @click="refreshCatalog"
+        >
+          {{ catalogLoading ? 'Refreshing…' : 'Refresh catalog' }}
+        </button>
+
+        <button type="button" class="btn-link" @click="showManualApiUrl = true; step = 'credentials'">
+          Enter API URL manually
+        </button>
+      </section>
+
+      <!-- Credentials -->
+      <template v-if="step === 'credentials'">
+        <div v-if="recents.length && (catalogError || showManualApiUrl)" class="recents">
+          <p class="section-label">Recent instances</p>
+          <ul class="instance-list">
+            <li v-for="inst in recents" :key="'c-' + inst.id">
+              <button type="button" class="instance-row instance-row--compact" @click="pickRecent(inst)">
+                <span class="instance-row-label">{{ inst.label }}</span>
+                <span class="instance-row-meta">{{ inst.fqdn || inst.api_base_url }}</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <p v-if="selectedSummary" class="selected-instance">
+          <span>{{ selectedSummary }}</span>
+          <button
+            v-if="fleetMode && catalogInstances.length > 1"
+            type="button"
+            class="btn-link-inline"
+            @click="backToPicker"
+          >
+            Change
+          </button>
+        </p>
+
+        <label v-if="needsApiUrlField" for="baseUrl">API base URL</label>
+        <input
+          v-if="needsApiUrlField"
+          id="baseUrl"
+          v-model="baseUrl"
+          type="url"
+          placeholder="e.g. https://08jzwn.pbx3.com:44300/api"
+          :required="needsApiUrlField"
+        />
+
+        <button
+          v-if="fleetMode && !showManualApiUrl && catalogInstances.length !== 0"
+          type="button"
+          class="btn-link"
+          @click="showManualApiUrl = true"
+        >
+          Use a different API URL
+        </button>
+
+        <label for="email">Email</label>
+        <input
+          id="email"
+          v-model="email"
+          type="email"
+          placeholder="admin@pbx3.com"
+          required
+          autocomplete="email"
+        />
+
+        <label for="password">Password</label>
+        <input
+          id="password"
+          v-model="password"
+          type="password"
+          placeholder="Password"
+          required
+          autocomplete="current-password"
+        />
+
+        <p v-if="error" class="error">{{ error }}</p>
+
+        <button type="submit" :disabled="loading">
+          {{ loading ? 'Signing in…' : 'Sign in' }}
+        </button>
+
+        <button
+          v-if="fleetMode && catalogInstances.length > 0"
+          type="button"
+          class="btn-link"
+          @click="backToPicker"
+        >
+          Back to instance list
+        </button>
+      </template>
     </form>
   </div>
 </template>
@@ -98,7 +338,7 @@ async function onSubmit(e) {
 }
 .login-form {
   width: 100%;
-  max-width: 22rem;
+  max-width: 26rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -111,6 +351,88 @@ async function onSubmit(e) {
   color: #64748b;
   font-size: 0.875rem;
   margin: 0 0 0.25rem 0;
+}
+.catalog-warning {
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  margin: 0;
+}
+.instance-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin: 0;
+}
+.instance-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.instance-row {
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.instance-row:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+.instance-row-label {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+.instance-row-meta {
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+.instance-row-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+.badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+  background: #e2e8f0;
+  color: #475569;
+}
+.badge--warn {
+  background: #fef3c7;
+  color: #92400e;
+}
+.selected-instance {
+  font-size: 0.875rem;
+  color: #334155;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
 }
 .login-form label {
   font-size: 0.875rem;
@@ -132,7 +454,7 @@ async function onSubmit(e) {
   font-size: 0.875rem;
   margin: 0;
 }
-.login-form button {
+.login-form button[type='submit'] {
   margin-top: 0.25rem;
   padding: 0.5rem 1rem;
   font-size: 1rem;
@@ -143,11 +465,35 @@ async function onSubmit(e) {
   border-radius: 0.375rem;
   cursor: pointer;
 }
-.login-form button:hover:not(:disabled) {
+.login-form button[type='submit']:hover:not(:disabled) {
   background: #1d4ed8;
 }
-.login-form button:disabled {
+.login-form button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+.btn-secondary {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  background: #f8fafc;
+  cursor: pointer;
+}
+.btn-secondary:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+.btn-link,
+.btn-link-inline {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+.btn-link-inline {
+  text-decoration: underline;
 }
 </style>
