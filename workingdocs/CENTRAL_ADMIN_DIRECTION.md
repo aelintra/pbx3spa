@@ -101,6 +101,6 @@ Central admin does **not** require moving API to port **443** or installing SPA 
 |-----|----------|
 | **`pbx3/pbx3-directory/README.md`** | Stub project charter |
 | **`pbx3/pbx3-directory/docs/OVERVIEW.md`** | Directory service overview |
-| **`pbx3/pbx3-directory/schema/instance-index.v0.json`** | Example index document |
+| **`pbx3/pbx3-directory/schema/instance-index.json`** | Example index (`catalog/instance-index.json` in S3) |
 | **`pbx3/workingdocs/TLS_AND_CERTIFICATES.md`** | Per-instance TLS (data plane) |
 | **`AUTH_PATTERNS.md`** | Token + whoami; federation |
