@@ -79,9 +79,10 @@ function pickRecent(instance) {
 }
 
 function backToPicker() {
-  if (fleetMode && catalogInstances.value.length > 1) {
+  if (fleetMode && catalogInstances.value.length > 0) {
     step.value = 'pick'
     selectedInstance.value = null
+    showManualApiUrl.value = false
     error.value = ''
   }
 }
@@ -99,11 +100,6 @@ async function loadCatalog() {
 
     if (fromQuery) {
       goToCredentials(fromQuery)
-      return
-    }
-
-    if (catalog.instances.length === 1) {
-      goToCredentials(catalog.instances[0])
       return
     }
 
@@ -205,13 +201,21 @@ async function onSubmit(e) {
       <h1>PBX3 Admin</h1>
 
       <p v-if="step === 'loading'" class="subtitle">Loading instance catalog…</p>
-      <p v-else-if="step === 'pick'" class="subtitle">Choose a PBX instance</p>
+      <p v-else-if="step === 'pick'" class="subtitle">
+        {{ catalogInstances.length === 1 ? 'Select your PBX instance' : 'Choose a PBX instance' }}
+      </p>
+      <p v-else-if="selectedInstance" class="subtitle">
+        Sign in to {{ selectedInstance.label }}
+      </p>
       <p v-else class="subtitle">Sign in to your PBX3 instance</p>
 
       <p v-if="catalogError" class="catalog-warning" role="status">{{ catalogError }}</p>
 
       <!-- Fleet picker -->
       <section v-if="step === 'pick'" class="instance-section">
+        <p v-if="catalogInstances.length === 1" class="pick-hint">
+          Click the instance below, then enter your credentials.
+        </p>
         <ul class="instance-list" role="listbox" aria-label="Instances">
           <li v-for="inst in catalogInstances" :key="inst.id">
             <button type="button" class="instance-row" @click="pickInstance(inst)">
@@ -271,17 +275,22 @@ async function onSubmit(e) {
           </ul>
         </div>
 
-        <p v-if="selectedSummary" class="selected-instance">
-          <span>{{ selectedSummary }}</span>
+        <div
+          v-if="selectedInstance && !showManualApiUrl"
+          class="selected-instance-panel"
+          aria-live="polite"
+        >
+          <p class="selected-instance-k">Selected instance</p>
+          <p class="selected-instance-v">{{ selectedSummary }}</p>
           <button
-            v-if="fleetMode && catalogInstances.length > 1"
+            v-if="fleetMode && catalogInstances.length > 0"
             type="button"
             class="btn-link-inline"
             @click="backToPicker"
           >
-            Change
+            Change instance
           </button>
-        </p>
+        </div>
 
         <label v-if="needsApiUrlField" for="baseUrl">API base URL</label>
         <input
@@ -326,15 +335,6 @@ async function onSubmit(e) {
 
         <button type="submit" :disabled="loading">
           {{ loading ? 'Signing in…' : 'Sign in' }}
-        </button>
-
-        <button
-          v-if="fleetMode && catalogInstances.length > 0"
-          type="button"
-          class="btn-link"
-          @click="backToPicker"
-        >
-          Back to instance list
         </button>
       </template>
     </form>
@@ -438,14 +438,31 @@ async function onSubmit(e) {
   background: #fef3c7;
   color: #92400e;
 }
-.selected-instance {
+.pick-hint {
   font-size: 0.875rem;
-  color: #334155;
+  color: #64748b;
   margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
+}
+.selected-instance-panel {
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  margin: 0;
+}
+.selected-instance-k {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin: 0 0 0.25rem 0;
+}
+.selected-instance-v {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.35rem 0;
 }
 .login-form label {
   font-size: 0.875rem;
