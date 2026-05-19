@@ -21,6 +21,24 @@ export default defineConfig(({ mode }) => {
   // Proxy target is only used when the user enters the dev server as API base at login (e.g. http://localhost:5173/api).
   // The user normally sets their API server URL at login; set VITE_API_PROXY_TARGET in .env.development for that dev-only case.
   const proxyTarget = env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8000'
+  /** When set, `/dev-catalog/*` proxies to this S3 bucket origin (avoids browser CORS in local dev). */
+  const catalogProxyTarget = (env.VITE_CATALOG_PROXY_TARGET ?? '').replace(/\/$/, '')
+
+  const proxy = {
+    '/api': {
+      target: proxyTarget,
+      changeOrigin: true,
+      secure: false
+    }
+  }
+  if (catalogProxyTarget) {
+    proxy['/dev-catalog'] = {
+      target: catalogProxyTarget,
+      changeOrigin: true,
+      secure: true,
+      rewrite: (path) => path.replace(/^\/dev-catalog/, '')
+    }
+  }
 
   return {
     define: {
@@ -34,13 +52,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       // Proxy /api when the app is pointed at the dev server as API base (see comment above).
-      proxy: {
-        '/api': {
-          target: proxyTarget,
-          changeOrigin: true,
-          secure: false
-        }
-      }
+      proxy
     }
   }
 })

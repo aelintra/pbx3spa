@@ -116,8 +116,21 @@ async function loadCatalog() {
 
     step.value = 'pick'
   } catch (err) {
-    catalogError.value =
-      err?.message || 'Could not load instance catalog. Use a recent instance or enter an API URL.'
+    let msg = err?.message || 'Could not load instance catalog.'
+    if (typeof window !== 'undefined' && directoryUrl) {
+      try {
+        const crossOrigin =
+          directoryUrl.startsWith('http') &&
+          new URL(directoryUrl, window.location.origin).origin !== window.location.origin
+        if (crossOrigin) {
+          msg +=
+            ' (CORS: allow this SPA origin on the S3 bucket, or use VITE_CATALOG_PROXY_TARGET + /dev-catalog/… in .env.development.)'
+        }
+      } catch {
+        // ignore URL parse errors
+      }
+    }
+    catalogError.value = `${msg} Use a recent instance or enter an API URL.`
     showManualApiUrl.value = true
     step.value = recents.value.length ? 'pick' : 'credentials'
   } finally {
