@@ -10,6 +10,7 @@ import {
 } from '@/config/instanceDirectory'
 import { fetchInstanceCatalog, findInstanceById } from '@/utils/instanceCatalog'
 import { loadInstanceRecents, pushInstanceRecent } from '@/utils/instanceRecents'
+import { resolveApiBaseUrl } from '@/config/apiBaseUrl'
 
 const router = useRouter()
 const route = useRoute()
@@ -58,7 +59,7 @@ const selectedSummary = computed(() => {
 function goToCredentials(instance) {
   selectedInstance.value = instance
   if (instance?.api_base_url) {
-    baseUrl.value = instance.api_base_url
+    baseUrl.value = resolveApiBaseUrl(instance.api_base_url)
   }
   step.value = 'credentials'
   error.value = ''
@@ -91,8 +92,10 @@ async function loadCatalog() {
   if (!directoryUrl) return
   catalogLoading.value = true
   catalogError.value = ''
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(new Error('Catalog request timed out')), 15_000)
   try {
-    const catalog = await fetchInstanceCatalog(directoryUrl)
+    const catalog = await fetchInstanceCatalog(directoryUrl, { signal: controller.signal })
     catalogInstances.value = catalog.instances
 
     const queryId = typeof route.query.instance === 'string' ? route.query.instance : ''
@@ -130,6 +133,7 @@ async function loadCatalog() {
     showManualApiUrl.value = true
     step.value = recents.value.length ? 'pick' : 'credentials'
   } finally {
+    clearTimeout(timer)
     catalogLoading.value = false
   }
 }
@@ -144,14 +148,14 @@ onMounted(() => {
   if (fleetMode) {
     loadCatalog()
   } else if (getDefaultApiBaseUrl()) {
-    baseUrl.value = getDefaultApiBaseUrl()
+    baseUrl.value = resolveApiBaseUrl(getDefaultApiBaseUrl())
   }
 })
 
 async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
-  const url = effectiveBaseUrl.value
+  const url = resolveApiBaseUrl(effectiveBaseUrl.value)
   if (!url) {
     error.value = 'API base URL is required'
     return
@@ -159,10 +163,14 @@ async function onSubmit(e) {
   loading.value = true
   try {
     const client = createApiClient(url, '')
-    const res = await client.post('auth/login', {
-      email: email.value.trim(),
-      password: password.value
-    })
+    const res = await client.post(
+      'auth/login',
+      {
+        email: email.value.trim(),
+        password: password.value
+      },
+      { timeoutMs: 30_000 }
+    )
     auth.setCredentials(url, res.accessToken)
     if (selectedInstance.value) {
       auth.setSelectedInstance(selectedInstance.value)

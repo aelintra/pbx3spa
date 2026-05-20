@@ -40,12 +40,22 @@ export function createApiClient(baseUrl, token) {
     return pathPart
   }
 
-  async function request(method, path, body) {
+  const defaultTimeoutMs = 60_000
+
+  async function request(method, path, body, requestOptions = {}) {
     const isGetWithParams =
       method === 'GET' && body && typeof body === 'object' && !Array.isArray(body)
     const url = buildUrl(path, isGetWithParams ? body : undefined)
+    const timeoutMs = requestOptions.timeoutMs ?? defaultTimeoutMs
+    const controller = new AbortController()
+    const timer =
+      timeoutMs > 0
+        ? setTimeout(() => controller.abort(new Error(`Request timed out after ${timeoutMs}ms`)), timeoutMs)
+        : null
+
     const options = {
       method,
+      signal: controller.signal,
       headers:
         method !== 'GET' && body !== undefined && body !== null
           ? { ...headers, 'Content-Type': 'application/json' }
@@ -54,7 +64,21 @@ export function createApiClient(baseUrl, token) {
     if (body !== undefined && body !== null && method !== 'GET') {
       options.body = JSON.stringify(body)
     }
-    const res = await fetch(url, options)
+    let res
+    try {
+      res = await fetch(url, options)
+    } catch (err) {
+      if (err?.name === 'AbortError') {
+        const timeoutErr = new Error(
+          err.cause?.message || `Request timed out (${method} ${path})`
+        )
+        timeoutErr.status = 0
+        throw timeoutErr
+      }
+      throw err
+    } finally {
+      if (timer) clearTimeout(timer)
+    }
     const text = await res.text()
     if (!res.ok) {
       if (res.status === 401) clearSessionAndGoLogin()
@@ -128,13 +152,13 @@ export function createApiClient(baseUrl, token) {
 
   return {
     get(path, options) {
-      return request('GET', path, options?.params)
+      return request('GET', path, options?.params, options)
     },
     getBlob(path) {
       return getBlob(path)
     },
-    post(path, body) {
-      return request('POST', path, body)
+    post(path, body, options) {
+      return request('POST', path, body, options)
     },
     postFile(path, formData) {
       return postFile(path, formData)
