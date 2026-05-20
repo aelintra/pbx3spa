@@ -79,15 +79,21 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="backup in sortedBackups" :key="backup.filename">
+            <tr v-for="backup in sortedBackups" :key="backup.backup_stamp || backup.filename">
               <td class="mono col-created" :title="backup.created_at">
                 {{ backup.created_at || '—' }}
               </td>
               <td class="mono col-archive" :title="backup.backup_stamp">
                 {{ backup.backup_stamp || '—' }}
               </td>
-              <td class="mono col-file" :title="backup.filename">
-                {{ backup.filename }}
+              <td class="mono col-file" :title="localFileLabel(backup)">
+                {{ localFileLabel(backup) }}
+                <span v-if="backup.source === 's3' && !backup.has_local" class="source-tag" title="Archive only on S3"
+                  >S3</span
+                >
+                <span v-else-if="backup.source === 'both'" class="source-tag source-tag-both" title="Local and S3"
+                  >local+S3</span
+                >
               </td>
               <td class="col-size">{{ formatBytes(backup.filesize) }}</td>
               <td class="cell-actions col-actions">
@@ -95,7 +101,7 @@
                   type="button"
                   class="cell-link cell-link-icon"
                   title="Download"
-                  :disabled="downloadingBackup === backup.filename"
+                  :disabled="!backup.has_local || downloadingBackup === backup.filename"
                   @click="downloadBackup(backup.filename)"
                 >
                   <span
@@ -142,7 +148,7 @@
                   type="button"
                   class="cell-link cell-link-icon"
                   title="Restore"
-                  :disabled="restoringBackup === backup.filename"
+                  :disabled="!backup.has_local || restoringBackup === backup.filename"
                   @click="openRestoreModal(backup.filename)"
                 >
                   <span
@@ -190,7 +196,7 @@
                   type="button"
                   class="cell-link cell-link-delete cell-link-icon"
                   title="Delete"
-                  :disabled="deletingBackup === backup.filename"
+                  :disabled="!backup.has_local || deletingBackup === backup.filename"
                   @click="askConfirmDelete(backup.filename)"
                 >
                   <span
@@ -662,6 +668,12 @@ function formatBytes(bytes) {
   return n + ' B'
 }
 
+function localFileLabel(backup) {
+  if (backup.local_file) return backup.local_file
+  if (backup.source === 's3' || backup.has_local === false) return '—'
+  return backup.filename || '—'
+}
+
 /** Derive ISO time + S3 archive id from pbx3bak.{epoch}.zip when API has not been upgraded yet. */
 function enrichBackupRow(filename, data = {}) {
   const match = filename.match(/^pbx3bak\.(\d+)\.zip$/)
@@ -670,7 +682,7 @@ function enrichBackupRow(filename, data = {}) {
 
   let created_at = data.created_at
   let backup_stamp = data.backup_stamp
-  if (epoch != null && Number.isFinite(epoch)) {
+  if (epoch != null && Number.isFinite(epoch) && epoch > 0) {
     if (!created_at) {
       created_at = new Date(epoch * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z')
     }
@@ -681,13 +693,20 @@ function enrichBackupRow(filename, data = {}) {
     }
   }
 
+  const hasLocal = data.has_local !== undefined ? Boolean(data.has_local) : true
+  const source = data.source || (hasLocal ? 'local' : 's3')
+
   return {
     filename,
+    local_file: data.local_file ?? (hasLocal ? filename : null),
     filesize: data.filesize,
     date: data.date,
     epoch,
     created_at: created_at || null,
-    backup_stamp: backup_stamp || null
+    backup_stamp: backup_stamp || null,
+    source,
+    has_local: hasLocal,
+    has_s3: Boolean(data.has_s3)
   }
 }
 
@@ -1269,6 +1288,20 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.table-backups .source-tag {
+  margin-left: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #0369a1;
+  vertical-align: middle;
+}
+
+.table-backups .source-tag-both {
+  color: #15803d;
 }
 
 .table-backups .col-size {
