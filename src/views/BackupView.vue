@@ -701,14 +701,18 @@ function canRestore(backup) {
 }
 
 function downloadTitle(backup) {
-  if (backup.has_local) return 'Download local backup'
-  if (backup.has_s3) return 'Download from archive (presigned S3 URL)'
+  if (backup.has_local) return 'Download local backup to your computer'
+  if (backup.has_s3) {
+    return 'Download archive copy to your computer (does not add a local zip on the PBX)'
+  }
   return 'Download unavailable'
 }
 
 function restoreTitle(backup) {
-  if (backup.has_local) return 'Restore from local backup'
-  if (backup.has_s3) return 'Restore from archive (downloads from S3 first)'
+  if (backup.has_local) return 'Restore selected items from local backup on this PBX'
+  if (backup.has_s3) {
+    return 'Copy archive to this PBX, then restore (row becomes LOCAL+S3)'
+  }
   return 'Restore unavailable'
 }
 
@@ -895,7 +899,9 @@ async function downloadBackup(backup) {
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
-    toast.show('Archive download link opened')
+    toast.show(
+      'Archive download started on your computer — use Restore to copy the zip onto this PBX'
+    )
   } catch (err) {
     const msg = firstErrorMessage(err, 'Failed to download backup')
     toast.show(msg, 'error')
