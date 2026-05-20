@@ -17,6 +17,9 @@ const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
+const isDev = import.meta.env.DEV
+const viteProxyTarget = import.meta.env.VITE_API_PROXY_TARGET ?? ''
+
 const fleetMode = isFleetDirectoryEnabled()
 const directoryUrl = getInstanceDirectoryUrl()
 
@@ -323,12 +326,10 @@ async function onSubmit(e) {
           Use a different API URL
         </button>
 
-        <p v-if="import.meta.env.DEV && resolvedLoginApiUrl" class="dev-api-hint" role="status">
+        <p v-if="isDev && resolvedLoginApiUrl" class="dev-api-hint" role="status">
           Dev API:
           <span class="mono">{{ resolvedLoginApiUrl }}</span>
-          <span v-if="import.meta.env.VITE_API_PROXY_TARGET">
-            → {{ import.meta.env.VITE_API_PROXY_TARGET }}
-          </span>
+          <span v-if="viteProxyTarget"> → {{ viteProxyTarget }}</span>
         </p>
 
         <label for="email">Email</label>
