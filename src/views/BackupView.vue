@@ -40,42 +40,57 @@
       <div v-else-if="!loading && backups.length === 0" class="empty">No backups found.</div>
 
       <div v-else class="backup-list">
-        <table class="table">
+        <table class="table table-backups">
           <thead>
             <tr>
               <th
-                class="th-sortable"
+                class="th-sortable col-created"
                 title="Click to sort"
+                :class="sortClass('created_at')"
+                @click="setSort('created_at')"
+              >
+                Created (UTC)
+              </th>
+              <th
+                class="th-sortable col-archive"
+                title="S3 folder (off-box)"
+                :class="sortClass('backup_stamp')"
+                @click="setSort('backup_stamp')"
+              >
+                Archive ID
+              </th>
+              <th
+                class="th-sortable col-file"
+                title="Local zip on this node"
                 :class="sortClass('filename')"
                 @click="setSort('filename')"
               >
-                Filename
+                Local file
               </th>
               <th
-                class="th-sortable"
-                title="Click to sort"
-                :class="sortClass('date')"
-                @click="setSort('date')"
-              >
-                Date
-              </th>
-              <th
-                class="th-sortable"
+                class="th-sortable col-size"
                 title="Click to sort"
                 :class="sortClass('size')"
                 @click="setSort('size')"
               >
                 Size
               </th>
-              <th class="th-actions">Actions</th>
+              <th class="th-actions col-actions">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="backup in sortedBackups" :key="backup.filename">
-              <td>{{ backup.filename }}</td>
-              <td>{{ backup.date }}</td>
-              <td>{{ formatBytes(backup.filesize) }}</td>
-              <td class="cell-actions">
+              <td class="mono col-created" :title="backup.created_at">
+                {{ backup.created_at || '—' }}
+              </td>
+              <td class="mono col-archive" :title="backup.backup_stamp">
+                {{ backup.backup_stamp || '—' }}
+              </td>
+              <td class="mono col-file" :title="backup.filename">
+                {{ backup.filename }}
+              </td>
+              <td class="col-size">{{ formatBytes(backup.filesize) }}</td>
+              <td class="cell-actions col-actions">
                 <button
                   type="button"
                   class="cell-link cell-link-icon"
@@ -267,7 +282,7 @@
       </div>
 
       <div v-else class="backup-list">
-        <table class="table">
+        <table class="table table-snapshots">
           <thead>
             <tr>
               <th
@@ -629,7 +644,7 @@ const restoreOptions = ref({
 })
 
 const { sortKey, sortOrder } = useStickySort('backup-backups', {
-  defaultKey: 'date',
+  defaultKey: 'created_at',
   defaultOrder: 'desc'
 })
 
@@ -647,8 +662,39 @@ function formatBytes(bytes) {
   return n + ' B'
 }
 
+/** Derive ISO time + S3 archive id from pbx3bak.{epoch}.zip when API has not been upgraded yet. */
+function enrichBackupRow(filename, data = {}) {
+  const match = filename.match(/^pbx3bak\.(\d+)\.zip$/)
+  const epoch =
+    data.epoch != null ? Number(data.epoch) : match ? parseInt(match[1], 10) : null
+
+  let created_at = data.created_at
+  let backup_stamp = data.backup_stamp
+  if (epoch != null && Number.isFinite(epoch)) {
+    if (!created_at) {
+      created_at = new Date(epoch * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z')
+    }
+    if (!backup_stamp) {
+      const d = new Date(epoch * 1000)
+      const p = (n) => String(n).padStart(2, '0')
+      backup_stamp = `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}T${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}Z`
+    }
+  }
+
+  return {
+    filename,
+    filesize: data.filesize,
+    date: data.date,
+    epoch,
+    created_at: created_at || null,
+    backup_stamp: backup_stamp || null
+  }
+}
+
 function sortValue(backup, key) {
   if (key === 'filename') return backup.filename || ''
+  if (key === 'created_at') return backup.created_at || ''
+  if (key === 'backup_stamp') return backup.backup_stamp || ''
   if (key === 'date') return backup.date || ''
   if (key === 'size') return backup.filesize || 0
   return ''
@@ -693,11 +739,9 @@ async function loadBackups() {
   try {
     const response = await getApiClient().get('backups')
     // API returns object keyed by filename: { "pbx3bak.1234567890.zip": { filesize: ..., date: ... }, ... }
-    backups.value = Object.entries(response || {}).map(([filename, data]) => ({
-      filename,
-      filesize: data.filesize,
-      date: data.date
-    }))
+    backups.value = Object.entries(response || {}).map(([filename, data]) =>
+      enrichBackupRow(filename, data)
+    )
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load backups')
     backups.value = []
@@ -1062,6 +1106,11 @@ onMounted(() => {
   gap: 1.5rem;
 }
 
+.backup-list .mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+}
+
 .backup-actions {
   display: flex;
   gap: 1rem;
@@ -1174,13 +1223,20 @@ onMounted(() => {
 
 .backup-list {
   margin: 0;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9375rem;
-  table-layout: fixed;
+}
+
+.backup-list .table-backups {
+  width: auto;
+  max-width: 100%;
+  table-layout: auto;
 }
 
 .table th,
@@ -1196,24 +1252,63 @@ onMounted(() => {
   background: #f8fafc;
 }
 
-/* Fixed column widths to ensure alignment between Backups and Snapshots tables */
-.table th:nth-child(1),
-.table td:nth-child(1) {
+/* Backups: shrink-to-fit columns (no full-width stretch) */
+.table-backups th,
+.table-backups td {
+  padding: 0.4rem 0.65rem;
+  vertical-align: middle;
+}
+
+.table-backups .col-created,
+.table-backups .col-archive {
+  white-space: nowrap;
+}
+
+.table-backups .col-file {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-backups .col-size {
+  white-space: nowrap;
+  text-align: right;
+  padding-left: 1rem;
+}
+
+.table-backups .col-actions {
+  width: 1%;
+  white-space: nowrap;
+  padding-left: 0.5rem;
+}
+
+.table-backups tbody tr {
+  height: auto;
+}
+
+.table-backups .cell-actions {
+  gap: 0.35rem;
+}
+
+/* Snapshots: filename + date + size + actions */
+.table-snapshots th:nth-child(1),
+.table-snapshots td:nth-child(1) {
   width: 40%;
 }
 
-.table th:nth-child(2),
-.table td:nth-child(2) {
+.table-snapshots th:nth-child(2),
+.table-snapshots td:nth-child(2) {
   width: 30%;
 }
 
-.table th:nth-child(3),
-.table td:nth-child(3) {
+.table-snapshots th:nth-child(3),
+.table-snapshots td:nth-child(3) {
   width: 15%;
 }
 
-.table th:nth-child(4),
-.table td:nth-child(4) {
+.table-snapshots th:nth-child(4),
+.table-snapshots td:nth-child(4) {
   width: 15%;
 }
 
