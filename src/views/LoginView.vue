@@ -11,6 +11,7 @@ import {
 import { fetchInstanceCatalog, findInstanceById } from '@/utils/instanceCatalog'
 import { loadInstanceRecents, pushInstanceRecent } from '@/utils/instanceRecents'
 import { resolveApiBaseUrl } from '@/config/apiBaseUrl'
+import { loginNetworkErrorMessage } from '@/utils/loginErrors'
 
 const router = useRouter()
 const route = useRoute()
@@ -43,6 +44,9 @@ const effectiveBaseUrl = computed(() => {
   if (fromPick) return fromPick
   return baseUrl.value.trim()
 })
+
+/** URL used for auth/login (dev → Vite /api proxy). */
+const resolvedLoginApiUrl = computed(() => resolveApiBaseUrl(effectiveBaseUrl.value))
 
 const needsApiUrlField = computed(
   () => showManualApiUrl.value || !selectedInstance.value
@@ -155,7 +159,7 @@ onMounted(() => {
 async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
-  const url = resolveApiBaseUrl(effectiveBaseUrl.value)
+  const url = resolvedLoginApiUrl.value
   if (!url) {
     error.value = 'API base URL is required'
     return
@@ -195,7 +199,7 @@ async function onSubmit(e) {
     if (err.status === 401) {
       error.value = 'Invalid email or password'
     } else {
-      error.value = err.data?.message || err.message || 'Login failed'
+      error.value = loginNetworkErrorMessage(err, url)
     }
   } finally {
     loading.value = false
@@ -319,6 +323,14 @@ async function onSubmit(e) {
           Use a different API URL
         </button>
 
+        <p v-if="import.meta.env.DEV && resolvedLoginApiUrl" class="dev-api-hint" role="status">
+          Dev API:
+          <span class="mono">{{ resolvedLoginApiUrl }}</span>
+          <span v-if="import.meta.env.VITE_API_PROXY_TARGET">
+            → {{ import.meta.env.VITE_API_PROXY_TARGET }}
+          </span>
+        </p>
+
         <label for="email">Email</label>
         <input
           id="email"
@@ -381,6 +393,16 @@ async function onSubmit(e) {
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   margin: 0;
+}
+.dev-api-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0 0 0.75rem;
+  line-height: 1.4;
+}
+.dev-api-hint .mono {
+  font-family: ui-monospace, monospace;
+  word-break: break-all;
 }
 .instance-section {
   display: flex;
