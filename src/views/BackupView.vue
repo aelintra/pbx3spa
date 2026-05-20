@@ -100,12 +100,12 @@
                 <button
                   type="button"
                   class="cell-link cell-link-icon"
-                  title="Download"
-                  :disabled="!backup.has_local || downloadingBackup === backup.filename"
-                  @click="downloadBackup(backup.filename)"
+                  :title="downloadTitle(backup)"
+                  :disabled="!canDownload(backup) || downloadingBackup === downloadKey(backup)"
+                  @click="downloadBackup(backup)"
                 >
                   <span
-                    v-if="downloadingBackup === backup.filename"
+                    v-if="downloadingBackup === downloadKey(backup)"
                     class="action-icon action-icon-spin"
                     aria-hidden="true"
                   >
@@ -147,12 +147,12 @@
                 <button
                   type="button"
                   class="cell-link cell-link-icon"
-                  title="Restore"
-                  :disabled="!backup.has_local || restoringBackup === backup.filename"
-                  @click="openRestoreModal(backup.filename)"
+                  :title="restoreTitle(backup)"
+                  :disabled="!canRestore(backup) || restoringBackup === restoreKey(backup)"
+                  @click="openRestoreModal(backup)"
                 >
                   <span
-                    v-if="restoringBackup === backup.filename"
+                    v-if="restoringBackup === restoreKey(backup)"
                     class="action-icon action-icon-spin"
                     aria-hidden="true"
                   >
@@ -482,8 +482,9 @@
           <h2 class="modal-title">Restore Backup</h2>
           <div class="modal-body">
             <p>
-              Select what to restore from <strong>{{ restoreBackupName }}</strong
-              >:
+              Select what to restore from
+              <strong>{{ restoreFromArchive ? restoreBackupStamp : restoreBackupName }}</strong
+              ><span v-if="restoreFromArchive"> (S3 archive)</span>:
             </p>
             <div class="restore-options">
               <label class="restore-option">
@@ -516,10 +517,17 @@
             <button
               type="button"
               class="modal-btn modal-btn-primary"
-              :disabled="restoringBackup === restoreBackupName || !hasRestoreOptionSelected"
+              :disabled="
+                restoringBackup === (restoreFromArchive ? restoreBackupStamp : restoreBackupName) ||
+                !hasRestoreOptionSelected
+              "
               @click="confirmRestore"
             >
-              {{ restoringBackup === restoreBackupName ? 'Restoring…' : 'Restore' }}
+              {{
+                restoringBackup === (restoreFromArchive ? restoreBackupStamp : restoreBackupName)
+                  ? 'Restoring…'
+                  : 'Restore'
+              }}
             </button>
           </div>
         </div>
@@ -641,6 +649,8 @@ const { sortKey: snapshotSortKey, sortOrder: snapshotSortOrder } = useStickySort
 
 const showRestoreModal = ref(false)
 const restoreBackupName = ref('')
+const restoreBackupStamp = ref('')
+const restoreFromArchive = ref(false)
 const restoreOptions = ref({
   restoredb: false,
   restoreasterisk: false,
@@ -672,6 +682,34 @@ function localFileLabel(backup) {
   if (backup.local_file) return backup.local_file
   if (backup.source === 's3' || backup.has_local === false) return '—'
   return backup.filename || '—'
+}
+
+function downloadKey(backup) {
+  return backup.backup_stamp || backup.filename
+}
+
+function restoreKey(backup) {
+  return backup.backup_stamp || backup.filename
+}
+
+function canDownload(backup) {
+  return Boolean(backup.has_local || (backup.has_s3 && backup.backup_stamp))
+}
+
+function canRestore(backup) {
+  return canDownload(backup)
+}
+
+function downloadTitle(backup) {
+  if (backup.has_local) return 'Download local backup'
+  if (backup.has_s3) return 'Download from archive (presigned S3 URL)'
+  return 'Download unavailable'
+}
+
+function restoreTitle(backup) {
+  if (backup.has_local) return 'Restore from local backup'
+  if (backup.has_s3) return 'Restore from archive (downloads from S3 first)'
+  return 'Restore unavailable'
 }
 
 /** Derive ISO time + S3 archive id from pbx3bak.{epoch}.zip when API has not been upgraded yet. */
@@ -825,19 +863,39 @@ async function handleFileUpload(event) {
   }
 }
 
-async function downloadBackup(filename) {
-  downloadingBackup.value = filename
+async function downloadBackup(backup) {
+  const key = downloadKey(backup)
+  downloadingBackup.value = key
   try {
-    const blob = await getApiClient().getBlob(`backups/${filename}`)
-    const url = window.URL.createObjectURL(blob)
+    if (backup.has_local && backup.filename) {
+      const blob = await getApiClient().getBlob(`backups/${backup.filename}`)
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = backup.filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+      toast.show('Backup download started')
+      return
+    }
+
+    if (!backup.backup_stamp) {
+      throw new Error('Missing archive ID for S3 download')
+    }
+    const { url, filename } = await getApiClient().get(
+      `backups/archive/${backup.backup_stamp}/download-url`
+    )
     const a = document.createElement('a')
     a.href = url
-    a.download = filename
+    a.download = filename || `pbx3bak-${backup.backup_stamp}.zip`
+    a.rel = 'noopener'
+    a.target = '_blank'
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
-    toast.show('Backup download started')
+    toast.show('Archive download link opened')
   } catch (err) {
     const msg = firstErrorMessage(err, 'Failed to download backup')
     toast.show(msg, 'error')
@@ -846,8 +904,10 @@ async function downloadBackup(filename) {
   }
 }
 
-function openRestoreModal(filename) {
-  restoreBackupName.value = filename
+function openRestoreModal(backup) {
+  restoreBackupName.value = backup.filename || ''
+  restoreBackupStamp.value = backup.backup_stamp || ''
+  restoreFromArchive.value = Boolean(!backup.has_local && backup.has_s3 && backup.backup_stamp)
   restoreOptions.value = {
     restoredb: false,
     restoreasterisk: false,
@@ -862,6 +922,8 @@ function openRestoreModal(filename) {
 function closeRestoreModal() {
   showRestoreModal.value = false
   restoreBackupName.value = ''
+  restoreBackupStamp.value = ''
+  restoreFromArchive.value = false
   restoreError.value = ''
 }
 
@@ -870,25 +932,35 @@ function confirmRestore() {
     restoreError.value = 'Please select at least one option to restore'
     return
   }
-  const name = restoreBackupName.value
+  const label = restoreFromArchive.value
+    ? restoreBackupStamp.value
+    : restoreBackupName.value
   openGenericConfirm({
-    title: 'Restore backup?',
-    body: `Restore selected items from ${name}? This will overwrite existing data.`,
+    title: restoreFromArchive.value ? 'Restore from archive?' : 'Restore backup?',
+    body: restoreFromArchive.value
+      ? `Download archive ${restoreBackupStamp.value} from S3, then restore selected items? This will overwrite existing data.`
+      : `Restore selected items from ${label}? This will overwrite existing data.`,
     confirmLabel: 'Restore',
     variant: 'danger',
-    onConfirm: () => runRestoreBackup(name)
+    onConfirm: runRestoreBackup
   })
 }
 
-async function runRestoreBackup(filename) {
-  restoringBackup.value = filename
+async function runRestoreBackup() {
+  const key = restoreFromArchive.value ? restoreBackupStamp.value : restoreBackupName.value
+  restoringBackup.value = key
   restoreError.value = ''
   try {
     const payload = {}
     for (const [key, value] of Object.entries(restoreOptions.value)) {
       payload[key] = value ? 1 : 0
     }
-    await getApiClient().put(`backups/${filename}`, payload)
+    if (restoreFromArchive.value) {
+      payload.backup_stamp = restoreBackupStamp.value
+      await getApiClient().post('backups/restore-from-archive', payload)
+    } else {
+      await getApiClient().put(`backups/${restoreBackupName.value}`, payload)
+    }
     toast.show('Backup restored successfully')
     closeRestoreModal()
     await loadBackups()
