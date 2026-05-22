@@ -53,3 +53,9 @@ export function resolveApiBaseUrl(url) {
 
   return normalized
 }
+
+/** True when dev login will use Vite /api → VITE_API_PROXY_TARGET. */
+export function usesDevApiProxy(resolvedApiUrl) {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return false
+  return resolvedApiUrl === `${window.location.origin}/api`
+}

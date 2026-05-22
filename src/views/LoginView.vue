@@ -10,7 +10,7 @@ import {
 } from '@/config/instanceDirectory'
 import { fetchInstanceCatalog, findInstanceById } from '@/utils/instanceCatalog'
 import { loadInstanceRecents, pushInstanceRecent } from '@/utils/instanceRecents'
-import { resolveApiBaseUrl } from '@/config/apiBaseUrl'
+import { resolveApiBaseUrl, usesDevApiProxy } from '@/config/apiBaseUrl'
 import { loginNetworkErrorMessage } from '@/utils/loginErrors'
 
 const router = useRouter()
@@ -50,6 +50,7 @@ const effectiveBaseUrl = computed(() => {
 
 /** URL used for auth/login (dev → Vite /api proxy). */
 const resolvedLoginApiUrl = computed(() => resolveApiBaseUrl(effectiveBaseUrl.value))
+const loginUsesDevProxy = computed(() => usesDevApiProxy(resolvedLoginApiUrl.value))
 
 const needsApiUrlField = computed(
   () => showManualApiUrl.value || !selectedInstance.value
@@ -329,7 +330,8 @@ async function onSubmit(e) {
         <p v-if="isDev && resolvedLoginApiUrl" class="dev-api-hint" role="status">
           Dev API:
           <span class="mono">{{ resolvedLoginApiUrl }}</span>
-          <span v-if="viteProxyTarget"> → {{ viteProxyTarget }}</span>
+          <span v-if="loginUsesDevProxy && viteProxyTarget"> → {{ viteProxyTarget }}</span>
+          <span v-else-if="!loginUsesDevProxy"> (direct — not via Vite proxy)</span>
         </p>
 
         <label for="email">Email</label>
