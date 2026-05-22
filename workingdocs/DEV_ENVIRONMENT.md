@@ -87,10 +87,9 @@ There are two different places that refer to “which PBX3 instance” the app t
 
 **How they interact:**
 
-- If the user logs in with base URL **`http://localhost:5173/api`** (the dev default): the browser sends all API requests to the dev server; the dev server then forwards them to **VITE_API_PROXY_TARGET**. So the real PBX3 instance is the one in `.env.development`.
-- If the user logs in with a **direct** URL (e.g. `https://192.168.1.150:44300/api`): the browser sends requests straight to that host. The proxy is not used; **VITE_API_PROXY_TARGET** is irrelevant for those requests.
-
-So: the SPA base URL (login) decides **where the browser sends the request**. Only when that is `http://localhost:5173/api` does the proxy (and thus **VITE_API_PROXY_TARGET**) come into play. To point at a different instance during dev without the user typing a new URL at login, change **VITE_API_PROXY_TARGET** in `.env.development` and restart the dev server; keep using `http://localhost:5173/api` at login.
+- **`resolveApiBaseUrl`** (login + auth store): on localhost dev, URLs whose **host:port** match **VITE_API_PROXY_TARGET** are rewritten to `http://localhost:5173/api` (proxy). Any **other** host (e.g. a second fleet node) stays a **direct** `https://that-node:44300/api` call.
+- If the user logs in with **`http://localhost:5173/api`** or an URL matching the proxy target (e.g. `https://08jzwn.pbx3.com:44300/api` when proxy is 08jzwn): requests go through the Vite proxy → **VITE_API_PROXY_TARGET**.
+- If the user logs in with a **different** instance URL (e.g. `https://bzy54n.pbx3.com:44300/api` while proxy is still 08jzwn): the browser calls **that host directly** (no proxy). The API must allow **CORS** from `http://localhost:5173`, or change **VITE_API_PROXY_TARGET** to that node and restart `npm run dev`, then log in with the matching URL (or `localhost:5173/api`).
 
 ---
 
