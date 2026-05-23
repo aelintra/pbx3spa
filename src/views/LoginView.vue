@@ -105,6 +105,8 @@ async function loadCatalog() {
   try {
     const catalog = await fetchInstanceCatalog(directoryUrl, { signal: controller.signal })
     catalogInstances.value = catalog.instances
+    const activeIds = new Set(catalog.instances.map((i) => i.id))
+    recents.value = recents.value.filter((r) => activeIds.has(r.id))
 
     const queryId = typeof route.query.instance === 'string' ? route.query.instance : ''
     const fromQuery = queryId ? findInstanceById(catalog.instances, queryId) : null

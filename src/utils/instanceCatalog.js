@@ -18,6 +18,10 @@ export function normalizeCatalog(raw) {
   const instances = list
     .map((row, index) => normalizeInstanceRecord(row, index))
     .filter(Boolean)
+    .filter((inst) => {
+      const status = (inst.status ?? 'active').toLowerCase()
+      return status !== 'decommissioned'
+    })
   return {
     version: typeof o.version === 'number' ? o.version : undefined,
     updated_at: typeof o.updated_at === 'string' ? o.updated_at : undefined,
