@@ -68,13 +68,24 @@ To stop the server: **Ctrl+C** in the terminal.
 
 ---
 
-## 7. Dev proxy (self-signed API certs)
+## 7. Dev proxy and API TLS
 
-If the PBX3 API uses a **self-signed certificate**, the browser blocks direct requests with `ERR_CERT_AUTHORITY_INVALID`. The Vite dev server **proxies** `/api` to your instance so the browser only talks to localhost (no cert error).
+The Vite dev server **proxies** `/api` to **`VITE_API_PROXY_TARGET`** so the browser only talks to **`http://localhost:5173`** (no browser cert errors on direct API calls).
+
+In **`vite.config.js`**, the proxy sets **`secure: false`** — Node.js **does not validate** the upstream certificate. That means **login, backup, and other SPA actions can succeed whether the node uses snakeoil or Let's Encrypt**. Those flows are **API smoke tests**, not proof of trusted TLS on the node.
 
 - **Restart** the dev server after changing the proxy target.
-- Use **base URL** `http://localhost:5173/api` (same origin as the app) when logging in or setting credentials. Requests to `/api/*` are forwarded to the real API.
-- **Proxy target** defaults to `https://192.168.1.205:44300`. To use another instance, set **VITE_API_PROXY_TARGET** in `.env.development` (e.g. `VITE_API_PROXY_TARGET=https://other-host:44300`).
+- Use **base URL** `http://localhost:5173/api` (or an URL whose host:port matches **`VITE_API_PROXY_TARGET`**) when logging in. Requests to `/api/*` are forwarded to the real API over HTTPS (or HTTP if you point the proxy at HTTP).
+
+**How to verify the node has trusted LE (Track B Phase 1):**
+
+| Check | Command / action |
+|-------|------------------|
+| CLI | `curl -sS -o /dev/null -w '%{http_code}\n' https://{fqdn}.pbx3.com:44300/up` — must be **200** without `-k` |
+| Panel | **Certificates** → Let's Encrypt configured, **Cert covers** lists node + tenant FQDNs |
+| Browser | Open `https://{fqdn}.pbx3.com:44300/up` directly — padlock shows Let's Encrypt, not snakeoil |
+
+**First LE on a new node** is **not** automatic at install — use **Certificates → Get certificate** (needs DNS for every name on the cert) or **`sudo /opt/pbx3/scripts/le-instance-bootstrap.sh email@example.com`**. See **`pbx3/workingdocs/INSTALL_SEQUENCE_UBUNTU.md`**.
 
 ### 7a. Two “targets” — proxy vs login (don’t forget)
 
