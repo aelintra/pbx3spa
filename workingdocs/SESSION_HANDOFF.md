@@ -2,6 +2,14 @@
 
 **AI: read this first.**
 
+## Session end 2026-05-30 — Track B Phases 0–3 on `main`
+
+**Completed:** Track B release hardening **Phases 0–3** merged to **`main`** in **pbx3**, **pbx3api**, **pbx3spa**; **`hardening`** branch deleted. Fleet TLS, pbx3api installer health checks, fail2ban `jail.d` (**0.0.3-15**). Golden **08jzwn** validated end-to-end.
+
+**Next (Track B Phase 4):** SPA field help on Tier 1–2 demo panels — **`pbx3/workingdocs/TRACK_B_RELEASE_HARDENING.md`** § Phase 4, **`STAKEHOLDER_DEMO_SCRIPT.md`**, **`formHelpPkey.js`**, **`tt_help_core`** in `sqlite_message.sql`.
+
+---
+
 ## Session end 2026-05-17 — LE done; directory planning next
 
 **Completed:** Per-instance **Let's Encrypt Option A** (multi-SAN, HTTP-01 webroot) merged to **`main`** in **pbx3**, **pbx3api**, **pbx3spa**. Remote **`certificates`** branches removed. Test node **`08jzwn.pbx3.com`**: package **pbx3 0.0.3-9**, API on **`main`**, three tenant FQDNs on cert, **Sync** + **renew --dry-run** OK.
@@ -41,6 +49,7 @@
 | Dev / run locally | DEV_ENVIRONMENT.md, SPA_BASICS.md |
 | **Instance directory (next)** | **`pbx3/pbx3-directory/docs/PLANNING_HANDOFF.md`**; **INSTANCE_DIRECTORY_NEXT.md**; **CENTRAL_ADMIN_DIRECTION.md** |
 | Per-instance TLS / LE (shipped on main) | pbx3 **TLS_AND_CERTIFICATES.md**, **TLS_IMPLEMENTATION_STEPS.md** |
+| **Track B — SPA field help (Phase 4)** | pbx3 **TRACK_B_RELEASE_HARDENING.md** § Phase 4 → **STAKEHOLDER_DEMO_SCRIPT.md** → **PANEL_PATTERN.md** |
 
 **Source of truth:** Schema and code. Verify against pbx3 full_schema.sql and repo code when changing behaviour; workingdocs may be outdated.
 
