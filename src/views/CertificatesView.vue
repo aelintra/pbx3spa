@@ -46,22 +46,31 @@
           <dt>Issuer</dt>
           <dd>{{ leStatus.issuer ?? '—' }}</dd>
         </dl>
+        <p v-if="certOutOfSync" class="cert-mismatch-warn" role="status">
+          The certificate names do not match the current tenant list in the database. Use
+          <strong>Sync with tenant list</strong> below (not Renew now).
+        </p>
+        <p class="section-help cert-actions-help">
+          After adding or removing tenants, or restoring a backup, use
+          <strong>Sync with tenant list</strong> so the certificate matches current tenant FQDNs.
+          <strong>Renew now</strong> only extends expiry for the names already on the certificate.
+        </p>
         <div class="section-actions">
           <button
             type="button"
             class="action-btn action-btn-primary"
-            :disabled="renewing"
-            @click="renewNow"
-          >
-            {{ renewing ? 'Renewing…' : 'Renew now' }}
-          </button>
-          <button
-            type="button"
-            class="action-btn action-btn-secondary"
             :disabled="syncing || !leSyncEmail"
             @click="syncLetsEncrypt"
           >
             {{ syncing ? 'Syncing…' : 'Sync with tenant list' }}
+          </button>
+          <button
+            type="button"
+            class="action-btn action-btn-secondary"
+            :disabled="renewing"
+            @click="renewNow"
+          >
+            {{ renewing ? 'Renewing…' : 'Renew now' }}
           </button>
         </div>
         <label class="form-label sync-email-label">
@@ -266,6 +275,19 @@ const certCovers = computed(() => {
   const intended = leStatus.value?.domains
   if (Array.isArray(intended) && intended.length) return intended
   return []
+})
+
+function normalizeFqdnList(list) {
+  if (!Array.isArray(list)) return []
+  return [...new Set(list.map((s) => String(s).trim().toLowerCase()).filter(Boolean))].sort()
+}
+
+/** True when on-disk cert SANs differ from DB intended list (e.g. after backup restore). */
+const certOutOfSync = computed(() => {
+  const actual = normalizeFqdnList(leStatus.value?.cert_sans)
+  const intended = normalizeFqdnList(leStatus.value?.domains)
+  if (!actual.length || !intended.length) return false
+  return actual.join('\0') !== intended.join('\0')
 })
 
 async function fetchActive() {
@@ -508,6 +530,18 @@ onMounted(() => {
 }
 .cert-dl dd {
   margin: 0;
+}
+.cert-mismatch-warn {
+  margin: 0.75rem 0 0.5rem;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.9375rem;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+}
+.cert-actions-help {
+  margin-top: 0.75rem;
 }
 .section-actions {
   display: flex;
