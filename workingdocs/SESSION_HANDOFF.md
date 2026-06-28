@@ -2,6 +2,18 @@
 
 **AI: read this first.**
 
+## Session end 2026-05-30 — Phase 4 pause (`helptext`)
+
+**Golden 08jzwn:** Demo DB from test instance; identity + LE + **410** `tt_help_core` rows applied. Packages **0.0.3-16** / **0.0.3-17** installed. Field-help walkthrough **in progress** — operator will report gaps.
+
+**Branch `helptext`** (pbx3, pbx3api, pbx3spa): Phase 4 audit + Tier 1–2 help done; Certificates Sync UX + LE SAN replace fix; tenant **Mix monitor** removed from panel.
+
+**Dev against golden:** `VITE_API_PROXY_TARGET=https://08jzwn.pbx3.com:44300` in `.env.development`; `npm run dev`.
+
+**Resume:** Operator feedback from demo QA → remaining Phase 4 (Backup/Certificates/Login wiring, IVR dynamic keys, KSUID readouts). See **pbx3/workingdocs/AGENT_HANDOFF.md** § Next agent session notes.
+
+---
+
 ## Session end 2026-05-30 — Track B Phases 0–3 on `main`
 
 **Completed:** Track B release hardening **Phases 0–3** merged to **`main`** in **pbx3**, **pbx3api**, **pbx3spa**; **`hardening`** branch deleted. Fleet TLS, pbx3api installer health checks, fail2ban `jail.d` (**0.0.3-15**). Golden **08jzwn** validated end-to-end.
@@ -28,7 +40,7 @@
 
 ## Quick start (next agent)
 
-1. **Repos / branch:** **`main`** on **pbx3**, **pbx3api**, **pbx3spa**. **`pbx3-master`** is **not** a git repo (four nested repos). Commit inside the repo you changed.
+1. **Repos / branch:** **`helptext`** for Phase 4 field help; **`main`** for fleet/TLS baseline. **`pbx3-master`** is **not** a git repo (four nested repos). Commit inside the repo you changed.
 2. **Directory work:** Read **`pbx3/pbx3-directory/docs/PLANNING_HANDOFF.md`** → **CENTRAL_ADMIN_DIRECTION.md** → v0 schema under **`pbx3/pbx3-directory/schema/`**.
 3. **Panel / UI work:** **PANEL_PATTERN.md**; **PROJECT_PLAN.md** § Current state; **FEATURE_PLANS_INDEX.md**.
 4. **TLS / certs (maintenance only):** **pbx3/workingdocs/TLS_AND_CERTIFICATES.md** — new tenant = DNS → **Sync**; do not re-run **Get certificate** if LE already configured.

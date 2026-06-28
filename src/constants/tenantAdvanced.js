@@ -94,11 +94,10 @@ export const CALL_RECORDING_KEYS = [
   'recused'
 ]
 
-// Mixmonitor paths and hot-desk lease (cluster columns).
-export const MONITORING_KEYS = ['mixmonitor', 'monitor_out', 'monitor_stage', 'leasedhdtime']
+// Monitor paths and hot-desk lease (cluster columns). mixmonitor column remains in DB but is not edited in SPA.
+export const MONITORING_KEYS = ['monitor_out', 'monitor_stage', 'leasedhdtime']
 
 export const MONITORING_FIELDS = [
-  { key: 'mixmonitor', label: 'Mix monitor', type: 'text' },
   { key: 'monitor_out', label: 'Monitor out path', type: 'text' },
   { key: 'monitor_stage', label: 'Monitor stage path', type: 'text' },
   { key: 'leasedhdtime', label: 'Hot desk lease (seconds)', type: 'number' }
