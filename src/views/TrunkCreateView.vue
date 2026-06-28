@@ -210,6 +210,7 @@ function onKeydown(e) {
             ref="pkeyInput"
             v-model="pkey"
             label="Trunk name"
+            help-pkey="trunkname"
             type="text"
             placeholder="e.g. mytrunk"
             :error="pkeyValidation.error.value"

@@ -240,6 +240,7 @@ function onKeydown(e) {
           ref="pkeyInput"
           v-model="pkey"
           label="Extension number"
+          help-pkey="blkstart"
           type="text"
           placeholder="e.g. 1001"
           :error="pkeyValidation.error.value"

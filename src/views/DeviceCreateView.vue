@@ -134,6 +134,7 @@ onMounted(async () => {
           ref="pkeyInput"
           v-model="pkey"
           label="Template name"
+          help-pkey="devtech"
           required
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"

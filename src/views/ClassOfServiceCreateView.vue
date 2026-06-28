@@ -183,6 +183,7 @@ async function onSubmit(e) {
           ref="pkeyInput"
           v-model="pkey"
           label="CoS key"
+          help-pkey="cosname"
           type="text"
           placeholder="e.g. internal"
           :error="pkeyValidation.error.value"

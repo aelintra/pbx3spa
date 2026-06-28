@@ -361,6 +361,7 @@ onMounted(async () => {
           ref="pkeyInput"
           v-model="pkey"
           label="IVR Direct Dial"
+          help-pkey="idd"
           type="text"
           inputmode="numeric"
           pattern="[0-9]{3,5}"

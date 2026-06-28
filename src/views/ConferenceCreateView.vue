@@ -193,6 +193,7 @@ async function onSubmit(e) {
           ref="pkeyInput"
           v-model="pkey"
           label="Room number"
+          help-pkey="confpkey"
           type="text"
           inputmode="numeric"
           placeholder="e.g. 9000"

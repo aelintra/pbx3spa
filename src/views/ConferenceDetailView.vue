@@ -285,6 +285,7 @@ const panelTitleTenantSuffix = computed(() => {
               v-if="isReadOnly('pkey')"
               id="edit-identity-pkey"
               label="Room number"
+              help-pkey="confpkey"
               :value="editPkey || '—'"
               class="readonly-identity"
             />
@@ -293,6 +294,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-identity-pkey"
               v-model="editPkey"
               label="Room number"
+              help-pkey="confpkey"
               type="text"
               inputmode="numeric"
               placeholder="e.g. 9000"

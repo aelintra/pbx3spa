@@ -470,6 +470,7 @@ onMounted(load)
                     :id="'fw-source-' + idx"
                     v-model="r.source"
                     label="Source"
+                    help-pkey="fwsource"
                     type="text"
                     hide-label
                     placeholder="e.g. net"
@@ -481,6 +482,7 @@ onMounted(load)
                     :id="'fw-proto-' + idx"
                     v-model="r.proto"
                     label="Proto"
+                    help-pkey="fwproto"
                     hide-label
                     :options="PROTO_OPTIONS"
                     aria-label="Proto"
@@ -491,6 +493,7 @@ onMounted(load)
                     :id="'fw-destports-' + idx"
                     v-model="r.destports"
                     label="Dest ports"
+                    help-pkey="fwdestports"
                     type="text"
                     hide-label
                     placeholder="e.g. 5060"
@@ -502,6 +505,7 @@ onMounted(load)
                     :id="'fw-connrate-' + idx"
                     v-model="r.connrate"
                     label="Conn rate"
+                    help-pkey="connrate"
                     type="text"
                     hide-label
                     placeholder="-"
@@ -513,6 +517,7 @@ onMounted(load)
                     :id="'fw-desc-' + idx"
                     v-model="r.description"
                     label="Description"
+                    help-pkey="fwdesc"
                     type="text"
                     hide-label
                     placeholder="Comment"
@@ -633,6 +638,7 @@ onMounted(load)
                     :id="'fw6-source-' + idx"
                     v-model="r.source"
                     label="Source"
+                    help-pkey="fwsource6"
                     type="text"
                     hide-label
                     placeholder="e.g. net"
@@ -644,6 +650,7 @@ onMounted(load)
                     :id="'fw6-proto-' + idx"
                     v-model="r.proto"
                     label="Proto"
+                    help-pkey="fwproto"
                     hide-label
                     :options="PROTO_OPTIONS"
                     aria-label="Proto"
@@ -654,6 +661,7 @@ onMounted(load)
                     :id="'fw6-destports-' + idx"
                     v-model="r.destports"
                     label="Dest ports"
+                    help-pkey="fwdestports"
                     type="text"
                     hide-label
                     placeholder="e.g. 5060"
@@ -665,6 +673,7 @@ onMounted(load)
                     :id="'fw6-connrate-' + idx"
                     v-model="r.connrate"
                     label="Conn rate"
+                    help-pkey="connrate"
                     type="text"
                     hide-label
                     placeholder="-"
@@ -676,6 +685,7 @@ onMounted(load)
                     :id="'fw6-desc-' + idx"
                     v-model="r.description"
                     label="Description"
+                    help-pkey="fwdesc"
                     type="text"
                     hide-label
                     placeholder="Comment"

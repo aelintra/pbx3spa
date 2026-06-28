@@ -155,6 +155,7 @@ async function confirmDelete() {
         <FormReadonly
           id="edit-identity-pkey"
           label="Template name"
+          help-pkey="devtech"
           :value="deviceRow?.pkey ?? pkey ?? '—'"
           class="readonly-identity"
         />

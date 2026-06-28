@@ -293,6 +293,7 @@ async function confirmAndDelete() {
               v-if="isReadOnly('pkey')"
               id="edit-identity-pkey"
               label="Name"
+              help-pkey="tenantname"
               :value="tenant.pkey ?? '—'"
               class="readonly-identity"
             />
@@ -301,6 +302,7 @@ async function confirmAndDelete() {
               id="edit-identity-pkey"
               :model-value="tenant.pkey ?? '—'"
               label="Name"
+              help-pkey="tenantname"
               disabled
               class="readonly-identity"
             />

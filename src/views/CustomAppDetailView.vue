@@ -271,6 +271,7 @@ const panelTitleTenantSuffix = computed(() => {
           v-else
           id="edit-identity-pkey"
           label="App name"
+          help-pkey="customappname"
           :value="app?.pkey ?? '—'"
           class="readonly-identity"
         />

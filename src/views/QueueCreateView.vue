@@ -243,6 +243,7 @@ async function onSubmit(e) {
           ref="pkeyInput"
           v-model="pkey"
           label="Queue Dial"
+          help-pkey="qdd"
           type="text"
           inputmode="numeric"
           placeholder="e.g. 100"

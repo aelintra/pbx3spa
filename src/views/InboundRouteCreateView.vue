@@ -281,6 +281,7 @@ function onKeydown(e) {
           ref="pkeyInput"
           v-model="pkey"
           label="Number (DiD/CLiD)"
+          help-pkey="didnumber"
           type="text"
           placeholder="e.g. 0123456789 or _2XXX"
           :error="pkeyValidation.error.value"

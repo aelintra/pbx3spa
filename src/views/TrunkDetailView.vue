@@ -297,6 +297,7 @@ async function confirmAndDelete() {
               v-if="isReadOnly('pkey')"
               id="edit-identity-pkey"
               label="Name"
+              help-pkey="trunkname"
               :value="editPkey || '—'"
               class="readonly-identity"
             />
@@ -305,6 +306,7 @@ async function confirmAndDelete() {
               id="edit-identity-pkey"
               v-model="editPkey"
               label="Name"
+              help-pkey="trunkname"
               type="text"
               placeholder="e.g. mytrunk"
               hint="Unique per tenant."

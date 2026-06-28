@@ -298,6 +298,7 @@ async function confirmAndDelete() {
               v-if="isReadOnly('pkey')"
               id="edit-identity-pkey"
               label="Agent number"
+              help-pkey="agent"
               :value="agent.pkey ?? '—'"
               class="readonly-identity"
             />
@@ -306,6 +307,7 @@ async function confirmAndDelete() {
               id="edit-identity-pkey"
               v-model="editPkey"
               label="Agent number"
+              help-pkey="agent"
               type="number"
               min="1000"
               max="9999"

@@ -253,6 +253,7 @@ const panelTitleTenantSuffix = computed(() => {
             <FormReadonly
               id="edit-pkey"
               label="Greeting number"
+              help-pkey="greetingnum"
               :value="String(greeting.pkey ?? '—')"
               class="readonly-identity"
             />

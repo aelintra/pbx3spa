@@ -72,7 +72,13 @@ export const TIMERS_FIELDS = [
   { key: 'ringdelay', label: 'Ring delay', type: 'number' },
   { key: 'ivr_key_wait', label: 'IVR key wait', type: 'number' },
   { key: 'ivr_digit_wait', label: 'IVR digit wait', type: 'number' },
-  { key: 'masteroclo', label: 'Timer status', type: 'segmented', options: ['AUTO', 'CLOSED'] }
+  {
+    key: 'masteroclo',
+    label: 'Timer status',
+    type: 'segmented',
+    options: ['AUTO', 'CLOSED'],
+    helpPkey: 'masterclose'
+  }
 ]
 
 // Call recording (after Advanced, before Call control).
@@ -132,7 +138,8 @@ export const CALL_CONTROL_FIELDS = [
     key: 'allow_hash_xfer',
     label: 'Allow hash transfer',
     type: 'pill',
-    options: ['enabled', 'disabled']
+    options: ['enabled', 'disabled'],
+    helpPkey: 'allow_hash_transfer'
   },
   { key: 'cfwd_progress', label: 'CFWD progress', type: 'pill', options: ['enabled', 'disabled'] },
   { key: 'cfwd_answer', label: 'CFWD answer', type: 'pill', options: ['enabled', 'disabled'] },
@@ -183,8 +190,8 @@ export const ADVANCED_FIELDS = [
   { key: 'countrycode', label: 'Country code', type: 'number' },
   { key: 'emergency', label: 'Emergency numbers', type: 'text' },
   { key: 'language', label: 'Language', type: 'text' },
-  { key: 'operator', label: 'Operator', type: 'number' },
   { key: 'spy_pass', label: 'Spy pass', type: 'text', helpPkey: 'spypass' },
+  { key: 'operator', label: 'Operator', type: 'number', helpPkey: 'clustersysop' },
   { key: 'sysop', label: 'Sysop', type: 'number' },
   { key: 'syspass', label: 'Sys pass', type: 'text' },
   {

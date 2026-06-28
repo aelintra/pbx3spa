@@ -30,6 +30,7 @@ import {
   parseNum
 } from '@/constants/tenantAdvanced'
 import { fieldErrors } from '@/utils/formErrors'
+import { OBJECT_PKEY_HELP } from '@/constants/helpPkeys'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
@@ -217,6 +218,7 @@ onMounted(async () => {
           ref="pkeyInput"
           v-model="pkey"
           label="Name"
+          :help-pkey="OBJECT_PKEY_HELP.tenant"
           type="text"
           placeholder="e.g. mycluster"
           :error="pkeyValidation.error.value"
@@ -302,6 +304,7 @@ onMounted(async () => {
             :id="`timers-${f.key}`"
             v-model="formTimers[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             yes-value="YES"
             no-value="NO"
           />
@@ -310,6 +313,7 @@ onMounted(async () => {
             :id="`timers-${f.key}`"
             v-model="formTimers[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             :options="f.options"
           />
           <FormToggle
@@ -317,6 +321,7 @@ onMounted(async () => {
             :id="`timers-${f.key}`"
             v-model="formTimers[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             :yes-value="f.options[0]"
             :no-value="f.options[1]"
           />
@@ -325,6 +330,7 @@ onMounted(async () => {
             :id="`timers-${f.key}`"
             v-model="formTimers[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             :options="f.options"
             :required="false"
           />
@@ -333,6 +339,7 @@ onMounted(async () => {
             :id="`timers-${f.key}`"
             v-model="formTimers[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             type="number"
             :placeholder="f.placeholder || 'number'"
           />
@@ -341,6 +348,7 @@ onMounted(async () => {
             :id="`timers-${f.key}`"
             v-model="formTimers[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             type="text"
             :placeholder="f.placeholder || ''"
           />
@@ -355,6 +363,7 @@ onMounted(async () => {
             :id="`adv-${f.key}`"
             v-model="formAdvanced[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             yes-value="YES"
             no-value="NO"
           />
@@ -363,6 +372,7 @@ onMounted(async () => {
             :id="`adv-${f.key}`"
             v-model="formAdvanced[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             :yes-value="f.options[0]"
             :no-value="f.options[1]"
           />
@@ -371,6 +381,7 @@ onMounted(async () => {
             :id="`adv-${f.key}`"
             v-model="formAdvanced[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             :options="f.options"
             :required="false"
           />
@@ -379,6 +390,7 @@ onMounted(async () => {
             :id="`adv-${f.key}`"
             v-model="formAdvanced[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             type="number"
             :placeholder="f.placeholder || 'number'"
           />
@@ -387,6 +399,7 @@ onMounted(async () => {
             :id="`adv-${f.key}`"
             v-model="formAdvanced[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             type="text"
             :placeholder="f.placeholder || ''"
           />
@@ -401,6 +414,7 @@ onMounted(async () => {
             :id="`rec-${f.key}`"
             v-model="formCallRecording[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             yes-value="YES"
             no-value="NO"
           />
@@ -408,6 +422,7 @@ onMounted(async () => {
             v-else-if="f.type === 'readonly'"
             :id="`rec-${f.key}`"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             :value="
               formCallRecording[f.key] !== '' && formCallRecording[f.key] != null
                 ? String(formCallRecording[f.key])
@@ -419,6 +434,7 @@ onMounted(async () => {
             :id="`rec-${f.key}`"
             v-model="formCallRecording[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             :yes-value="f.options[0]"
             :no-value="f.options[1]"
           />
@@ -427,6 +443,7 @@ onMounted(async () => {
             :id="`rec-${f.key}`"
             v-model="formCallRecording[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             :options="f.options"
             :required="false"
           />
@@ -435,6 +452,7 @@ onMounted(async () => {
             :id="`rec-${f.key}`"
             v-model="formCallRecording[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             type="number"
             :placeholder="f.placeholder || 'number'"
           />
@@ -443,6 +461,7 @@ onMounted(async () => {
             :id="`rec-${f.key}`"
             v-model="formCallRecording[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             type="text"
             :placeholder="f.placeholder || ''"
           />
@@ -457,6 +476,7 @@ onMounted(async () => {
             :id="`mon-${f.key}`"
             v-model="formMonitoring[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             type="number"
             :placeholder="f.placeholder || 'number'"
           />
@@ -465,6 +485,7 @@ onMounted(async () => {
             :id="`mon-${f.key}`"
             v-model="formMonitoring[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             type="text"
             :placeholder="f.placeholder || ''"
           />
@@ -479,6 +500,7 @@ onMounted(async () => {
             :id="`cc-${f.key}`"
             v-model="formCallControl[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             yes-value="YES"
             no-value="NO"
           />
@@ -487,6 +509,7 @@ onMounted(async () => {
             :id="`cc-${f.key}`"
             v-model="formCallControl[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             :yes-value="f.options[0]"
             :no-value="f.options[1]"
           />
@@ -495,6 +518,7 @@ onMounted(async () => {
             :id="`cc-${f.key}`"
             v-model="formCallControl[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             :options="f.options"
             :required="false"
           />
@@ -503,6 +527,7 @@ onMounted(async () => {
             :id="`cc-${f.key}`"
             v-model="formCallControl[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             type="number"
             :placeholder="f.placeholder || 'number'"
           />
@@ -511,6 +536,7 @@ onMounted(async () => {
             :id="`cc-${f.key}`"
             v-model="formCallControl[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             type="text"
             :placeholder="f.placeholder || ''"
           />
@@ -525,6 +551,7 @@ onMounted(async () => {
             :id="`ldap-${f.key}`"
             v-model="formLdap[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             yes-value="YES"
             no-value="NO"
           />
@@ -533,6 +560,7 @@ onMounted(async () => {
             :id="`ldap-${f.key}`"
             v-model="formLdap[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             :yes-value="f.options[0]"
             :no-value="f.options[1]"
           />
@@ -541,6 +569,7 @@ onMounted(async () => {
             :id="`ldap-${f.key}`"
             v-model="formLdap[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             :options="f.options"
             :required="false"
           />
@@ -549,6 +578,7 @@ onMounted(async () => {
             :id="`ldap-${f.key}`"
             v-model="formLdap[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             type="number"
             :placeholder="f.placeholder || 'number'"
           />
@@ -557,6 +587,7 @@ onMounted(async () => {
             :id="`ldap-${f.key}`"
             v-model="formLdap[f.key]"
             :label="f.label"
+            :help-pkey="f.helpPkey ?? f.key"
             type="text"
             :placeholder="f.placeholder || ''"
           />

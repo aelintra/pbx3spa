@@ -204,6 +204,7 @@ onMounted(async () => {
           ref="pkeyInput"
           v-model="pkey"
           label="App name"
+          help-pkey="customappname"
           required
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"

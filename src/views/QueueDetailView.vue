@@ -321,6 +321,7 @@ const panelTitleTenantSuffix = computed(() => {
               v-if="isReadOnly('pkey')"
               id="edit-identity-pkey"
               label="Queue Dial"
+              help-pkey="qdd"
               :value="editPkey || '—'"
               class="readonly-identity"
             />
@@ -329,6 +330,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-identity-pkey"
               v-model="editPkey"
               label="Queue Dial"
+              help-pkey="qdd"
               type="text"
               inputmode="numeric"
               placeholder="e.g. 100"

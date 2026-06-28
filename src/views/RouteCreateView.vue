@@ -220,6 +220,7 @@ onMounted(async () => {
           ref="pkeyInput"
           v-model="pkey"
           label="Route name"
+          help-pkey="route"
           type="text"
           placeholder="e.g. sales-ring"
           :error="pkeyValidation.error.value"

@@ -299,6 +299,7 @@ const panelTitleTenantSuffix = computed(() => {
               v-if="isReadOnly('pkey')"
               id="edit-identity-pkey"
               label="Route name"
+              help-pkey="route"
               :value="routeData.pkey ?? '—'"
               class="readonly-identity"
             />
@@ -307,6 +308,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-identity-pkey"
               v-model="editPkey"
               label="Route name"
+              help-pkey="route"
               type="text"
               placeholder="e.g. _XXXXXX"
               hint="Unique per tenant."

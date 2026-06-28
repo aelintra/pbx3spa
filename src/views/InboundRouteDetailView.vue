@@ -387,6 +387,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-identity-pkey"
               v-model="editPkey"
               label="Number (DiD/CLiD)"
+              help-pkey="didnumber"
               type="text"
               placeholder="e.g. 0123456789 or _2XXX"
               hint="Digits, pattern _XZN.! (e.g. _2XXX), or special s/i/t. Cannot be single 0."
@@ -395,6 +396,7 @@ const panelTitleTenantSuffix = computed(() => {
               v-else
               id="edit-identity-pkey"
               label="DiD/CLiD"
+              help-pkey="didnumber"
               :value="inboundRoute.pkey ?? '—'"
               class="readonly-identity"
             />

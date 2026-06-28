@@ -423,6 +423,7 @@ const panelTitleTenantSuffix = computed(() => {
               v-if="isReadOnly('pkey')"
               id="edit-identity-pkey"
               label="Ext Dial"
+              help-pkey="blkstart"
               :value="extension.pkey ?? '—'"
               class="readonly-identity"
             />
@@ -431,6 +432,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-identity-pkey"
               :model-value="extension.pkey ?? '—'"
               label="Ext Dial"
+              help-pkey="blkstart"
               disabled
               class="readonly-identity"
             />

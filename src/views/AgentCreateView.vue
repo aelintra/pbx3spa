@@ -253,6 +253,7 @@ async function onSubmit(e) {
           ref="pkeyInput"
           v-model="pkey"
           label="Agent number"
+          help-pkey="agent"
           type="number"
           min="1000"
           max="9999"

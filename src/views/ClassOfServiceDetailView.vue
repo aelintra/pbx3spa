@@ -248,6 +248,7 @@ const panelTitleTenantSuffix = computed(() => {
             <FormReadonly
               id="edit-identity-pkey"
               label="CoS key"
+              help-pkey="cosname"
               :value="cosrule.pkey ?? '—'"
               class="readonly-identity"
             />

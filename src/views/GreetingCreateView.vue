@@ -186,6 +186,7 @@ async function onSubmit(e) {
           ref="pkeyInput"
           v-model="pkey"
           label="Greeting number"
+          help-pkey="greetingnum"
           type="text"
           inputmode="numeric"
           placeholder="e.g. 40001"

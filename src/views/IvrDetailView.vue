@@ -441,6 +441,7 @@ const panelTitleTenantSuffix = computed(() => {
               v-if="isReadOnly('pkey')"
               id="edit-identity-pkey"
               label="IVR Direct Dial"
+              help-pkey="idd"
               :value="ivr.pkey ?? '—'"
               class="readonly-identity"
             />
@@ -449,6 +450,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-identity-pkey"
               v-model="editPkey"
               label="IVR Direct Dial"
+              help-pkey="idd"
               type="text"
               placeholder="3-5 digits"
               hint="3-5 digits, unique per tenant."
