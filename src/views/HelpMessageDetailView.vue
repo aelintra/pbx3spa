@@ -9,6 +9,7 @@ import FormField from '@/components/forms/FormField.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { HELP_TEXT_FORMAT_NOTE } from '@/utils/helpTextFormat'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -164,6 +165,7 @@ async function confirmDelete() {
       </div>
 
       <h2 class="detail-heading">Help text</h2>
+      <p class="help-text-format-note">{{ HELP_TEXT_FORMAT_NOTE }}</p>
       <div class="longtext-section">
         <div class="form-fields provision-section">
           <FormField
@@ -173,7 +175,6 @@ async function confirmDelete() {
             label="Help text"
             multiline
             :rows="16"
-            hint="Markdown supported (*italic*, **bold**, line breaks)."
           />
           <FormReadonly v-else id="htext" label="Help text" :value="messageRow?.htext ?? ''" />
         </div>
@@ -224,6 +225,12 @@ async function confirmDelete() {
 }
 .detail-heading:first-of-type {
   margin-top: 0;
+}
+.help-text-format-note {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+  line-height: 1.5;
 }
 .form-fields {
   display: flex;

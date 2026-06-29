@@ -14,6 +14,10 @@ const PURIFY_CONFIG = {
   ALLOWED_ATTR: ['href', 'rel', 'target']
 }
 
+/** Shown on Help message create/edit panels. */
+export const HELP_TEXT_FORMAT_NOTE =
+  'Help text may be plain text or Markdown. In field help popovers, Markdown is formatted (e.g. *italic*, **bold**, line breaks).'
+
 const NAMED_ENTITIES = {
   '&rsquo;': "'",
   '&lsquo;': "'",
