@@ -173,6 +173,7 @@ async function confirmDelete() {
             label="Help text"
             multiline
             :rows="16"
+            hint="Markdown supported (*italic*, **bold**, line breaks)."
           />
           <FormReadonly v-else id="htext" label="Help text" :value="messageRow?.htext ?? ''" />
         </div>

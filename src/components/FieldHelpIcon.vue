@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useHelp } from '@/composables/useHelp'
+import { renderHelpHtml } from '@/utils/helpTextFormat'
 
 const props = defineProps({
   /** tt_help_core pkey (column name) for lookup */
@@ -17,6 +18,7 @@ const popoverRef = ref(null)
 
 const help = computed(() => getHelp(props.pkey))
 const hasHelp = computed(() => help.value && (help.value.htext ?? '').trim() !== '')
+const renderedHtext = computed(() => renderHelpHtml(help.value?.htext ?? ''))
 
 function toggle() {
   open.value = !open.value
@@ -88,7 +90,7 @@ watch(open, (isOpen) => {
       :aria-labelledby="'help-trigger-' + pkey"
       aria-label="Help for this field"
     >
-      <p class="field-help-text">{{ help?.htext }}</p>
+      <div class="field-help-text" v-html="renderedHtext" />
     </div>
   </span>
 </template>
@@ -147,7 +149,23 @@ watch(open, (isOpen) => {
 }
 .field-help-text {
   margin: 0;
-  white-space: pre-wrap;
   word-break: break-word;
+}
+.field-help-text :deep(p) {
+  margin: 0 0 0.5em;
+}
+.field-help-text :deep(p:last-child) {
+  margin-bottom: 0;
+}
+.field-help-text :deep(ul),
+.field-help-text :deep(ol) {
+  margin: 0.25em 0 0.5em 1.25em;
+  padding: 0;
+}
+.field-help-text :deep(li) {
+  margin: 0.15em 0;
+}
+.field-help-text :deep(a) {
+  color: #2563eb;
 }
 </style>

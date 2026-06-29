@@ -147,6 +147,7 @@ onMounted(async () => {
             multiline
             :rows="16"
             placeholder="Help / UI message content"
+            hint="Markdown supported (*italic*, **bold**, line breaks)."
           />
         </div>
       </div>
