@@ -146,10 +146,14 @@ watch(open, (isOpen) => {
   box-shadow:
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  /* Labels use white-space: nowrap; reset so plain-text help wraps in the popover. */
+  white-space: normal;
 }
 .field-help-text {
   margin: 0;
   word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 .field-help-text :deep(p) {
   margin: 0 0 0.5em;
