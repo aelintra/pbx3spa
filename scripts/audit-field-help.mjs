@@ -135,6 +135,25 @@ function scanVueFile(filePath) {
 }
 
 /** Parse { key, label, helpPkey } from tenantAdvanced.js *_FIELDS arrays. */
+function parseTenantFieldBlocks(body) {
+  const fields = []
+  const blockRe = /\{[\s\S]*?\}/g
+  let bm
+  while ((bm = blockRe.exec(body)) !== null) {
+    const block = bm[0]
+    const keyM = block.match(/\bkey:\s*'([^']+)'/)
+    if (!keyM) continue
+    const labelM = block.match(/\blabel:\s*'([^']+)'/)
+    const helpM = block.match(/\bhelpPkey:\s*'([^']+)'/)
+    fields.push({
+      key: keyM[1],
+      label: labelM?.[1] ?? keyM[1],
+      helpPkey: helpM?.[1] ?? null
+    })
+  }
+  return fields
+}
+
 function loadTenantAdvancedFields() {
   const file = path.join(SPA_ROOT, 'src/constants/tenantAdvanced.js')
   const content = fs.readFileSync(file, 'utf8')
@@ -143,16 +162,13 @@ function loadTenantAdvancedFields() {
   let am
   while ((am = arrayRe.exec(content)) !== null) {
     const section = am[1]
-    const body = am[2]
-    const objRe = /\{\s*key:\s*'([^']+)',\s*label:\s*'([^']+)'[^}]*?(?:helpPkey:\s*'([^']+)')?[^}]*\}/g
-    let om
-    while ((om = objRe.exec(body)) !== null) {
+    for (const field of parseTenantFieldBlocks(am[2])) {
       fields.push({
         view: `TenantCreateView + TenantDetailView (${section})`,
         component: 'dynamic',
-        id: `edit-${om[1]}`,
-        label: om[2],
-        helpPkey: om[3] ?? null,
+        id: `edit-${field.key}`,
+        label: field.label,
+        helpPkey: field.helpPkey,
         hideHelp: false,
         source: 'tenantAdvanced'
       })
