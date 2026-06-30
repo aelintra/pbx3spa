@@ -440,6 +440,7 @@ const panelTitleTenantSuffix = computed(() => {
               v-if="isReadOnly('shortuid')"
               id="edit-identity-sip-user"
               label="SIP User"
+              help-pkey="shortuid"
               :value="extension.shortuid ?? '—'"
               class="readonly-identity"
             />
@@ -448,6 +449,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-identity-sip-user"
               :model-value="extension.shortuid ?? '—'"
               label="SIP User"
+              help-pkey="shortuid"
               disabled
               class="readonly-identity"
             />

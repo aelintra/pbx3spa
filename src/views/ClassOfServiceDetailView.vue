@@ -280,6 +280,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-dialplan"
               v-model="editDialplan"
               label="Dialplan (required)"
+              help-pkey="cosdialplan"
               type="text"
               placeholder="Dialplan fragment"
               :required="true"

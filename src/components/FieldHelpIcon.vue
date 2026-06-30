@@ -91,6 +91,9 @@ watch(open, (isOpen) => {
       aria-label="Help for this field"
     >
       <div class="field-help-text" v-html="renderedHtext" />
+      <p class="field-help-pkey">
+        Help key: <code>{{ pkey }}</code>
+      </p>
     </div>
   </span>
 </template>
@@ -171,5 +174,17 @@ watch(open, (isOpen) => {
 }
 .field-help-text :deep(a) {
   color: #2563eb;
+}
+.field-help-pkey {
+  margin: 0.75rem 0 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+.field-help-pkey code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: #475569;
 }
 </style>

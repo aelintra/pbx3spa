@@ -267,7 +267,8 @@ async function onSubmit(e) {
         <FormField
           id="passwd"
           v-model="passwd"
-          label="Password"
+          label="PIN"
+          help-pkey="pin"
           type="number"
           min="1001"
           max="9999"

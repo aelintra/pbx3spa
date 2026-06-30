@@ -403,7 +403,8 @@ const panelTitleTenantSuffix = computed(() => {
             <FormSelect
               id="edit-technology"
               v-model="editTechnology"
-              label="DDI type"
+              label="DiD Type"
+              help-pkey="technology"
               :options="technologyOptions"
               hint="DiD, CLiD, or Class."
             />

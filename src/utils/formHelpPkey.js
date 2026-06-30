@@ -64,8 +64,6 @@ const COLUMN_TO_HELP_PKEY = {
   'dest-timeout': 'outcome',
   'edit-timeout': 'outcome',
   'edit-greetnum': 'greeting',
-  sip_user: 'desc',
-  'sip-user': 'desc',
   edomain: 'edomaindig',
   provision: 'provisioning',
   provisionwith: 'provisionwith',

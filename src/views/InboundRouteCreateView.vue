@@ -267,7 +267,8 @@ function onKeydown(e) {
         <FormSegmentedPill
           id="carrier"
           v-model="carrier"
-          label="DDI type"
+          label="DiD Type"
+          help-pkey="technology"
           :options="['DiD', 'CLiD', 'Class']"
           :error="carrierValidation.error.value"
           :touched="carrierValidation.touched.value"

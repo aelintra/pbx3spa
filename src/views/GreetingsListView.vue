@@ -366,7 +366,7 @@ onUnmounted(() => {
               :class="sortClass('type')"
               @click="setSort('type')"
             >
-              Type
+              File Type
             </th>
             <th class="th-actions" title="Play">
               <span class="action-icon" aria-hidden="true"

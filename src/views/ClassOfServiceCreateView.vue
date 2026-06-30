@@ -234,6 +234,7 @@ async function onSubmit(e) {
           id="dialplan"
           v-model="dialplan"
           label="Dialplan"
+          help-pkey="cosdialplan"
           type="text"
           placeholder="Dialplan fragment (required)"
           :required="true"

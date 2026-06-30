@@ -286,7 +286,12 @@ const panelTitleTenantSuffix = computed(() => {
               label="Original filename"
               :value="greeting.filename ?? '—'"
             />
-            <FormReadonly id="edit-type" label="Type" :value="greeting.type ?? '—'" />
+            <FormReadonly
+              id="edit-type"
+              label="File Type"
+              help-pkey="filetype"
+              :value="greeting.type ?? '—'"
+            />
           </div>
 
           <h2 class="detail-heading">Audio</h2>

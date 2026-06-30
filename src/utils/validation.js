@@ -153,7 +153,7 @@ export function validateInboundRoutePkey(value) {
  */
 export function validateInboundCarrier(value) {
   if (!value || !String(value).trim()) {
-    return 'DDI type is required'
+    return 'DiD Type is required'
   }
   const v = String(value).trim()
   if (v !== 'DiD' && v !== 'CLiD' && v !== 'Class') {
