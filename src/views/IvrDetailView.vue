@@ -453,7 +453,6 @@ const panelTitleTenantSuffix = computed(() => {
               help-pkey="idd"
               type="text"
               placeholder="3-5 digits"
-              hint="3-5 digits, unique per tenant."
             />
             <FormSelect
               id="edit-cluster"
@@ -464,7 +463,6 @@ const panelTitleTenantSuffix = computed(() => {
               :touched="clusterValidation.touched.value"
               :required="true"
               :disabled="destinationsLoading"
-              hint="The tenant this IVR belongs to."
               @blur="clusterValidation.onBlur"
             />
             <FormField
@@ -493,7 +491,6 @@ const panelTitleTenantSuffix = computed(() => {
               :error="greetnumValidation.error.value"
               :touched="greetnumValidation.touched.value"
               :loading="greetingsLoading"
-              hint="Greeting played when the IVR is activated. Greetings are created in the Greetings section."
               @blur="greetnumValidation.onBlur"
             />
             <FormToggle

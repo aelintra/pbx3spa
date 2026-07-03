@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
@@ -7,6 +7,7 @@ import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateQueuePkey, validateTenant } from '@/utils/validation'
 import { normalizeList } from '@/utils/listResponse'
+import { buildGreetnumSelectOptions, filterGreetingsForTenant } from '@/utils/greetingSelectOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
@@ -22,10 +23,9 @@ const active = ref('YES')
 const cname = ref('')
 const description = ref('')
 const devicerec = ref('None')
-const outcome = ref('')
+const outcome = ref('None')
 const strategy = ref('ringall')
-const greetnum = ref('')
-const greeting = ref('')
+const greetnum = ref('None')
 const options = ref('CiIknrtT')
 const musicclass = ref('')
 const members = ref('')
@@ -33,10 +33,14 @@ const timeout = ref('30')
 const retry = ref('1')
 const wrapuptime = ref('0')
 const maxlen = ref('0')
-const divert = ref('')
+const divert = ref('None')
 const alertinfo = ref('')
 const tenants = ref([])
 const tenantsLoading = ref(true)
+const destinations = ref(null)
+const destinationsLoading = ref(false)
+const greetingRecords = ref([])
+const greetingsLoading = ref(false)
 const error = ref('')
 const loading = ref(false)
 const pkeyInput = ref(null)
@@ -57,7 +61,7 @@ const tenantOptionsForSelect = computed(() => {
   return list
 })
 
-const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'default']
+const devicerecOptions = ['None', 'Inbound', 'default']
 const strategyOptions = [
   'ringall',
   'roundrobin',
@@ -66,6 +70,53 @@ const strategyOptions = [
   'random',
   'rrmemory'
 ]
+
+const destinationGroups = computed(() => {
+  const d = destinations.value
+  if (!d || typeof d !== 'object') return {}
+  return {
+    Queues: Array.isArray(d.Queues) ? d.Queues : [],
+    Extensions: Array.isArray(d.Extensions) ? d.Extensions : [],
+    IVRs: Array.isArray(d.IVRs) ? d.IVRs : [],
+    CustomApps: Array.isArray(d.CustomApps) ? d.CustomApps : []
+  }
+})
+
+const greetnumOptions = computed(() =>
+  buildGreetnumSelectOptions(
+    filterGreetingsForTenant(greetingRecords.value, tenants.value, cluster.value),
+    greetnum.value
+  )
+)
+
+async function loadDestinations() {
+  const c = cluster.value
+  if (!c) {
+    destinations.value = null
+    return
+  }
+  destinationsLoading.value = true
+  try {
+    const response = await getApiClient().get('destinations', { params: { cluster: c } })
+    destinations.value = response && typeof response === 'object' ? response : null
+  } catch {
+    destinations.value = null
+  } finally {
+    destinationsLoading.value = false
+  }
+}
+
+async function loadGreetingRecords() {
+  greetingsLoading.value = true
+  try {
+    const response = await getApiClient().get('greetingrecords')
+    greetingRecords.value = normalizeList(response, 'greetingrecords') || normalizeList(response)
+  } catch {
+    greetingRecords.value = []
+  } finally {
+    greetingsLoading.value = false
+  }
+}
 
 async function loadTenants() {
   tenantsLoading.value = true
@@ -99,6 +150,14 @@ onMounted(async () => {
     maxlen
   })
   await loadTenants()
+  await loadGreetingRecords()
+  loadDestinations()
+})
+
+watch(cluster, () => {
+  loadDestinations()
+  const valid = new Set(greetnumOptions.value.map((o) => o.value))
+  if (!valid.has(greetnum.value)) greetnum.value = 'None'
 })
 
 function resetForm() {
@@ -108,10 +167,9 @@ function resetForm() {
   cname.value = ''
   description.value = ''
   devicerec.value = 'None'
-  outcome.value = ''
+  outcome.value = 'None'
   strategy.value = 'ringall'
-  greetnum.value = ''
-  greeting.value = ''
+  greetnum.value = 'None'
   options.value = 'CiIknrtT'
   musicclass.value = ''
   members.value = ''
@@ -119,7 +177,7 @@ function resetForm() {
   retry.value = '1'
   wrapuptime.value = '0'
   maxlen.value = '0'
-  divert.value = ''
+  divert.value = 'None'
   alertinfo.value = ''
   pkeyValidation.reset()
   clusterValidation.reset()
@@ -168,12 +226,11 @@ async function onSubmit(e) {
       active: active.value,
       cname: cname.value.trim() || null,
       devicerec: devicerec.value || 'None',
-      strategy: strategy.value
+      strategy: strategy.value,
+      outcome: outcome.value.trim() || 'None',
+      divert: divert.value.trim() || 'None',
+      greetnum: greetnum.value && greetnum.value !== 'None' ? greetnum.value : 'None'
     }
-    if (description.value.trim()) body.description = description.value.trim()
-    if (outcome.value.trim()) body.outcome = outcome.value.trim()
-    if (greetnum.value.trim()) body.greetnum = greetnum.value.trim()
-    if (greeting.value.trim()) body.greeting = greeting.value.trim()
     if (options.value.trim()) body.options = options.value.trim()
     if (musicclass.value.trim()) body.musicclass = musicclass.value.trim()
     if (members.value.trim()) body.members = members.value.trim()
@@ -186,8 +243,6 @@ async function onSubmit(e) {
     if (wrapuptimeNum !== undefined) body.wrapuptime = wrapuptimeNum
     const maxlenNum = parseNum(maxlen.value)
     if (maxlenNum !== undefined) body.maxlen = maxlenNum
-    const divertNum = parseNum(divert.value)
-    if (divertNum !== undefined) body.divert = divertNum
 
     await getApiClient().post('queues', body)
     toast.show(`Queue ${pkey.value.trim()} created`)
@@ -250,7 +305,6 @@ async function onSubmit(e) {
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
           :required="true"
-          hint="Unique per tenant. 3-5 digits."
           @blur="pkeyValidation.onBlur"
         />
         <FormField
@@ -280,7 +334,6 @@ async function onSubmit(e) {
           :touched="clusterValidation.touched.value"
           :required="true"
           :loading="tenantsLoading"
-          hint="The tenant this queue belongs to."
           @blur="clusterValidation.onBlur"
         />
         <FormToggle
@@ -289,37 +342,25 @@ async function onSubmit(e) {
           label="Active"
           yes-value="YES"
           no-value="NO"
-          hint="If off, the queue will not be available."
         />
         <FormSelect
           id="devicerec"
           v-model="devicerec"
           label="Device recording"
           :options="devicerecOptions"
-          hint="Recording options for this queue."
         />
         <FormSelect
           id="strategy"
           v-model="strategy"
           label="Strategy"
           :options="strategyOptions"
-          hint="How calls are distributed to queue members."
         />
-        <FormField
+        <FormSelect
           id="greetnum"
           v-model="greetnum"
           label="Greeting number"
-          type="text"
-          placeholder="e.g. usergreeting1234"
-          hint="Audio file to play when call enters queue."
-        />
-        <FormField
-          id="greeting"
-          v-model="greeting"
-          label="Greeting"
-          type="text"
-          placeholder="Override greetnum"
-          hint="Alternative greeting (overrides greetnum)."
+          :options="greetnumOptions"
+          :loading="greetingsLoading"
         />
         <FormField
           id="options"
@@ -327,14 +368,12 @@ async function onSubmit(e) {
           label="Options"
           type="text"
           placeholder="e.g. CiIknrtT"
-          hint="Queue options flags."
         />
         <FormField
           id="musicclass"
           v-model="musicclass"
           label="Music class"
           type="text"
-          hint="Music on hold class to play."
         />
         <FormField
           id="members"
@@ -342,7 +381,6 @@ async function onSubmit(e) {
           label="Members"
           type="text"
           placeholder="Comma-separated member list"
-          hint="Queue members (comma-separated)."
         />
       </div>
 
@@ -355,7 +393,6 @@ async function onSubmit(e) {
           type="text"
           inputmode="numeric"
           placeholder="e.g. 30"
-          hint="How long to ring before timeout."
         />
         <FormField
           id="retry"
@@ -364,7 +401,6 @@ async function onSubmit(e) {
           type="text"
           inputmode="numeric"
           placeholder="e.g. 1"
-          hint="Retry attempts."
         />
         <FormField
           id="wrapuptime"
@@ -373,7 +409,6 @@ async function onSubmit(e) {
           type="text"
           inputmode="numeric"
           placeholder="seconds"
-          hint="Time before agent can receive next call."
         />
         <FormField
           id="maxlen"
@@ -382,15 +417,15 @@ async function onSubmit(e) {
           type="text"
           inputmode="numeric"
           placeholder="0 = unlimited"
-          hint="Maximum queue length (0 = unlimited)."
         />
-        <FormField
+        <FormSelect
           id="divert"
           v-model="divert"
           label="Divert"
-          type="text"
-          inputmode="numeric"
-          hint="Divert option."
+          :options="['None', 'operator']"
+          :option-groups="destinationGroups"
+          :loading="destinationsLoading"
+          aria-label="Queue divert target"
         />
       </div>
 
@@ -401,14 +436,15 @@ async function onSubmit(e) {
           v-model="alertinfo"
           label="Alert info"
           type="text"
-          hint="Distinctive ring information."
         />
-        <FormField
+        <FormSelect
           id="outcome"
           v-model="outcome"
           label="Outcome"
-          type="text"
-          placeholder="e.g. None"
+          :options="['None', 'operator']"
+          :option-groups="destinationGroups"
+          :loading="destinationsLoading"
+          aria-label="Queue timeout outcome"
         />
       </div>
 

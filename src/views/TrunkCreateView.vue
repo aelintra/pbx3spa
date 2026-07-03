@@ -182,7 +182,6 @@ function onKeydown(e) {
           v-model="technology"
           label="Technology"
           :options="technologyOptions"
-          hint="SIP or IAX2."
           aria-label="Choose technology"
         />
       </div>
@@ -197,7 +196,6 @@ function onKeydown(e) {
               label="How this trunk registers"
               :options="sipRegModeOptions"
               required
-              hint="Send registration: your PBX registers to the ITSP. Accept registration: the provider registers to you (host is “dynamic”). Trusted: IP-based / no outbound registration."
               aria-label="SIP registration mode"
             />
           </div>
@@ -236,14 +234,8 @@ function onKeydown(e) {
 
         <h2 class="detail-heading">Connection</h2>
         <div class="form-fields">
-          <template v-if="isSipAcceptReg">
-            <p class="form-hint form-hint-block">
-              Host is set to <strong>dynamic</strong> for trunks that accept registration from the
-              provider.
-            </p>
-          </template>
           <FormField
-            v-else
+            v-if="!isSipAcceptReg"
             id="host"
             v-model="host"
             label="Host"
@@ -251,16 +243,12 @@ function onKeydown(e) {
             placeholder="e.g. sip.example.com, IP, or FQDN"
             :required="true"
           />
-          <p v-if="isSIP && !isSipAcceptReg" class="form-hint">
-            Not “dynamic” unless you selected “Accept registration from provider”.
-          </p>
           <FormSelect
             v-if="isSIP"
             id="transport"
             v-model="transport"
             label="Transport"
             :options="['udp', 'tcp', 'tls', 'wss']"
-            hint="SIP transport (udp, tcp, tls, wss)."
           />
           <FormField
             v-if="isSIP"
@@ -310,15 +298,6 @@ function onKeydown(e) {
   flex-direction: column;
   gap: 0;
   margin-top: 0.5rem;
-}
-.form-hint {
-  font-size: 0.8125rem;
-  color: #64748b;
-  margin: 0 0 0.5rem 0;
-}
-.form-hint-block {
-  margin: 0 0 0.75rem 0;
-  line-height: 1.4;
 }
 .error {
   color: #dc2626;

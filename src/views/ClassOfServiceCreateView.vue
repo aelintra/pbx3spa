@@ -189,7 +189,6 @@ async function onSubmit(e) {
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
           :required="true"
-          hint="Letters, numbers, underscore, hyphen. Unique per tenant."
           @blur="pkeyValidation.onBlur"
         />
         <FormField
@@ -219,7 +218,6 @@ async function onSubmit(e) {
           :touched="clusterValidation.touched.value"
           :required="true"
           :loading="tenantsLoading"
-          hint="The tenant this CoS rule belongs to."
           @blur="clusterValidation.onBlur"
         />
         <FormToggle
@@ -228,7 +226,6 @@ async function onSubmit(e) {
           label="Active"
           yes-value="YES"
           no-value="NO"
-          hint="If off, the rule will not be applied."
         />
         <FormField
           id="dialplan"
@@ -238,7 +235,6 @@ async function onSubmit(e) {
           type="text"
           placeholder="Dialplan fragment (required)"
           :required="true"
-          hint="Required. Dialplan fragment for this Class of Service."
         />
       </div>
 

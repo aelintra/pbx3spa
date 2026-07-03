@@ -146,7 +146,6 @@ async function onSubmit(e) {
           label="Description"
           type="text"
           placeholder="e.g. Christmas"
-          hint="Label for this holiday period."
         />
         <FormSelect
           id="cluster"
@@ -157,7 +156,6 @@ async function onSubmit(e) {
           :touched="clusterValidation.touched.value"
           :required="true"
           :loading="tenantsLoading"
-          hint="The tenant this Holiday timer belongs to. Start and end date/time can be set after creation."
           @blur="clusterValidation.onBlur"
         />
       </div>

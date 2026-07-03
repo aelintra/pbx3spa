@@ -338,7 +338,6 @@ const panelTitleTenantSuffix = computed(() => {
               :option-groups="destinationGroups"
               :loading="destinationsLoading"
               empty-text="None"
-              hint="Internal destination when this holiday is active (queue, extension, IVR, custom app). Leave empty for none."
             />
             <FormField
               id="edit-start-datetime"
@@ -346,7 +345,6 @@ const panelTitleTenantSuffix = computed(() => {
               label="Start"
               type="datetime-local"
               :step="60"
-              hint="Start of holiday period (local date and time)"
             />
             <FormField
               id="edit-end-datetime"
@@ -354,7 +352,6 @@ const panelTitleTenantSuffix = computed(() => {
               label="End"
               type="datetime-local"
               :step="60"
-              hint="End of holiday period (local date and time)"
             />
           </div>
 

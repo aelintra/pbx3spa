@@ -22,7 +22,6 @@ const cluster = ref('default')
 const description = ref('')
 const cname = ref('')
 const active = ref('YES')
-const auth = ref('NO')
 const dialplan = ref('')
 const path1 = ref('None')
 const path2 = ref('None')
@@ -93,7 +92,6 @@ function resetForm() {
   description.value = ''
   cname.value = ''
   active.value = 'YES'
-  auth.value = 'NO'
   dialplan.value = ''
   path1.value = 'None'
   path2.value = 'None'
@@ -128,7 +126,6 @@ async function onSubmit(e) {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
       active: active.value,
-      auth: auth.value,
       dialplan: dialplan.value.trim(),
       strategy: strategy.value
     }
@@ -191,7 +188,7 @@ function onKeydown(e) {
 
 onMounted(async () => {
   await ensureFetched()
-  applySchemaDefaults('routes', { cluster, description, cname, active, auth, strategy })
+  applySchemaDefaults('routes', { cluster, description, cname, active, strategy })
   await loadTenants()
   await loadTrunks()
 })
@@ -226,7 +223,6 @@ onMounted(async () => {
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
           :required="true"
-          hint="Unique identifier for this route (ring group)."
           @blur="pkeyValidation.onBlur"
         />
         <FormField
@@ -256,7 +252,6 @@ onMounted(async () => {
           :touched="clusterValidation.touched.value"
           :required="true"
           :loading="tenantsLoading"
-          hint="The tenant this route belongs to."
           @blur="clusterValidation.onBlur"
         />
         <FormToggle
@@ -265,22 +260,12 @@ onMounted(async () => {
           label="Active"
           yes-value="YES"
           no-value="NO"
-          hint="If off, the route will not be available."
-        />
-        <FormToggle
-          id="auth"
-          v-model="auth"
-          label="Auth (PIN dial)"
-          yes-value="YES"
-          no-value="NO"
-          hint="Require PIN for dialing."
         />
         <FormSegmentedPill
           id="strategy"
           v-model="strategy"
           label="Strategy"
           :options="['hunt', 'balance']"
-          hint="Ring order: hunt = sequential, balance = round-robin."
         />
       </div>
 
@@ -295,7 +280,6 @@ onMounted(async () => {
           :error="dialplanValidation.error.value"
           :touched="dialplanValidation.touched.value"
           :required="true"
-          hint="Required. Example: _XXXXXX for 6-digit extension matching."
           @blur="dialplanValidation.onBlur"
         />
       </div>

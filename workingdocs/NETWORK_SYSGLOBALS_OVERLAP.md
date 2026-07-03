@@ -22,7 +22,6 @@ It also recommends whether to keep two panels or merge into one.
   - `GET /syscommands/timezones`
 - **Writes**
   - `PUT /sysglobals` (subset only: `bindport`, `staticipv4`, `tlsport`, `sitename`)
-  - `PUT /syscommands/hostname`
   - `PUT /syscommands/dns`
   - `PUT /syscommands/smtp` (when SMTP config exists)
   - `PUT /syscommands/timezone`
@@ -42,7 +41,8 @@ It also recommends whether to keep two panels or merge into one.
 
 | Field (UI label) | Network panel source | System Globals source | Saved by Network | Saved by System Globals | Notes |
 |---|---|---|---|---|---|
-| Site Name (`sitename`) | `sysglobals.sitename` | `sysglobals.sitename` | Yes (`PUT /sysglobals`) | Yes (`PUT /sysglobals`) | True overlap, same source and destination. |
+| Site Name (`sitename`) | `sysglobals.sitename` | `sysglobals.sitename` | Yes (`PUT /sysglobals`) | Yes (`PUT /sysglobals`) | Friendly operator label; also shown on **Home** (`DashboardView` loads `GET sysglobals`). |
+| Hostname | `sysnotes.network.hostname` (read-only) | N/A | No | No | OS hostname from install/`hostnamectl`; **not editable** in Network (does not update `globals.fqdn`). Use **Site name** for a friendly label. |
 | Bind Port (`bindport`) | `sysglobals.bindport` | `sysglobals.bindport` | Yes (`PUT /sysglobals`) | Yes (`PUT /sysglobals`) | True overlap, same source and destination. |
 | TLS Port (`tlsport`) | `sysglobals.tlsport` | `sysglobals.tlsport` | Yes (`PUT /sysglobals`) | Yes (`PUT /sysglobals`) | True overlap, same source and destination. |
 | Local IP (`localip` / `local_ip`) | `sysnotes.network.local_ip` | `sysglobals.localip` | No (display only) | No (display only) | Label overlaps, backing data source differs by panel. |
@@ -56,7 +56,7 @@ It also recommends whether to keep two panels or merge into one.
 ### Network
 
 - Operational network/runtime oriented data:
-  - Hostname, DNS, SMTP, timezone, ICMP from `syscommands/*`
+  - Hostname (read-only), DNS, SMTP, timezone, ICMP from `syscommands/*`
   - selected SIP/network globals (`bindport`, `tlsport`, `staticipv4`, `sitename`) from `sysglobals`
 
 ### System Globals
@@ -82,7 +82,7 @@ It also recommends whether to keep two panels or merge into one.
 ### What to do next (recommended)
 
 1. Define explicit field ownership:
-   - **Network owns:** hostname, DNS, SMTP, timezone, ICMP, and network-facing globals used in deployment (`bindport`, `tlsport`, `staticipv4`, `sitename`).
+   - **Network owns:** DNS, SMTP, timezone, ICMP, **sitename** (friendly label), and network-facing globals (`bindport`, `tlsport`, `staticipv4`). **Hostname** is display-only (instance FQDN identity lives in `globals.fqdn`, set at install).
    - **System Globals owns:** the rest.
 2. NAT is fixed by template policy (`pbx3/pbx3-1/opt/pbx3/etc/asterisk/templates/pjsip_phone.tmpl`) and should not be user-editable in panels.
 3. Remove duplicate editable fields from one side where practical (single source of edit truth).

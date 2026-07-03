@@ -224,7 +224,6 @@ onMounted(async () => {
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
           :required="true"
-          hint="Unique tenant identifier."
           @blur="pkeyValidation.onBlur"
         />
         <FormField

@@ -23,7 +23,6 @@ const saving = ref(false)
 const discarding = ref(false)
 const saveError = ref('')
 
-const editHostname = ref('')
 const editDns = ref('')
 const editBindport = ref('')
 const editStaticipv4 = ref('')
@@ -63,7 +62,6 @@ async function fetchData(options = {}) {
     sysnotes.value = notesRes
     syncEditFromSysglobal()
     auth.setGlobalsFqdnFromSysglobal(globalsRes)
-    editHostname.value = notesRes?.network?.hostname ?? ''
     editDns.value = Array.isArray(notesRes?.dns) ? notesRes.dns.join('\n') : ''
     const s = notesRes?.smtp
     if (s) {
@@ -125,11 +123,6 @@ async function saveEdit(e) {
   saveError.value = ''
   saving.value = true
   try {
-    const newHostname = editHostname.value?.trim() ?? ''
-    const currentHostname = network.value?.hostname ?? ''
-    if (newHostname && newHostname !== currentHostname) {
-      await getApiClient().put('syscommands/hostname', { hostname: newHostname })
-    }
     const newDnsList = (editDns.value ?? '')
       .split('\n')
       .map((s) => s.trim())
@@ -227,7 +220,7 @@ onMounted(fetchData)
       <h2 class="detail-heading">System</h2>
       <div class="form-fields">
         <FormField id="ip-sitename" v-model="editSitename" label="Site Name" />
-        <FormField id="ip-hostname" v-model="editHostname" label="Hostname" />
+        <FormReadonly id="ip-hostname" label="Hostname" :value="network?.hostname ?? '—'" />
         <FormReadonly id="ip-localip" label="Local IP" :value="network?.local_ip ?? '—'" />
         <FormField id="ip-staticipv4" v-model="editStaticipv4" label="Static IPv4" />
         <FormReadonly id="ip-publicip" label="Public IP" :value="network?.public_ip ?? '—'" />

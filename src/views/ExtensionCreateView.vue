@@ -293,7 +293,6 @@ function onKeydown(e) {
           label="MAC address (optional)"
           type="text"
           placeholder="e.g. 001122334455 (12 hex digits)"
-          hint="Optional. For device provisioning (auto-detects vendor)."
         />
       </div>
 
@@ -306,7 +305,6 @@ function onKeydown(e) {
           v-model="transport"
           label="Transport"
           :options="['udp', 'tcp', 'tls', 'wss']"
-          hint="SIP transport."
         />
       </div>
 

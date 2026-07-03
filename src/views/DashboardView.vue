@@ -20,6 +20,7 @@ const actionConfirmVariant = ref('primary')
 const pendingSysCommand = ref(null)
 
 const sysnotes = ref(null)
+const sysglobal = ref(null)
 const sysnotesLoading = ref(true)
 const sysnotesError = ref('')
 
@@ -60,14 +61,30 @@ const systemInfo = computed(() => {
   }
 })
 
+/** Site label from globals (Network panel); sysnotes may also carry it when API is current. */
+const displaySitename = computed(() => {
+  const fromGlobals = (sysglobal.value?.sitename ?? '').trim()
+  if (fromGlobals) return fromGlobals
+  return (systemInfo.value?.sitename ?? '').trim()
+})
+
 async function fetchSysnotes() {
   sysnotesLoading.value = true
   sysnotesError.value = ''
   try {
-    sysnotes.value = await getApiClient().get('syscommands/sysnotes')
+    const notes = await getApiClient().get('syscommands/sysnotes')
+    sysnotes.value = notes
+    try {
+      const globals = await getApiClient().get('sysglobals')
+      sysglobal.value = globals
+      auth.setGlobalsFqdnFromSysglobal(globals)
+    } catch {
+      sysglobal.value = null
+    }
   } catch (err) {
     sysnotesError.value = err.data?.message || err.message || 'Failed to load system info'
     sysnotes.value = null
+    sysglobal.value = null
   } finally {
     sysnotesLoading.value = false
   }
@@ -192,6 +209,10 @@ onMounted(() => {
           <h3 class="sysnotes-col-heading">System</h3>
           <dl class="sysnotes-dl">
             <template v-if="systemInfo">
+              <template v-if="displaySitename">
+                <dt>Site name</dt>
+                <dd>{{ display(displaySitename) }}</dd>
+              </template>
               <dt>Distro</dt>
               <dd>{{ display(systemInfo.distro) }}</dd>
               <dt>Asterisk release</dt>

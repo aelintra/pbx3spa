@@ -7,7 +7,6 @@ import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
-import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
@@ -32,20 +31,15 @@ const editUsername = ref('')
 const editPeername = ref('')
 const editTrunkname = ref('')
 const editPassword = ref('')
-const editMoh = ref('NO')
 const editCallprogress = ref('NO')
-const editSwoclip = ref('YES')
-const editAlertinfo = ref('')
 const editCallerid = ref('')
 const editInprefix = ref('')
 const editMatch = ref('')
-const editTag = ref('')
-const editCallback = ref('')
-const editPrivileged = ref('')
+const editPrivileged = ref('NO')
 const editTechnology = ref('SIP')
 const editIaxreg = ref('')
 const editPjsipreg = ref('')
-const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'Outbound', 'Both']
+const devicerecOptions = ['None', 'Inbound', 'Outbound', 'Both']
 
 const sipPjsipregOptions = [
   { value: '', label: 'Trusted peer (no outbound registration)' },
@@ -63,10 +57,11 @@ function normalizePjsipregForSelect(v) {
 function normalizeDevicerec(s) {
   if (s == null || s === '') return 'None'
   const v = String(s).trim()
+  if (v === 'OTR' || v === 'OTRR') return 'Both'
   return devicerecOptions.includes(v) ? v : 'None'
 }
 
-/** Normalize ON/OFF or YES/NO to YES/NO for API (moh, callprogress). */
+/** Normalize ON/OFF or YES/NO to YES/NO for API (callprogress, privileged). */
 function normalizeYesNo(val) {
   if (val == null || val === '') return 'NO'
   const v = String(val).trim().toUpperCase()
@@ -75,8 +70,6 @@ function normalizeYesNo(val) {
 }
 
 const editDevicerec = ref('None')
-const editDisa = ref('None')
-const editDisapass = ref('')
 const editTransform = ref('')
 const saveError = ref('')
 const saving = ref(false)
@@ -101,22 +94,15 @@ async function fetchTrunk() {
     editPeername.value = trunk.value?.peername ?? ''
     editTrunkname.value = trunk.value?.trunkname ?? ''
     editPassword.value = '' // never re-fill password
-    editMoh.value = normalizeYesNo(trunk.value?.moh)
     editCallprogress.value = normalizeYesNo(trunk.value?.callprogress)
-    editSwoclip.value = trunk.value?.swoclip ?? 'YES'
-    editAlertinfo.value = trunk.value?.alertinfo ?? ''
     editCallerid.value = trunk.value?.callerid ?? ''
     editInprefix.value = trunk.value?.inprefix ?? ''
     editMatch.value = trunk.value?.match ?? ''
-    editTag.value = trunk.value?.tag ?? ''
-    editCallback.value = trunk.value?.callback ?? ''
-    editPrivileged.value = trunk.value?.privileged ?? ''
+    editPrivileged.value = normalizeYesNo(trunk.value?.privileged)
     editTechnology.value = trunk.value?.technology ?? 'SIP'
     editIaxreg.value = trunk.value?.iaxreg ?? ''
     editPjsipreg.value = normalizePjsipregForSelect(trunk.value?.pjsipreg)
     editDevicerec.value = normalizeDevicerec(trunk.value?.devicerec)
-    editDisa.value = trunk.value?.disa?.trim() || 'None'
-    editDisapass.value = trunk.value?.disapass ?? ''
     editTransform.value = trunk.value?.transform ?? ''
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load trunk')
@@ -131,6 +117,11 @@ onMounted(async () => {
   await fetchTrunk()
 })
 watch(shortuid, fetchTrunk)
+
+watch(editTechnology, (t) => {
+  if (t !== 'IAX2') editIaxreg.value = ''
+  if (t !== 'SIP') editPjsipreg.value = ''
+})
 
 function goBack() {
   router.push({ name: 'trunks' })
@@ -162,18 +153,16 @@ async function saveEdit(e) {
       username: editUsername.value.trim() || undefined,
       peername: editPeername.value.trim() || undefined,
       trunkname: editTrunkname.value.trim() || undefined,
-      moh: editMoh.value,
       callprogress: editCallprogress.value,
-      swoclip: editSwoclip.value,
-      alertinfo: editAlertinfo.value.trim() || undefined,
       callerid: editCallerid.value.trim() || undefined,
       inprefix: editInprefix.value.trim() || undefined,
       match: editMatch.value.trim() || undefined,
-      tag: editTag.value.trim() || undefined,
-      callback: editCallback.value.trim() || undefined,
-      privileged: editPrivileged.value.trim() || undefined,
+      privileged: editPrivileged.value,
       technology: editTechnology.value || undefined,
-      iaxreg: editIaxreg.value.trim() || undefined,
+      iaxreg:
+        editTechnology.value === 'IAX2'
+          ? editIaxreg.value.trim() || null
+          : null,
       pjsipreg:
         editTechnology.value === 'SIP'
           ? editPjsipreg.value
@@ -181,11 +170,6 @@ async function saveEdit(e) {
             : null
           : null,
       devicerec: editDevicerec.value || 'None',
-      disa:
-        editDisa.value.trim() && editDisa.value.trim() !== 'None'
-          ? editDisa.value.trim()
-          : undefined,
-      disapass: editDisapass.value.trim() || undefined,
       transform: editTransform.value.trim() || undefined
     }
     if (editPassword.value.trim()) body.password = editPassword.value.trim()
@@ -309,7 +293,6 @@ async function confirmAndDelete() {
               help-pkey="trunkname"
               type="text"
               placeholder="e.g. mytrunk"
-              hint="Unique per tenant."
             />
             <FormField
               id="edit-cname"
@@ -370,7 +353,13 @@ async function confirmAndDelete() {
               v-model="editPjsipreg"
               label="SIP registration"
               :options="sipPjsipregOptions"
-              hint="Controls PJSIP template: outbound registration (SND), accept registration (RCV), or trusted peer."
+            />
+            <FormField
+              v-if="editTechnology === 'IAX2'"
+              id="edit-iaxreg"
+              v-model="editIaxreg"
+              label="IAX reg"
+              type="text"
             />
             <FormField
               id="edit-host"
@@ -409,7 +398,6 @@ async function confirmAndDelete() {
               placeholder="Leave blank to keep current"
               autocomplete="new-password"
             />
-            <FormToggle id="edit-moh" v-model="editMoh" label="MOH" yes-value="YES" no-value="NO" />
             <FormToggle
               id="edit-callprogress"
               v-model="editCallprogress"
@@ -418,9 +406,9 @@ async function confirmAndDelete() {
               no-value="NO"
             />
             <FormToggle
-              id="edit-swoclip"
-              v-model="editSwoclip"
-              label="SWOCLIP"
+              id="edit-privileged"
+              v-model="editPrivileged"
+              label="Privileged"
               yes-value="YES"
               no-value="NO"
             />
@@ -428,37 +416,14 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Advanced</h2>
           <div class="form-fields">
-            <FormField id="edit-alertinfo" v-model="editAlertinfo" label="Alert info" type="text" />
             <FormField id="edit-callerid" v-model="editCallerid" label="Caller ID" type="text" />
             <FormField id="edit-inprefix" v-model="editInprefix" label="In prefix" type="text" />
             <FormField id="edit-match" v-model="editMatch" label="Match" type="text" />
-            <FormField id="edit-tag" v-model="editTag" label="Tag" type="text" />
-            <FormField id="edit-callback" v-model="editCallback" label="Callback" type="text" />
-            <FormField
-              id="edit-privileged"
-              v-model="editPrivileged"
-              label="Privileged"
-              type="text"
-            />
-            <FormField id="edit-iaxreg" v-model="editIaxreg" label="IAX reg" type="text" />
             <FormSelect
               id="edit-devicerec"
               v-model="editDevicerec"
               label="Device recording"
               :options="devicerecOptions"
-            />
-            <FormSegmentedPill
-              id="edit-disa"
-              v-model="editDisa"
-              label="DISA"
-              :options="['None', 'DISA', 'CALLBACK']"
-            />
-            <FormField
-              id="edit-disapass"
-              v-model="editDisapass"
-              label="DISA pass"
-              type="text"
-              autocomplete="off"
             />
             <FormField id="edit-transform" v-model="editTransform" label="Transform" type="text" />
           </div>

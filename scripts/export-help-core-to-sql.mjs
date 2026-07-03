@@ -8,8 +8,8 @@
  *     > tt_help_core.json
  *   scp golden:tt_help_core.json .
  *
- * Dev machine (from pbx3spa):
- *   node scripts/export-help-core-to-sql.mjs tt_help_core.json --write
+ * Dev machine (from pbx3spa; JSON at workspace root pbx3-master/):
+ *   node scripts/export-help-core-to-sql.mjs ../tt_help_core.json --write
  *   node scripts/export-help-core-to-sql.mjs /path/to/sqlite.db --write
  */
 import { execFileSync } from 'node:child_process'

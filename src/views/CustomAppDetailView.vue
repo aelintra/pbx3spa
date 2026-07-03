@@ -351,7 +351,6 @@ const panelTitleTenantSuffix = computed(() => {
           multiline
           :rows="20"
           placeholder="Asterisk extensions.conf code"
-          hint="Asterisk extensions.conf dialplan code (long text)."
         />
         <FormReadonly v-else id="extcode" label="Extension code" :value="app?.extcode ?? ''" />
       </div>

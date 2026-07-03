@@ -58,7 +58,6 @@ const COLUMN_TO_HELP_PKEY = {
   queue5: 'q5',
   queue6: 'q6',
   'trunk-technology': 'chooser',
-  extcode: 'directdial',
   disa: 'disapass',
   timeout: 'queuetimeout',
   'dest-timeout': 'outcome',

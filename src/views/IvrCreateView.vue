@@ -369,7 +369,6 @@ onMounted(async () => {
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
           :required="true"
-          hint="Numeric ID (3-5 digits) for this IVR."
           @blur="pkeyValidation.onBlur"
         />
         <FormField
@@ -378,7 +377,6 @@ onMounted(async () => {
           label="Description (optional)"
           type="text"
           placeholder="Freeform description"
-          hint="Shown in the IVR list."
         />
         <FormField
           id="cname"
@@ -386,7 +384,6 @@ onMounted(async () => {
           label="Display name (optional)"
           type="text"
           placeholder="Common name / label"
-          hint="Optional label for this IVR."
         />
       </div>
 
@@ -401,14 +398,12 @@ onMounted(async () => {
           :touched="clusterValidation.touched.value"
           :required="true"
           :loading="tenantsLoading"
-          hint="The tenant this IVR belongs to."
           @blur="clusterValidation.onBlur"
         />
         <FormToggle
           id="active"
           v-model="active"
           label="Active?"
-          hint="If off, the IVR will not be offered as a destination and callers cannot reach it."
         />
         <FormSelect
           id="greetnum"
@@ -418,14 +413,12 @@ onMounted(async () => {
           :error="greetnumValidation.error.value"
           :touched="greetnumValidation.touched.value"
           :loading="greetingsLoading"
-          hint="Greeting played when the IVR is activated. Greetings are created in the Greetings section."
           @blur="greetnumValidation.onBlur"
         />
         <FormToggle
           id="listenforext"
           v-model="listenforext"
           label="Listen for extension dial?"
-          hint='If on, the IVR listens for an extension number as well as key presses. This can slow response; you can use a separate sub-IVR for extension entry (e.g. "press star to enter extension").'
         />
         <FormSelect
           id="dest-timeout"

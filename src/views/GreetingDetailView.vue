@@ -304,10 +304,7 @@ const panelTitleTenantSuffix = computed(() => {
               :disabled="saving"
               @change="onReplaceFileChange"
             />
-            <p class="hint">
-              Replacement will be saved as <strong>usergreeting{pkey}.wav/mp3</strong> in the
-              tenant's sounds folder.
-            </p>
+
           </div>
 
           <div class="edit-actions">
@@ -433,10 +430,5 @@ const panelTitleTenantSuffix = computed(() => {
   font-size: 0.875rem;
   font-weight: 500;
   color: #0f172a;
-}
-.hint {
-  margin: 0;
-  font-size: 0.875rem;
-  color: #64748b;
 }
 </style>

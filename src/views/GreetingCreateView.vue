@@ -193,7 +193,6 @@ async function onSubmit(e) {
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
           :required="true"
-          hint="Unique per tenant. Positive number."
           @blur="pkeyValidation.onBlur"
         />
         <FormSelect
@@ -205,7 +204,6 @@ async function onSubmit(e) {
           :touched="clusterValidation.touched.value"
           :required="true"
           :loading="tenantsLoading"
-          hint="The tenant this greeting belongs to."
           @blur="clusterValidation.onBlur"
         />
       </div>
@@ -238,10 +236,7 @@ async function onSubmit(e) {
           :disabled="loading"
           @change="onFileChange"
         />
-        <p class="hint">
-          The original upload name is stored in the greeting record. The file will be saved as
-          <strong>usergreeting{pkey}.wav/mp3</strong> in the tenant's sounds folder.
-        </p>
+
       </div>
 
       <div class="actions">
@@ -320,10 +315,5 @@ async function onSubmit(e) {
   font-size: 0.875rem;
   font-weight: 500;
   color: #0f172a;
-}
-.hint {
-  margin: 0;
-  font-size: 0.875rem;
-  color: #64748b;
 }
 </style>

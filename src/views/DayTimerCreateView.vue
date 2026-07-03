@@ -146,7 +146,6 @@ async function onSubmit(e) {
           label="Description"
           type="text"
           placeholder="e.g. Office hours"
-          hint="Label for this recurring timer."
         />
         <FormSelect
           id="cluster"
@@ -157,7 +156,6 @@ async function onSubmit(e) {
           :touched="clusterValidation.touched.value"
           :required="true"
           :loading="tenantsLoading"
-          hint="The tenant this Day timer belongs to."
           @blur="clusterValidation.onBlur"
         />
       </div>

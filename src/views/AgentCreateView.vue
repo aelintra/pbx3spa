@@ -261,7 +261,6 @@ async function onSubmit(e) {
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
           :required="true"
-          hint="1000–9999, unique per tenant."
           @blur="pkeyValidation.onBlur"
         />
         <FormField
@@ -276,7 +275,6 @@ async function onSubmit(e) {
           :error="passwdValidation.error.value"
           :touched="passwdValidation.touched.value"
           :required="true"
-          hint="1001–9999 (agent PIN)."
           @blur="passwdValidation.onBlur"
         />
         <FormField
@@ -306,7 +304,6 @@ async function onSubmit(e) {
           :touched="clusterValidation.touched.value"
           :required="true"
           :loading="tenantsLoading"
-          hint="The tenant this agent belongs to."
           @blur="clusterValidation.onBlur"
         />
       </div>

@@ -312,7 +312,6 @@ async function confirmAndDelete() {
               min="1000"
               max="9999"
               placeholder="1000–9999"
-              hint="1000–9999, unique per tenant."
             />
             <FormSelect
               id="edit-cluster"
@@ -344,7 +343,6 @@ async function confirmAndDelete() {
               max="9999"
               placeholder="1001–9999"
               :required="true"
-              hint="1001–9999 (agent PIN)."
             />
           </div>
 

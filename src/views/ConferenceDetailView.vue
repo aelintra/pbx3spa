@@ -298,7 +298,6 @@ const panelTitleTenantSuffix = computed(() => {
               type="text"
               inputmode="numeric"
               placeholder="e.g. 9000"
-              hint="Unique per tenant. Positive number."
             />
             <FormField
               id="edit-cname"

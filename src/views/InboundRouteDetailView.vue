@@ -81,13 +81,15 @@ const tenantOptionsForSelect = computed(() => {
   return list
 })
 
-const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'Outbound', 'Both']
+const devicerecOptions = ['None', 'Inbound', 'default']
 const technologyOptions = ['DiD', 'CLiD', 'Class']
 
 function normalizeDevicerec(v) {
-  if (v == null || String(v).trim() === '') return 'None'
-  const s = String(v).trim()
-  return devicerecOptions.includes(s) ? s : 'None'
+  const s = (v ?? '').toString().trim()
+  if (!s || s === '-') return 'None'
+  if (s === 'OTR' || s === 'OTRR' || s === 'Outbound' || s === 'Both') return 'default'
+  if (devicerecOptions.includes(s)) return s
+  return 'None'
 }
 
 /** Normalize destinations API response (handles both { Queues: [] } and { queues: [] } shapes). */
@@ -390,7 +392,6 @@ const panelTitleTenantSuffix = computed(() => {
               help-pkey="didnumber"
               type="text"
               placeholder="e.g. 0123456789 or _2XXX"
-              hint="Digits, pattern _XZN.! (e.g. _2XXX), or special s/i/t. Cannot be single 0."
             />
             <FormReadonly
               v-else
@@ -406,7 +407,6 @@ const panelTitleTenantSuffix = computed(() => {
               label="DiD Type"
               help-pkey="technology"
               :options="technologyOptions"
-              hint="DiD, CLiD, or Class."
             />
             <FormField
               id="edit-description"
@@ -425,7 +425,6 @@ const panelTitleTenantSuffix = computed(() => {
               label="Tenant"
               :options="tenantOptionsForSelect"
               :required="true"
-              hint="The tenant this inbound route belongs to."
             />
             <FormSelect
               id="edit-openroute"

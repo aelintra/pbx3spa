@@ -2,6 +2,18 @@
 
 **AI: read this first.**
 
+## Session end 2026-07-02 — `panelfixes` (panels + globals + help)
+
+**Branch `panelfixes`** (pbx3, pbx3api, pbx3spa): Demo panel QA — queues (outcome/divert/greetnum), trunks (trimmed Settings/Advanced), routes (auth removed), inbound SWOCLIP retained, custom app **extcode** help, Instance Globals tidy, Network hostname **read-only**, **Site name** on Home.
+
+**Dev against golden:** `VITE_API_PROXY_TARGET=https://08jzwn.pbx3.com:44300`; `npm run dev`. Home **Site name** reads **`GET sysglobals.sitename`** (no golden API deploy required for that UX).
+
+**Docs:** **`pbx3/workingdocs/TODO.md`** (Runtime, SWOCLIP, maxin/maxout, session timeout, permissions Phase 1+). **`NETWORK_SYSGLOBALS_OVERLAP.md`** — hostname display-only; **sitename** = friendly label (Network edit, Home System column).
+
+**Resume:** Operator QA on golden; deploy **pbx3api** when queue/trunk API changes needed on node; add **`extcode`** (+ **`iaxreg`**) rows on golden **Help messages** if missing.
+
+---
+
 ## Session end 2026-05-30 — Phase 4 pause (`helptext`)
 
 **Golden 08jzwn:** Demo DB from test instance; identity + LE + **410** `tt_help_core` rows applied. Packages **0.0.3-16** / **0.0.3-17** installed. Field-help walkthrough **in progress** — operator will report gaps.

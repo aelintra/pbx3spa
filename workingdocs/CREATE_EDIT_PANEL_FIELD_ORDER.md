@@ -309,8 +309,8 @@ See `src/constants/tenantAdvanced.js`:
 ### `TrunkDetailView.vue`
 
 1. **Identity** — Name, Common name, UID, KSUID, Transport, Technology  
-2. **Settings** — Active?, SIP registration, Host, Username, Peername, Trunkname, Password, MOH, Call progress, SWOCLIP  
-3. **Advanced** — Alert info, Caller ID, In prefix, Match, Tag, Callback, Privileged, IAX reg, Device recording, DISA, DISA pass, Transform  
+2. **Settings** — Active?, SIP registration, Host, Username, Peername, Trunkname, Password, Call progress, Privileged  
+3. **Advanced** — Caller ID, In prefix, Match, Device recording, Transform  
 
 ---
 

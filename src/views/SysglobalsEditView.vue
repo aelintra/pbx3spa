@@ -23,11 +23,9 @@ const saveError = ref('')
 
 // Editable and display-only (read-only) fields
 const editAbstimeout = ref('')
-const editEdomain = ref('')
 const editEmergency = ref('')
 const editLanguage = ref('')
 const editLoglevel = ref('')
-const editLogopts = ref('')
 const editLogsipdispsize = ref('')
 const editLogsipnumfiles = ref('')
 const editLogsipfilesize = ref('')
@@ -40,7 +38,7 @@ const editRecmount = ref('')
 const editRecqdither = ref('')
 const editRecqsearchlim = ref('')
 const editSessiontimout = ref('')
-const editSendedomain = ref('')
+const editSendedomain = ref('YES')
 const editSipflood = ref('')
 const editSysop = ref('')
 const editVoipmax = ref('')
@@ -58,11 +56,9 @@ function syncEditFromSysglobal() {
 
   // API returns lowercase keys (schema standardised on lowercase)
   editAbstimeout.value = g.abstimeout != null ? String(g.abstimeout) : ''
-  editEdomain.value = g.edomain ?? ''
   editEmergency.value = g.emergency ?? ''
   editLanguage.value = g.language ?? ''
   editLoglevel.value = g.loglevel != null ? String(g.loglevel) : ''
-  editLogopts.value = g.logopts ?? ''
   editLogsipdispsize.value = g.logsipdispsize != null ? String(g.logsipdispsize) : ''
   editLogsipnumfiles.value = g.logsipnumfiles != null ? String(g.logsipnumfiles) : ''
   editLogsipfilesize.value = g.logsipfilesize != null ? String(g.logsipfilesize) : ''
@@ -75,7 +71,9 @@ function syncEditFromSysglobal() {
   editRecqdither.value = g.recqdither ?? ''
   editRecqsearchlim.value = g.recqsearchlim ?? ''
   editSessiontimout.value = g.sessiontimout != null ? String(g.sessiontimout) : ''
-  editSendedomain.value = g.sendedomain ?? ''
+  const sd = g.sendedomain
+  editSendedomain.value =
+    sd === true || sd === 1 || sd === 'YES' || sd === 'yes' ? 'YES' : 'NO'
   editSipflood.value = g.sipflood ?? ''
   editSysop.value = g.sysop != null ? String(g.sysop) : ''
   editVoipmax.value = g.voipmax != null ? String(g.voipmax) : ''
@@ -135,8 +133,6 @@ async function saveEdit(e) {
       editLoglevel.value !== '' && editLoglevel.value != null
         ? parseInt(editLoglevel.value, 10)
         : null
-    body.logopts =
-      editLogopts.value && editLogopts.value.trim() !== '' ? editLogopts.value.trim() : null
     body.logsipdispsize =
       editLogsipdispsize.value !== '' && editLogsipdispsize.value != null
         ? parseInt(editLogsipdispsize.value, 10)
@@ -177,10 +173,7 @@ async function saveEdit(e) {
       editSessiontimout.value !== '' && editSessiontimout.value != null
         ? parseInt(editSessiontimout.value, 10)
         : null
-    body.sendedomain =
-      editSendedomain.value && editSendedomain.value.trim() !== ''
-        ? editSendedomain.value.trim()
-        : null
+    body.sendedomain = editSendedomain.value === 'YES' ? 'YES' : 'NO'
     body.sipflood =
       editSipflood.value && editSipflood.value.trim() !== '' ? editSipflood.value.trim() : null
     body.sysop =
@@ -291,10 +284,6 @@ onMounted(fetchSysglobal)
           label="FQDN inspect (SIP / Shorewall)"
           :options="YESNO_OPTIONS"
         />
-        <p class="scope-note">
-          <strong>YES</strong> = Shorewall may match SIP against configured FQDNs (see pbx3
-          <code>LETSENCRYPT_PER_TENANT_FQDN.md</code>). Inline refresh from the API is Phase 1–2.
-        </p>
       </div>
 
       <h2 class="detail-heading">SIP</h2>
@@ -314,7 +303,6 @@ onMounted(fetchSysglobal)
       <h2 class="detail-heading">Logging</h2>
       <div class="form-fields">
         <FormField id="edit-loglevel" v-model="editLoglevel" type="number" label="Log Level" />
-        <FormField id="edit-logopts" v-model="editLogopts" label="Log Options" />
         <FormField
           id="edit-logsipdispsize"
           v-model="editLogsipdispsize"
@@ -350,12 +338,12 @@ onMounted(fetchSysglobal)
 
       <h2 class="detail-heading">Other</h2>
       <div class="form-fields">
-        <FormReadonly
-          id="edit-edomain"
-          label="Email Domain"
-          :value="editEdomain.trim() !== '' ? editEdomain : '—'"
+        <FormSegmentedPill
+          id="edit-sendedomain"
+          v-model="editSendedomain"
+          label="Send Domain"
+          :options="YESNO_OPTIONS"
         />
-        <FormField id="edit-sendedomain" v-model="editSendedomain" label="Send Domain" />
         <FormField id="edit-language" v-model="editLanguage" label="Language" />
         <FormField
           id="edit-sessiontimout"

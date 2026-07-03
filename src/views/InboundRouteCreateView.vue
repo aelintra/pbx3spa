@@ -261,7 +261,6 @@ function onKeydown(e) {
           :touched="clusterValidation.touched.value"
           :required="true"
           :loading="tenantsLoading"
-          hint="The tenant this inbound route belongs to."
           @blur="clusterValidation.onBlur"
         />
         <FormSegmentedPill
@@ -273,7 +272,6 @@ function onKeydown(e) {
           :error="carrierValidation.error.value"
           :touched="carrierValidation.touched.value"
           :required="true"
-          hint="DiD, CLiD, or Class."
           aria-label="Choose type"
           @blur="carrierValidation.onBlur"
         />
@@ -288,7 +286,6 @@ function onKeydown(e) {
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
           :required="true"
-          hint="Digits, pattern _XZN.! (e.g. _2XXX), or special s/i/t. Cannot be single 0."
           @blur="pkeyValidation.onBlur"
         />
       </div>
@@ -302,7 +299,6 @@ function onKeydown(e) {
           :options="openrouteOptions"
           :option-groups="destinationGroups"
           :loading="destinationsLoading"
-          hint="Destination when line is open."
         />
         <FormSelect
           id="closeroute"
@@ -310,7 +306,6 @@ function onKeydown(e) {
           label="Closed route"
           :options="closerouteOptions"
           :option-groups="destinationGroups"
-          hint="Destination when line is closed."
         />
       </div>
 

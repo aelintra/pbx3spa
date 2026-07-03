@@ -7,6 +7,11 @@ import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { validateQueuePkey } from '@/utils/validation'
+import {
+  buildGreetnumSelectOptions,
+  filterGreetingsForTenant,
+  greetingNumberFromStored
+} from '@/utils/greetingSelectOptions'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
@@ -22,6 +27,10 @@ function isReadOnly(field) {
 }
 const queue = ref(null)
 const tenants = ref([])
+const destinations = ref(null)
+const destinationsLoading = ref(false)
+const greetingRecords = ref([])
+const greetingsLoading = ref(false)
 const loading = ref(true)
 const error = ref('')
 const editPkey = ref('')
@@ -30,10 +39,9 @@ const editCluster = ref('default')
 const editCname = ref('')
 const editDescription = ref('')
 const editDevicerec = ref('None')
-const editOutcome = ref('')
-const editDivert = ref('')
-const editGreetnum = ref('')
-const editGreeting = ref('')
+const editOutcome = ref('None')
+const editDivert = ref('None')
+const editGreetnum = ref('None')
 const editMembers = ref('')
 const editMusicclass = ref('')
 const editOptions = ref('')
@@ -75,7 +83,7 @@ const tenantOptionsForSelect = computed(() => {
   return list
 })
 
-const devicerecOptions = ['None', 'OTR', 'OTRR', 'Inbound', 'default']
+const devicerecOptions = ['None', 'Inbound', 'default']
 const strategyOptions = [
   'ringall',
   'roundrobin',
@@ -88,8 +96,56 @@ const strategyOptions = [
 function normalizeDevicerec(v) {
   const s = (v ?? '').toString().trim()
   if (!s || s === '-') return 'None'
+  if (s === 'OTR' || s === 'OTRR') return 'default'
   if (devicerecOptions.includes(s)) return s
   return 'None'
+}
+
+const destinationGroups = computed(() => {
+  const d = destinations.value
+  if (!d || typeof d !== 'object') return {}
+  return {
+    Queues: Array.isArray(d.Queues) ? d.Queues : [],
+    Extensions: Array.isArray(d.Extensions) ? d.Extensions : [],
+    IVRs: Array.isArray(d.IVRs) ? d.IVRs : [],
+    CustomApps: Array.isArray(d.CustomApps) ? d.CustomApps : []
+  }
+})
+
+const greetnumOptions = computed(() =>
+  buildGreetnumSelectOptions(
+    filterGreetingsForTenant(greetingRecords.value, tenants.value, editCluster.value),
+    editGreetnum.value
+  )
+)
+
+async function loadGreetingRecords() {
+  greetingsLoading.value = true
+  try {
+    const response = await getApiClient().get('greetingrecords')
+    greetingRecords.value = normalizeList(response, 'greetingrecords') || normalizeList(response)
+  } catch {
+    greetingRecords.value = []
+  } finally {
+    greetingsLoading.value = false
+  }
+}
+
+async function loadDestinations() {
+  const c = editCluster.value
+  if (!c) {
+    destinations.value = null
+    return
+  }
+  destinationsLoading.value = true
+  try {
+    const response = await getApiClient().get('destinations', { params: { cluster: c } })
+    destinations.value = response && typeof response === 'object' ? response : null
+  } catch {
+    destinations.value = null
+  } finally {
+    destinationsLoading.value = false
+  }
 }
 
 async function fetchTenants() {
@@ -114,16 +170,11 @@ async function fetchQueue() {
     editActive.value = q?.active === 'NO' ? 'NO' : 'YES'
     editCname.value = q?.cname ?? ''
     editDescription.value = q?.description ?? ''
-    editOutcome.value = q?.outcome ?? ''
+    editOutcome.value = q?.outcome != null && String(q.outcome).trim() !== '' ? String(q.outcome) : 'None'
     editDevicerec.value = normalizeDevicerec(q?.devicerec)
     editAlertinfo.value = q?.alertinfo ?? ''
-    editDivert.value = q?.divert != null && q?.divert !== '' ? String(q.divert) : ''
-    const g = q?.greetnum
-    editGreetnum.value =
-      g == null || g === '' || String(g).trim() === 'None' ? '' : String(g).trim()
-    const gr = q?.greeting
-    editGreeting.value =
-      gr == null || gr === '' || String(gr).trim() === 'None' ? '' : String(gr).trim()
+    editDivert.value = q?.divert != null && String(q.divert).trim() !== '' ? String(q.divert) : 'None'
+    editGreetnum.value = greetingNumberFromStored(q?.greetnum)
     editMembers.value = q?.members ?? ''
     editMusicclass.value = q?.musicclass ?? ''
     editOptions.value = q?.options ?? ''
@@ -138,14 +189,20 @@ async function fetchQueue() {
   } finally {
     loading.value = false
   }
+  if (editCluster.value) loadDestinations()
 }
 
 onMounted(async () => {
   await ensureFetched()
-  await fetchTenants()
+  await Promise.all([fetchTenants(), loadGreetingRecords()])
   await fetchQueue()
 })
 watch(shortuid, fetchQueue)
+watch(editCluster, () => {
+  loadDestinations()
+  const valid = new Set(greetnumOptions.value.map((o) => o.value))
+  if (!valid.has(editGreetnum.value)) editGreetnum.value = 'None'
+})
 
 function goBack() {
   router.push({ name: 'queues' })
@@ -180,25 +237,24 @@ async function saveEdit(e) {
       description: editDescription.value.trim() || undefined,
       devicerec: editDevicerec.value || 'None',
       alertinfo: editAlertinfo.value.trim() || undefined,
-      greetnum: editGreetnum.value.trim() || undefined,
-      greeting: editGreeting.value.trim() || undefined,
+      greetnum:
+        editGreetnum.value && editGreetnum.value !== 'None' ? editGreetnum.value : 'None',
       members: editMembers.value.trim() || undefined,
       musicclass: editMusicclass.value.trim() || undefined,
       options: editOptions.value.trim() || undefined,
-      outcome: editOutcome.value.trim() || undefined,
+      outcome: editOutcome.value.trim() || 'None',
+      divert: editDivert.value.trim() || 'None',
       strategy: editStrategy.value,
       maxlen: parseInt(editMaxlen.value, 10),
       retry: parseInt(editRetry.value, 10),
       timeout: parseInt(editTimeout.value, 10),
-      wrapuptime: parseInt(editWrapuptime.value, 10),
-      divert: parseInt(editDivert.value, 10)
+      wrapuptime: parseInt(editWrapuptime.value, 10)
     }
     if (Number.isNaN(body.maxlen)) delete body.maxlen
     else if (body.maxlen === 0) body.maxlen = 0
     if (Number.isNaN(body.retry)) delete body.retry
     if (Number.isNaN(body.timeout)) delete body.timeout
     if (Number.isNaN(body.wrapuptime)) delete body.wrapuptime
-    if (Number.isNaN(body.divert)) delete body.divert
     await getApiClient().put(`queues/${encodeURIComponent(shortuid.value)}`, body)
     await fetchQueue()
     toast.show(`Queue ${queue.value?.pkey ?? ''} saved`)
@@ -334,7 +390,6 @@ const panelTitleTenantSuffix = computed(() => {
               type="text"
               inputmode="numeric"
               placeholder="e.g. 100"
-              hint="Unique per tenant. 3-5 digits."
             />
             <FormField
               id="edit-cname"
@@ -373,19 +428,12 @@ const panelTitleTenantSuffix = computed(() => {
               label="Strategy"
               :options="strategyOptions"
             />
-            <FormField
+            <FormSelect
               id="edit-greetnum"
               v-model="editGreetnum"
               label="Greeting number"
-              type="text"
-              placeholder="e.g. usergreeting1234"
-            />
-            <FormField
-              id="edit-greeting"
-              v-model="editGreeting"
-              label="Greeting"
-              type="text"
-              placeholder="Override greetnum"
+              :options="greetnumOptions"
+              :loading="greetingsLoading"
             />
             <FormField
               id="edit-options"
@@ -443,24 +491,28 @@ const panelTitleTenantSuffix = computed(() => {
               inputmode="numeric"
               placeholder="0 = unlimited"
             />
-            <FormField
+            <FormSelect
               id="edit-divert"
               v-model="editDivert"
               label="Divert"
-              type="text"
-              inputmode="numeric"
+              :options="['None', 'operator']"
+              :option-groups="destinationGroups"
+              :loading="destinationsLoading"
+              aria-label="Queue divert target"
             />
           </div>
 
           <h2 class="detail-heading">Advanced</h2>
           <div class="form-fields">
             <FormField id="edit-alertinfo" v-model="editAlertinfo" label="Alert info" type="text" />
-            <FormField
+            <FormSelect
               id="edit-outcome"
               v-model="editOutcome"
               label="Outcome"
-              type="text"
-              placeholder="e.g. None"
+              :options="['None', 'operator']"
+              :option-groups="destinationGroups"
+              :loading="destinationsLoading"
+              aria-label="Queue timeout outcome"
             />
           </div>
 

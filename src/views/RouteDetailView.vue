@@ -32,7 +32,6 @@ const editCluster = ref('default')
 const editCname = ref('')
 const editDescription = ref('')
 const editActive = ref('YES')
-const editAuth = ref('NO')
 const editDialplan = ref('')
 const editPath1 = ref('None')
 const editPath2 = ref('None')
@@ -119,7 +118,6 @@ function syncEditFromRoute() {
   editCname.value = r.cname ?? ''
   editDescription.value = r.description ?? ''
   editActive.value = r.active ?? 'YES'
-  editAuth.value = r.auth ?? 'NO'
   editDialplan.value = r.dialplan ?? ''
   editPath1.value = r.path1 && String(r.path1).trim() ? r.path1 : 'None'
   editPath2.value = r.path2 && String(r.path2).trim() ? r.path2 : 'None'
@@ -186,7 +184,6 @@ async function saveEdit(e) {
       cname: editCname.value.trim() || null,
       description: editDescription.value.trim() || null,
       active: editActive.value,
-      auth: editAuth.value,
       dialplan: dialplanTrimmed,
       path1: editPath1.value !== 'None' && editPath1.value.trim() ? editPath1.value.trim() : null,
       path2: editPath2.value !== 'None' && editPath2.value.trim() ? editPath2.value.trim() : null,
@@ -311,7 +308,6 @@ const panelTitleTenantSuffix = computed(() => {
               help-pkey="route"
               type="text"
               placeholder="e.g. _XXXXXX"
-              hint="Unique per tenant."
             />
             <FormField
               id="edit-cname"
@@ -337,21 +333,12 @@ const panelTitleTenantSuffix = computed(() => {
               label="Tenant"
               :options="tenantOptionsForSelect"
               :required="true"
-              hint="The tenant this route belongs to."
-            />
-            <FormToggle
-              id="edit-auth"
-              v-model="editAuth"
-              label="Auth (PIN dial)"
-              yes-value="YES"
-              no-value="NO"
             />
             <FormSegmentedPill
               id="edit-strategy"
               v-model="editStrategy"
               label="Strategy"
               :options="['hunt', 'balance']"
-              hint="Ring order: hunt = sequential, balance = round-robin."
             />
           </div>
 
@@ -364,7 +351,6 @@ const panelTitleTenantSuffix = computed(() => {
               type="text"
               placeholder="_XXXXXX"
               :required="true"
-              hint="Required. Example: _XXXXXX for 6-digit extension matching."
             />
           </div>
 

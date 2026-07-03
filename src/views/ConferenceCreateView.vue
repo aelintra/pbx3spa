@@ -200,7 +200,6 @@ async function onSubmit(e) {
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
           :required="true"
-          hint="Unique per tenant. Positive number."
           @blur="pkeyValidation.onBlur"
         />
         <FormField
@@ -230,7 +229,6 @@ async function onSubmit(e) {
           :touched="clusterValidation.touched.value"
           :required="true"
           :loading="tenantsLoading"
-          hint="The tenant this conference belongs to."
           @blur="clusterValidation.onBlur"
         />
         <FormToggle
@@ -239,14 +237,12 @@ async function onSubmit(e) {
           label="Active"
           yes-value="YES"
           no-value="NO"
-          hint="If off, the conference room will not be available."
         />
         <FormSelect
           id="type"
           v-model="type"
           label="Type"
           :options="typeOptions"
-          hint="Conference type: simple or hosted."
         />
         <FormField
           id="pin"
@@ -255,7 +251,6 @@ async function onSubmit(e) {
           type="text"
           inputmode="numeric"
           placeholder="None or numeric PIN"
-          hint="PIN for participants to join (optional)."
         />
         <FormField
           id="adminpin"
@@ -264,7 +259,6 @@ async function onSubmit(e) {
           type="text"
           inputmode="numeric"
           placeholder="None or numeric PIN"
-          hint="PIN for admin options (optional)."
         />
       </div>
 

@@ -308,7 +308,6 @@ const panelTitleTenantSuffix = computed(() => {
               v-model="editDayofweek"
               label="Day of week"
               :options="dayOfWeekOptions"
-              hint="* = every day; mon–sun = weekday"
             />
             <FormToggle
               id="edit-allday"
@@ -316,7 +315,6 @@ const panelTitleTenantSuffix = computed(() => {
               label="All day"
               yes-value="YES"
               no-value="NO"
-              hint="If yes, the rule is active all day; otherwise set start and end time."
             />
             <template v-if="allday === 'NO'">
               <FormField
@@ -325,7 +323,6 @@ const panelTitleTenantSuffix = computed(() => {
                 label="Start time"
                 type="text"
                 placeholder="HH:MM e.g. 09:00"
-                hint="24-hour format HH:MM"
               />
               <FormField
                 id="edit-end"
@@ -333,7 +330,6 @@ const panelTitleTenantSuffix = computed(() => {
                 label="End time"
                 type="text"
                 placeholder="HH:MM e.g. 17:00"
-                hint="24-hour format HH:MM"
               />
             </template>
           </div>
