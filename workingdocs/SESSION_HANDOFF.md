@@ -2,6 +2,20 @@
 
 **AI: read this first.**
 
+**Session end:** When the user says **`session end`**, **`end session`**, or **`update handoff`**, follow **`pbx3/workingdocs/SESSION_END_CHECKLIST.md`** (prepend a new block below; update **`pbx3/workingdocs/TODO.md`** and **`AGENT_HANDOFF.md`** too).
+
+**New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
+
+## Session end 2026-07-02 (evening) — docs, MkDocs map, session-end habit
+
+**On `main`**, no code changes this chat. **Pushed:** SIP/catalog policy, handoff refresh, CoS partial tracking, **`USER_GUIDES_MKDOCS_CONTENT_MAP.md`**, **session-end checklist + Cursor rule**.
+
+**Workingdocs policy:** workingdocs = dev/AI; MkDocs **`pbx3-docs`** = installer/admin how-tos (see content map). Rationalization: session-end habit in place; optional 2–3 h handoff trim later.
+
+**Resume:** Golden QA + deploy **pbx3api** (queue/trunk). New chat: **`New session — read handoff and summarize.`** Close with **`Session end.`**
+
+---
+
 ## Session end 2026-07-02 — panel fixes (**merged to `main`**)
 
 **Merged to `main`** (pbx3, pbx3api, pbx3spa); branch **`panelfixes`** deleted. Demo panel QA — queues (outcome/divert/greetnum), trunks (trimmed Settings/Advanced), routes (auth removed), inbound SWOCLIP retained, custom app **extcode** help, Instance Globals tidy, Network hostname **read-only**, **Site name** on Home.
@@ -64,6 +78,8 @@
 | Task | Read (in order) |
 |------|------------------|
 | Current state / next steps | This file only |
+| **Session end** (user request) | **pbx3/workingdocs/SESSION_END_CHECKLIST.md** |
+| **New session** (user request) | **pbx3/AGENT_HANDOFF.md** § Next agent session notes → **pbx3/TODO.md** → this file (top block only) |
 | New or refactor panel | PANEL_PATTERN.md; optional: LIST_EXPORT_PDF_CSV.md, SINGLE_PANEL_SCREENS.md, PANEL_PATTERN_DEPARTURES.md |
 | Panel conversion / technical debt | AGENT_HANDOFF_TECHNICAL_DEBT.md, PANEL_REFACTOR_STRATEGY.md |
 | Feature (provisioning, DDI, trunk, cert, etc.) | FEATURE_PLANS_INDEX.md → then docs listed there |
