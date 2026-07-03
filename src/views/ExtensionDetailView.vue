@@ -173,14 +173,15 @@ async function fetchCos() {
   try {
     const data = await getApiClient().get(`extensions/${encodeURIComponent(shortuid.value)}/cos`)
     const rules = Array.isArray(data?.rules) ? data.rules : []
-    const openSet = new Set(Array.isArray(data?.open) ? data.open : [])
-    const closedSet = new Set(Array.isArray(data?.closed) ? data.closed : [])
+    const openSet = new Set((Array.isArray(data?.open) ? data.open : []).map(String))
+    const closedSet = new Set((Array.isArray(data?.closed) ? data.closed : []).map(String))
     const openMap = {}
     const closedMap = {}
     for (const r of rules) {
-      if (!r?.pkey) continue
-      openMap[r.pkey] = openSet.has(r.pkey) ? 'YES' : 'NO'
-      closedMap[r.pkey] = closedSet.has(r.pkey) ? 'YES' : 'NO'
+      const key = r?.pkey != null && String(r.pkey).trim() !== '' ? String(r.pkey) : ''
+      if (!key) continue
+      openMap[key] = openSet.has(key) ? 'YES' : 'NO'
+      closedMap[key] = closedSet.has(key) ? 'YES' : 'NO'
     }
     cosRules.value = rules
     openCos.value = openMap
