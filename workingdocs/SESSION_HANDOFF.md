@@ -2,9 +2,9 @@
 
 **AI: read this first.**
 
-## Session end 2026-07-02 — `panelfixes` (panels + globals + help)
+## Session end 2026-07-02 — panel fixes (**merged to `main`**)
 
-**Branch `panelfixes`** (pbx3, pbx3api, pbx3spa): Demo panel QA — queues (outcome/divert/greetnum), trunks (trimmed Settings/Advanced), routes (auth removed), inbound SWOCLIP retained, custom app **extcode** help, Instance Globals tidy, Network hostname **read-only**, **Site name** on Home.
+**Merged to `main`** (pbx3, pbx3api, pbx3spa); branch **`panelfixes`** deleted. Demo panel QA — queues (outcome/divert/greetnum), trunks (trimmed Settings/Advanced), routes (auth removed), inbound SWOCLIP retained, custom app **extcode** help, Instance Globals tidy, Network hostname **read-only**, **Site name** on Home.
 
 **Dev against golden:** `VITE_API_PROXY_TARGET=https://08jzwn.pbx3.com:44300`; `npm run dev`. Home **Site name** reads **`GET sysglobals.sitename`** (no golden API deploy required for that UX).
 
@@ -52,7 +52,7 @@
 
 ## Quick start (next agent)
 
-1. **Repos / branch:** **`helptext`** for Phase 4 field help; **`main`** for fleet/TLS baseline. **`pbx3-master`** is **not** a git repo (four nested repos). Commit inside the repo you changed.
+1. **Repos / branch:** **`main`** in all repos (`helptext`, `panelfixes`, `directory` merged and deleted). **`pbx3-master`** is **not** a git repo (four nested repos). Commit inside the repo you changed.
 2. **Directory work:** Read **`pbx3/pbx3-directory/docs/PLANNING_HANDOFF.md`** → **CENTRAL_ADMIN_DIRECTION.md** → v0 schema under **`pbx3/pbx3-directory/schema/`**.
 3. **Panel / UI work:** **PANEL_PATTERN.md**; **PROJECT_PLAN.md** § Current state; **FEATURE_PLANS_INDEX.md**.
 4. **TLS / certs (maintenance only):** **pbx3/workingdocs/TLS_AND_CERTIFICATES.md** — new tenant = DNS → **Sync**; do not re-run **Get certificate** if LE already configured.

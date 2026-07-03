@@ -10,7 +10,8 @@
 
 **Status summary**
 
-- **Done (from candidate list):** sarkconference, sarkgreeting, **sarkcert** (Certificates), **sarkcos** (Class of Service), **sarktimer** (Day timers), **sarkholiday** (Holiday timers), **sarknetwork** (IP Settings). All have API + SPA.
+- **Done (from candidate list):** sarkconference, sarkgreeting, **sarkcert** (Certificates), **sarktimer** (Day timers), **sarkholiday** (Holiday timers), **sarknetwork** (IP Settings). All have API + SPA.
+- **Partial:** **sarkcos** (Class of Service) — **`cosrules`** CRUD only; extension COS assignment deferred (see §5, §6).
 - **Left to do (candidates):** sarkrecordings, sarkreport, sark3pcerts (3rd-party/provisioning), sarkwallboard, sarkshell, sarkldap, sarkpcap, sarkfreset. See §6 for details and §8 for next-step workflow.
 
 ---
@@ -135,9 +136,9 @@ From `php/` in sail65 (sail-6/opt/sark/php):
 | sarkbackup     | Backup                   | backups            | ✓ |
 | sarkcluster    | Tenants                  | tenants            | ✓ |
 | sarkconference | Conferences (list/create/detail) | conferences (meetme) | ✓ Done  |
-| sarkcos        | Class of Service (list/create/detail) | cosrules, cosopens, coscloses | ✓ **Done** |
+| sarkcos        | Class of Service (list/create/detail) | cosrules, cosopens, coscloses | ⚠️ **Partial** — rules CRUD only; no extension COS UI (see §6) |
 | sarkdevice     | Devices                  | devices            | ✓ |
-| sarkextension  | Extensions               | extensions         | ✓ |
+| sarkextension  | Extensions               | extensions         | ✓ (COS assignment on edit: **not ported** — was on legacy extension panel) |
 | sarkglobal     | System Globals           | sysglobals         | ✓ |
 | sarkgreeting   | Greetings (list/create/detail) | greetingrecords    | ✓ Done  |
 | sarkholiday    | Holiday timers (list/create/detail) | holidaytimers      | ✓ **Done** |
@@ -159,6 +160,14 @@ From `php/` in sail65 (sail-6/opt/sark/php):
 
 These sail65 panels do **not** currently have a full SPA + API CRUD (or single-screen) equivalent in pbx3. They are candidates for new panels.
 
+### Partial — started but not complete
+
+- **sarkcos** – **Partial.** **`cosrules`** list/create/detail (`/cosrules`) is done. **Still missing (legacy split across sarkcos + sarkextension):**
+  - **Extension edit:** daytime / nighttime COS matrix — one toggle per CoS rule (`ipphonecosopen` / `ipphonecosclosed`). Legacy: **`sarkextension/view.php`** sections **cosday** / **cosnight** with **`opencos`** / **`closedcos`**; save via **`doCos()`**.
+  - **CoS rule defaults:** **`defaultopen`** / **`defaultclosed`** editable on create/edit (SPA shows read-only today); used when seeding new extensions via **`ExtensionController::create_default_cos_instances()`**.
+  - **Instance master switch:** **`globals.cosstart`** on Instance Globals (schema exists; SPA not wired).
+  - **API:** **`cosopens`** / **`coscloses`** endpoints exist; no SPA consumer except create-time seeding. See **`pbx3api/workingdocs/COS_AUDIT_PROTOTYPE.md`** §5.2; **`pbx3/workingdocs/TODO.md`**.
+
 **Higher value / common features**
 
 - ~~**sarkconference**~~ – **Done.** Conference rooms (meetme): list/create/detail, tenant-scoped; API + SPA implemented.
@@ -167,7 +176,6 @@ These sail65 panels do **not** currently have a full SPA + API CRUD (or single-s
 
 **CoS / Timers; Greetings done**
 
-- ~~**sarkcos**~~ – **Done.** Class of Service: cosrules + cosopens + coscloses; API + SPA list/create/detail.
 - ~~**sarktimer**~~ – **Done.** Day timers: API daytimers + SPA list/create/detail.
 - ~~**sarkholiday**~~ – **Done.** Holiday timers: API holidaytimers + SPA list/create/detail (Start/End date+time, cluster, route, etc.).
 - ~~**sarkgreeting**~~ – **Done.** Greetings panel: list/create/detail using greetingrecords API; tenant-scoped, wav/mp3 upload, download, replace, delete.
@@ -204,7 +212,9 @@ For each chosen sail65 panel:
 
 ## 8. Next step
 
-**Done so far (from candidate list):** Conferences, Greetings, **Certificates** (sarkcert), **Class of Service** (sarkcos), **Day timers** (sarktimer), **Holiday timers** (sarkholiday), **Network** (sarknetwork → IP Settings). All have API + SPA.
+**Done so far (from candidate list):** Conferences, Greetings, **Certificates** (sarkcert), **Day timers** (sarktimer), **Holiday timers** (sarkholiday), **Network** (sarknetwork → IP Settings). All have API + SPA.
+
+**Partial:** **Class of Service** (sarkcos) — **`cosrules`** CRUD; finish extension COS assignment + rule defaults (see §6).
 
 **Remaining candidates to port** (pick next): Recordings, 3rd-party certs (sark3pcerts), Wallboard, Shell, LDAP, Packet capture, Factory reset. For each:
 
