@@ -8,6 +8,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
@@ -28,6 +29,8 @@ const editCluster = ref('default')
 const editCname = ref('')
 const editDescription = ref('')
 const editDialplan = ref('')
+const editDefaultopen = ref('NO')
+const editDefaultclosed = ref('NO')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -80,6 +83,8 @@ async function fetchCosrule() {
     editCname.value = c?.cname ?? ''
     editDescription.value = c?.description ?? ''
     editDialplan.value = c?.dialplan ?? ''
+    editDefaultopen.value = c?.defaultopen === 'YES' ? 'YES' : 'NO'
+    editDefaultclosed.value = c?.defaultclosed === 'YES' ? 'YES' : 'NO'
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load Class of Service rule')
     cosrule.value = null
@@ -124,7 +129,9 @@ async function saveEdit(e) {
       cluster: editCluster.value.trim(),
       cname: editCname.value.trim() === '' ? null : editCname.value.trim(),
       description: editDescription.value.trim() || null,
-      dialplan: editDialplan.value.trim()
+      dialplan: editDialplan.value.trim(),
+      defaultopen: editDefaultopen.value,
+      defaultclosed: editDefaultclosed.value
     }
     await getApiClient().put(`cosrules/${encodeURIComponent(shortuid.value)}`, body)
     await fetchCosrule()
@@ -285,17 +292,21 @@ const panelTitleTenantSuffix = computed(() => {
               placeholder="Dialplan fragment"
               :required="true"
             />
-            <FormReadonly
+            <FormToggle
               id="edit-defaultopen"
+              v-model="editDefaultopen"
               label="Default open"
-              :value="cosrule.defaultopen ?? '—'"
-              class="readonly-identity"
+              help-pkey="cosopen"
+              yes-value="YES"
+              no-value="NO"
             />
-            <FormReadonly
+            <FormToggle
               id="edit-defaultclosed"
+              v-model="editDefaultclosed"
               label="Default closed"
-              :value="cosrule.defaultclosed ?? '—'"
-              class="readonly-identity"
+              help-pkey="cosclosed"
+              yes-value="YES"
+              no-value="NO"
             />
           </div>
 

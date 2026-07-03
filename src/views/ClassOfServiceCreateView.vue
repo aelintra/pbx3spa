@@ -19,6 +19,8 @@ const { ensureFetched, applySchemaDefaults } = useSchema()
 const pkey = ref('')
 const cluster = ref('default')
 const active = ref('YES')
+const defaultopen = ref('NO')
+const defaultclosed = ref('NO')
 const cname = ref('')
 const description = ref('')
 const dialplan = ref('')
@@ -65,6 +67,8 @@ onMounted(async () => {
   applySchemaDefaults('cosrules', {
     cluster,
     active,
+    defaultopen,
+    defaultclosed,
     cname,
     description,
     dialplan
@@ -76,6 +80,8 @@ function resetForm() {
   pkey.value = ''
   cluster.value = 'default'
   active.value = 'YES'
+  defaultopen.value = 'NO'
+  defaultclosed.value = 'NO'
   cname.value = ''
   description.value = ''
   dialplan.value = ''
@@ -122,6 +128,8 @@ async function onSubmit(e) {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
       active: active.value,
+      defaultopen: defaultopen.value,
+      defaultclosed: defaultclosed.value,
       cname: cname.value.trim() || null,
       description: description.value.trim() || null,
       dialplan: dialplan.value.trim()
@@ -235,6 +243,22 @@ async function onSubmit(e) {
           type="text"
           placeholder="Dialplan fragment (required)"
           :required="true"
+        />
+        <FormToggle
+          id="defaultopen"
+          v-model="defaultopen"
+          label="Default open"
+          help-pkey="cosopen"
+          yes-value="YES"
+          no-value="NO"
+        />
+        <FormToggle
+          id="defaultclosed"
+          v-model="defaultclosed"
+          label="Default closed"
+          help-pkey="cosclosed"
+          yes-value="YES"
+          no-value="NO"
         />
       </div>
 

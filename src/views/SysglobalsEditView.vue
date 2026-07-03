@@ -11,6 +11,7 @@ import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const YESNO_OPTIONS = ['YES', 'NO']
+const ONOFF_OPTIONS = ['ON', 'OFF']
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -43,6 +44,7 @@ const editSipflood = ref('')
 const editSysop = ref('')
 const editVoipmax = ref('')
 const editFqdninspect = ref('NO')
+const editCosstart = ref('ON')
 
 const globalsHeading = computed(() => {
   const raw = sysglobal.value?.fqdn
@@ -80,6 +82,11 @@ function syncEditFromSysglobal() {
   const fi = g.fqdninspect
   editFqdninspect.value =
     fi === true || fi === 1 || fi === 'YES' || fi === 'yes' ? 'YES' : 'NO'
+  const cs = g.cosstart
+  editCosstart.value =
+    cs === false || cs === 0 || cs === 'OFF' || cs === 'off' || cs === 'NO' || cs === 'no'
+      ? 'OFF'
+      : 'ON'
 }
 
 async function fetchSysglobal() {
@@ -181,6 +188,7 @@ async function saveEdit(e) {
     body.voipmax =
       editVoipmax.value !== '' && editVoipmax.value != null ? parseInt(editVoipmax.value, 10) : null
     body.fqdninspect = editFqdninspect.value === 'YES' ? 'YES' : 'NO'
+    body.cosstart = editCosstart.value === 'OFF' ? 'OFF' : 'ON'
 
     await getApiClient().put('sysglobals', body)
     toast.show('Instance globals saved')
@@ -343,6 +351,13 @@ onMounted(fetchSysglobal)
           v-model="editSendedomain"
           label="Send Domain"
           :options="YESNO_OPTIONS"
+        />
+        <FormSegmentedPill
+          id="edit-cosstart"
+          v-model="editCosstart"
+          label="Class of Service"
+          help-pkey="cosstart"
+          :options="ONOFF_OPTIONS"
         />
         <FormField id="edit-language" v-model="editLanguage" label="Language" />
         <FormField

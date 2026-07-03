@@ -11,6 +11,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
+import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
@@ -63,6 +64,11 @@ const runtimeSaving = ref(false)
 const confirmRegenerateSipOpen = ref(false)
 const regeneratingSip = ref(false)
 const regenerateSipError = ref('')
+const cosRules = ref([])
+const openCos = ref({})
+const closedCos = ref({})
+const cosLoaded = ref(false)
+const cosError = ref('')
 
 const shortuid = computed(() => route.params.shortuid)
 
@@ -160,15 +166,55 @@ async function fetchRuntime() {
   }
 }
 
+async function fetchCos() {
+  if (!shortuid.value) return
+  cosError.value = ''
+  cosLoaded.value = false
+  try {
+    const data = await getApiClient().get(`extensions/${encodeURIComponent(shortuid.value)}/cos`)
+    const rules = Array.isArray(data?.rules) ? data.rules : []
+    const openSet = new Set(Array.isArray(data?.open) ? data.open : [])
+    const closedSet = new Set(Array.isArray(data?.closed) ? data.closed : [])
+    const openMap = {}
+    const closedMap = {}
+    for (const r of rules) {
+      if (!r?.pkey) continue
+      openMap[r.pkey] = openSet.has(r.pkey) ? 'YES' : 'NO'
+      closedMap[r.pkey] = closedSet.has(r.pkey) ? 'YES' : 'NO'
+    }
+    cosRules.value = rules
+    openCos.value = openMap
+    closedCos.value = closedMap
+    cosLoaded.value = true
+  } catch (err) {
+    cosError.value = firstErrorMessage(err, 'Failed to load Class of Service')
+    cosRules.value = []
+    openCos.value = {}
+    closedCos.value = {}
+    cosLoaded.value = false
+  }
+}
+
+function ruleLabel(rule) {
+  const name = rule?.cname || rule?.description
+  if (name && String(name).trim()) return `${rule.pkey} — ${String(name).trim()}`
+  return rule?.pkey ?? ''
+}
+
 onMounted(async () => {
   await ensureFetched()
   await fetchTenants()
   await fetchExtension()
-  if (extension.value) await fetchRuntime()
+  if (extension.value) {
+    await Promise.all([fetchRuntime(), fetchCos()])
+  }
 })
 watch(shortuid, () => {
   fetchExtension().then(() => {
-    if (extension.value) fetchRuntime()
+    if (extension.value) {
+      fetchRuntime()
+      fetchCos()
+    }
   })
 })
 
@@ -220,7 +266,20 @@ async function saveEdit(e) {
     }
     if (body.callmax !== undefined && Number.isNaN(body.callmax)) delete body.callmax
     await getApiClient().put(`extensions/${encodeURIComponent(shortuid.value)}`, body)
+    if (cosLoaded.value) {
+      const open = Object.entries(openCos.value)
+        .filter(([, v]) => v === 'YES')
+        .map(([k]) => k)
+      const closed = Object.entries(closedCos.value)
+        .filter(([, v]) => v === 'YES')
+        .map(([k]) => k)
+      await getApiClient().put(`extensions/${encodeURIComponent(shortuid.value)}/cos`, {
+        open,
+        closed
+      })
+    }
     await fetchExtension()
+    if (cosLoaded.value) await fetchCos()
     toast.show(`Extension saved`)
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update extension')
@@ -624,6 +683,48 @@ const panelTitleTenantSuffix = computed(() => {
             />
           </div>
 
+          <h2 class="detail-heading detail-heading-with-help">
+            <span>Day time Class of Service</span>
+            <FieldHelpIcon pkey="cosday" />
+          </h2>
+          <p v-if="cosError" class="error">{{ cosError }}</p>
+          <p v-else-if="!cosLoaded" class="muted">Loading Class of Service…</p>
+          <p v-else-if="cosRules.length === 0" class="muted">
+            No Class of Service rules for this tenant.
+          </p>
+          <div v-else class="form-fields cos-rules">
+            <FormToggle
+              v-for="rule in cosRules"
+              :id="`cos-open-${rule.pkey}`"
+              :key="`open-${rule.pkey}`"
+              v-model="openCos[rule.pkey]"
+              :label="ruleLabel(rule)"
+              yes-value="YES"
+              no-value="NO"
+            />
+          </div>
+
+          <h2 class="detail-heading detail-heading-with-help">
+            <span>Night time Class of Service</span>
+            <FieldHelpIcon pkey="cosnight" />
+          </h2>
+          <p v-if="cosError" class="error">{{ cosError }}</p>
+          <p v-else-if="!cosLoaded" class="muted">Loading Class of Service…</p>
+          <p v-else-if="cosRules.length === 0" class="muted">
+            No Class of Service rules for this tenant.
+          </p>
+          <div v-else class="form-fields cos-rules">
+            <FormToggle
+              v-for="rule in cosRules"
+              :id="`cos-closed-${rule.pkey}`"
+              :key="`closed-${rule.pkey}`"
+              v-model="closedCos[rule.pkey]"
+              :label="ruleLabel(rule)"
+              yes-value="YES"
+              no-value="NO"
+            />
+          </div>
+
           <div class="edit-actions">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
             <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
@@ -819,6 +920,14 @@ const panelTitleTenantSuffix = computed(() => {
 }
 .detail-heading:first-of-type {
   margin-top: 0;
+}
+.detail-heading-with-help {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.cos-rules {
+  margin-bottom: 0.25rem;
 }
 .form-fields {
   display: flex;
