@@ -4,7 +4,7 @@
 
 **Audience:** Workingdocs are **for the AI**. Optimize for agent consumption: one entry point per repo, task-triggered read order, dense structure (tables/bullets over long prose), and no conflicting “current state” across files.
 
-**Scope:** All `workingdocs/` folders in the three repos. Does not cover `pbx3api/docs/` (API reference) or `pbx3/docs/` (MkDocs).
+**Scope:** All `workingdocs/` folders in the three repos. Does not cover `pbx3api/docs/` (API reference) or published **user guides** — see **`USER_GUIDES_MKDOCS_CONTENT_MAP.md`** (MkDocs / `pbx3-docs`, installer + admin audience only).
 
 **Status:** Draft for review.
 
