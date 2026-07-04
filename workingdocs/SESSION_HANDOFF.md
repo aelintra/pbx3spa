@@ -6,6 +6,18 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-04 — golden QA merged (`goldenQA` → `main`)
+
+**Merged to `main`** in pbx3, pbx3api, pbx3spa, pbx3cagi; branch **`goldenQA`** deleted. Golden **08jzwn** QA: CoS assignment, extension calling, CFIM (shortuid AstDB), runtime save/display (AMI DBGet fix), GenAst, **pbx3cagi** local CFIM divert (no hold clip). **pbx3cagi 1.0.0-2** ships amd64 + arm64 binaries.
+
+**Dev against golden:** `VITE_API_PROXY_TARGET=https://08jzwn.pbx3.com:44300`; `npm run dev`. Deploy **`main`** on node (not `goldenQA`).
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — Runtime live SIP/latency and SWOCLIP create/edit still open for re-examine.
+
+**Resume:** Phase S8 fleet lifecycle, or operator pass on Extension Runtime + inbound SWOCLIP create panel parity.
+
+---
+
 ## Session end 2026-07-02 (evening) — docs, MkDocs map, session-end habit
 
 **On `main`**, no code changes this chat. **Pushed:** SIP/catalog policy, handoff refresh, CoS partial tracking, **`USER_GUIDES_MKDOCS_CONTENT_MAP.md`**, **session-end checklist + Cursor rule**.
