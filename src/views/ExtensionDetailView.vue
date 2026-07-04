@@ -196,10 +196,13 @@ async function fetchCos() {
   }
 }
 
-function ruleLabel(rule) {
+function ruleKey(rule) {
+  return rule?.pkey != null ? String(rule.pkey) : ''
+}
+
+function ruleDescription(rule) {
   const name = rule?.cname || rule?.description
-  if (name && String(name).trim()) return `${rule.pkey} — ${String(name).trim()}`
-  return rule?.pkey ?? ''
+  return name && String(name).trim() ? String(name).trim() : ''
 }
 
 onMounted(async () => {
@@ -699,7 +702,8 @@ const panelTitleTenantSuffix = computed(() => {
               :id="`cos-open-${rule.pkey}`"
               :key="`open-${rule.pkey}`"
               v-model="openCos[rule.pkey]"
-              :label="ruleLabel(rule)"
+              :label="ruleKey(rule)"
+              :hint="ruleDescription(rule)"
               yes-value="YES"
               no-value="NO"
             />
@@ -720,7 +724,8 @@ const panelTitleTenantSuffix = computed(() => {
               :id="`cos-closed-${rule.pkey}`"
               :key="`closed-${rule.pkey}`"
               v-model="closedCos[rule.pkey]"
-              :label="ruleLabel(rule)"
+              :label="ruleKey(rule)"
+              :hint="ruleDescription(rule)"
               yes-value="YES"
               no-value="NO"
             />
