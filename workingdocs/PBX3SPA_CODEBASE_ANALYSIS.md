@@ -212,13 +212,25 @@ Work through in order unless you skip an entire phase. **Phase F** is **on hold*
 2. If revisiting: prefer incremental **`// @ts-check`** or **`vue-tsc`** on a **small** subset (e.g. **`api/client.js`**) rather than a full migration.
 3. Until then, occasional **JSDoc** on public helpers is enough.
 
-### Phase H — Route lazy loading — **deferred**
+### Phase H — Route lazy loading — **deferred (after functionality complete)**
 
-**Current decision:** Keep **eager** route imports until **cloud** (or other) deployment and **profiling** show that a **~650 kB** (gz **~150 kB**) initial JS payload is a **real problem**. Lazy loading adds **complexity** (chunk boundaries, loading states); it will be **obvious** when operators or metrics need it.
+**Current decision:** Keep **eager** route imports until **S8 / R1 / permissions** and other core panels are done. SPA **runs fine** on golden/LAN. Lazy loading adds **complexity** (chunk boundaries, loading states); adopt when **functionality** is in place and/or **GitHub Pages / cloud** deploy needs a smaller initial payload.
 
-1. When triggered: in **`src/router/index.js`**, replace static component imports with **`() => import('@/views/...vue')`** for routes (or heaviest views first).
+**Measured (2026-07):** `npm run build` → single JS chunk ~**743 kB** min (~**183 kB** gzip); Vite warns >500 kB.
+
+1. When triggered: in **`src/router/index.js`**, replace static component imports with **`() => import('@/views/...vue')`** for routes (or heaviest views first — e.g. **BackupView**, **FirewallView**).
 2. Run **`npm run build`**, confirm **multiple chunks** and that every route still loads.
 3. **Commit** e.g. `perf: lazy-load route components`.
+
+### Phase H2 — Shared list/detail extraction — **deferred (same gate as Phase H)**
+
+**Problem:** **61** views, **~20** shared components; many list/detail files are **600–1,600 lines** with duplicated CRUD/table/form patterns.
+
+**Current decision:** Do **not** refactor existing god-views wholesale. **When adding new panels** (especially **R1 recordings**), prefer extracting shared pieces over another copy-paste monolith.
+
+1. Identify repeated patterns (list + filters, detail + save/delete, **`PanelBackLink`**, schema-driven forms via **`useSchema`**).
+2. Extract incrementally when touching a large view — not a big-bang rewrite.
+3. **Commit** per extraction; keep behaviour unchanged.
 
 ### Phase I — Confirm dialog consistency — **applied**
 

@@ -32,7 +32,12 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **To-do (pbx3api – Middleware on remote):** Investigate why `app/Http/Middleware/ValidateClusterAccess.php` does not appear on the remote test instance after pull. (Unclear; deployment path / branch / Sanctum history to be checked.)
 
-**To-do (SPA – bundle size / perf, watch):** Acceptable on **LAN**; revisit when **cloud** testing starts (network latency). Track production build sizes; if needed add **lazy-loaded routes** and bundle analysis. See **SESSION_HANDOFF** § Other to-dos.
+**To-do (SPA – size / maintainability, defer until functionality complete):** Runs fine on **LAN/golden** today (~**743 kB** JS / ~**183 kB** gzip, single chunk). **Do not divert effort** until core product work is done (**S8**, **R1** recordings, permissions, etc.). Then, in order:
+
+1. **Route lazy loading** — replace eager imports in **`src/router/index.js`** with **`() => import('@/views/…vue')`** per route (or heaviest views first). Quick bundle win before **GitHub Pages / cloud** deploy. Detail: **PBX3SPA_CODEBASE_ANALYSIS.md** § Phase H.
+2. **Shared list/detail extraction** — many views are **600–1,600 lines** (`BackupView`, `ExtensionDetailView`, …); only **~20** shared components. When adding panels (e.g. **R1 recordings**), extract reusable list/detail patterns instead of copying another monolith. Detail: **PBX3SPA_CODEBASE_ANALYSIS.md** § Phase H2.
+
+See **SESSION_HANDOFF** § Other to-dos for earlier “watch in cloud” note.
 
 **Inline edit (pattern in place):** List views can support inline edits for fields that users often change without opening detail (e.g. **Active** YES/NO). Use **FormToggle** or **FormSelect** with **hideLabel** in the table cell; on change call the update API immediately; show toast on success. Pattern documented in PANEL_PATTERN.md § "Inline edits in list views"; it works. It was tried on the Queues list and reverted for now—we may revisit the look/UX when we add it again. Other lists (Trunks, Routes, IVRs, Inbound routes, etc.) can add the same when desired.
 
