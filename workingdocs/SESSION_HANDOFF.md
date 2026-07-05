@@ -6,6 +6,18 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-04 — Phase 0 golden sign-off
+
+**On `main`** (all repos). **pbx3cagi Phase 0:** golden **08jzwn** — `make test` PASS with synthetic seed and live **`/opt/pbx3/db/sqlite.rdonly.db`**. Gate cleared; struct refactor still deferred until **S8 + R1**.
+
+**Dev against golden:** `VITE_API_PROXY_TARGET=https://08jzwn.pbx3.com:44300`; `npm run dev`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — **S8** fleet first; **R1** recordings panel/API next.
+
+**Resume:** **S8.1–S8.4** fleet checklist + IAM hardening; then **R1** (`sarkrecordings` port + API).
+
+---
+
 ## Session end 2026-07-04 — Phase 0 harness + S8/R1 priority
 
 **On `main`** (all repos). **pbx3cagi:** Phase 0 offline AGI test harness (synthetic fixture, CFIM scenarios, **`make test`**, **`TEST_RECIPE.md`**). **Planning:** product priority **S8 → R1 recordings → S7 S3**; pbx3cagi struct refactor deferred. **`phase0`** branch deleted.
