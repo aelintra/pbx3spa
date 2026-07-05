@@ -6,6 +6,18 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-04 — Phase 0 harness + S8/R1 priority
+
+**On `main`** (all repos). **pbx3cagi:** Phase 0 offline AGI test harness (synthetic fixture, CFIM scenarios, **`make test`**, **`TEST_RECIPE.md`**). **Planning:** product priority **S8 → R1 recordings → S7 S3**; pbx3cagi struct refactor deferred. **`phase0`** branch deleted.
+
+**Dev against golden:** `VITE_API_PROXY_TARGET=https://08jzwn.pbx3.com:44300`; `npm run dev`. On node: `cd pbx3cagi/pbx3cagi-1.0.0/csource && make test` per **`pbx3cagi/workingdocs/TEST_RECIPE.md`**.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — S8 fleet first; **R1** recordings panel/API next (no SPA recordings panel yet).
+
+**Resume:** **S8.1–S8.4** fleet checklist + IAM hardening; user golden harness testing in progress; then **R1** (`sarkrecordings` port + API).
+
+---
+
 ## Session end 2026-07-04 — golden QA merged (`goldenQA` → `main`)
 
 **Merged to `main`** in pbx3, pbx3api, pbx3spa, pbx3cagi; branch **`goldenQA`** deleted. Golden **08jzwn** QA: CoS assignment, extension calling, CFIM (shortuid AstDB), runtime save/display (AMI DBGet fix), GenAst, **pbx3cagi** local CFIM divert (no hold clip). **pbx3cagi 1.0.0-2** ships amd64 + arm64 binaries.
