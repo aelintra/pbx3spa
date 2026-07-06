@@ -6,6 +6,18 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-06 — snapshots backlog + backup retention
+
+**On `main`.** Docs only: snapshots UX / commit hook / FIFO backlog (**S9.5–S9.7**, **`ea34c69`**). Operator Q&A: **local+S3** on **`/backup`** is normal — local eviction is **9-file FIFO** (on create/cron), not time-based; S3 holds **30d**.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` at login, or `VITE_API_PROXY_TARGET=https://08jzwn.pbx3.com:44300` + `npm run dev`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`**.
+
+**Resume:** **S8.5–S8.6** tenant migration; then **R1** recordings.
+
+---
+
 ## Session end 2026-07-06 — S8 rebuild drill complete
 
 **On `main`.** Second full fleet rebuild validated: lab **`i-09b5e1853b40f10db`** → **`pbx3 0.0.3-21`** → S3 restore → onboard → **`pbx3:fleet-preflight`** → SPA (lab API URL at login). Lab terminated; golden re-onboarded. Runbook Phase 1 hardened (**`15c5e9b`**). DNS/LE skipped by design.
