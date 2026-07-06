@@ -6,6 +6,18 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-06 — S8 rebuild drill complete
+
+**On `main`.** Second full fleet rebuild validated: lab **`i-09b5e1853b40f10db`** → **`pbx3 0.0.3-21`** → S3 restore → onboard → **`pbx3:fleet-preflight`** → SPA (lab API URL at login). Lab terminated; golden re-onboarded. Runbook Phase 1 hardened (**`15c5e9b`**). DNS/LE skipped by design.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` at login, or `VITE_API_PROXY_TARGET=https://08jzwn.pbx3.com:44300` + `npm run dev`. Home IPs: **System info → Network** (not page title).
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`**.
+
+**Resume:** **S8.5–S8.6** tenant migration; then **R1** recordings.
+
+---
+
 ## Session end 2026-07-06 — S8 rebuild shipped; drill paused
 
 **Merged to `main`:** **S8.1–S8.4** fleet rebuild tooling (pbx3 + pbx3api); **`s8build`** deleted. **`pbx3 0.0.3-21`** includes restore + hostname sync scripts. First lab rebuild validated; lab EC2 terminated; **second drill** not started — launch new instance next.
