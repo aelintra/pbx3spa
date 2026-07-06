@@ -17,7 +17,81 @@
 
 ---
 
-## 2. Trunk allocation and tenant portability
+## 2. Ownership decision (consensus, 2026-07)
+
+**Question:** In a cloud multi-tenant PBX, who owns outbound SIP trunks — the host, the tenant, or both?
+
+**Decision:** Split **pipes** from **policy**.
+
+| Layer | Owner | Travels with tenant export? |
+|-------|--------|----------------------------|
+| **Physical trunks** (carrier creds, registration, channels, failover) | **Host / instance** (commercial relationship may be platform-level) | **No** |
+| **Outbound routing policy** (dial plans, CoS, CLID, LCR, account codes) | **Tenant** | **Yes** (`route` and related tenant tables) |
+| **Indirection** (virtual trunk / trunk group → real trunk on *this* node) | **Host maps; tenant references** | **Names/KSUIDs yes; map is per-instance** |
+
+This matches how most hosted PBX providers operate and aligns with PBX3’s **federated, migration-first** design (see **`TENANT_MIGRATION_RUNBOOK.md`**, **`tenant:export`** — trunks excluded from mini-DB).
+
+### Options considered (external review, 2026-07)
+
+| Model | Fit for PBX3 fleet | Notes |
+|-------|-------------------|--------|
+| **Host owns trunks** | **Default — adopt** | One carrier account serves many tenants; credentials stay on the node; central fraud/failover; simplest tenant move *once routes use portable references*. |
+| **Tenant owns trunks** | **Reject as default** | BYOC-friendly for enterprise single-box PBX; poor at fleet scale (credential sprawl, registrations, support, migration friction). |
+| **Hybrid (host or tenant trunk owner)** | **Later phase** | Same routing model; add `owner = HOST \| TENANT` on trunk or trunk-group rows when BYOC is a product requirement. Not needed to prove S8 tenant move. |
+
+### Platform vs instance
+
+```
+Platform (catalog, S3, future central admin)
+  └── may document / assign commercial carrier relationships
+
+Instance (08jzwn, bzy54n, …)
+  └── real Asterisk trunks + PJSIP registration on THIS box
+
+Tenant
+  └── policy only; moves as mini-DB
+```
+
+Trunks are **instance-local telephony objects** even when the MSP buys capacity centrally. The catalog does not carry live SIP signaling (Rule 1: runtime does not depend on S3). Tenant move still requires **trunks (or maps) on the destination node**.
+
+### Virtual trunks and trunk groups
+
+**Virtual trunk** — a stable, human-facing slot tenants and routes reference, e.g. **Primary**, **Secondary**, **International**, **Failover**. Same four names on every node.
+
+**Trunk group** — optional grouping layer (e.g. “US host carrier”, “EU host carrier”, or a tenant BYOC group) that resolves to one or more physical trunks. Routes can point at a **virtual trunk** or **trunk group**; the admin maintains a **per-instance map** from that abstraction to real `trunks` rows.
+
+```text
+Tenant route.path1  →  "Primary" (virtual)
+                           │
+              per-instance map (admin, not in tenant export)
+                           ▼
+                    trunks.pkey = ael3  →  Carrier
+```
+
+On migration: tenant zip unchanged; operator on destination sets **Primary → local trunk X** (and Secondary, etc.), then Commit. No rewrite of dial-plan rows.
+
+**Why not route → real trunk pkey directly?** Carrier-chosen labels (`ael3`, site codes) **collide across nodes** and expose instance-specific names in portable tenant data. Virtual names are the portable contract.
+
+### First cut vs target (why migration feels manual today)
+
+| | **Target (this doc)** | **First cut (running system)** |
+|--|----------------------|--------------------------------|
+| Trunks table | Instance SQL | Instance SQL (declared); may still appear tenant-adjacent in legacy DBs |
+| Route `path1`…`path4` | Virtual trunk or logical KSUID | **Real trunk pkey** from default-tenant dropdown |
+| Tenant export | No trunks | No trunks (**S8.6**) |
+| Land on new node | Map four virtual names | **Provision trunks whose pkeys match routes**, or hand-edit routes |
+
+The policy direction is settled; the **gap is implementation**. First S8 tenant moves may require matching trunk **pkeys** on the destination — expected until the virtual-trunk mapping milestone ships.
+
+### Roadmap order
+
+1. **Now (S8):** Trunks out of tenant export; operator provisions/maps trunks on destination before Commit.
+2. **Next trunk milestone:** Virtual trunk table + per-instance (or per-tenant) map; routes store portable references.
+3. **Later (MSP / BYOC):** Trunk groups with `owner = HOST \| TENANT`; plug tenant-owned carriers into the same route abstraction.
+
+---
+
+## 3. Trunk allocation and tenant portability
 
 **Driver:** The PBX is built to support **easy, quick movement of a tenant from one PBX backend instance to another.** A major gotcha in migration is **trunk re-allocation**: on the new instance, the tenant’s outbound routes must use that instance’s real trunks, not the old one’s.
 
@@ -33,7 +107,7 @@
 
 ---
 
-## 3. Alternatives considered
+## 4. Alternatives considered
 
 All of the following preserve **tenant portability** (tenant data is instance-agnostic; only the mapping layer is per-instance). The choice was made for **simplicity for users**:
 
@@ -48,7 +122,7 @@ We adopt **standard virtual trunk names** as the user-facing model. Under the ho
 
 ---
 
-## 4. First cut (initial behaviour)
+## 5. First cut (initial behaviour)
 
 **Trunk tenant (cluster):** For now, all trunks are treated as belonging to the **default** tenant. New trunks are forced to `cluster = 'default'`; we may open this up later (e.g. allow assigning trunks to other tenants or to instance-only). This keeps ownership simple while the instance owns the trunks table.
 
@@ -58,7 +132,7 @@ We adopt **standard virtual trunk names** as the user-facing model. Under the ho
 
 ---
 
-## 5. Later phase (not in scope here)
+## 6. Later phase (not in scope here)
 
 - **Schema/API:** Tables and endpoints for virtual trunks and their mapping to real trunks; admin UI to assign real trunks to the standard names (per tenant or per instance as designed).
 - **Outbound routes:** Ensure routes reference the portable abstraction (virtual trunk name or its KSUID), not raw real-trunk ID, when allocation is implemented.
@@ -66,8 +140,9 @@ We adopt **standard virtual trunk names** as the user-facing model. Under the ho
 
 ---
 
-## 6. References
+## 7. References
 
 - **COMPLEX_CREATE_PLAN.md** — Trunk create (type chooser, API); ownership/allocation is a later phase.
+- **TENANT_MIGRATION_RUNBOOK.md** — tenant move; trunks not exported; destination trunk step.
 - **PROJECT_PLAN.md** / **SESSION_HANDOFF.md** — Current state and next priorities.
 - **pbx3 full_schema.sql** / **sqlite_create_tenant.sql** — Persistent rows use KSUIDs; any allocation model can be built on top.
