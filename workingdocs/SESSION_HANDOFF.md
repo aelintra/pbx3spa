@@ -6,6 +6,18 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-06 — S8 rebuild shipped; drill paused
+
+**Merged to `main`:** **S8.1–S8.4** fleet rebuild tooling (pbx3 + pbx3api); **`s8build`** deleted. **`pbx3 0.0.3-21`** includes restore + hostname sync scripts. First lab rebuild validated; lab EC2 terminated; **second drill** not started — launch new instance next.
+
+**Dev against golden:** `VITE_API_PROXY_TARGET=https://08jzwn.pbx3.com:44300`; `npm run dev`. (Revert from lab IP if `.env.development` still points at `13.217.51.165`.)
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`**, **`pbx3/pbx3-directory/docs/REBUILD_INSTANCE_RUNBOOK.md`**.
+
+**Resume:** New lab EC2 → install **-21** → restore S3 backup → onboard → **`pbx3:fleet-preflight`** → SPA smoke via Vite proxy to new IP.
+
+---
+
 ## Session end 2026-07-05 — SPA hygiene deferred; S8 next
 
 **On `main`** (all repos). Docs only. **SPA size review:** ~38k LOC, single bundle OK on golden/LAN — **no code changes**. Deferred **Phase H** (lazy routes) + **Phase H2** (list/detail extraction) until after **S8 / R1**; see **`PROJECT_PLAN.md`**, **`PBX3SPA_CODEBASE_ANALYSIS.md`**. Removed obsolete **`ROLLBACK_NOTE.txt`** from holding folder (never in git).
