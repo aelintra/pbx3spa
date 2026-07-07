@@ -8,7 +8,9 @@
         <span class="filter-label">Tenant</span>
         <select v-model="filterTenant" class="filter-input">
           <option value="">All tenants</option>
-          <option v-for="t in tenantOptions" :key="t" :value="t">{{ t }}</option>
+          <option v-for="t in tenantOptions" :key="t.shortuid" :value="t.shortuid">
+            {{ t.name }}
+          </option>
         </select>
       </label>
       <label class="filter">
@@ -78,9 +80,9 @@
             </th>
             <th
               class="th-sortable"
-              :class="sortClass('tenant')"
+              :class="sortClass('tenant_name')"
               title="Click to sort"
-              @click="setSort('tenant')"
+              @click="setSort('tenant_name')"
             >
               Tenant
             </th>
@@ -101,7 +103,7 @@
         <tbody>
           <tr v-for="rec in sortedRecordings" :key="rec.id" :class="{ playing: nowPlaying?.id === rec.id }">
             <td class="mono" :title="rec.created_at || ''">{{ formatDate(rec) }}</td>
-            <td>{{ rec.tenant }}</td>
+            <td :title="rec.tenant">{{ rec.tenant_name || rec.tenant }}</td>
             <td class="mono">{{ rec.callerid || '—' }}</td>
             <td class="mono">{{ rec.dnid || '—' }}</td>
             <td>
@@ -169,11 +171,15 @@ const { sortKey, sortOrder } = useStickySort('recordings-list', {
 })
 
 const tenantOptions = computed(() => {
-  const set = new Set()
+  const map = new Map()
   for (const rec of recordings.value) {
-    if (rec.tenant) set.add(rec.tenant)
+    if (rec.tenant && !map.has(rec.tenant)) {
+      map.set(rec.tenant, rec.tenant_name || rec.tenant)
+    }
   }
-  return Array.from(set).sort()
+  return Array.from(map, ([shortuid, name]) => ({ shortuid, name })).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )
 })
 
 const hasActiveFilter = computed(
@@ -195,7 +201,15 @@ const filteredRecordings = computed(() => {
     if (fromEpoch && rec.epoch > 0 && rec.epoch < fromEpoch) return false
     if (toEpoch && rec.epoch > 0 && rec.epoch > toEpoch) return false
     if (search) {
-      const hay = [rec.filename, rec.callerid, rec.dnid, rec.queue, rec.extension]
+      const hay = [
+        rec.filename,
+        rec.callerid,
+        rec.dnid,
+        rec.queue,
+        rec.extension,
+        rec.tenant,
+        rec.tenant_name
+      ]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
@@ -370,12 +384,30 @@ onBeforeUnmount(revokeObjectUrl)
 }
 
 .filter-input {
-  padding: 0.4rem 0.6rem;
+  box-sizing: border-box;
+  height: 2.375rem;
+  padding: 0.375rem 0.75rem;
   font-size: 0.9375rem;
+  line-height: 1.25;
   border: 1px solid #cbd5e1;
   border-radius: 0.375rem;
   background: white;
   color: #0f172a;
+}
+
+select.filter-input {
+  min-width: 10rem;
+}
+
+input[type='date'].filter-input {
+  width: 10rem;
+  min-width: 0;
+  padding-right: 0.5rem;
+}
+
+input[type='date'].filter-input::-webkit-datetime-edit {
+  padding: 0;
+  margin: 0;
 }
 
 .filter-grow .filter-input {
