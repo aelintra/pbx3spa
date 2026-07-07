@@ -6,6 +6,20 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-07 — S8.10 fleet mobility design docs
+
+**On `main`.** Docs only in **`pbx3-directory/`** — no SPA/API/runtime changes this session.
+
+**Added:** **`TENANT_MOBILITY_FLEET_CONSOLE_DESIGN.md`** (Fleet Console move wizard, SBC + S3 + control-plane architecture, §13 for implementers) + **`FLEET_SYSTEM_OVERVIEW.md`** (stakeholder / slides source).
+
+**Fleet unchanged:** affcot on **bzy54n**; golden **08jzwn**; packages **0.0.3-22** / **pbx3cagi 1.0.0-3**.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — S8.10 open item + §2.6.1 IAM early win.
+
+**Resume:** **R1** call recordings; **S8.10** implementation when scheduled (**Phase A** or IAM tighten first).
+
+---
+
 ## Session end 2026-07-07 — S8 closed; fleet on 0.0.3-22
 
 **All on `main`.** **`s8-tenant-move` merged.** **`pbx3 0.0.3-22`** deb (**`e4f9a88`**) + **`pbx3cagi 1.0.0-3`** installed fleet-wide. **pbx3api** **`a7cb907`** on golden + bzy54n (`git pull` + composer — no scp).
