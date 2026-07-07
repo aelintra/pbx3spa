@@ -6,6 +6,20 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-07 — R1 call recordings shipped
+
+**Merged to `main`:** **pbx3api** **`4f52853`**, **pbx3spa** **`ea0fefc`** (`r1` → `main`). **pbx3** docs: **`RECORDINGS_STORAGE_DESIGN.md`** on **`main`**.
+
+**Shipped:** Recordings panel (ACD nav) — list/filter by tenant, date, search; inline play + download. API indexes **`/var/spool/asterisk/monitor`**. Golden smoke: **duns** tenant on **08jzwn**.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` at login; hard-refresh SPA after pull if nav missing.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — R1 complete; **R1.5** next.
+
+**Resume:** **R1.5** local archive + SQLite `recordings` index; design in **`pbx3/pbx3-directory/docs/RECORDINGS_STORAGE_DESIGN.md`**.
+
+---
+
 ## Session end 2026-07-07 — S8.10 fleet mobility design docs
 
 **On `main`.** Docs only in **`pbx3-directory/`** — no SPA/API/runtime changes this session.
