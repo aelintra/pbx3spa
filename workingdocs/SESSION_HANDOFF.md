@@ -6,6 +6,20 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-07 — R1.5 recordings local archive shipped
+
+**On `main`:** **pbx3api** **`27ff302`…`f5237de`**; **pbx3** **`0.0.3-23`** (`efdc78a` deb on golden). No SPA changes.
+
+**Shipped:** Spool → local archive offload (`/opt/pbx3/media/recordings/{tenant}/{yyyy}/{mm}/{dd}/`); SQLite `recordings` index; retention + `recused` tally; cron on **08jzwn** + **bzy54n**. Recordings panel unchanged — list/play from archive + DB. Scheduled **daily backups** cron installed (was SPA-manual only).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` at login.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — R1.5 complete; **S7** next.
+
+**Resume:** **S7** S3 recordings offload; optional **§2.6.1** IAM; **bzy54n** **0.0.3-23** deb upgrade.
+
+---
+
 ## Session end 2026-07-07 — R1 call recordings shipped
 
 **Merged to `main`:** **pbx3api** **`4f52853`**, **pbx3spa** **`ea0fefc`** (`r1` → `main`). **pbx3** docs: **`RECORDINGS_STORAGE_DESIGN.md`** on **`main`**.
