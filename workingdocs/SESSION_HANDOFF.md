@@ -6,6 +6,20 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-07 — S8 closed; fleet on 0.0.3-22
+
+**All on `main`.** **`s8-tenant-move` merged.** **`pbx3 0.0.3-22`** deb (**`e4f9a88`**) + **`pbx3cagi 1.0.0-3`** installed fleet-wide. **pbx3api** **`a7cb907`** on golden + bzy54n (`git pull` + composer — no scp).
+
+**Drill complete:** affcot on **bzy54n**; golden cleaned; catalog updated.
+
+**Dev:** golden `https://08jzwn.pbx3.com:44300/api` · affcot `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`**.
+
+**Resume:** **R1** call recordings.
+
+---
+
 ## Session end 2026-07-06 — affcot tenant migration drill
 
 **On `main`:** **pbx3cagi** **1.0.0-3** (`_all.deb` packaging, **`bf8774e`**). **Pending merge `s8-tenant-move`:** pbx3 (runbook, postinst runLinker, **0.0.3-22**) + pbx3api (tenant import + auto firewall FQDN refresh).
