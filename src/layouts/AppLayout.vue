@@ -21,6 +21,7 @@ const COMMIT_HIDDEN_PATH_PREFIXES = [
   '/help-messages',
   '/ip-settings',
   '/logs',
+  '/recordings',
   '/users'
 ]
 
@@ -71,7 +72,8 @@ const navGroups = [
       { to: '/queues', label: 'Queues / Ring groups', icon: 'list-ordered' },
       { to: '/ivrs', label: 'IVRs', icon: 'git-branch' },
       { to: '/greetings', label: 'Greetings', icon: 'volume2' },
-      { to: '/agents', label: 'Agents', icon: 'headset' }
+      { to: '/agents', label: 'Agents', icon: 'headset' },
+      { to: '/recordings', label: 'Recordings', icon: 'mic' }
     ]
   },
   {
