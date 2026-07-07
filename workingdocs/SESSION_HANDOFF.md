@@ -6,6 +6,20 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-06 — affcot tenant migration drill
+
+**On `main`:** **pbx3cagi** **1.0.0-3** (`_all.deb` packaging, **`bf8774e`**). **Pending merge `s8-tenant-move`:** pbx3 (runbook, postinst runLinker, **0.0.3-22**) + pbx3api (tenant import + auto firewall FQDN refresh).
+
+**Drill:** **affcot** moved **08jzwn → bzy54n** — export/import, DNS, phone register, ext-to-ext calls; golden tenant removed; catalog updated.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` at login. **Affcot on bzy54n:** `https://bzy54n.pbx3.com:44300/api` or `VITE_API_PROXY_TARGET`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`**, **`pbx3-directory/docs/TENANT_MIGRATION_RUNBOOK.md`**.
+
+**Resume:** Merge **`s8-tenant-move`**; deploy **0.0.3-22** / **pbx3cagi 1.0.0-3**; then **R1** recordings.
+
+---
+
 ## Session end 2026-07-06 — snapshots backlog + backup retention
 
 **On `main`.** Docs only: snapshots UX / commit hook / FIFO backlog (**S9.5–S9.7**, **`ea34c69`**). Operator Q&A: **local+S3** on **`/backup`** is normal — local eviction is **9-file FIFO** (on create/cron), not time-based; S3 holds **30d**.
