@@ -6,6 +6,22 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-07 — §2.6.1 node IAM tighten; S7 deferred; S8.10 next
+
+**On `main`:** **pbx3** **`a4628fe`** (node S3 IAM tighten — drop `tenants/*`; docs; recordings bucket naming note), **pbx3api** **`34d8bd8`** (fleet-preflight deny probe). **No SPA changes.**
+
+**Fleet:** IAM applied live on **08jzwn** + **bzy54n** (backup PUT OK, `tenants/*` denied); `pbx3:fleet-preflight` all green. **bzy54n** now on **pbx3 0.0.3-23** (R1.5 parity smoke-tested).
+
+**Direction:** **S7 recordings S3 deferred** (local R1.5 tier is enough; needs B′ gatekeeper). **S8.10 panel tenant moves = priority** — next is **SBC standup** → **Phase A** Egress → **B′** control plane + gatekeeper → **C** move wizard. Gatekeeper runs in the control-plane service on its own host, not on a node/SBC.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` at login.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — §2.6.1 done; S7 deferred; S8.10 #1.
+
+**Resume:** SBC standup (`pbx3sbc` image) → Phase A Egress.
+
+---
+
 ## Session end 2026-07-07 — R1.5 recordings local archive shipped
 
 **On `main`:** **pbx3api** **`27ff302`…`f5237de`**; **pbx3** **`0.0.3-23`** (`efdc78a` deb on golden). No SPA changes.
