@@ -6,6 +6,24 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-09 — fleet-egress merged to main; Phase A + fleet shell scaffold
+
+**Merged to `main`:** **pbx3** **`9a25470`**, **pbx3api** **`2e25076`**, **pbx3spa** **`308af87`**, **pbx3cagi** **`9fe15e2`**, **pbx3sbc** **`d84c192`**. **`fleet-egress`** branch work integrated and pushed.
+
+**SPA:** Fleet nav link, **`FleetTenantsView`** stub, route create/detail hides trunk picker when fleet posture active (`useFleetPosture`). Run locally from **`main`** against golden API.
+
+**Nodes pulled:** **08jzwn** + **bzy54n** **`/opt/pbx3api`** at **`2e25076`**. Preflight fails only on missing **Egress** trunk (seed not run). **pbx3cagi** deb not rebuilt on nodes yet.
+
+**SBC:** **`/home/ubuntu/pbx3sbc`** at **`d84c192`**; OpenSIPS not reloaded this session.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` at login.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — deploy Phase A on golden is #1 next.
+
+**Resume:** egress seed + fleet `.env` + **pbx3cagi** deb on golden; then SBC template reload + dispatcher attrs backfill.
+
+---
+
 ## Session end 2026-07-08 — pbx3sbc inter-extension calling on sbc.pbx3.com
 
 **On `main`:** **pbx3sbc** **`8174dfe`** (NAT INVITE routing, Yealink auth relay, Snom `line=` preservation). **No SPA/API changes.**
