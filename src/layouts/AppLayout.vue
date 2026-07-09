@@ -165,7 +165,7 @@ function scrollActiveNavIntoView() {
 
 function groupIdForPath(path) {
   const p = path.replace(/\/$/, '') || '/'
-  const g = navGroups.find((gr) =>
+  const g = navGroups.value.find((gr) =>
     gr.links.some((l) => l.to === p || (l.to !== '/' && p.startsWith(l.to + '/')))
   )
   return g?.id ?? null
@@ -174,7 +174,7 @@ function groupIdForPath(path) {
 function ensureCurrentGroupOpen() {
   const id = groupIdForPath(route.path)
   const next = {}
-  navGroups.forEach((g) => {
+  navGroups.value.forEach((g) => {
     next[g.id] = g.id === id
   })
   expanded.value = next
@@ -183,7 +183,7 @@ function ensureCurrentGroupOpen() {
 async function toggle(id) {
   const willBeOpen = !expanded.value[id]
   const next = {}
-  navGroups.forEach((g) => {
+  navGroups.value.forEach((g) => {
     next[g.id] = g.id === id ? willBeOpen : false
   })
   expanded.value = next
