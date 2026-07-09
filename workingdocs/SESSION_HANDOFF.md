@@ -6,6 +6,22 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-09 — Phase A live on fleet nodes; SBC soak; peering next
+
+**On `fleet-phase-a`:** **pbx3** **`67d2376`** (egress PJSIP template, pushed). **pbx3api**, **pbx3spa**, **pbx3cagi** unchanged on branch. **On `main`:** **pbx3sbc** **`1d9433d`**, **pbx3sbc-admin** **`4282261`** (profile/password; pushed).
+
+**Fleet nodes:** **08jzwn** + **bzy54n** — Phase A deployed (egress seed, fleet `.env`, **pbx3cagi 1.0.0-4**, preflight green). Egress PJSIP fix hot-patched. Extension calling via SBC working.
+
+**SBC:** Reboot soak OK. Admin panel login + profile password change working. **Peering not live** — test carrier available for Phase 0–2 lab.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` at login.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — SBC peering Phase 0–2 is #1.
+
+**Resume:** seed **`dr_*`** on SBC + test carrier outbound; merge **`fleet-phase-a`** when stable.
+
+---
+
 ## Session end 2026-07-09 — fleet-egress merged to main; Phase A + fleet shell scaffold
 
 **Merged to `main`:** **pbx3** **`9a25470`**, **pbx3api** **`2e25076`**, **pbx3spa** **`308af87`**, **pbx3cagi** **`9fe15e2`**, **pbx3sbc** **`d84c192`**. **`fleet-egress`** branch work integrated and pushed.
