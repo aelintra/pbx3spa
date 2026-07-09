@@ -15,10 +15,12 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
+import { useFleetPosture } from '@/composables/useFleetPosture'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const { getSchema, ensureFetched } = useSchema()
+const { loadFleetPosture, hideRoutePaths, posture } = useFleetPosture()
 function isReadOnly(field) {
   return getSchema('routes')?.read_only?.includes(field) ?? false
 }
@@ -143,6 +145,7 @@ async function fetchRoute() {
 
 onMounted(async () => {
   await ensureFetched()
+  await loadFleetPosture()
   await Promise.all([fetchTenants(), fetchTrunks()])
   await fetchRoute()
 })
@@ -178,7 +181,7 @@ async function saveEdit(e) {
   }
   saving.value = true
   try {
-    await getApiClient().put(`routes/${encodeURIComponent(shortuid.value)}`, {
+    const payload = {
       pkey: editPkey.value.trim(),
       cluster: editCluster.value.trim(),
       cname: editCname.value.trim() || null,
@@ -190,7 +193,14 @@ async function saveEdit(e) {
       path3: editPath3.value !== 'None' && editPath3.value.trim() ? editPath3.value.trim() : null,
       path4: editPath4.value !== 'None' && editPath4.value.trim() ? editPath4.value.trim() : null,
       strategy: editStrategy.value
-    })
+    }
+    if (hideRoutePaths()) {
+      payload.path1 = posture.value?.egress_trunk || 'Egress'
+      payload.path2 = null
+      payload.path3 = null
+      payload.path4 = null
+    }
+    await getApiClient().put(`routes/${encodeURIComponent(shortuid.value)}`, payload)
     await fetchRoute()
     toast.show(`Route saved`)
   } catch (err) {
@@ -354,8 +364,8 @@ const panelTitleTenantSuffix = computed(() => {
             />
           </div>
 
-          <h2 class="detail-heading">Paths (trunks)</h2>
-          <div class="form-fields">
+          <h2 v-if="!hideRoutePaths()" class="detail-heading">Paths (trunks)</h2>
+          <div v-if="!hideRoutePaths()" class="form-fields">
             <FormSelect
               id="edit-path1"
               v-model="editPath1"
@@ -381,6 +391,10 @@ const panelTitleTenantSuffix = computed(() => {
               :options="pathOptions(editPath4)"
             />
           </div>
+          <p v-else class="fleet-route-note">
+            Fleet node: outbound uses fixed <strong>{{ posture?.egress_trunk || 'Egress' }}</strong> trunk to
+            {{ posture?.sbc_egress_host || 'SBC' }}.
+          </p>
 
           <div class="edit-actions">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>

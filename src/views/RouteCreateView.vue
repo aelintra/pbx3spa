@@ -13,10 +13,12 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useFleetPosture } from '@/composables/useFleetPosture'
 
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { loadFleetPosture, hideRoutePaths, posture } = useFleetPosture()
 const pkey = ref('')
 const cluster = ref('default')
 const description = ref('')
@@ -135,6 +137,12 @@ async function onSubmit(e) {
     body.path2 = path2.value && path2.value !== 'None' ? path2.value.trim() : null
     body.path3 = path3.value && path3.value !== 'None' ? path3.value.trim() : null
     body.path4 = path4.value && path4.value !== 'None' ? path4.value.trim() : null
+    if (hideRoutePaths()) {
+      body.path1 = posture.value?.egress_trunk || 'Egress'
+      body.path2 = null
+      body.path3 = null
+      body.path4 = null
+    }
     await getApiClient().post('routes', body)
     toast.show(`Route ${pkey.value.trim()} created`)
     resetForm()
@@ -189,8 +197,12 @@ function onKeydown(e) {
 onMounted(async () => {
   await ensureFetched()
   applySchemaDefaults('routes', { cluster, description, cname, active, strategy })
+  await loadFleetPosture()
   await loadTenants()
   await loadTrunks()
+  if (hideRoutePaths()) {
+    path1.value = posture.value?.egress_trunk || 'Egress'
+  }
 })
 </script>
 
@@ -284,13 +296,17 @@ onMounted(async () => {
         />
       </div>
 
-      <h2 class="detail-heading">Paths (trunks)</h2>
-      <div class="form-fields">
+      <h2 v-if="!hideRoutePaths()" class="detail-heading">Paths (trunks)</h2>
+      <div v-if="!hideRoutePaths()" class="form-fields">
         <FormSelect id="path1" v-model="path1" label="Path 1" :options="pathOptions" />
         <FormSelect id="path2" v-model="path2" label="Path 2" :options="pathOptions" />
         <FormSelect id="path3" v-model="path3" label="Path 3" :options="pathOptions" />
         <FormSelect id="path4" v-model="path4" label="Path 4" :options="pathOptions" />
       </div>
+      <p v-else class="fleet-route-note">
+        Fleet node: outbound uses fixed <strong>{{ posture?.egress_trunk || 'Egress' }}</strong> trunk to
+        {{ posture?.sbc_egress_host || 'SBC' }} — dialplan defines policy only.
+      </p>
 
       <div class="actions">
         <button type="submit" :disabled="loading || tenantsLoading || trunksLoading">

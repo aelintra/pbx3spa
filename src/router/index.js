@@ -33,6 +33,7 @@ import AgentsListView from '../views/AgentsListView.vue'
 import AgentCreateView from '../views/AgentCreateView.vue'
 import AgentDetailView from '../views/AgentDetailView.vue'
 import RoutesListView from '../views/RoutesListView.vue'
+import FleetTenantsView from '../views/FleetTenantsView.vue'
 import RouteCreateView from '../views/RouteCreateView.vue'
 import RouteDetailView from '../views/RouteDetailView.vue'
 import CustomAppsListView from '../views/CustomAppsListView.vue'
@@ -85,6 +86,7 @@ const router = createRouter({
         { path: 'tenants', name: 'tenants', component: TenantsListView },
         { path: 'tenants/new', name: 'tenant-create', component: TenantCreateView },
         { path: 'tenants/:pkey', name: 'tenant-detail', component: TenantDetailView },
+        { path: 'fleet/tenants', name: 'fleet-tenants', component: FleetTenantsView },
         { path: 'extensions', name: 'extensions', component: ExtensionsListView },
         { path: 'extensions/new', name: 'extension-create', component: ExtensionCreateView },
         { path: 'extensions/:shortuid', name: 'extension-detail', component: ExtensionDetailView },

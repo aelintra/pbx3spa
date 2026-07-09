@@ -7,6 +7,7 @@ import { getApiClient } from '@/api/client'
 import CommitButton from '@/components/CommitButton.vue'
 import NavIcon from '@/components/NavIcon.vue'
 import SessionContextChips from '@/components/SessionContextChips.vue'
+import { isFleetDirectoryEnabled } from '@/config/instanceDirectory'
 
 const route = useRoute()
 const router = useRouter()
@@ -33,12 +34,18 @@ const showCommitButton = computed(() => {
   )
 })
 
-const navGroups = [
+const navGroups = computed(() => {
+  const groups = [
   {
     id: 'tenancy',
     heading: 'Tenancy',
     icon: 'building2',
-    links: [{ to: '/tenants', label: 'Tenants', icon: 'building2' }]
+    links: [
+      { to: '/tenants', label: 'Tenants', icon: 'building2' },
+      ...(isFleetDirectoryEnabled()
+        ? [{ to: '/fleet/tenants', label: 'Fleet tenants', icon: 'layers' }]
+        : [])
+    ]
   },
   {
     id: 'endpoints',
@@ -104,7 +111,9 @@ const navGroups = [
       { to: '/users', label: 'Users', icon: 'user-cog' }
     ]
   }
-]
+  ]
+  return groups
+})
 
 const expanded = ref({})
 
