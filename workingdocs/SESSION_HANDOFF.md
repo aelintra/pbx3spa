@@ -6,6 +6,20 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-08 — pbx3sbc inter-extension calling on sbc.pbx3.com
+
+**On `main`:** **pbx3sbc** **`8174dfe`** (NAT INVITE routing, Yealink auth relay, Snom `line=` preservation). **No SPA/API changes.**
+
+**SBC:** **`sbc.pbx3.com`** — tenant **`dhbm8x.pbx3.com`** → Golden **`08jzwn`**. Phones: Snom 1000 + Yealinks 1001/1002; all extension directions working after fixes. Live OpenSIPS config hot-patched on server.
+
+**Direction:** SBC standup **in progress** — extension path proven; next soak + **carrier peering** (`PEERING-PLAN.md`), then Phase A Egress.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — SBC extension calling done; peering + multi-tenant dispatcher lookup open.
+
+**Resume:** SBC peering/PSTN path; more tenants on **`sbc.pbx3.com`**.
+
+---
+
 ## Session end 2026-07-07 — §2.6.1 node IAM tighten; S7 deferred; S8.10 next
 
 **On `main`:** **pbx3** **`a4628fe`** (node S3 IAM tighten — drop `tenants/*`; docs; recordings bucket naming note), **pbx3api** **`34d8bd8`** (fleet-preflight deny probe). **No SPA changes.**
