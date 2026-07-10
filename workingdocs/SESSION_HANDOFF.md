@@ -8,9 +8,9 @@
 
 ## Session end 2026-07-10 — S8.10 movewizard scaffold (lab move next)
 
-**On `movewizard`:** **pbx3spa** **`c696c4f`** (Fleet tenants Move wizard + names), **pbx3api** **`0fb0019`** on **08jzwn**/**bzy54n**, **pbx3sbc-admin** **`6036bcb`** on SBC, **pbx3** gatekeeper runner **`c75430e`**.
+**On `movewizard`:** **pbx3spa** **`1d27b54`** (Fleet tenants: Name + Hosted on + Move wizard), **pbx3api** **`0fb0019`** on **08jzwn**/**bzy54n**, **pbx3sbc-admin** **`6036bcb`** on SBC, **pbx3** gatekeeper **`384eb33`**.
 
-**SPA:** same app as node admin — **Fleet tenants** when directory URL set. Lab gatekeeper `http://127.0.0.1:8090` via Vite `/fleet-gk`. Human names in list (affcot/duns/…).
+**SPA:** same app as node admin — **Fleet tenants** when directory URL set. Lab gatekeeper `http://127.0.0.1:8090` via Vite `/fleet-gk`. List shows human names and **Hosted on** (08jzwn/bzy54n).
 
 **Not done:** live Start move (export/import/repoint). Affcot already on bzy54n.
 
