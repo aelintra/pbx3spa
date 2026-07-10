@@ -6,19 +6,29 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-10 — SBC peering Phases 3–4 lab green (Magrathea DID)
+## Session end 2026-07-10 — pbx3 0.0.3-25 on golden + bzy54n
 
-**On `main`:** **pbx3** **`3af4519`** (Egress identify), **pbx3sbc** **`b914e1c`** (FROM_CARRIER skip Asterisk + record_route + create_dialog), **pbx3sbc-admin** **`138d65d`** (Peers / Number routes UI).
+**On `main`:** **pbx3** **`1bed066`** (**0.0.3-25** Egress identify packaged). Earlier: **pbx3sbc** **`b914e1c`**, **pbx3sbc-admin** **`138d65d`**.
 
-**Lab validated:** Magrathea DID **`01924918076`** → golden **1000**; internal ext calls; hangup both ways; Active Calls two legs; CLI E.164. Admin **`http://sbc.pbx3.com/admin`**.
+**Fleet:** **08jzwn** + **bzy54n** on **pbx3 0.0.3-25** (identify no longer hot-patch-only). Peering Phases 3–4 still lab-green (Magrathea DID **`01924918076`** → golden **1000**).
 
-**Ops:** Identify live hot-patched on nodes — package **pbx3 0.0.3-25** when convenient. After egress **`genAst.sh`**, **`systemctl restart asterisk`**.
+**Ops:** After egress **`genAst.sh`**, **`systemctl restart asterisk`**. SBC admin **`http://sbc.pbx3.com/admin`**.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **affcot:** `https://bzy54n.pbx3.com:44300/api`
 
 **Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — **S8.10** is #1.
 
-**Resume:** fleet mobility move wizard; optional identify deb / peering failover.
+**Resume:** fleet mobility move wizard; optional peering failover / `alias_db`.
+
+---
+
+## Session end 2026-07-10 — SBC peering Phases 3–4 lab green (Magrathea DID) — historical
+
+**On `main`:** **pbx3** **`3af4519`** (Egress identify), **pbx3sbc** **`b914e1c`**, **pbx3sbc-admin** **`138d65d`**. Superseded by **0.0.3-25** install same day.
+
+**Lab validated:** Magrathea DID **`01924918076`** → golden **1000**; hangup both ways; Active Calls two legs.
+
+**Resume:** see block above.
 
 ---
 
