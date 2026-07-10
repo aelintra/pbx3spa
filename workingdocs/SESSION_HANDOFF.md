@@ -6,11 +6,27 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-10 — SBC peering Phases 3–4 lab green (Magrathea DID)
+
+**On `main`:** **pbx3** **`3af4519`** (Egress identify), **pbx3sbc** **`b914e1c`** (FROM_CARRIER skip Asterisk + record_route + create_dialog), **pbx3sbc-admin** **`138d65d`** (Peers / Number routes UI).
+
+**Lab validated:** Magrathea DID **`01924918076`** → golden **1000**; internal ext calls; hangup both ways; Active Calls two legs; CLI E.164. Admin **`http://sbc.pbx3.com/admin`**.
+
+**Ops:** Identify live hot-patched on nodes — package **pbx3 0.0.3-25** when convenient. After egress **`genAst.sh`**, **`systemctl restart asterisk`**.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **affcot:** `https://bzy54n.pbx3.com:44300/api`
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — **S8.10** is #1.
+
+**Resume:** fleet mobility move wizard; optional identify deb / peering failover.
+
+---
+
 ## Session end 2026-07-09 — Phase A egress + PSTN validated both fleet nodes
 
 **On `fleet-phase-a`:** **pbx3** **`ded9b76`** (egress qualify + rollback/availability docs). **pbx3api**, **pbx3spa**, **pbx3cagi** unchanged on branch. **On `main`:** **pbx3sbc** **`8c702fb`** (peering egress live), **pbx3sbc-admin** **`4282261`**.
 
-**Fleet nodes:** **08jzwn** (golden) + **bzy54n** — register, PSTN outbound via **Egress** → SBC → carrier **validated**. **affcot** Snom ext **1101** on **bzy54n** — SIP auth username **`59507r`**.
+**Fleet nodes:** **08jzwn** (golden) + **bzy54n** — register, PSTN outbound via **Egress** → SBC → carrier **validated**. **affcot** Snom ext **1101** on **bzy54n** — SIP auth username **`59507r`**. **2026-07-10:** Linphone softphone on **bzy54n** — register OK; makes/receives calls across the SBC.
 
 **SBC:** Peering Phase 0–2 live; **bzy54n** dispatcher **setid 3** + tenant domains. Admin **`http://sbc.pbx3.com/admin`**.
 
@@ -18,9 +34,9 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **affcot:** `https://bzy54n.pbx3.com:44300/api`
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — merge **`fleet-phase-a`** is #1.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — superseded 2026-07-10 (peering 3–4 done).
 
-**Resume:** merge branch + debs on nodes; SBC inbound DID (Phases 3–4); S8.10 move wizard.
+**Resume:** see **Session end 2026-07-10** block above.
 
 ---
 
