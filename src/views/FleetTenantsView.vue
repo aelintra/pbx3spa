@@ -54,6 +54,7 @@ onMounted(loadTenants)
           <th>FQDN</th>
           <th>Instance</th>
           <th>Status</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -62,12 +63,17 @@ onMounted(loadTenants)
           <td>{{ t.fqdn || '—' }}</td>
           <td><code>{{ t.instance_id }}</code></td>
           <td>{{ t.status }}</td>
+          <td>
+            <RouterLink
+              :to="{ name: 'fleet-tenant-move', query: { tenant: t.shortuid } }"
+            >
+              Move
+            </RouterLink>
+          </td>
         </tr>
       </tbody>
     </table>
     <p v-else>No tenants in catalog yet.</p>
-
-    <p class="hint">Move wizard (Phase C) will enable actions from this list.</p>
   </div>
 </template>
 

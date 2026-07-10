@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8000'
   /** When set, `/dev-catalog/*` proxies to this S3 bucket origin (avoids browser CORS in local dev). */
   const catalogProxyTarget = (env.VITE_CATALOG_PROXY_TARGET ?? '').replace(/\/$/, '')
+  const gatekeeperProxyTarget = (env.VITE_FLEET_GATEKEEPER_PROXY_TARGET ?? '').replace(/\/$/, '')
 
   const proxy = {
     '/api': {
@@ -37,6 +38,14 @@ export default defineConfig(({ mode }) => {
       changeOrigin: true,
       secure: true,
       rewrite: (path) => path.replace(/^\/dev-catalog/, '')
+    }
+  }
+  if (gatekeeperProxyTarget) {
+    proxy['/fleet-gk'] = {
+      target: gatekeeperProxyTarget,
+      changeOrigin: true,
+      secure: false,
+      rewrite: (path) => path.replace(/^\/fleet-gk/, '')
     }
   }
 
