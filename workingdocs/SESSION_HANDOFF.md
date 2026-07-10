@@ -6,6 +6,24 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-07-09 — Phase A egress + PSTN validated both fleet nodes
+
+**On `fleet-phase-a`:** **pbx3** **`ded9b76`** (egress qualify + rollback/availability docs). **pbx3api**, **pbx3spa**, **pbx3cagi** unchanged on branch. **On `main`:** **pbx3sbc** **`8c702fb`** (peering egress live), **pbx3sbc-admin** **`4282261`**.
+
+**Fleet nodes:** **08jzwn** (golden) + **bzy54n** — register, PSTN outbound via **Egress** → SBC → carrier **validated**. **affcot** Snom ext **1101** on **bzy54n** — SIP auth username **`59507r`**.
+
+**SBC:** Peering Phase 0–2 live; **bzy54n** dispatcher **setid 3** + tenant domains. Admin **`http://sbc.pbx3.com/admin`**.
+
+**Ops note:** After egress template / **`genAst.sh`**, **`systemctl restart asterisk`** on the node — **`pjsip reload`** alone caused **503** on bzy54n outbound until restart.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **affcot:** `https://bzy54n.pbx3.com:44300/api`
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — merge **`fleet-phase-a`** is #1.
+
+**Resume:** merge branch + debs on nodes; SBC inbound DID (Phases 3–4); S8.10 move wizard.
+
+---
+
 ## Session end 2026-07-09 — Phase A live on fleet nodes; SBC soak; peering next
 
 **On `fleet-phase-a`:** **pbx3** **`67d2376`** (egress PJSIP template, pushed). **pbx3api**, **pbx3spa**, **pbx3cagi** unchanged on branch. **On `main`:** **pbx3sbc** **`1d9433d`**, **pbx3sbc-admin** **`4282261`** (profile/password; pushed).
