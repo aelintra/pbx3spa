@@ -34,7 +34,13 @@ async function loadTenants() {
 
 function instanceLabel(instanceId) {
   const i = instancesById.value[instanceId]
-  return i?.label || i?.fqdn || instanceId
+  if (!i) return instanceId || '—'
+  const name = i.label || i.fqdn || instanceId
+  // Prefer short host name; append fqdn only when it adds info
+  if (i.fqdn && i.label && i.fqdn !== i.label) {
+    return `${i.label} (${i.fqdn})`
+  }
+  return name
 }
 
 onMounted(loadTenants)
@@ -57,9 +63,9 @@ onMounted(loadTenants)
       <thead>
         <tr>
           <th>Name</th>
-          <th>Short UID</th>
+          <th>Hosted on</th>
           <th>FQDN</th>
-          <th>Instance</th>
+          <th>Short UID</th>
           <th>Status</th>
           <th></th>
         </tr>
@@ -67,9 +73,9 @@ onMounted(loadTenants)
       <tbody>
         <tr v-for="t in tenants" :key="t.shortuid">
           <td>{{ t.name }}</td>
-          <td><code>{{ t.shortuid }}</code></td>
-          <td>{{ t.fqdn || '—' }}</td>
           <td>{{ instanceLabel(t.instance_id) }}</td>
+          <td>{{ t.fqdn || '—' }}</td>
+          <td><code>{{ t.shortuid }}</code></td>
           <td>{{ t.status }}</td>
           <td>
             <RouterLink
