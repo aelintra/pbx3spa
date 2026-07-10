@@ -1,10 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getFleetGatekeeperUrl, isFleetGatekeeperEnabled } from '@/config/fleetGatekeeper'
+import { listFleetTenants } from '@/api/fleetGatekeeper'
+import { isFleetGatekeeperEnabled } from '@/config/fleetGatekeeper'
 import { isFleetDirectoryEnabled } from '@/config/instanceDirectory'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const tenants = ref([])
+const instancesById = ref({})
 const loading = ref(true)
 const error = ref('')
 
@@ -14,23 +16,25 @@ async function loadTenants() {
     loading.value = false
     return
   }
-  const token = import.meta.env.VITE_FLEET_GATEKEEPER_TOKEN || ''
   try {
-    const res = await fetch(`${getFleetGatekeeperUrl()}/api/v1/tenants`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    })
-    if (!res.ok) {
-      throw new Error(`Gatekeeper ${res.status}`)
+    const { getFleetCatalog } = await import('@/api/fleetGatekeeper')
+    const [tList, catalog] = await Promise.all([listFleetTenants(), getFleetCatalog()])
+    const map = {}
+    for (const i of catalog.instances || []) {
+      map[i.id] = i
     }
-    const data = await res.json()
-    tenants.value = (data.tenants || []).map((t) => ({
-      ...t,
-      shortuid: t.shortuid || t.tenant_shortuid
-    }))  } catch (e) {
+    instancesById.value = map
+    tenants.value = tList
+  } catch (e) {
     error.value = e?.message || 'Failed to load fleet tenants'
   } finally {
     loading.value = false
   }
+}
+
+function instanceLabel(instanceId) {
+  const i = instancesById.value[instanceId]
+  return i?.label || i?.fqdn || instanceId
 }
 
 onMounted(loadTenants)
@@ -52,6 +56,7 @@ onMounted(loadTenants)
     <table v-else-if="tenants.length" class="data-table">
       <thead>
         <tr>
+          <th>Name</th>
           <th>Short UID</th>
           <th>FQDN</th>
           <th>Instance</th>
@@ -61,9 +66,10 @@ onMounted(loadTenants)
       </thead>
       <tbody>
         <tr v-for="t in tenants" :key="t.shortuid">
-          <td>{{ t.shortuid }}</td>
+          <td>{{ t.name }}</td>
+          <td><code>{{ t.shortuid }}</code></td>
           <td>{{ t.fqdn || '—' }}</td>
-          <td><code>{{ t.instance_id }}</code></td>
+          <td>{{ instanceLabel(t.instance_id) }}</td>
           <td>{{ t.status }}</td>
           <td>
             <RouterLink

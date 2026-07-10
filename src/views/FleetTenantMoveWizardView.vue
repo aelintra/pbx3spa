@@ -171,7 +171,7 @@ onMounted(load)
           <select v-model="tenantShortuid">
             <option disabled value="">Choose…</option>
             <option v-for="t in tenants" :key="t.shortuid" :value="t.shortuid">
-              {{ t.fqdn || t.shortuid }} ({{ t.shortuid }}) @ {{ t.instance_id }}
+              {{ t.name }} ({{ t.shortuid }}) — {{ t.fqdn || 'no fqdn' }}
             </option>
           </select>
         </label>
@@ -208,7 +208,7 @@ onMounted(load)
         <h2>Review &amp; start</h2>
         <dl class="review">
           <dt>Tenant</dt>
-          <dd>{{ tenant?.fqdn || tenant?.shortuid }} ({{ tenant?.shortuid }})</dd>
+          <dd>{{ tenant?.name || tenant?.fqdn }} ({{ tenant?.shortuid }})</dd>
           <dt>From</dt>
           <dd>{{ sourceInstance?.label || tenant?.instance_id }}</dd>
           <dt>To</dt>

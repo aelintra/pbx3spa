@@ -46,10 +46,15 @@ async function gkFetch(path, options = {}) {
 
 export function listFleetTenants() {
   return gkFetch('/api/v1/tenants').then((d) =>
-    (d.tenants || []).map((t) => ({
-      ...t,
-      shortuid: t.shortuid || t.tenant_shortuid
-    }))
+    (d.tenants || []).map((t) => {
+      const shortuid = t.shortuid || t.tenant_shortuid
+      const name = t.label || t.pkey || t.cname || shortuid
+      return {
+        ...t,
+        shortuid,
+        name
+      }
+    })
   )
 }
 
