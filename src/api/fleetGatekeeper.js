@@ -45,7 +45,12 @@ async function gkFetch(path, options = {}) {
 }
 
 export function listFleetTenants() {
-  return gkFetch('/api/v1/tenants').then((d) => d.tenants || [])
+  return gkFetch('/api/v1/tenants').then((d) =>
+    (d.tenants || []).map((t) => ({
+      ...t,
+      shortuid: t.shortuid || t.tenant_shortuid
+    }))
+  )
 }
 
 export function getFleetCatalog() {

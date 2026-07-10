@@ -23,8 +23,10 @@ async function loadTenants() {
       throw new Error(`Gatekeeper ${res.status}`)
     }
     const data = await res.json()
-    tenants.value = data.tenants || []
-  } catch (e) {
+    tenants.value = (data.tenants || []).map((t) => ({
+      ...t,
+      shortuid: t.shortuid || t.tenant_shortuid
+    }))  } catch (e) {
     error.value = e?.message || 'Failed to load fleet tenants'
   } finally {
     loading.value = false
