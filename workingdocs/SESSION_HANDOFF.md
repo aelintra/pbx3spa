@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-11 — Fleet UI home + SBC stylesync (stop here)
 
-**On `main`:** **pbx3sbc-admin** **`624b0f3`** (stylesync live on SBC). **pbx3** **`9ccd055`** / **pbx3spa** **`6bcd0f1`** (one-SPA / two-modes Fleet Console + parked shadowing). Nodes **pbx3api** still **`0fb0019`**.
+**On `main`:** **pbx3sbc-admin** **`624b0f3`** (stylesync live on SBC). **pbx3** **`2ee36f9`** / **pbx3spa** **`5977b62`** (one-SPA / two-modes Fleet Console + parked shadowing). Nodes **pbx3api** still **`0fb0019`**.
 
 **Day:** Settled Fleet = first-class **mode** in same SPA (separate control-plane API). SBC Filament look/feel aligned with SPA shell/tables. Failover+shadowing parked.
 
