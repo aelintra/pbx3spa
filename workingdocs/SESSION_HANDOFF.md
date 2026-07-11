@@ -6,17 +6,33 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-10 — S8.10 merged to main (interim auth)
+## Session end 2026-07-11 — Fleet UI home + SBC stylesync (stop here)
 
-**On `main`:** **pbx3spa** **`c828fe0`** (sessionStorage gatekeeper token; DEV-only `VITE_*`), **pbx3api** **`0fb0019`**, **pbx3sbc-admin** **`6036bcb`**, **pbx3** **`79700ee`**. Fast-forward from **`movewizard`**.
+**On `main`:** **pbx3sbc-admin** **`624b0f3`** (stylesync live on SBC). **pbx3** / **pbx3spa** docs for one-SPA / two-modes Fleet Console + parked shadowing (tips after this commit). Nodes **pbx3api** still **`0fb0019`**.
 
-**Validated earlier:** willand + affcot phone POC. Fleet tenants Hosted on matches catalog.
+**Day:** Settled Fleet = first-class **mode** in same SPA (separate control-plane API). SBC Filament look/feel aligned with SPA shell/tables. Failover+shadowing parked.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **bzy54n:** `https://bzy54n.pbx3.com:44300/api` · gatekeeper `http://127.0.0.1:8090` via `/fleet-gk`
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **bzy54n:** `https://bzy54n.pbx3.com:44300/api` · gatekeeper `http://127.0.0.1:8090` via `/fleet-gk` · SBC `http://sbc.pbx3.com/admin`
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — pull nodes optional; peering/UI polish next.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — peering polish or Fleet mode UX next.
 
-**Resume:** optional node pull to `main`; then polish / next priority.
+**Resume:** peering polish, Fleet mode shell swap, or snapshots.
+
+---
+
+## Session end 2026-07-10 — S8.10 day complete (stop here) — historical
+
+**On `main`:** **pbx3spa** **`089477b`**, **pbx3api** **`0fb0019`** on **08jzwn**/**bzy54n**, **pbx3sbc-admin** **`6036bcb`**, **pbx3** **`9e00e30`**. Superseded by **2026-07-11** block above.
+
+**Resume:** see block above.
+
+---
+
+## Session end 2026-07-10 — S8.10 merged to main (interim auth) — historical
+
+**On `main`:** merge before node pull. Superseded by **day complete** above.
+
+**Resume:** see block above.
 
 ---
 

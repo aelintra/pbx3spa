@@ -58,8 +58,8 @@
 ## 4. Future capabilities (enabled by B + directory)
 
 - **Central monitoring** — aggregator reads directory, polls or receives metrics per instance.
-- **Tenant move** — orchestration uses directory for source/target `api_base_url` + FQDN; nodes run sync/LE/firewall/DB steps (see **`pbx3/workingdocs/LETSENCRYPT_PER_TENANT_FQDN.md`**).
-- **Superuser / MSP** — one login, many instances filtered by directory ACLs.
+- **Tenant move** — orchestration uses directory for source/target `api_base_url` + FQDN; nodes run sync/LE/firewall/DB steps (see **`pbx3/workingdocs/LETSENCRYPT_PER_TENANT_FQDN.md`**). **Product UI:** **Fleet mode** in the same `pbx3spa` (shell swap); control-plane/gatekeeper is a separate **API** — see **`pbx3/pbx3-directory/docs/TENANT_MOBILITY_FLEET_CONSOLE_DESIGN.md`** §2.5.
+- **Superuser / MSP** — Model B: one login, many **instances** (tenant mode). **Fleet** abilities unlock **Fleet mode** (catalog, move, SBC repoint via gatekeeper) — same SPA, different mode/token; never mix fleet + tenant on one screen.
 - **Break-glass** — optional per-node minimal UI or direct API URL for support (out of scope for v1 central UX).
 
 ---
@@ -91,7 +91,7 @@ Central admin does **not** require moving API to port **443** or installing SPA 
 | **1** | Directory schema v0 + example index; read-only API or static fetch | **pbx3-directory** (stub) |
 | **2** | SPA: instance picker login; hide URL field in production build | pbx3spa |
 | **3** | Central auth + ACL filter on directory | TBD (+ pbx3api/gateway) |
-| **4** | Orchestration (tenant move, monitoring) | pbx3 + directory + SPA |
+| **4** | Orchestration (tenant move, monitoring) | control plane API + **pbx3spa Fleet mode** |
 
 ---
 
