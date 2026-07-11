@@ -57,7 +57,7 @@ const canStart = computed(() => {
 
 async function load() {
   if (!isFleetGatekeeperEnabled()) {
-    error.value = 'Set VITE_FLEET_GATEKEEPER_URL (and token) to use the move wizard.'
+    error.value = 'Set VITE_FLEET_GATEKEEPER_URL and a session (or DEV) gatekeeper token to use the move wizard.'
     loading.value = false
     return
   }

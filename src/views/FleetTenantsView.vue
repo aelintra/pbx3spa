@@ -1,7 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { listFleetTenants } from '@/api/fleetGatekeeper'
-import { isFleetGatekeeperEnabled } from '@/config/fleetGatekeeper'
+import {
+  isFleetGatekeeperEnabled,
+  hasFleetGatekeeperToken,
+  setFleetGatekeeperToken,
+  clearFleetGatekeeperToken
+} from '@/config/fleetGatekeeper'
 import { isFleetDirectoryEnabled } from '@/config/instanceDirectory'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 
@@ -9,13 +14,25 @@ const tenants = ref([])
 const instancesById = ref({})
 const loading = ref(true)
 const error = ref('')
+const tokenDraft = ref('')
+const needsToken = ref(false)
 
 async function loadTenants() {
   if (!isFleetGatekeeperEnabled()) {
     error.value = 'Set VITE_FLEET_GATEKEEPER_URL to load fleet tenant list.'
     loading.value = false
+    needsToken.value = false
     return
   }
+  if (!hasFleetGatekeeperToken()) {
+    needsToken.value = true
+    error.value = 'Enter the fleet gatekeeper API token for this browser session.'
+    loading.value = false
+    return
+  }
+  needsToken.value = false
+  loading.value = true
+  error.value = ''
   try {
     const { getFleetCatalog } = await import('@/api/fleetGatekeeper')
     const [tList, catalog] = await Promise.all([listFleetTenants(), getFleetCatalog()])
@@ -27,9 +44,25 @@ async function loadTenants() {
     tenants.value = tList
   } catch (e) {
     error.value = e?.message || 'Failed to load fleet tenants'
+    if (/401|unauthorized|token/i.test(String(e?.message || ''))) {
+      needsToken.value = true
+    }
   } finally {
     loading.value = false
   }
+}
+
+function saveToken() {
+  setFleetGatekeeperToken(tokenDraft.value)
+  tokenDraft.value = ''
+  loadTenants()
+}
+
+function clearToken() {
+  clearFleetGatekeeperToken()
+  needsToken.value = true
+  tenants.value = []
+  error.value = 'Fleet token cleared for this session.'
 }
 
 function instanceLabel(instanceId) {
@@ -54,6 +87,25 @@ onMounted(loadTenants)
 
     <p v-if="!isFleetDirectoryEnabled()" class="hint">
       Instance directory mode is off — this view is for fleet operators with gatekeeper access.
+    </p>
+
+    <div v-if="needsToken" class="token-box">
+      <p class="hint">
+        Gatekeeper token is not stored in production builds. Paste
+        <code>GATEKEEPER_API_TOKEN</code> for this browser session only.
+      </p>
+      <form class="token-form" @submit.prevent="saveToken">
+        <input
+          v-model="tokenDraft"
+          type="password"
+          autocomplete="off"
+          placeholder="Gatekeeper API token"
+        />
+        <button type="submit" class="primary">Save for session</button>
+      </form>
+    </div>
+    <p v-else-if="hasFleetGatekeeperToken()" class="hint token-clear">
+      <button type="button" class="linkish" @click="clearToken">Clear fleet token</button>
     </p>
 
     <p v-if="loading">Loading…</p>
@@ -101,6 +153,38 @@ onMounted(loadTenants)
 }
 .error {
   color: #b91c1c;
+}
+.token-box {
+  margin: 0.75rem 0 1rem;
+  max-width: 28rem;
+}
+.token-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.token-form input {
+  flex: 1;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+}
+.token-form .primary {
+  padding: 0.4rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  background: #0f766e;
+  color: #fff;
+  cursor: pointer;
+}
+.token-clear .linkish {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #64748b;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
 }
 .data-table {
   width: 100%;

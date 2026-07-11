@@ -6,19 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-10 — S8.10 movewizard scaffold (lab move next)
+## Session end 2026-07-10 — S8.10 live moves + affcot phone POC
 
-**On `movewizard`:** **pbx3spa** **`1d27b54`** (Fleet tenants: Name + Hosted on + Move wizard), **pbx3api** **`0fb0019`** on **08jzwn**/**bzy54n**, **pbx3sbc-admin** **`6036bcb`** on SBC, **pbx3** gatekeeper **`384eb33`**.
+**On `movewizard`:** **pbx3spa** **`29ea623`**, **pbx3api** **`0fb0019`**, **pbx3sbc-admin** **`6036bcb`**, **pbx3** **`8d14a4e`**. No SPA code change this session — ops moves via gatekeeper (same create/run/advance as wizard).
 
-**SPA:** same app as node admin — **Fleet tenants** when directory URL set. Lab gatekeeper `http://127.0.0.1:8090` via Vite `/fleet-gk`. List shows human names and **Hosted on** (08jzwn/bzy54n).
+**Validated:** willand → bzy54n; affcot → 08jzwn with **Snom following** SBC setid remount. Fleet tenants **Hosted on** matches catalog (affcot on golden).
 
-**Not done:** live Start move (export/import/repoint). Affcot already on bzy54n.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **bzy54n:** `https://bzy54n.pbx3.com:44300/api` · gatekeeper `http://127.0.0.1:8090` via `/fleet-gk`
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **affcot:** `https://bzy54n.pbx3.com:44300/api`
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — harden + merge is #1.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — lab move is #1.
+**Resume:** S8.10 harden (gatekeeper auth) then merge **`movewizard` → `main`**. UI polish later.
 
-**Resume:** controlled lab tenant move on **`movewizard`**; then merge/harden.
+---
+
+## Session end 2026-07-10 — S8.10 movewizard scaffold (lab move next) — historical
+
+**On `movewizard`:** scaffold + Hosted on. Superseded by live moves + phone POC above.
+
+**Resume:** see block above.
 
 ---
 

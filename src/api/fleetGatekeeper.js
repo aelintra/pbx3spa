@@ -1,12 +1,12 @@
 /**
  * Fleet gatekeeper HTTP helpers (S8.10 move wizard).
- * Lab: VITE_FLEET_GATEKEEPER_URL=http://127.0.0.1:8090
- *      VITE_FLEET_GATEKEEPER_TOKEN=… (lab only — not for production builds)
+ * Lab: VITE_FLEET_GATEKEEPER_URL=/fleet-gk (+ optional DEV-only VITE_FLEET_GATEKEEPER_TOKEN).
+ * Production: set token via sessionStorage (Fleet tenants panel) — never bake into builds.
  */
-import { getFleetGatekeeperUrl } from '@/config/fleetGatekeeper'
+import { getFleetGatekeeperUrl, getFleetGatekeeperToken } from '@/config/fleetGatekeeper'
 
 function token() {
-  return (import.meta.env.VITE_FLEET_GATEKEEPER_TOKEN || '').trim()
+  return getFleetGatekeeperToken()
 }
 
 function base() {
