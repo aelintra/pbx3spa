@@ -56,6 +56,7 @@ import InboundRouteDetailView from '../views/InboundRouteDetailView.vue'
 import SysglobalsEditView from '../views/SysglobalsEditView.vue'
 import FirewallView from '../views/FirewallView.vue'
 import BackupView from '../views/BackupView.vue'
+import SnapshotsView from '../views/SnapshotsView.vue'
 import CertificatesView from '../views/CertificatesView.vue'
 import NetworkView from '../views/NetworkView.vue'
 import AsteriskFilesListView from '../views/AsteriskFilesListView.vue'
@@ -175,6 +176,7 @@ const router = createRouter({
         { path: 'certificates', name: 'certificates', component: CertificatesView },
         { path: 'ip-settings', name: 'ip-settings', component: NetworkView },
         { path: 'backup', name: 'backup', component: BackupView },
+        { path: 'snapshots', name: 'snapshots', component: SnapshotsView },
         { path: 'asterisk-files', name: 'asterisk-files', component: AsteriskFilesListView },
         {
           path: 'asterisk-files/:filename',

@@ -16,6 +16,7 @@ const auth = useAuthStore()
 /** Panels that do NOT show the Commit button (no config commit applies). */
 const COMMIT_HIDDEN_PATH_PREFIXES = [
   '/backup',
+  '/snapshots',
   '/certificates',
   '/devices',
   '/firewall',
@@ -100,6 +101,7 @@ const navGroups = computed(() => {
     links: [
       { to: '/asterisk-files', label: 'Asterisk Files', icon: 'file-code' },
       { to: '/backup', label: 'Backup', icon: 'database' },
+      { to: '/snapshots', label: 'Snapshots', icon: 'layers' },
       { to: '/certificates', label: 'Certificates', icon: 'lock' },
       { to: '/customapps', label: 'Custom Apps', icon: 'package' },
       { to: '/devices', label: 'Devices', icon: 'smartphone' },
