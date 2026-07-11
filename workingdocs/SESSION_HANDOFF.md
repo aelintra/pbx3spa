@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-10 — S8.10 live moves + affcot phone POC
+## Session end 2026-07-10 — S8.10 merged to main (interim auth)
 
-**On `movewizard`:** **pbx3spa** **`29ea623`**, **pbx3api** **`0fb0019`**, **pbx3sbc-admin** **`6036bcb`**, **pbx3** **`8d14a4e`**. No SPA code change this session — ops moves via gatekeeper (same create/run/advance as wizard).
+**On `main`:** **pbx3spa** **`c828fe0`** (sessionStorage gatekeeper token; DEV-only `VITE_*`), **pbx3api** **`0fb0019`**, **pbx3sbc-admin** **`6036bcb`**, **pbx3** **`79700ee`**. Fast-forward from **`movewizard`**.
 
-**Validated:** willand → bzy54n; affcot → 08jzwn with **Snom following** SBC setid remount. Fleet tenants **Hosted on** matches catalog (affcot on golden).
+**Validated earlier:** willand + affcot phone POC. Fleet tenants Hosted on matches catalog.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **bzy54n:** `https://bzy54n.pbx3.com:44300/api` · gatekeeper `http://127.0.0.1:8090` via `/fleet-gk`
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — harden + merge is #1.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — pull nodes optional; peering/UI polish next.
 
-**Resume:** S8.10 harden (gatekeeper auth) then merge **`movewizard` → `main`**. UI polish later.
+**Resume:** optional node pull to `main`; then polish / next priority.
+
+---
+
+## Session end 2026-07-10 — S8.10 live moves + affcot phone POC — historical
+
+**On `movewizard`:** live moves + Snom POC. Superseded by merge to **`main`** above.
+
+**Resume:** see block above.
 
 ---
 
