@@ -1,7 +1,7 @@
 /**
- * Fleet gatekeeper HTTP helpers (S8.10 move wizard).
+ * Fleet gatekeeper HTTP helpers (Fleet mode / move wizard).
  * Lab: VITE_FLEET_GATEKEEPER_URL=/fleet-gk (+ optional DEV-only VITE_FLEET_GATEKEEPER_TOKEN).
- * Production: set token via sessionStorage (Fleet tenants panel) — never bake into builds.
+ * Production: set token via sessionStorage after Enter Fleet — never bake into builds.
  */
 import { getFleetGatekeeperUrl, getFleetGatekeeperToken } from '@/config/fleetGatekeeper'
 

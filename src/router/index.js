@@ -33,9 +33,13 @@ import AgentsListView from '../views/AgentsListView.vue'
 import AgentCreateView from '../views/AgentCreateView.vue'
 import AgentDetailView from '../views/AgentDetailView.vue'
 import RoutesListView from '../views/RoutesListView.vue'
+import FleetLayout from '../layouts/FleetLayout.vue'
 import FleetTenantsView from '../views/FleetTenantsView.vue'
+import FleetInstancesView from '../views/FleetInstancesView.vue'
 import FleetTenantMoveWizardView from '../views/FleetTenantMoveWizardView.vue'
 import FleetTenantMoveJobView from '../views/FleetTenantMoveJobView.vue'
+import { useFleetModeStore } from '@/stores/fleetMode'
+import { isFleetGatekeeperEnabled } from '@/config/fleetGatekeeper'
 import RouteCreateView from '../views/RouteCreateView.vue'
 import RouteDetailView from '../views/RouteDetailView.vue'
 import CustomAppsListView from '../views/CustomAppsListView.vue'
@@ -89,13 +93,6 @@ const router = createRouter({
         { path: 'tenants', name: 'tenants', component: TenantsListView },
         { path: 'tenants/new', name: 'tenant-create', component: TenantCreateView },
         { path: 'tenants/:pkey', name: 'tenant-detail', component: TenantDetailView },
-        { path: 'fleet/tenants', name: 'fleet-tenants', component: FleetTenantsView },
-        { path: 'fleet/tenants/move', name: 'fleet-tenant-move', component: FleetTenantMoveWizardView },
-        {
-          path: 'fleet/tenants/move/:jobId',
-          name: 'fleet-tenant-move-job',
-          component: FleetTenantMoveJobView
-        },
         { path: 'extensions', name: 'extensions', component: ExtensionsListView },
         { path: 'extensions/new', name: 'extension-create', component: ExtensionCreateView },
         { path: 'extensions/:shortuid', name: 'extension-detail', component: ExtensionDetailView },
@@ -186,12 +183,33 @@ const router = createRouter({
         { path: 'logs', name: 'logs', component: LogsListView },
         { path: 'recordings', name: 'recordings', component: RecordingsListView }
       ]
+    },
+    {
+      path: '/fleet',
+      component: FleetLayout,
+      meta: { fleet: true },
+      children: [
+        { path: '', redirect: { name: 'fleet-tenants' } },
+        { path: 'instances', name: 'fleet-instances', component: FleetInstancesView },
+        { path: 'tenants', name: 'fleet-tenants', component: FleetTenantsView },
+        {
+          path: 'tenants/move',
+          name: 'fleet-tenant-move',
+          component: FleetTenantMoveWizardView
+        },
+        {
+          path: 'tenants/move/:jobId',
+          name: 'fleet-tenant-move-job',
+          component: FleetTenantMoveJobView
+        }
+      ]
     }
   ]
 })
 
-router.beforeEach(async (to) => {
+router.beforeEach(async (to, from) => {
   const auth = useAuthStore()
+  const fleetMode = useFleetModeStore()
 
   if (PUBLIC_ROUTES.includes(to.path)) {
     return
@@ -211,12 +229,31 @@ router.beforeEach(async (to) => {
       auth.setUser(user)
     } catch {
       auth.clearCredentials()
+      fleetMode.reset()
       return { path: '/login' }
     }
   }
 
   if (!auth.can('admin')) {
     return { name: 'no-access' }
+  }
+
+  const isFleetRoute = Boolean(to.matched.some((r) => r.meta?.fleet))
+
+  if (isFleetRoute) {
+    if (!isFleetGatekeeperEnabled()) {
+      return { name: 'dashboard' }
+    }
+    if (!fleetMode.isFleetMode) {
+      const ret =
+        from.fullPath && !from.fullPath.startsWith('/fleet') ? from.fullPath : '/'
+      fleetMode.enterFleet(ret)
+    }
+    return
+  }
+
+  if (fleetMode.isFleetMode) {
+    return { path: '/fleet/tenants' }
   }
 })
 

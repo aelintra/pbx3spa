@@ -7,11 +7,12 @@ import { getApiClient } from '@/api/client'
 import CommitButton from '@/components/CommitButton.vue'
 import NavIcon from '@/components/NavIcon.vue'
 import SessionContextChips from '@/components/SessionContextChips.vue'
-import { isFleetDirectoryEnabled } from '@/config/instanceDirectory'
+import { useFleetModeStore } from '@/stores/fleetMode'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const fleetMode = useFleetModeStore()
 
 /** Panels that do NOT show the Commit button (no config commit applies). */
 const COMMIT_HIDDEN_PATH_PREFIXES = [
@@ -41,12 +42,7 @@ const navGroups = computed(() => {
     id: 'tenancy',
     heading: 'Tenancy',
     icon: 'building2',
-    links: [
-      { to: '/tenants', label: 'Tenants', icon: 'building2' },
-      ...(isFleetDirectoryEnabled()
-        ? [{ to: '/fleet/tenants', label: 'Fleet tenants', icon: 'layers' }]
-        : [])
-    ]
+    links: [{ to: '/tenants', label: 'Tenants', icon: 'building2' }]
   },
   {
     id: 'endpoints',
@@ -251,7 +247,13 @@ onBeforeUnmount(() => {
   }
 })
 
+function enterFleet() {
+  fleetMode.enterFleet(route.fullPath)
+  router.push({ name: 'fleet-tenants' })
+}
+
 async function logout() {
+  fleetMode.reset()
   try {
     await getApiClient().get('auth/logout')
   } catch {
@@ -332,6 +334,14 @@ async function logout() {
         </div>
         <div class="topbar-right">
           <CommitButton v-if="showCommitButton" />
+          <button
+            v-if="fleetMode.fleetAvailable && auth.can('admin')"
+            type="button"
+            class="enter-fleet-btn"
+            @click="enterFleet"
+          >
+            Enter Fleet
+          </button>
           <span v-if="auth.user" class="user"
             >Logged in as {{ auth.user.name || auth.user.email }}</span
           >
@@ -549,6 +559,19 @@ async function logout() {
 .user {
   font-size: 0.875rem;
   color: var(--pbx-text-muted);
+}
+.enter-fleet-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--pbx-accent, #1d4ed8);
+  background: transparent;
+  border: 1px solid var(--pbx-border);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.enter-fleet-btn:hover {
+  background: var(--pbx-surface-subtle);
 }
 .logout-btn {
   padding: 0.375rem 0.75rem;

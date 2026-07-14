@@ -1,14 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { listFleetTenants } from '@/api/fleetGatekeeper'
+import { listFleetTenants, getFleetCatalog } from '@/api/fleetGatekeeper'
 import {
   isFleetGatekeeperEnabled,
   hasFleetGatekeeperToken,
-  setFleetGatekeeperToken,
-  clearFleetGatekeeperToken
+  setFleetGatekeeperToken
 } from '@/config/fleetGatekeeper'
-import { isFleetDirectoryEnabled } from '@/config/instanceDirectory'
-import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const tenants = ref([])
 const instancesById = ref({})
@@ -34,7 +31,6 @@ async function loadTenants() {
   loading.value = true
   error.value = ''
   try {
-    const { getFleetCatalog } = await import('@/api/fleetGatekeeper')
     const [tList, catalog] = await Promise.all([listFleetTenants(), getFleetCatalog()])
     const map = {}
     for (const i of catalog.instances || []) {
@@ -58,13 +54,6 @@ function saveToken() {
   loadTenants()
 }
 
-function clearToken() {
-  clearFleetGatekeeperToken()
-  needsToken.value = true
-  tenants.value = []
-  error.value = 'Fleet token cleared for this session.'
-}
-
 function instanceLabel(instanceId) {
   const i = instancesById.value[instanceId]
   if (!i) return instanceId || '—'
@@ -81,12 +70,9 @@ onMounted(loadTenants)
 
 <template>
   <div class="fleet-tenants-view">
-    <PanelBackLink :to="{ name: 'dashboard' }" label="Dashboard">
-      <h1>Fleet tenants</h1>
-    </PanelBackLink>
-
-    <p v-if="!isFleetDirectoryEnabled()" class="hint">
-      Instance directory mode is off — this view is for fleet operators with gatekeeper access.
+    <h1>Fleet tenants</h1>
+    <p class="hint">
+      Org catalog via gatekeeper. Move a tenant between instances without mixing tenant-node panels.
     </p>
 
     <div v-if="needsToken" class="token-box">
@@ -105,7 +91,7 @@ onMounted(loadTenants)
       </form>
     </div>
     <p v-else-if="hasFleetGatekeeperToken()" class="hint token-clear">
-      <button type="button" class="linkish" @click="clearToken">Clear fleet token</button>
+      Session has a fleet token (clear from the top bar if needed).
     </p>
 
     <p v-if="loading">Loading…</p>

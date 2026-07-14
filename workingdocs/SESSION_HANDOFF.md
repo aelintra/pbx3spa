@@ -6,17 +6,39 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-11 — Fleet UI home + SBC stylesync (stop here)
+## Session WIP 2026-07-13 — Fleet mode UX (`fleetadmin`)
 
-**On `main`:** **pbx3sbc-admin** **`624b0f3`** (stylesync live on SBC). **pbx3** **`2ee36f9`** / **pbx3spa** **`5977b62`** (one-SPA / two-modes Fleet Console + parked shadowing). Nodes **pbx3api** still **`0fb0019`**.
+**Branch:** **`fleetadmin`** (pbx3spa / pbx3 / pbx3api). Not merged to `main`.
 
-**Day:** Settled Fleet = first-class **mode** in same SPA (separate control-plane API). SBC Filament look/feel aligned with SPA shell/tables. Failover+shadowing parked.
+**Shipped (SPA):** One SPA / two modes — **Enter Fleet** (tenant top bar) → **`FleetLayout`** (Instances, Tenants); **Exit Fleet** restores prior route and clears gatekeeper token. Dropped peer “Fleet tenants” from tenant sidebar. Routes under `/fleet/*` with guards so modes never mix. Lab still uses session-paste gatekeeper token.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **bzy54n:** `https://bzy54n.pbx3.com:44300/api` · gatekeeper `http://127.0.0.1:8090` via `/fleet-gk` · SBC `http://sbc.pbx3.com/admin`
+**Try:** `npm run dev` with directory URL + `/fleet-gk`; login → **Enter Fleet** → paste token → tenants/instances → **Exit Fleet**.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — peering polish or Fleet mode UX next.
+**Still open:** dedicated fleet auth (not paste token); Jobs nav; SSO/`fleet` abilities; EC2 control-plane host.
 
-**Resume:** peering polish, Fleet mode shell swap, or snapshots.
+**Resume:** soak/QA Enter–Exit; then merge `fleetadmin` when content, or continue polish.
+
+---
+
+## Session end 2026-07-11 — S9 snapshots + peering Phase 5 (stop here)
+
+**On `main`:** **pbx3spa** **`103ab34`** (`/snapshots`), **pbx3api** **`d8c560c`** (snap on Commit + FIFO; golden), **pbx3sbc** **`05ea925`** / **pbx3sbc-admin** **`2df6a60`** (alias_db + DID aliases; Phase 5 call OK). **pbx3** docs tip **`3705b8b`**.
+
+**Day:** Snapshots S9.5–S9.7 complete. Peering Phase 5 done; Phase 2 blocked on second SIP provider (user returning when acquired).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **bzy54n:** `https://bzy54n.pbx3.com:44300/api` · gatekeeper `http://127.0.0.1:8090` via `/fleet-gk` · SBC `http://sbc.pbx3.com/admin` · **Snapshots** at `/snapshots`
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — Phase 2 when second carrier, or Fleet mode UX.
+
+**Resume:** Phase 2 outbound failover (needs 2nd ITSP), or Fleet mode shell swap.
+
+---
+
+## Session end 2026-07-11 — Fleet UI home + SBC stylesync (stop here) — historical
+
+**On `main`:** stylesync / Fleet UI direction. Superseded by **S9 + Phase 5** block above.
+
+**Resume:** see block above.
 
 ---
 
