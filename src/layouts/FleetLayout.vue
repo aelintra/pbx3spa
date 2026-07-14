@@ -3,18 +3,15 @@
  * Fleet mode shell — gatekeeper-only nav. Does not mount tenant AppLayout.
  * Design: TENANT_MOBILITY_FLEET_CONSOLE_DESIGN.md §2.5
  */
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useFleetModeStore } from '@/stores/fleetMode'
 import NavIcon from '@/components/NavIcon.vue'
 import { getApiClient } from '@/api/client'
-import { hasFleetGatekeeperToken, clearFleetGatekeeperToken } from '@/config/fleetGatekeeper'
 
 const router = useRouter()
 const auth = useAuthStore()
 const fleetMode = useFleetModeStore()
-const tokenPresent = ref(hasFleetGatekeeperToken())
 
 const navLinks = [
   { to: '/fleet/instances', label: 'Instances', icon: 'layers' },
@@ -22,20 +19,13 @@ const navLinks = [
   { to: '/fleet/jobs', label: 'Jobs', icon: 'list-ordered' }
 ]
 
-function exitFleet() {
-  const path = fleetMode.exitFleet()
-  tokenPresent.value = false
+async function exitFleet() {
+  const path = await fleetMode.exitFleet()
   router.push(path)
 }
 
-function clearToken() {
-  clearFleetGatekeeperToken()
-  tokenPresent.value = false
-}
-
 async function logout() {
-  fleetMode.reset()
-  tokenPresent.value = false
+  await fleetMode.reset()
   try {
     await getApiClient().get('auth/logout')
   } catch {
@@ -77,14 +67,6 @@ async function logout() {
           <span class="fleet-chip">Fleet mode</span>
         </div>
         <div class="topbar-right">
-          <button
-            v-if="tokenPresent"
-            type="button"
-            class="logout-btn"
-            @click="clearToken"
-          >
-            Clear fleet token
-          </button>
           <span v-if="auth.user" class="user"
             >Logged in as {{ auth.user.name || auth.user.email }}</span
           >

@@ -253,7 +253,7 @@ function enterFleet() {
 }
 
 async function logout() {
-  fleetMode.reset()
+  await fleetMode.reset()
   try {
     await getApiClient().get('auth/logout')
   } catch {

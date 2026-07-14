@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { clearFleetGatekeeperToken, isFleetGatekeeperEnabled } from '@/config/fleetGatekeeper'
+import { logoutFleet } from '@/api/fleetGatekeeper'
 import { isFleetDirectoryEnabled } from '@/config/instanceDirectory'
 
 const MODE_KEY = 'pbx3.uiMode'
@@ -62,11 +63,16 @@ export const useFleetModeStore = defineStore('fleetMode', {
     },
 
     /**
-     * Clear fleet token and leave fleet mode.
-     * @returns {string} path to navigate after exit
+     * Revoke gatekeeper session (best-effort), clear local token, leave fleet mode.
+     * Soft step-up: next Enter Fleet requires Sign in again.
+     * @returns {Promise<string>} path to navigate after exit
      */
-    exitFleet() {
-      clearFleetGatekeeperToken()
+    async exitFleet() {
+      try {
+        await logoutFleet()
+      } catch {
+        clearFleetGatekeeperToken()
+      }
       this.mode = 'tenant'
       const path = this.returnPath || '/'
       this.persist()
@@ -74,8 +80,12 @@ export const useFleetModeStore = defineStore('fleetMode', {
     },
 
     /** On logout / session end — drop fleet context without navigation. */
-    reset() {
-      clearFleetGatekeeperToken()
+    async reset() {
+      try {
+        await logoutFleet()
+      } catch {
+        clearFleetGatekeeperToken()
+      }
       this.mode = 'tenant'
       this.returnPath = '/'
       this.persist()

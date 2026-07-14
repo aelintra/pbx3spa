@@ -1,7 +1,7 @@
 <script setup>
 /**
  * Fleet gatekeeper auth for Fleet mode panels.
- * Prefer email/password login; optional advanced paste for break-glass token.
+ * Prefer email/password login; break-glass paste stays collapsed (ops/emergency only).
  */
 import { ref, computed } from 'vue'
 import {
@@ -99,18 +99,22 @@ defineExpose({
       </form>
       <p v-if="error" class="error">{{ error }}</p>
 
-      <button type="button" class="linkish advanced-toggle" @click="showAdvanced = !showAdvanced">
-        {{ showAdvanced ? 'Hide' : 'Advanced' }}: paste API token
-      </button>
-      <form v-if="showAdvanced" class="token-form" @submit.prevent="saveToken">
-        <input
-          v-model="tokenDraft"
-          type="password"
-          autocomplete="off"
-          placeholder="Paste GATEKEEPER_API_TOKEN (break-glass)"
-        />
-        <button type="submit" class="primary">Save for session</button>
-      </form>
+      <details class="break-glass" :open="showAdvanced" @toggle="showAdvanced = $event.target.open">
+        <summary>Break-glass (ops only)</summary>
+        <p class="hint break-glass-hint">
+          Emergency access with the control-plane <code>GATEKEEPER_API_TOKEN</code>.
+          Day-to-day operators should use Sign in above.
+        </p>
+        <form class="token-form" @submit.prevent="saveToken">
+          <input
+            v-model="tokenDraft"
+            type="password"
+            autocomplete="off"
+            placeholder="Paste break-glass token"
+          />
+          <button type="submit" class="primary">Save for session</button>
+        </form>
+      </details>
     </div>
     <p v-else class="hint token-ok">
       Fleet session active.
@@ -160,9 +164,32 @@ defineExpose({
   flex: none;
   width: 100%;
 }
-.advanced-toggle {
+.break-glass {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--pbx-border);
+  color: var(--pbx-text-muted);
+  font-size: 0.85rem;
+}
+.break-glass summary {
+  cursor: pointer;
+  list-style: none;
+  color: var(--pbx-text-muted);
+}
+.break-glass summary::-webkit-details-marker {
+  display: none;
+}
+.break-glass summary::before {
+  content: '▸ ';
   display: inline-block;
-  margin-top: 0.75rem;
+  width: 0.9em;
+}
+.break-glass[open] summary::before {
+  content: '▾ ';
+}
+.break-glass-hint {
+  margin: 0.5rem 0 0.65rem;
+  font-size: 0.8rem;
 }
 .linkish {
   border: none;

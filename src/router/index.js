@@ -231,7 +231,7 @@ router.beforeEach(async (to, from) => {
       auth.setUser(user)
     } catch {
       auth.clearCredentials()
-      fleetMode.reset()
+      void fleetMode.reset()
       return { path: '/login' }
     }
   }
