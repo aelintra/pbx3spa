@@ -1,7 +1,12 @@
 <template>
   <div class="recordings-view">
     <h1>Recordings</h1>
-    <p class="subtitle">Call recordings stored on this node. Times shown in UTC.</p>
+    <p class="subtitle">
+      Call recordings on this node. Storage:
+      <strong>Spool</strong> (just captured) →
+      <strong>Local</strong> (on-node archive) →
+      <strong>S3</strong> (fleet offload). Times in UTC.
+    </p>
 
     <div class="filters">
       <label class="filter">
@@ -90,6 +95,14 @@
             <th>Callee</th>
             <th>Queue / Ext</th>
             <th
+              class="th-sortable"
+              :class="sortClass('storage')"
+              title="Where the recording lives"
+              @click="setSort('storage')"
+            >
+              Storage
+            </th>
+            <th
               class="th-sortable col-size"
               :class="sortClass('filesize')"
               title="Click to sort"
@@ -103,20 +116,20 @@
         <tbody>
           <tr v-for="rec in sortedRecordings" :key="rec.id" :class="{ playing: nowPlaying?.id === rec.id }">
             <td class="mono" :title="rec.created_at || ''">{{ formatDate(rec) }}</td>
-            <td :title="rec.tenant">
-              {{ rec.tenant_name || rec.tenant }}
-              <span
-                v-if="rec.archived || rec.location === 's3_only'"
-                class="archived-badge"
-                title="Local copy aged off — playback via S3 archive"
-              >archived</span>
-            </td>
+            <td :title="rec.tenant">{{ rec.tenant_name || rec.tenant }}</td>
             <td class="mono">{{ rec.callerid || '—' }}</td>
             <td class="mono">{{ rec.dnid || '—' }}</td>
             <td>
               <span v-if="rec.queue">{{ rec.queue }}<span v-if="rec.extension"> / {{ rec.extension }}</span></span>
               <span v-else-if="rec.is_queue" class="muted">queue</span>
               <span v-else>—</span>
+            </td>
+            <td>
+              <span
+                class="storage-badge"
+                :class="storageBadgeClass(rec)"
+                :title="storageTitle(rec)"
+              >{{ storageLabel(rec) }}</span>
             </td>
             <td class="col-size">{{ formatBytes(rec.filesize) }}</td>
             <td class="cell-actions col-actions">
@@ -231,14 +244,17 @@ const sortedRecordings = computed(() => {
   const key = sortKey.value
   const order = sortOrder.value
   list.sort((a, b) => {
-    let va = a[key]
-    let vb = b[key]
-    if (key === 'epoch' || key === 'filesize') {
-      va = Number(va) || 0
-      vb = Number(vb) || 0
+    let va
+    let vb
+    if (key === 'storage') {
+      va = storageLabel(a).toLowerCase()
+      vb = storageLabel(b).toLowerCase()
+    } else if (key === 'epoch' || key === 'filesize') {
+      va = Number(a[key]) || 0
+      vb = Number(b[key]) || 0
     } else {
-      va = String(va ?? '').toLowerCase()
-      vb = String(vb ?? '').toLowerCase()
+      va = String(a[key] ?? '').toLowerCase()
+      vb = String(b[key] ?? '').toLowerCase()
     }
     let cmp = 0
     if (va < vb) cmp = -1
@@ -247,6 +263,42 @@ const sortedRecordings = computed(() => {
   })
   return list
 })
+
+/** Operator-facing storage tier for a recording row. */
+function storageLabel(rec) {
+  const loc = rec.location || ''
+  const onS3 = !!(rec.on_s3 || rec.archived || loc === 's3_only')
+  if (loc === 's3_only' || rec.archived) return 'S3 only'
+  if (loc === 'spool') return onS3 ? 'Spool + S3' : 'Spool'
+  if (onS3) return 'Local + S3'
+  if (loc === 'archive' || loc === 's3') return 'Local'
+  return loc || 'Local'
+}
+
+function storageTitle(rec) {
+  const loc = rec.location || ''
+  const onS3 = !!(rec.on_s3 || rec.archived || loc === 's3_only')
+  if (loc === 's3_only' || rec.archived) {
+    return 'Local copy aged off — play/download via S3 archive (gatekeeper)'
+  }
+  if (loc === 'spool') {
+    return onS3
+      ? 'Still in Asterisk spool; also copied to S3'
+      : 'Hot capture under /var/spool/asterisk/monitor (not yet offloaded to local archive)'
+  }
+  if (onS3) {
+    return 'On-node archive and copied to the fleet recordings S3 bucket'
+  }
+  return 'On-node archive under /opt/pbx3/media/recordings (not yet on S3)'
+}
+
+function storageBadgeClass(rec) {
+  const label = storageLabel(rec)
+  if (label === 'S3 only') return 'storage-s3-only'
+  if (label.includes('S3')) return 'storage-s3'
+  if (label === 'Spool') return 'storage-spool'
+  return 'storage-local'
+}
 
 function setSort(key) {
   if (sortKey.value === key) {
@@ -480,18 +532,36 @@ input[type='date'].filter-input::-webkit-datetime-edit {
   font-style: italic;
 }
 
-.archived-badge {
+.archived-badge,
+.storage-badge {
   display: inline-block;
-  margin-left: 0.35rem;
-  padding: 0.05rem 0.35rem;
+  padding: 0.05rem 0.4rem;
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: #475569;
-  background: #e2e8f0;
   border-radius: 0.25rem;
   vertical-align: middle;
+  white-space: nowrap;
+}
+
+.storage-local {
+  color: #334155;
+  background: #e2e8f0;
+}
+
+.storage-spool {
+  color: #9a3412;
+  background: #ffedd5;
+}
+
+.storage-s3 {
+  color: #1e40af;
+  background: #dbeafe;
+}
+
+.storage-s3-only {
+  color: #5b21b6;
+  background: #ede9fe;
 }
 
 .loading {
