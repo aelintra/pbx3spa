@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session WIP 2026-07-13 — Fleet mode UX (`fleetadmin`)
+## Session end 2026-07-13 — Peers carrier UX + SBC sidebar
 
-**Branch:** **`fleetadmin`** (pbx3spa / pbx3 / pbx3api). Not merged to `main`.
+**On `main`:** **pbx3sbc-admin** **`374afb0`** / **`e78d13a`** (Peers grouped by `carrier=`/`role=` attrs; Used-by = route counts; sidebar Peering→Routing→Fail2Ban→Logs). **pbx3sbc** **`5d90d84`**. **pbx3spa** Fleet mode already on **`main`** (**`ba31dd4`**); no SPA code this session.
 
-**Shipped (SPA):** One SPA / two modes — **Enter Fleet** → **`FleetLayout`** (Instances, Tenants, **Jobs**); **Exit Fleet** clears gatekeeper token. Shared **`FleetTokenGate`** explains `GATEKEEPER_API_TOKEN` (lab: `movewizard-smoke-token`). Gatekeeper **`GET /api/v1/tenant-moves`** lists jobs.
+**Day:** Logical carrier Peers layout live on SBC; clarified Number routes vs DID aliases (aliases not for fleet delivery). TODO tip: **LE on SBC + control EC2**, then Fleet auth.
 
-**Try:** Enter Fleet → Tenants / Instances / Jobs. Restart local gatekeeper (`php -S …`) to pick up list API.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **bzy54n:** `https://bzy54n.pbx3.com:44300/api` · SBC **`http://sbc.pbx3.com/admin`** · gatekeeper local `http://127.0.0.1:8090`
 
-**Still open:** dedicated fleet auth (not paste token); Jobs nav; SSO/`fleet` abilities; EC2 control-plane host.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — LE SBC/control; prefix-overlap; Fail2ban inbound whitelist still open.
 
-**Resume:** soak/QA Enter–Exit; then merge `fleetadmin` when content, or continue polish.
+**Resume:** LE for SBC / control EC2 standup, or Fleet auth — not Peers layout polish unless copy tweaks from use.
+
+---
+
+## Session WIP 2026-07-13 — Fleet mode UX (`fleetadmin`) — historical (merged)
+
+**Branch:** **`fleetadmin`** merged → **`main`**; branch deleted. See Fleet mode TODO [x] and earlier session notes. Superseded by Peers UX session end above.
 
 ---
 
