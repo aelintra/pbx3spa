@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-14 — LE, control, fleet auth, Pack A, identity stance
+## Session end 2026-07-14 — S10, design rules 10–14, S7 PCI-shaped
 
-**On `main`:** **pbx3spa** **`3618666`** (Fleet login + Exit Fleet revoke; break-glass collapsed). **pbx3** docs tip / Pack A / **`FLEET_AUTH_COOKIE_SSO.md`** / handoff. **pbx3api** **`f872963`** (Pack A SnapshotRetention + recordings HTTP). **pbx3sbc-admin** **`f40d581`** (prefix overlap; live **`https://sbc.pbx3.com/admin`**). Control **`https://control.pbx3.com`**.
+**On `main`:** **pbx3** **`d0801c5`** (Phase S10 plan; Rule 9; DESIGN_RULES Parts A–D + Rules 10–14; S7 PCI-shaped baseline / S7+ attestation). **pbx3spa** no code this session (**`e8da6de`** prior). Escalation: agents must flag asks that break **`DESIGN_RULES.md`**.
 
-**Day:** SBC + control LE; fleet email/password auth; prefix-overlap UX; critical-path Pack A green; SSO-agnostic identity settled (no big IdP for try-it-out); Fleet login UI kinship still open (looks early-oughts vs **`LoginView`**).
+**Day:** Fleet-admin wishlist → S10; cloud portability Rule 9; rules restructure + Cursor escalate rule; S7 = private bucket + presigns + SSE-S3 (not full PCI); search remains SQLite.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **bzy54n:** `https://bzy54n.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** (Vite `/fleet-gk`) · SBC **`https://sbc.pbx3.com/admin`** · Snapshots `/snapshots`
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **bzy54n** · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · Recordings panel local-only until S7
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — tip S7 / egress / …; open **Fleet login UI kinship**; cookie/SSO blocked with stance doc.
+**Docs / TODO:** tip **implement S7** or **S10.1** abilities; Fleet login UI kinship still open.
 
-**Resume:** Prefer product pick (S7 / egress) or **FleetTokenGate** restyle toward LoginView. Do not start IdP/cookie work without same-site UI / customer SSO ask.
+**Resume:** Start S7 implementation (recordings bucket + gatekeeper presigns) or S10.1. No SPA work required for S7 upload core beyond archived badge.
+
+---
+
+## Session end 2026-07-14 — LE, control, fleet auth, Pack A, identity stance — historical
+
+**On `main`:** Fleet auth + Pack A + SBC LE morning arc. Superseded by pm block above.
+
+**Resume:** see block above.
 
 ---
 
