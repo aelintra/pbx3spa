@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-13 — Peers carrier UX + SBC sidebar
+## Session end 2026-07-14 — LE, control, fleet auth, Pack A, identity stance
+
+**On `main`:** **pbx3spa** **`3618666`** (Fleet login + Exit Fleet revoke; break-glass collapsed). **pbx3** docs tip / Pack A / **`FLEET_AUTH_COOKIE_SSO.md`** / handoff. **pbx3api** **`f872963`** (Pack A SnapshotRetention + recordings HTTP). **pbx3sbc-admin** **`f40d581`** (prefix overlap; live **`https://sbc.pbx3.com/admin`**). Control **`https://control.pbx3.com`**.
+
+**Day:** SBC + control LE; fleet email/password auth; prefix-overlap UX; critical-path Pack A green; SSO-agnostic identity settled (no big IdP for try-it-out); Fleet login UI kinship still open (looks early-oughts vs **`LoginView`**).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **bzy54n:** `https://bzy54n.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** (Vite `/fleet-gk`) · SBC **`https://sbc.pbx3.com/admin`** · Snapshots `/snapshots`
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — tip S7 / egress / …; open **Fleet login UI kinship**; cookie/SSO blocked with stance doc.
+
+**Resume:** Prefer product pick (S7 / egress) or **FleetTokenGate** restyle toward LoginView. Do not start IdP/cookie work without same-site UI / customer SSO ask.
+
+---
+
+## Session end 2026-07-13 — Peers carrier UX + SBC sidebar — historical
 
 **On `main`:** **pbx3sbc-admin** **`374afb0`** / **`e78d13a`** (Peers grouped by `carrier=`/`role=` attrs; Used-by = route counts; sidebar Peering→Routing→Fail2Ban→Logs). **pbx3sbc** **`5d90d84`**. **pbx3spa** Fleet mode already on **`main`** (**`ba31dd4`**); no SPA code this session.
 
