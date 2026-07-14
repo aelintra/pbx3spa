@@ -103,7 +103,14 @@
         <tbody>
           <tr v-for="rec in sortedRecordings" :key="rec.id" :class="{ playing: nowPlaying?.id === rec.id }">
             <td class="mono" :title="rec.created_at || ''">{{ formatDate(rec) }}</td>
-            <td :title="rec.tenant">{{ rec.tenant_name || rec.tenant }}</td>
+            <td :title="rec.tenant">
+              {{ rec.tenant_name || rec.tenant }}
+              <span
+                v-if="rec.archived || rec.location === 's3_only'"
+                class="archived-badge"
+                title="Local copy aged off — playback via S3 archive"
+              >archived</span>
+            </td>
             <td class="mono">{{ rec.callerid || '—' }}</td>
             <td class="mono">{{ rec.dnid || '—' }}</td>
             <td>
@@ -471,6 +478,20 @@ input[type='date'].filter-input::-webkit-datetime-edit {
 .muted {
   color: #94a3b8;
   font-style: italic;
+}
+
+.archived-badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #475569;
+  background: #e2e8f0;
+  border-radius: 0.25rem;
+  vertical-align: middle;
 }
 
 .loading {
