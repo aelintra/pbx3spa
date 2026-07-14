@@ -1,31 +1,20 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getFleetCatalog } from '@/api/fleetGatekeeper'
-import {
-  isFleetGatekeeperEnabled,
-  hasFleetGatekeeperToken,
-  setFleetGatekeeperToken
-} from '@/config/fleetGatekeeper'
+import { hasFleetGatekeeperToken } from '@/config/fleetGatekeeper'
+import FleetTokenGate from '@/components/FleetTokenGate.vue'
 
 const instances = ref([])
 const loading = ref(true)
 const error = ref('')
-const tokenDraft = ref('')
-const needsToken = ref(false)
 
 async function load() {
-  if (!isFleetGatekeeperEnabled()) {
-    error.value = 'Set VITE_FLEET_GATEKEEPER_URL to load fleet instances.'
-    loading.value = false
-    return
-  }
   if (!hasFleetGatekeeperToken()) {
-    needsToken.value = true
-    error.value = 'Enter the fleet gatekeeper API token for this browser session.'
     loading.value = false
+    error.value = ''
+    instances.value = []
     return
   }
-  needsToken.value = false
   loading.value = true
   error.value = ''
   try {
@@ -33,18 +22,9 @@ async function load() {
     instances.value = catalog.instances || []
   } catch (e) {
     error.value = e?.message || 'Failed to load fleet instances'
-    if (/401|unauthorized|token/i.test(String(e?.message || ''))) {
-      needsToken.value = true
-    }
   } finally {
     loading.value = false
   }
-}
-
-function saveToken() {
-  setFleetGatekeeperToken(tokenDraft.value)
-  tokenDraft.value = ''
-  load()
 }
 
 onMounted(load)
@@ -55,20 +35,7 @@ onMounted(load)
     <h1>Fleet instances</h1>
     <p class="hint">Catalog instances from the gatekeeper (S3 directory). Gatekeeper API only.</p>
 
-    <div v-if="needsToken" class="token-box">
-      <p class="hint">
-        Paste <code>GATEKEEPER_API_TOKEN</code> for this browser session only.
-      </p>
-      <form class="token-form" @submit.prevent="saveToken">
-        <input
-          v-model="tokenDraft"
-          type="password"
-          autocomplete="off"
-          placeholder="Gatekeeper API token"
-        />
-        <button type="submit" class="primary">Save for session</button>
-      </form>
-    </div>
+    <FleetTokenGate @saved="load" @cleared="load" />
 
     <p v-if="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
@@ -91,7 +58,7 @@ onMounted(load)
         </tr>
       </tbody>
     </table>
-    <p v-else>No instances in catalog yet.</p>
+    <p v-else-if="hasFleetGatekeeperToken()">No instances in catalog yet.</p>
   </div>
 </template>
 
@@ -102,23 +69,6 @@ onMounted(load)
 .hint {
   color: var(--pbx-text-muted);
   font-size: 0.9rem;
-}
-.token-box {
-  margin: 1rem 0;
-  padding: 1rem;
-  border: 1px solid var(--pbx-border);
-  border-radius: 0.5rem;
-  background: var(--pbx-surface-subtle, #f8fafc);
-}
-.token-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-.token-form input {
-  flex: 1 1 12rem;
-  padding: 0.4rem 0.6rem;
 }
 .error {
   color: var(--pbx-danger, #b91c1c);

@@ -10,9 +10,9 @@
 
 **Branch:** **`fleetadmin`** (pbx3spa / pbx3 / pbx3api). Not merged to `main`.
 
-**Shipped (SPA):** One SPA / two modes — **Enter Fleet** (tenant top bar) → **`FleetLayout`** (Instances, Tenants); **Exit Fleet** restores prior route and clears gatekeeper token. Dropped peer “Fleet tenants” from tenant sidebar. Routes under `/fleet/*` with guards so modes never mix. Lab still uses session-paste gatekeeper token.
+**Shipped (SPA):** One SPA / two modes — **Enter Fleet** → **`FleetLayout`** (Instances, Tenants, **Jobs**); **Exit Fleet** clears gatekeeper token. Shared **`FleetTokenGate`** explains `GATEKEEPER_API_TOKEN` (lab: `movewizard-smoke-token`). Gatekeeper **`GET /api/v1/tenant-moves`** lists jobs.
 
-**Try:** `npm run dev` with directory URL + `/fleet-gk`; login → **Enter Fleet** → paste token → tenants/instances → **Exit Fleet**.
+**Try:** Enter Fleet → Tenants / Instances / Jobs. Restart local gatekeeper (`php -S …`) to pick up list API.
 
 **Still open:** dedicated fleet auth (not paste token); Jobs nav; SSO/`fleet` abilities; EC2 control-plane host.
 

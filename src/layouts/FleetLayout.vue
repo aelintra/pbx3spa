@@ -18,7 +18,8 @@ const tokenPresent = ref(hasFleetGatekeeperToken())
 
 const navLinks = [
   { to: '/fleet/instances', label: 'Instances', icon: 'layers' },
-  { to: '/fleet/tenants', label: 'Tenants', icon: 'building2' }
+  { to: '/fleet/tenants', label: 'Tenants', icon: 'building2' },
+  { to: '/fleet/jobs', label: 'Jobs', icon: 'list-ordered' }
 ]
 
 function exitFleet() {

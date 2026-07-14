@@ -62,6 +62,11 @@ export function getFleetCatalog() {
   return gkFetch('/api/v1/catalog')
 }
 
+export function listTenantMoves(limit = 50) {
+  const q = new URLSearchParams({ limit: String(limit) })
+  return gkFetch(`/api/v1/tenant-moves?${q}`).then((d) => d.jobs || [])
+}
+
 export function createTenantMove(body) {
   return gkFetch('/api/v1/tenant-moves', {
     method: 'POST',
