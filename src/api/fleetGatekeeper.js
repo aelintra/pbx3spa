@@ -1,9 +1,14 @@
 /**
  * Fleet gatekeeper HTTP helpers (Fleet mode / move wizard).
- * Lab: VITE_FLEET_GATEKEEPER_URL=/fleet-gk (+ optional DEV-only VITE_FLEET_GATEKEEPER_TOKEN).
- * Production: set token via sessionStorage after Enter Fleet — never bake into builds.
+ * Lab: VITE_FLEET_GATEKEEPER_URL=/fleet-gk → proxy to control host.
+ * Auth: prefer POST /api/v1/auth/login → sessionStorage Bearer; optional paste / DEV break-glass.
  */
-import { getFleetGatekeeperUrl, getFleetGatekeeperToken } from '@/config/fleetGatekeeper'
+import {
+  getFleetGatekeeperUrl,
+  getFleetGatekeeperToken,
+  setFleetGatekeeperToken,
+  clearFleetGatekeeperToken
+} from '@/config/fleetGatekeeper'
 
 function token() {
   return getFleetGatekeeperToken()
@@ -15,6 +20,21 @@ function base() {
     throw new Error('VITE_FLEET_GATEKEEPER_URL is not set')
   }
   return url
+}
+
+async function parseJsonResponse(res) {
+  const text = await res.text()
+  let data = null
+  try {
+    data = text ? JSON.parse(text) : null
+  } catch {
+    data = { raw: text }
+  }
+  if (!res.ok) {
+    const msg = data?.error || data?.message || `Gatekeeper ${res.status}`
+    throw new Error(msg)
+  }
+  return data
 }
 
 async function gkFetch(path, options = {}) {
@@ -30,18 +50,49 @@ async function gkFetch(path, options = {}) {
     headers['Content-Type'] = 'application/json'
   }
   const res = await fetch(`${base()}${path}`, { ...options, headers })
-  const text = await res.text()
-  let data = null
-  try {
-    data = text ? JSON.parse(text) : null
-  } catch {
-    data = { raw: text }
+  return parseJsonResponse(res)
+}
+
+/** Public — no Bearer. */
+export async function fleetAuthStatus() {
+  return gkFetch('/api/v1/auth/status')
+}
+
+/**
+ * Login with fleet operator email/password; stores returned Bearer in sessionStorage.
+ * @returns {{ token: string, user: object, expires_at?: string }}
+ */
+export async function loginFleet(email, password) {
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json'
   }
-  if (!res.ok) {
-    const msg = data?.error || data?.message || `Gatekeeper ${res.status}`
-    throw new Error(msg)
+  const res = await fetch(`${base()}/api/v1/auth/login`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ email, password })
+  })
+  const data = await parseJsonResponse(res)
+  if (!data?.token) {
+    throw new Error('Login response missing token')
   }
+  setFleetGatekeeperToken(data.token)
   return data
+}
+
+export async function logoutFleet() {
+  try {
+    if (token()) {
+      await gkFetch('/api/v1/auth/logout', { method: 'POST', body: '{}' })
+    }
+  } catch {
+    // still clear local session
+  }
+  clearFleetGatekeeperToken()
+}
+
+export function getFleetMe() {
+  return gkFetch('/api/v1/auth/me')
 }
 
 export function listFleetTenants() {

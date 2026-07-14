@@ -1,9 +1,9 @@
 /**
  * Fleet gatekeeper API base (Phase B′).
- * Example: https://fleet.example.com or http://127.0.0.1:8090
+ * Example: https://control.pbx3.com or /fleet-gk (Vite proxy).
  *
- * Auth: production builds must not bake GATEKEEPER_API_TOKEN into the SPA.
- * Prefer sessionStorage (operator paste). VITE_FLEET_GATEKEEPER_TOKEN is DEV-only.
+ * Auth: sessionStorage Bearer from login (or paste / DEV break-glass).
+ * Never bake GATEKEEPER_API_TOKEN into production builds.
  */
 
 const TOKEN_KEY = 'pbx3.fleetGatekeeperToken'

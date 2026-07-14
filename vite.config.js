@@ -44,7 +44,7 @@ export default defineConfig(({ mode }) => {
     proxy['/fleet-gk'] = {
       target: gatekeeperProxyTarget,
       changeOrigin: true,
-      secure: false,
+      secure: true,
       rewrite: (path) => path.replace(/^\/fleet-gk/, '')
     }
   }
