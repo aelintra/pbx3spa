@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-14 — S10, design rules 10–14, S7 PCI-shaped
+## Session end 2026-07-14 — S7 recordings S3 offload + Storage UI + S7.10 sweeper
 
-**On `main`:** **pbx3** **`d0801c5`** (Phase S10 plan; Rule 9; DESIGN_RULES Parts A–D + Rules 10–14; S7 PCI-shaped baseline / S7+ attestation). **pbx3spa** no code this session (**`e8da6de`** prior). Escalation: agents must flag asks that break **`DESIGN_RULES.md`**.
+**On `main`:** **pbx3** **`ed484f3`** (bucket ops, gatekeeper `presign-recordings`, lifecycle/docs). **pbx3api** **`6f46712`** (upload, play proxy, `s3_only` retention, reconcile sweeper). **pbx3spa** **`6e23fa3`** (Recordings **Storage** column: Spool / Local / Local + S3 / S3 only).
 
-**Day:** Fleet-admin wishlist → S10; cloud portability Rule 9; rules restructure + Cursor escalate rule; S7 = private bucket + presigns + SSE-S3 (not full PCI); search remains SQLite.
+**Day:** Created **`08jzwn-pbx3-recordings`**; wired control + golden; smoked upload/GET + reconcile path rediscovery. PCI-shaped only — not attested.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **bzy54n** · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · Recordings panel local-only until S7
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · Recordings show Storage badges against live golden
 
-**Docs / TODO:** tip **implement S7** or **S10.1** abilities; Fleet login UI kinship still open.
+**Docs / TODO:** tip **S10.1** abilities; S7 implement [x]; S7+ parked.
 
-**Resume:** Start S7 implementation (recordings bucket + gatekeeper presigns) or S10.1. No SPA work required for S7 upload core beyond archived badge.
+**Resume:** S10.1 gatekeeper abilities, or Fleet login UI kinship. No further S7 code required for baseline.
+
+---
+
+## Session end 2026-07-14 — S10, design rules 10–14, S7 PCI-shaped — historical
+
+**On `main`:** docs/plan tip before evening implement. Superseded by block above.
+
+**Resume:** see block above.
 
 ---
 
