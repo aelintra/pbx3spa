@@ -303,4 +303,58 @@ describe('fleetGatekeeper API login/logout', () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1].body)
     expect(body.confirm).toBe(true)
   })
+
+  it('listFleetDids GETs /dids', async () => {
+    session.setItem(TOKEN_KEY, 't')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ updated_at: '2026-07-15T00:00:00Z', dids: [] })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { listFleetDids } = await import('@/api/fleetGatekeeper.js')
+    const data = await listFleetDids()
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://control.test/api/v1/dids',
+      expect.any(Object)
+    )
+    expect(data.dids).toEqual([])
+  })
+
+  it('assignFleetDid POSTs /dids/assign', async () => {
+    session.setItem(TOKEN_KEY, 't')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ ok: true, tenant_shortuid: '9wvvnb' })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { assignFleetDid } = await import('@/api/fleetGatekeeper.js')
+    await assignFleetDid({ e164: '+44111', tenant_shortuid: '9wvvnb', reassign: true })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://control.test/api/v1/dids/assign',
+      expect.objectContaining({ method: 'POST' })
+    )
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.reassign).toBe(true)
+  })
+
+  it('projectFleetDids POSTs /dids/project', async () => {
+    session.setItem(TOKEN_KEY, 't')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ ok: true, upserted: [], removed: [] })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { projectFleetDids } = await import('@/api/fleetGatekeeper.js')
+    await projectFleetDids({})
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://control.test/api/v1/dids/project',
+      expect.objectContaining({ method: 'POST' })
+    )
+  })
 })

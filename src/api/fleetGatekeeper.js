@@ -141,6 +141,55 @@ export function listFleetTenants() {
   )
 }
 
+/** S10.5 — catalog DID ownership (flat list). */
+export function listFleetDids() {
+  return gkFetch('/api/v1/dids')
+}
+
+/**
+ * Assign / reassign DID → tenant in catalog (`fleet_edge`); projects to SBC unless project:false.
+ * @param {{ e164: string, tenant_shortuid: string, status?: string, carrier?: string, notes?: string, sip_prefix?: string, reassign?: boolean, project?: boolean }} body
+ */
+export function assignFleetDid(body) {
+  return gkFetch('/api/v1/dids/assign', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+/**
+ * Soft-release DID in catalog (`fleet_edge`).
+ * @param {{ e164: string, confirm?: boolean, remove?: boolean, project?: boolean }} body
+ */
+export function releaseFleetDid(body) {
+  return gkFetch('/api/v1/dids/release', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+/**
+ * Force-project catalog DIDs → SBC inbound dr_rules (`fleet_edge`).
+ * @param {{ tenant_shortuid?: string, dry_run?: boolean }} [body]
+ */
+export function projectFleetDids(body = {}) {
+  return gkFetch('/api/v1/dids/project', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+/**
+ * Ensure tenant fqdn exists as SBC domain at catalog setid (`fleet_edge`).
+ * @param {string} shortuid
+ */
+export function registerFleetTenantDomain(shortuid) {
+  return gkFetch(`/api/v1/tenants/${encodeURIComponent(shortuid)}/register-domain`, {
+    method: 'POST',
+    body: '{}'
+  })
+}
+
 export function getFleetCatalog() {
   return gkFetch('/api/v1/catalog')
 }
