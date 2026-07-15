@@ -22,8 +22,16 @@ const navLinks = [
 ]
 
 async function exitFleet() {
-  const path = await fleetMode.exitFleet()
-  router.push(path)
+  // Leave UI mode immediately so a slow/hanging revoke never traps the operator.
+  const path = fleetMode.returnPath || '/'
+  fleetMode.mode = 'tenant'
+  fleetMode.persist()
+  try {
+    await fleetMode.exitFleet()
+  } catch {
+    // exitFleet already clears token best-effort; navigate anyway
+  }
+  router.push(path && !String(path).startsWith('/fleet') ? path : '/')
 }
 
 async function logout() {
@@ -69,6 +77,9 @@ async function logout() {
           <span class="fleet-chip">Fleet mode</span>
         </div>
         <div class="topbar-right">
+          <button type="button" class="exit-fleet-btn" @click="exitFleet">
+            Exit Fleet
+          </button>
           <span v-if="auth.user" class="user"
             >Logged in as {{ auth.user.name || auth.user.email }}</span
           >
@@ -212,6 +223,19 @@ async function logout() {
   background: var(--pbx-surface-subtle, #f1f5f9);
   border: 1px solid var(--pbx-border);
   border-radius: 0.375rem;
+}
+.exit-fleet-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--pbx-accent, #1d4ed8);
+  background: transparent;
+  border: 1px solid var(--pbx-accent, #1d4ed8);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.exit-fleet-btn:hover {
+  background: var(--pbx-surface-subtle, #f1f5f9);
 }
 .logo {
   font-size: 1.25rem;

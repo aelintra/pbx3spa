@@ -76,7 +76,7 @@ export const useFleetModeStore = defineStore('fleetMode', {
       this.mode = 'tenant'
       const path = this.returnPath || '/'
       this.persist()
-      return path
+      return path && !String(path).startsWith('/fleet') ? path : '/'
     },
 
     /** On logout / session end — drop fleet context without navigation. */
