@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-15 — pbx3-docs MkDocs + Pages (lab guide)
 
-**On `main`:** SPA code unchanged (**`18f3329`** handoff). **pbx3** **`abb2bc3`**. **pbx3-docs** **`2a37a00`** → **https://aelintra.github.io/pbx3-docs/**.
+**On `main`:** SPA code unchanged (**`d4d3e71`** tip). **pbx3** **`1d8316a`**. **pbx3-docs** **`2a37a00`** → **https://aelintra.github.io/pbx3-docs/**.
 
 **Day:** Stood up operator MkDocs (nav + schematic + Cloud/S3); seeded install/TLS/admin/fleet/troubleshoot from runbooks for lab use; human edit expected.
 
