@@ -206,3 +206,24 @@ export function advanceTenantMove(jobId, body) {
     body: JSON.stringify(body || {})
   })
 }
+
+export function abortTenantMove(jobId, tenantShortuid) {
+  return gkFetch(`/api/v1/tenant-moves/${encodeURIComponent(jobId)}/abort`, {
+    method: 'POST',
+    body: JSON.stringify(tenantShortuid ? { tenant_shortuid: tenantShortuid } : {})
+  })
+}
+
+export function retryTenantMove(jobId, tenantShortuid) {
+  return gkFetch(`/api/v1/tenant-moves/${encodeURIComponent(jobId)}/retry`, {
+    method: 'POST',
+    body: JSON.stringify(tenantShortuid ? { tenant_shortuid: tenantShortuid } : {})
+  })
+}
+
+export function rollbackTenantMove(jobId, tenantShortuid) {
+  return gkFetch(`/api/v1/tenant-moves/${encodeURIComponent(jobId)}/rollback`, {
+    method: 'POST',
+    body: JSON.stringify(tenantShortuid ? { tenant_shortuid: tenantShortuid } : {})
+  })
+}

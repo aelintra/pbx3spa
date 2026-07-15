@@ -1,8 +1,19 @@
 <script setup>
+/**
+ * Tenant move job detail — S8.10 gates + S10.3 abort / retry / rollback.
+ */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import PanelBackLink from '@/components/PanelBackLink.vue'
-import { getTenantMove, runTenantMove, advanceTenantMove } from '@/api/fleetGatekeeper'
+import {
+  getTenantMove,
+  runTenantMove,
+  advanceTenantMove,
+  abortTenantMove,
+  retryTenantMove,
+  rollbackTenantMove
+} from '@/api/fleetGatekeeper'
+import { canFleet, FLEET_ABILITY } from '@/config/fleetGatekeeper'
 
 const route = useRoute()
 const jobId = computed(() => String(route.params.jobId || ''))
@@ -11,12 +22,31 @@ const tenantShortuid = computed(() => String(route.query.tenant || ''))
 const job = ref(null)
 const error = ref('')
 const busy = ref(false)
+const canMoves = computed(() => canFleet(FLEET_ABILITY.MOVES))
 let timer = null
 
 const phases = computed(() => {
   const p = job.value?.phases
   if (!p || typeof p !== 'object') return []
   return Object.entries(p).map(([name, row]) => ({ name, ...(row || {}) }))
+})
+
+const cutoverDone = computed(
+  () => (job.value?.phases?.cutover?.status || '') === 'ok'
+)
+
+const canAbort = computed(() => {
+  if (!job.value || !canMoves.value) return false
+  const s = job.value.state
+  if (['completed', 'aborted'].includes(s)) return false
+  if (cutoverDone.value) return false
+  return true
+})
+
+const canRollback = computed(() => {
+  if (!job.value || !canMoves.value) return false
+  if (['completed', 'aborted'].includes(job.value.state)) return false
+  return cutoverDone.value
 })
 
 async function refresh() {
@@ -32,7 +62,11 @@ async function refresh() {
 async function retryRun() {
   busy.value = true
   try {
-    job.value = await runTenantMove(jobId.value, tenantShortuid.value || undefined)
+    if (job.value?.state === 'failed') {
+      job.value = await retryTenantMove(jobId.value, tenantShortuid.value || undefined)
+    } else {
+      job.value = await runTenantMove(jobId.value, tenantShortuid.value || undefined)
+    }
   } catch (e) {
     error.value = e?.message || 'Run failed'
     await refresh()
@@ -50,6 +84,38 @@ async function confirmGate(gate) {
     })
   } catch (e) {
     error.value = e?.message || 'Advance failed'
+    await refresh()
+  } finally {
+    busy.value = false
+  }
+}
+
+async function doAbort() {
+  if (!window.confirm('Abort this move job? Source tenant will be left unchanged.')) return
+  busy.value = true
+  try {
+    job.value = await abortTenantMove(jobId.value, tenantShortuid.value || undefined)
+  } catch (e) {
+    error.value = e?.message || 'Abort failed'
+    await refresh()
+  } finally {
+    busy.value = false
+  }
+}
+
+async function doRollback() {
+  if (
+    !window.confirm(
+      'Roll back SBC cutover (and catalog home if updated)? Destination tenant data may still exist.'
+    )
+  ) {
+    return
+  }
+  busy.value = true
+  try {
+    job.value = await rollbackTenantMove(jobId.value, tenantShortuid.value || undefined)
+  } catch (e) {
+    error.value = e?.message || 'Rollback failed'
     await refresh()
   } finally {
     busy.value = false
@@ -81,6 +147,10 @@ onUnmounted(() => {
         · <code>{{ job.job_id }}</code>
         · state <strong>{{ job.state }}</strong>
       </p>
+      <p v-if="job.created_by || job.last_action_by" class="meta">
+        <span v-if="job.created_by">Started by {{ job.created_by }}</span>
+        <span v-if="job.last_action_by"> · last action {{ job.last_action_by }}</span>
+      </p>
       <p v-if="job.next_human_action" class="gate">{{ job.next_human_action }}</p>
       <p v-if="job.error" class="error">{{ job.error }}</p>
 
@@ -103,7 +173,7 @@ onUnmounted(() => {
 
       <div class="actions">
         <button
-          v-if="job.state === 'verifying'"
+          v-if="job.state === 'verifying' && canMoves"
           type="button"
           class="primary"
           :disabled="busy"
@@ -112,7 +182,7 @@ onUnmounted(() => {
           Confirm test call OK
         </button>
         <button
-          v-if="job.state === 'awaiting_cleanup'"
+          v-if="job.state === 'awaiting_cleanup' && canMoves"
           type="button"
           class="danger"
           :disabled="busy"
@@ -121,12 +191,29 @@ onUnmounted(() => {
           Delete tenant on source
         </button>
         <button
-          v-if="['pending', 'failed'].includes(job.state)"
+          v-if="['pending', 'failed'].includes(job.state) && canMoves"
           type="button"
           :disabled="busy"
           @click="retryRun"
         >
-          {{ job.state === 'failed' ? 'Retry run' : 'Run' }}
+          {{ job.state === 'failed' ? 'Retry' : 'Run' }}
+        </button>
+        <button
+          v-if="canAbort"
+          type="button"
+          :disabled="busy"
+          @click="doAbort"
+        >
+          Abort
+        </button>
+        <button
+          v-if="canRollback"
+          type="button"
+          class="danger"
+          :disabled="busy"
+          @click="doRollback"
+        >
+          Rollback cutover
         </button>
         <button type="button" :disabled="busy" @click="refresh">Refresh</button>
       </div>
@@ -139,6 +226,10 @@ onUnmounted(() => {
 <style scoped>
 .job-view {
   max-width: 48rem;
+}
+.meta {
+  color: #64748b;
+  font-size: 0.9rem;
 }
 .gate {
   background: #fef3c7;

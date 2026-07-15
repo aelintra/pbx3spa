@@ -244,4 +244,21 @@ describe('fleetGatekeeper API login/logout', () => {
     expect(body.confirm).toBe(true)
     expect(body.notes).toBe('lab cleanup')
   })
+
+  it('retryTenantMove posts to /retry', async () => {
+    session.setItem(TOKEN_KEY, 't')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ state: 'pending' })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { retryTenantMove } = await import('@/api/fleetGatekeeper.js')
+    await retryTenantMove('tmj_abc', '9wvvnb')
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://control.test/api/v1/tenant-moves/tmj_abc/retry',
+      expect.objectContaining({ method: 'POST' })
+    )
+  })
 })

@@ -49,6 +49,7 @@ onMounted(load)
           <th>Tenant</th>
           <th>Job</th>
           <th>State</th>
+          <th>Started by</th>
           <th>Updated</th>
           <th></th>
         </tr>
@@ -58,6 +59,7 @@ onMounted(load)
           <td><code>{{ j.tenant_shortuid }}</code></td>
           <td><code>{{ j.job_id }}</code></td>
           <td>{{ j.state }}</td>
+          <td>{{ j.created_by || '—' }}</td>
           <td>{{ j.updated_at || j.created_at || '—' }}</td>
           <td>
             <RouterLink
