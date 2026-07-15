@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-14 — S10.4 catalog ↔ SBC reconcile + setid guard
+## Session end 2026-07-15 — S10.5 DID ownership + SBC project (residue paused)
+
+**On `s105`:** **pbx3** **`9b3c8fa`**, **pbx3spa** **`44fefff`**, **pbx3sbc-admin** **`97c9d05`**. Live on control + SBC. Not merged to `main`.
+
+**Day:** Fleet **DIDs** panel — catalog assign/release + Project all → SBC inbound `dr_rules`. Lab Magrathea DID → duns call OK. S10.5 **DID path done**; residue (domain register UI + dispatcher-set create) **paused for product decisions**.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · Fleet DIDs on spa **`s105`** (`npm run dev`)
+
+**Docs / TODO:** tip decide S10.5 residue then S10.6 / polish; S10.5 DID [x].
+
+**Resume:** Decision session on domain register + dispatcher-set onboard — do not implement until settled. Or merge `s105` / S10.6 / UX polish.
+
+---
+
+## Session end 2026-07-14 — S10.4 catalog ↔ SBC reconcile + setid guard — historical
 
 **On `main`:** **pbx3** **`96e432e`** (reconcile + project + `SbcSetidGuard`). **pbx3sbc-admin** **`2d232f8`** (`/fleet/domains`, `dispatcher-sets`). **pbx3spa** **`15c5090`** (Fleet Reconcile; Instances Link setid from live sets; Apply button only when mismatches). Live on control + SBC.
 
@@ -16,7 +30,7 @@
 
 **Docs / TODO:** tip **S10.5** DID/edge; S10.4 [x].
 
-**Resume:** S10.5 edge/DID, or Fleet login / Instances UX polish.
+**Resume:** see block above.
 
 ---
 
