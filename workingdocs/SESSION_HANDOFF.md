@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-15 — S10.8 login chooser + fleet shell gate
 
-**On `main`:** **pbx3spa** S10.8 (chooser, Sanctum-free `/fleet`, shell TokenGate, nav lock); **pbx3** docs (S10.8 [x], S10.7 parked). SHAs after push tip.
+**On `main`:** **pbx3spa** **`59225b9`** (S10.8); **pbx3** **`a170c68`** (handoff). Gatekeeper live from S10.6.
 
 **Day:** S10.6 Users earlier; park S10.7; S10.8 entry polish + dual-hat Enter Fleet with locked nav until gatekeeper Sign in.
 
