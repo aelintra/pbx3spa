@@ -198,4 +198,50 @@ describe('fleetGatekeeper API login/logout', () => {
     expect(rows[0].name).toBe('Affcot')
     expect(rows[0].instance_id).toBe('08jzwn')
   })
+
+  it('registerFleetInstance POSTs body with verify_up', async () => {
+    session.setItem(TOKEN_KEY, 't')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      text: async () => JSON.stringify({ catalog: { instances: [] } })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { registerFleetInstance } = await import('@/api/fleetGatekeeper.js')
+    await registerFleetInstance({
+      id: 'abc',
+      fqdn: 'x.example',
+      api_base_url: 'https://x.example:44300/api',
+      label: 'x',
+      status: 'active',
+      verify_up: true
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://control.test/api/v1/instances',
+      expect.objectContaining({ method: 'POST' })
+    )
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.verify_up).toBe(true)
+  })
+
+  it('decommissionFleetInstance sends confirm', async () => {
+    session.setItem(TOKEN_KEY, 't')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ instance: { status: 'decommissioned' } })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { decommissionFleetInstance } = await import('@/api/fleetGatekeeper.js')
+    await decommissionFleetInstance('kid123', { notes: 'lab cleanup' })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://control.test/api/v1/instances/kid123/decommission',
+      expect.objectContaining({ method: 'POST' })
+    )
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.confirm).toBe(true)
+    expect(body.notes).toBe('lab cleanup')
+  })
 })

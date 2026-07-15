@@ -145,6 +145,37 @@ export function getFleetCatalog() {
   return gkFetch('/api/v1/catalog')
 }
 
+/** @param {Record<string, unknown>} body */
+export function registerFleetInstance(body) {
+  return gkFetch('/api/v1/instances', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+/** @param {string} id @param {Record<string, unknown>} body */
+export function patchFleetInstance(id, body) {
+  return gkFetch(`/api/v1/instances/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body)
+  })
+}
+
+/**
+ * Soft decommission (status=decommissioned).
+ * @param {string} id
+ * @param {{ notes?: string }} [opts]
+ */
+export function decommissionFleetInstance(id, opts = {}) {
+  return gkFetch(`/api/v1/instances/${encodeURIComponent(id)}/decommission`, {
+    method: 'POST',
+    body: JSON.stringify({
+      confirm: true,
+      ...(opts.notes ? { notes: opts.notes } : {})
+    })
+  })
+}
+
 export function listTenantMoves(limit = 50) {
   const q = new URLSearchParams({ limit: String(limit) })
   return gkFetch(`/api/v1/tenant-moves?${q}`).then((d) => d.jobs || [])

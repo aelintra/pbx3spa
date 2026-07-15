@@ -38,7 +38,11 @@ const sourceInstance = computed(() => {
 
 const destChoices = computed(() => {
   const src = tenant.value?.instance_id
-  return instances.value.filter((i) => i.id !== src && (i.status || 'active') !== 'decommissioned')
+  return instances.value.filter((i) => {
+    if (i.id === src) return false
+    const status = (i.status || 'active').toLowerCase()
+    return status !== 'decommissioned' && status !== 'maintenance'
+  })
 })
 
 const destInstance = computed(() =>
