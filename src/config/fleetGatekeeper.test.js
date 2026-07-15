@@ -261,4 +261,46 @@ describe('fleetGatekeeper API login/logout', () => {
       expect.objectContaining({ method: 'POST' })
     )
   })
+
+  it('getFleetReconcile GETs /reconcile', async () => {
+    session.setItem(TOKEN_KEY, 't')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({
+          ok: true,
+          summary: { matched: 1, drifts: 0 },
+          drifts: []
+        })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { getFleetReconcile } = await import('@/api/fleetGatekeeper.js')
+    const report = await getFleetReconcile()
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://control.test/api/v1/reconcile',
+      expect.any(Object)
+    )
+    expect(report.ok).toBe(true)
+  })
+
+  it('projectFleetReconcile POSTs confirm', async () => {
+    session.setItem(TOKEN_KEY, 't')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ dry_run: false, projected: [], after: { ok: true } })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { projectFleetReconcile } = await import('@/api/fleetGatekeeper.js')
+    await projectFleetReconcile({ confirm: true })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://control.test/api/v1/reconcile/project',
+      expect.objectContaining({ method: 'POST' })
+    )
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.confirm).toBe(true)
+  })
 })

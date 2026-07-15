@@ -145,6 +145,27 @@ export function getFleetCatalog() {
   return gkFetch('/api/v1/catalog')
 }
 
+/** Live SBC dispatcher setids (catalog sbc_dispatcher_setid must be one of these). */
+export function listFleetDispatcherSets() {
+  return gkFetch('/api/v1/sbc/dispatcher-sets').then((d) => d.sets || [])
+}
+
+/** S10.4 — catalog ↔ SBC domain.setid drift (`fleet_edge`). */
+export function getFleetReconcile() {
+  return gkFetch('/api/v1/reconcile')
+}
+
+/**
+ * Force-project setid_mismatch drifts onto SBC (`fleet_edge`).
+ * @param {{ confirm?: boolean, dry_run?: boolean, domains?: string[] }} [body]
+ */
+export function projectFleetReconcile(body = { confirm: true }) {
+  return gkFetch('/api/v1/reconcile/project', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
 /** @param {Record<string, unknown>} body */
 export function registerFleetInstance(body) {
   return gkFetch('/api/v1/instances', {

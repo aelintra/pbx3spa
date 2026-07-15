@@ -5,6 +5,7 @@
 import { ref, computed, onMounted } from 'vue'
 import {
   getFleetCatalog,
+  listFleetDispatcherSets,
   refreshFleetSession,
   registerFleetInstance,
   patchFleetInstance,
@@ -19,6 +20,7 @@ import {
 import FleetTokenGate from '@/components/FleetTokenGate.vue'
 
 const instances = ref([])
+const dispatcherSets = ref([])
 const loading = ref(true)
 const error = ref('')
 const actionError = ref('')
@@ -34,17 +36,21 @@ const reg = ref({
   label: '',
   environment: 'lab',
   status: 'active',
+  sbc_dispatcher_setid: '',
   skip_verify: false
 })
 
 const editingId = ref('')
 const editDraft = ref({ label: '', notes: '', environment: '' })
+const linkingId = ref('')
+const linkSetid = ref('')
 
 async function load() {
   if (!hasFleetGatekeeperToken()) {
     loading.value = false
     error.value = ''
     instances.value = []
+    dispatcherSets.value = []
     return
   }
   loading.value = true
@@ -54,8 +60,12 @@ async function load() {
     if (getFleetAbilities().length === 0) {
       await refreshFleetSession()
     }
-    const catalog = await getFleetCatalog()
+    const [catalog, sets] = await Promise.all([
+      getFleetCatalog(),
+      listFleetDispatcherSets().catch(() => [])
+    ])
     instances.value = catalog.instances || []
+    dispatcherSets.value = sets
   } catch (e) {
     error.value = e?.message || 'Failed to load fleet instances'
   } finally {
@@ -65,6 +75,7 @@ async function load() {
 
 function startEdit(row) {
   editingId.value = row.id
+  linkingId.value = ''
   editDraft.value = {
     label: row.label || '',
     notes: row.notes || '',
@@ -75,6 +86,21 @@ function startEdit(row) {
 
 function cancelEdit() {
   editingId.value = ''
+}
+
+function startLink(row) {
+  linkingId.value = row.id
+  editingId.value = ''
+  linkSetid.value =
+    row.sbc_dispatcher_setid != null && row.sbc_dispatcher_setid !== ''
+      ? String(row.sbc_dispatcher_setid)
+      : ''
+  actionError.value = ''
+}
+
+function cancelLink() {
+  linkingId.value = ''
+  linkSetid.value = ''
 }
 
 async function saveEdit(id) {
@@ -97,6 +123,24 @@ async function saveEdit(id) {
     await load()
   } catch (e) {
     actionError.value = e?.message || 'Update failed'
+  } finally {
+    busyId.value = ''
+  }
+}
+
+async function saveLink(id) {
+  actionError.value = ''
+  busyId.value = id
+  try {
+    const setid = Number(linkSetid.value)
+    if (!Number.isInteger(setid) || setid < 1) {
+      throw new Error('Pick a live SBC dispatcher set')
+    }
+    await patchFleetInstance(id, { sbc_dispatcher_setid: setid })
+    linkingId.value = ''
+    await load()
+  } catch (e) {
+    actionError.value = e?.message || 'Link setid failed'
   } finally {
     busyId.value = ''
   }
@@ -148,6 +192,13 @@ async function doRegister() {
     if (reg.value.environment) {
       body.environment = reg.value.environment
     }
+    if (reg.value.sbc_dispatcher_setid !== '') {
+      const setid = Number(reg.value.sbc_dispatcher_setid)
+      if (!Number.isInteger(setid) || setid < 1) {
+        throw new Error('Pick a live SBC dispatcher set')
+      }
+      body.sbc_dispatcher_setid = setid
+    }
     if (!body.id || !body.fqdn || !body.api_base_url) {
       throw new Error('id, fqdn, and api_base_url are required')
     }
@@ -160,6 +211,7 @@ async function doRegister() {
       label: '',
       environment: 'lab',
       status: 'active',
+      sbc_dispatcher_setid: '',
       skip_verify: false
     }
     await load()
@@ -184,8 +236,11 @@ onMounted(load)
   <div class="fleet-instances-view">
     <h1>Fleet instances</h1>
     <p class="hint">
-      Org catalog via gatekeeper. Register upserts the S3 directory row after a live
+      Org catalog via gatekeeper (S3 home of record). Register upserts the directory row after a live
       <code>/up</code> check. Soft decommission hides from the picker only.
+      <strong>SBC setid</strong> is catalog intent linked only to a
+      <em>live</em> SBC dispatcher set (not a free-typed number). Applying that intent onto tenant
+      domains is <RouterLink to="/fleet/reconcile">Reconcile → Apply catalog → SBC</RouterLink>.
     </p>
 
     <FleetTokenGate @saved="load" @cleared="load" />
@@ -237,6 +292,15 @@ onMounted(load)
           <option value="production">production</option>
         </select>
       </label>
+      <label>
+        SBC dispatcher setid
+        <select v-model="reg.sbc_dispatcher_setid">
+          <option value="">— unset (link later) —</option>
+          <option v-for="s in dispatcherSets" :key="s.setid" :value="String(s.setid)">
+            set {{ s.setid }} ({{ s.destinations }} dest)
+          </option>
+        </select>
+      </label>
       <label class="checkbox-row">
         <input v-model="reg.skip_verify" type="checkbox" />
         Skip /up verify (lab if control cannot reach node :44300)
@@ -263,6 +327,7 @@ onMounted(load)
           <th>Label</th>
           <th>FQDN</th>
           <th>Environment</th>
+          <th>SBC setid</th>
           <th>Status</th>
           <th>ID</th>
           <th v-if="canManage"></th>
@@ -293,6 +358,19 @@ onMounted(load)
             </template>
           </td>
           <td>
+            <template v-if="linkingId === i.id">
+              <select v-model="linkSetid" class="inline-input">
+                <option disabled value="">Pick live set…</option>
+                <option v-for="s in dispatcherSets" :key="s.setid" :value="String(s.setid)">
+                  set {{ s.setid }} ({{ s.destinations }} dest)
+                </option>
+              </select>
+            </template>
+            <template v-else>
+              {{ i.sbc_dispatcher_setid ?? '—' }}
+            </template>
+          </td>
+          <td>
             <span :class="statusClass(i.status)">{{ i.status || 'active' }}</span>
           </td>
           <td><code>{{ i.id }}</code></td>
@@ -314,6 +392,19 @@ onMounted(load)
                 Cancel
               </button>
             </template>
+            <template v-else-if="linkingId === i.id">
+              <button
+                type="button"
+                class="linkish"
+                :disabled="busyId === i.id || !linkSetid"
+                @click="saveLink(i.id)"
+              >
+                Save setid
+              </button>
+              <button type="button" class="linkish" :disabled="busyId === i.id" @click="cancelLink">
+                Cancel
+              </button>
+            </template>
             <template v-else>
               <button
                 type="button"
@@ -322,6 +413,14 @@ onMounted(load)
                 @click="startEdit(i)"
               >
                 Edit
+              </button>
+              <button
+                type="button"
+                class="linkish"
+                :disabled="busyId === i.id || !dispatcherSets.length"
+                @click="startLink(i)"
+              >
+                Link setid
               </button>
               <button
                 v-if="(i.status || 'active') !== 'maintenance'"
@@ -406,6 +505,9 @@ onMounted(load)
   padding: 0.35rem 0.5rem;
   font: inherit;
   color: var(--pbx-text, inherit);
+}
+.setid-input {
+  max-width: 5.5rem;
 }
 .data-table {
   width: 100%;
