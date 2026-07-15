@@ -18,7 +18,8 @@ const navLinks = [
   { to: '/fleet/tenants', label: 'Tenants', icon: 'building2' },
   { to: '/fleet/dids', label: 'DIDs', icon: 'phone' },
   { to: '/fleet/jobs', label: 'Jobs', icon: 'list-ordered' },
-  { to: '/fleet/reconcile', label: 'Reconcile', icon: 'git-branch' }
+  { to: '/fleet/reconcile', label: 'Reconcile', icon: 'git-branch' },
+  { to: '/fleet/users', label: 'Users', icon: 'users' }
 ]
 
 async function exitFleet() {

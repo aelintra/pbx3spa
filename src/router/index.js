@@ -39,6 +39,7 @@ import FleetInstancesView from '../views/FleetInstancesView.vue'
 import FleetJobsView from '../views/FleetJobsView.vue'
 import FleetReconcileView from '../views/FleetReconcileView.vue'
 import FleetDidsView from '../views/FleetDidsView.vue'
+import FleetUsersView from '../views/FleetUsersView.vue'
 import FleetTenantMoveWizardView from '../views/FleetTenantMoveWizardView.vue'
 import FleetTenantMoveJobView from '../views/FleetTenantMoveJobView.vue'
 import { useFleetModeStore } from '@/stores/fleetMode'
@@ -198,6 +199,7 @@ const router = createRouter({
         { path: 'dids', name: 'fleet-dids', component: FleetDidsView },
         { path: 'jobs', name: 'fleet-jobs', component: FleetJobsView },
         { path: 'reconcile', name: 'fleet-reconcile', component: FleetReconcileView },
+        { path: 'users', name: 'fleet-users', component: FleetUsersView },
         {
           path: 'tenants/move',
           name: 'fleet-tenant-move',

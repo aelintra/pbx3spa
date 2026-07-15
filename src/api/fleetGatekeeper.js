@@ -309,3 +309,50 @@ export function rollbackTenantMove(jobId, tenantShortuid) {
     body: JSON.stringify(tenantShortuid ? { tenant_shortuid: tenantShortuid } : {})
   })
 }
+
+/** S10.6 — list fleet users (`fleet_admin`). */
+export function listFleetUsers() {
+  return gkFetch('/api/v1/fleet-users')
+}
+
+/**
+ * @param {{ email: string, password: string, name?: string, abilities?: string[] }} body
+ */
+export function createFleetUser(body) {
+  return gkFetch('/api/v1/fleet-users', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+/**
+ * @param {number|string} id
+ * @param {{ name?: string, password?: string, abilities?: string[] }} body
+ */
+export function updateFleetUser(id, body) {
+  return gkFetch(`/api/v1/fleet-users/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body)
+  })
+}
+
+export function disableFleetUser(id) {
+  return gkFetch(`/api/v1/fleet-users/${encodeURIComponent(id)}/disable`, {
+    method: 'POST',
+    body: '{}'
+  })
+}
+
+export function enableFleetUser(id) {
+  return gkFetch(`/api/v1/fleet-users/${encodeURIComponent(id)}/enable`, {
+    method: 'POST',
+    body: '{}'
+  })
+}
+
+export function revokeFleetUserSessions(id) {
+  return gkFetch(`/api/v1/fleet-users/${encodeURIComponent(id)}/revoke-sessions`, {
+    method: 'POST',
+    body: '{}'
+  })
+}
