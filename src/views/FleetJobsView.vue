@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue'
 import { listTenantMoves, refreshFleetSession } from '@/api/fleetGatekeeper'
 import { hasFleetGatekeeperToken, getFleetAbilities } from '@/config/fleetGatekeeper'
-import FleetTokenGate from '@/components/FleetTokenGate.vue'
 
 const jobs = ref([])
 const loading = ref(true)
@@ -37,8 +36,6 @@ onMounted(load)
   <div class="fleet-jobs-view">
     <h1>Move jobs</h1>
     <p class="hint">Recent tenant-move jobs from the gatekeeper (S3 catalog).</p>
-
-    <FleetTokenGate @saved="load" @cleared="load" />
 
     <p v-if="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>

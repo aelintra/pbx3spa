@@ -12,7 +12,6 @@ import {
   FLEET_ABILITY,
   getFleetAbilities
 } from '@/config/fleetGatekeeper'
-import FleetTokenGate from '@/components/FleetTokenGate.vue'
 
 const tenants = ref([])
 const instancesById = ref({})
@@ -99,8 +98,6 @@ onMounted(loadTenants)
       Org catalog via gatekeeper. Register on SBC projects the tenant FQDN → host setid (phones).
       Move a tenant between instances without mixing tenant-node panels.
     </p>
-
-    <FleetTokenGate @saved="loadTenants" @cleared="loadTenants" />
 
     <p v-if="actionError" class="error">{{ actionError }}</p>
     <p v-if="loading">Loading…</p>

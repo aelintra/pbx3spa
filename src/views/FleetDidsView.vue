@@ -17,7 +17,6 @@ import {
   canFleet,
   FLEET_ABILITY
 } from '@/config/fleetGatekeeper'
-import FleetTokenGate from '@/components/FleetTokenGate.vue'
 
 const dids = ref([])
 const tenants = ref([])
@@ -174,8 +173,6 @@ onMounted(load)
       (fleet-owned rows). Optional <strong>SIP prefix</strong> is the digit string OpenSIPS matches
       (e.g. Magrathea <code>01924918076</code> vs E.164 <code>+441924918076</code>).
     </p>
-
-    <FleetTokenGate @saved="load" @cleared="load" />
 
     <div v-if="hasFleetGatekeeperToken()" class="toolbar">
       <button type="button" class="primary" :disabled="loading" @click="load">

@@ -14,7 +14,6 @@ import {
   canFleet,
   FLEET_ABILITY
 } from '@/config/fleetGatekeeper'
-import FleetTokenGate from '@/components/FleetTokenGate.vue'
 
 const report = ref(null)
 const loading = ref(false)
@@ -120,8 +119,6 @@ onMounted(load)
         currently says (including a wrong setid — that will fail or break routing).
       </li>
     </ul>
-
-    <FleetTokenGate @saved="load" @cleared="load" />
 
     <div v-if="hasFleetGatekeeperToken()" class="toolbar">
       <button type="button" class="primary" :disabled="loading || projecting || !canEdge" @click="load">

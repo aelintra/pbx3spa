@@ -18,7 +18,6 @@ import {
   canFleet,
   FLEET_ABILITY
 } from '@/config/fleetGatekeeper'
-import FleetTokenGate from '@/components/FleetTokenGate.vue'
 
 const instances = ref([])
 const dispatcherSets = ref([])
@@ -302,12 +301,9 @@ onMounted(load)
       Org catalog via gatekeeper (S3 home of record). Register upserts the directory row after a live
       <code>/up</code> check. Soft decommission hides from the picker only.
       <strong>Provision edge</strong> creates a dispatcher set + Asterisk Peer on the SBC and writes
-      catalog setid (Rule 13). <strong>Link setid</strong> only attaches an already-live set.
-      Applying catalog setid onto tenant domains is
+      catalog setid (Rule 13). Applying catalog setid onto tenant domains is
       <RouterLink to="/fleet/reconcile">Reconcile → Apply catalog → SBC</RouterLink>.
     </p>
-
-    <FleetTokenGate @saved="load" @cleared="load" />
 
     <p v-if="actionError" class="error">{{ actionError }}</p>
 
@@ -532,15 +528,6 @@ onMounted(load)
                 {{ Number(i.sbc_dispatcher_setid) >= 1 ? 'Edge' : 'Provision' }}
               </button>
               <button
-                v-if="canManage"
-                type="button"
-                class="linkish"
-                :disabled="busyId === i.id || !dispatcherSets.length"
-                @click="startLink(i)"
-              >
-                Link
-              </button>
-              <button
                 v-if="canManage && (i.status || 'active') !== 'maintenance'"
                 type="button"
                 class="linkish"
@@ -567,6 +554,21 @@ onMounted(load)
               >
                 Decom
               </button>
+              <details v-if="canManage" class="advanced-actions">
+                <summary>Advanced</summary>
+                <p class="advanced-hint">
+                  Link setid attaches an <strong>already-live</strong> dispatcher set (catch-up). Prefer
+                  Provision for new nodes.
+                </p>
+                <button
+                  type="button"
+                  class="linkish muted-action"
+                  :disabled="busyId === i.id || !dispatcherSets.length"
+                  @click="startLink(i)"
+                >
+                  Link setid
+                </button>
+              </details>
             </template>
             <span v-else class="muted">…</span>
           </td>
@@ -718,6 +720,36 @@ onMounted(load)
 }
 .actions .linkish {
   margin-right: 0.55rem;
+}
+.advanced-actions {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--pbx-text-muted);
+}
+.advanced-actions summary {
+  cursor: pointer;
+  list-style: none;
+}
+.advanced-actions summary::-webkit-details-marker {
+  display: none;
+}
+.advanced-actions summary::before {
+  content: '▸ ';
+}
+.advanced-actions[open] summary::before {
+  content: '▾ ';
+}
+.advanced-hint {
+  margin: 0.35rem 0 0.45rem;
+  max-width: 16rem;
+  white-space: normal;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--pbx-text-muted);
+}
+.muted-action {
+  opacity: 0.85;
 }
 .action-row {
   display: flex;

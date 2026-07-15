@@ -2,16 +2,50 @@
 /**
  * Fleet mode shell — gatekeeper-only nav. Does not mount tenant AppLayout.
  * Design: TENANT_MOBILITY_FLEET_CONSOLE_DESIGN.md §2.5
+ *
+ * Exit Fleet vs Logout:
+ * - Dual-hat (instance Sanctum present): Exit = revoke fleet, return to instance;
+ *   Logout = revoke fleet + instance, → /login.
+ * - Fleet-only (chooser → Fleet console): one Logout → /login (no Exit Fleet).
+ *
+ * Auth gate (S10.8): panel nav stays locked until gatekeeper Sign in — one login surface
+ * in this layout (not per child route).
  */
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useFleetModeStore } from '@/stores/fleetMode'
 import NavIcon from '@/components/NavIcon.vue'
+import FleetTokenGate from '@/components/FleetTokenGate.vue'
 import { getApiClient } from '@/api/client'
+import { hasFleetGatekeeperToken } from '@/config/fleetGatekeeper'
 
 const router = useRouter()
 const auth = useAuthStore()
 const fleetMode = useFleetModeStore()
+
+/** Instance Sanctum session — dual-hat when true. */
+const hasInstanceSession = computed(() => auth.isLoggedIn)
+
+const fleetSignedIn = ref(hasFleetGatekeeperToken())
+/** Bump to remount panel views after Sign in so onMounted reloads. */
+const fleetSessionKey = ref(0)
+
+function onFleetAuthSaved() {
+  fleetSignedIn.value = true
+  fleetSessionKey.value += 1
+}
+
+function onFleetAuthCleared() {
+  fleetSignedIn.value = false
+  fleetSessionKey.value += 1
+}
+
+function onNavClick(e) {
+  if (!fleetSignedIn.value) {
+    e.preventDefault()
+  }
+}
 
 const navLinks = [
   { to: '/fleet/instances', label: 'Instances', icon: 'layers' },
@@ -24,6 +58,7 @@ const navLinks = [
 
 async function exitFleet() {
   // Leave UI mode immediately so a slow/hanging revoke never traps the operator.
+  const hadSanctum = auth.isLoggedIn
   const path = fleetMode.returnPath || '/'
   fleetMode.mode = 'tenant'
   fleetMode.persist()
@@ -32,17 +67,25 @@ async function exitFleet() {
   } catch {
     // exitFleet already clears token best-effort; navigate anyway
   }
-  router.push(path && !String(path).startsWith('/fleet') ? path : '/')
+  fleetSignedIn.value = false
+  if (hadSanctum) {
+    router.push(path && !String(path).startsWith('/fleet') ? path : '/')
+  } else {
+    router.push('/login')
+  }
 }
 
 async function logout() {
   await fleetMode.reset()
-  try {
-    await getApiClient().get('auth/logout')
-  } catch {
-    // still clear and redirect
+  fleetSignedIn.value = false
+  if (auth.isLoggedIn) {
+    try {
+      await getApiClient().get('auth/logout')
+    } catch {
+      // still clear and redirect
+    }
+    auth.clearCredentials()
   }
-  auth.clearCredentials()
   router.push('/login')
 }
 </script>
@@ -51,20 +94,33 @@ async function logout() {
   <div class="fleet-layout">
     <aside class="sidebar">
       <div class="sidebar-top-spacer" aria-hidden="true" />
-      <nav class="nav">
+      <nav class="nav" :class="{ 'nav--locked': !fleetSignedIn }" aria-label="Fleet">
         <p class="nav-mode-label">Fleet console</p>
+        <p v-if="!fleetSignedIn" class="nav-lock-hint">Sign in to open panels</p>
         <router-link
           v-for="link in navLinks"
           :key="link.to"
           :to="link.to"
           class="nav-link"
+          :class="{ 'nav-link--disabled': !fleetSignedIn }"
           active-class="active"
+          :tabindex="fleetSignedIn ? 0 : -1"
+          :aria-disabled="!fleetSignedIn ? 'true' : undefined"
+          @click="onNavClick"
         >
           <NavIcon :name="link.icon" />
           <span class="nav-link-label">{{ link.label }}</span>
         </router-link>
-        <button type="button" class="exit-fleet-nav" @click="exitFleet">
+        <button
+          v-if="hasInstanceSession"
+          type="button"
+          class="exit-fleet-nav"
+          @click="exitFleet"
+        >
           Exit Fleet
+        </button>
+        <button v-else type="button" class="exit-fleet-nav" @click="logout">
+          Logout
         </button>
       </nav>
       <footer class="sidebar-footer" role="contentinfo">© Aelintra Telecom</footer>
@@ -78,17 +134,23 @@ async function logout() {
           <span class="fleet-chip">Fleet mode</span>
         </div>
         <div class="topbar-right">
-          <button type="button" class="exit-fleet-btn" @click="exitFleet">
-            Exit Fleet
+          <template v-if="hasInstanceSession">
+            <button type="button" class="exit-fleet-btn" @click="exitFleet">
+              Exit Fleet
+            </button>
+            <span v-if="auth.user" class="user"
+              >Logged in as {{ auth.user.name || auth.user.email }}</span
+            >
+            <button type="button" class="logout-btn" @click="logout">Logout</button>
+          </template>
+          <button v-else type="button" class="logout-btn" @click="logout">
+            Logout
           </button>
-          <span v-if="auth.user" class="user"
-            >Logged in as {{ auth.user.name || auth.user.email }}</span
-          >
-          <button type="button" class="logout-btn" @click="logout">Logout</button>
         </div>
       </header>
       <main class="content">
-        <router-view />
+        <FleetTokenGate @saved="onFleetAuthSaved" @cleared="onFleetAuthCleared" />
+        <router-view v-if="fleetSignedIn" :key="fleetSessionKey" />
       </main>
       <div class="main-tail" aria-hidden="true" />
     </div>
@@ -137,6 +199,13 @@ async function logout() {
   text-transform: uppercase;
   color: var(--pbx-sidebar-heading);
 }
+.nav-lock-hint {
+  margin: -0.35rem 0 0.65rem;
+  padding: 0 0.65rem;
+  font-size: 0.75rem;
+  color: var(--pbx-sidebar-link);
+  opacity: 0.85;
+}
 .nav-link {
   display: flex;
   align-items: center;
@@ -157,6 +226,12 @@ async function logout() {
   color: var(--pbx-sidebar-active-color);
   background: var(--pbx-sidebar-active-bg);
   font-weight: 500;
+}
+.nav--locked .nav-link--disabled,
+.nav-link--disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 .exit-fleet-nav {
   margin-top: 1.25rem;

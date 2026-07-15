@@ -223,6 +223,23 @@ router.beforeEach(async (to, from) => {
     return
   }
 
+  const isFleetRoute = Boolean(to.matched.some((r) => r.meta?.fleet))
+
+  // S10.8 — Fleet console is gatekeeper-only; Sanctum not required.
+  if (isFleetRoute) {
+    if (!isFleetGatekeeperEnabled()) {
+      return auth.isLoggedIn ? { name: 'dashboard' } : { path: '/login' }
+    }
+    if (!fleetMode.isFleetMode) {
+      const ret =
+        auth.isLoggedIn && from.fullPath && !from.fullPath.startsWith('/fleet')
+          ? from.fullPath
+          : '/'
+      fleetMode.enterFleet(ret)
+    }
+    return
+  }
+
   if (!auth.isLoggedIn) {
     return { path: '/login' }
   }
@@ -244,20 +261,6 @@ router.beforeEach(async (to, from) => {
 
   if (!auth.can('admin')) {
     return { name: 'no-access' }
-  }
-
-  const isFleetRoute = Boolean(to.matched.some((r) => r.meta?.fleet))
-
-  if (isFleetRoute) {
-    if (!isFleetGatekeeperEnabled()) {
-      return { name: 'dashboard' }
-    }
-    if (!fleetMode.isFleetMode) {
-      const ret =
-        from.fullPath && !from.fullPath.startsWith('/fleet') ? from.fullPath : '/'
-      fleetMode.enterFleet(ret)
-    }
-    return
   }
 
   if (fleetMode.isFleetMode) {

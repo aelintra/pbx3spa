@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-15 — S10.5 complete (edge + Rule 13 + Exit Fleet)
+## Session end 2026-07-15 — S10.8 login chooser + fleet shell gate
 
-**On `main`:** **pbx3** **`f074b07`**, **pbx3spa** **`ee9a4f3`**, **pbx3sbc-admin** **`95bd61c`**. Live on control + SBC.
+**On `main`:** **pbx3spa** S10.8 (chooser, Sanctum-free `/fleet`, shell TokenGate, nav lock); **pbx3** docs (S10.8 [x], S10.7 parked). SHAs after push tip.
 
-**Day:** Finished S10.5 residue (Provision edge + Register on SBC); documented Rule 13 standalone vs fleet authorship; Exit Fleet in topbar; login **chooser** deferred as **S10.8** polish. Gatekeeper redeployed.
+**Day:** S10.6 Users earlier; park S10.7; S10.8 entry polish + dual-hat Enter Fleet with locked nav until gatekeeper Sign in.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa **`main`/`s105`** (`npm run dev` from **`pbx3spa/`**)
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · spa **`main`** (`npm run dev` from **`pbx3spa/`**)
 
-**Docs / TODO:** tip **S10.6** then Fleet UX / S10.8 chooser; S10.5 [x].
+**Docs / TODO:** tip egress / failover planning; S10.8 [x]; S10.7 parked.
 
-**Resume:** **S10.6** fleet user manage (or small UX: demote Link setid).
+**Resume:** operator priorities outside S10 panel v1 (egress availability, etc.).
+
+---
+
+## Session end 2026-07-15 — S10.5 complete (edge + Rule 13 + Exit Fleet) — historical
+
+**On `main`:** superseded — S10.6–S10.8 same day. See block above.
+
+**Resume:** see block above.
 
 ---
 

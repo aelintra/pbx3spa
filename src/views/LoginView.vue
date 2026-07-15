@@ -8,6 +8,7 @@ import {
   getDefaultApiBaseUrl,
   isFleetDirectoryEnabled
 } from '@/config/instanceDirectory'
+import { useFleetModeStore } from '@/stores/fleetMode'
 import { fetchInstanceCatalog, findInstanceById } from '@/utils/instanceCatalog'
 import { loadInstanceRecents, pushInstanceRecent } from '@/utils/instanceRecents'
 import { resolveApiBaseUrl, usesDevApiProxy } from '@/config/apiBaseUrl'
@@ -16,15 +17,19 @@ import { loginNetworkErrorMessage } from '@/utils/loginErrors'
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
+const fleetUi = useFleetModeStore()
 
 const isDev = import.meta.env.DEV
 const viteProxyTarget = import.meta.env.VITE_API_PROXY_TARGET ?? ''
 
-const fleetMode = isFleetDirectoryEnabled()
+const directoryEnabled = isFleetDirectoryEnabled()
 const directoryUrl = getInstanceDirectoryUrl()
+const showEntryChooser = computed(() => fleetUi.fleetAvailable)
 
-/** @type {import('vue').Ref<'loading'|'pick'|'credentials'>} */
-const step = ref(fleetMode ? 'loading' : 'credentials')
+/** @type {import('vue').Ref<'chooser'|'loading'|'pick'|'credentials'>} */
+const step = ref(
+  showEntryChooser.value ? 'chooser' : directoryEnabled ? 'loading' : 'credentials'
+)
 
 const catalogLoading = ref(false)
 const catalogError = ref('')
@@ -35,7 +40,7 @@ const recents = ref(loadInstanceRecents())
 /** @type {import('vue').Ref<import('@/utils/instanceCatalog').InstanceRecord | null>} */
 const selectedInstance = ref(null)
 
-const showManualApiUrl = ref(!fleetMode)
+const showManualApiUrl = ref(!directoryEnabled)
 const baseUrl = ref(getDefaultApiBaseUrl() ?? '')
 const email = ref('')
 const password = ref('')
@@ -88,12 +93,37 @@ function pickRecent(instance) {
 }
 
 function backToPicker() {
-  if (fleetMode && catalogInstances.value.length > 0) {
+  if (directoryEnabled && catalogInstances.value.length > 0) {
     step.value = 'pick'
     selectedInstance.value = null
     showManualApiUrl.value = false
     error.value = ''
   }
+}
+
+function backToChooser() {
+  if (!showEntryChooser.value) return
+  step.value = 'chooser'
+  selectedInstance.value = null
+  showManualApiUrl.value = false
+  error.value = ''
+  catalogError.value = ''
+}
+
+function chooseManageInstance() {
+  error.value = ''
+  catalogError.value = ''
+  if (catalogInstances.value.length > 0) {
+    step.value = 'pick'
+    return
+  }
+  step.value = 'loading'
+  void loadCatalog()
+}
+
+function chooseFleetConsole() {
+  fleetUi.enterFleet('/')
+  router.push({ name: 'fleet-tenants' })
 }
 
 async function loadCatalog() {
@@ -119,11 +149,16 @@ async function loadCatalog() {
     if (catalog.instances.length === 0) {
       catalogError.value = 'Catalog has no instances. Enter an API URL below or fix the index file.'
       showManualApiUrl.value = true
-      step.value = 'credentials'
+      if (step.value !== 'chooser') {
+        step.value = 'credentials'
+      }
       return
     }
 
-    step.value = 'pick'
+    // S10.8: stay on chooser while preloading; only advance when already loading for Manage.
+    if (step.value === 'loading') {
+      step.value = 'pick'
+    }
   } catch (err) {
     let msg = err?.message || 'Could not load instance catalog.'
     if (typeof window !== 'undefined' && directoryUrl) {
@@ -141,7 +176,9 @@ async function loadCatalog() {
     }
     catalogError.value = `${msg} Use a recent instance or enter an API URL.`
     showManualApiUrl.value = true
-    step.value = recents.value.length ? 'pick' : 'credentials'
+    if (step.value === 'loading') {
+      step.value = recents.value.length ? 'pick' : 'credentials'
+    }
   } finally {
     clearTimeout(timer)
     catalogLoading.value = false
@@ -155,8 +192,9 @@ async function refreshCatalog() {
 }
 
 onMounted(() => {
-  if (fleetMode) {
-    loadCatalog()
+  if (directoryEnabled) {
+    // Preload catalog (chooser stays put; Manage uses pick when ready).
+    void loadCatalog()
   } else if (getDefaultApiBaseUrl()) {
     baseUrl.value = resolveApiBaseUrl(getDefaultApiBaseUrl())
   }
@@ -218,7 +256,8 @@ async function onSubmit(e) {
     <form class="login-form" @submit="onSubmit">
       <h1>PBX3 Admin</h1>
 
-      <p v-if="step === 'loading'" class="subtitle">Loading instance catalog…</p>
+      <p v-if="step === 'chooser'" class="subtitle">How do you want to work?</p>
+      <p v-else-if="step === 'loading'" class="subtitle">Loading instance catalog…</p>
       <p v-else-if="step === 'pick'" class="subtitle">
         {{ catalogInstances.length === 1 ? 'Select your PBX instance' : 'Choose a PBX instance' }}
       </p>
@@ -227,10 +266,36 @@ async function onSubmit(e) {
       </p>
       <p v-else class="subtitle">Sign in to your PBX3 instance</p>
 
-      <p v-if="catalogError" class="catalog-warning" role="status">{{ catalogError }}</p>
+      <p v-if="catalogError && step !== 'chooser'" class="catalog-warning" role="status">
+        {{ catalogError }}
+      </p>
+
+      <!-- S10.8 login chooser -->
+      <section v-if="step === 'chooser'" class="chooser-section">
+        <p class="chooser-hint">
+          <strong>Manage instance</strong> uses your PBX node login.
+          <strong>Fleet console</strong> uses the control-plane fleet account (not the same password).
+        </p>
+        <button type="button" class="chooser-btn" @click="chooseManageInstance">
+          <span class="chooser-btn-title">Manage instance</span>
+          <span class="chooser-btn-meta">Tenants, extensions, trunks on one node</span>
+        </button>
+        <button type="button" class="chooser-btn chooser-btn--fleet" @click="chooseFleetConsole">
+          <span class="chooser-btn-title">Fleet console</span>
+          <span class="chooser-btn-meta">Catalog, DIDs, moves, edge — gatekeeper only</span>
+        </button>
+      </section>
 
       <!-- Fleet picker -->
       <section v-if="step === 'pick'" class="instance-section">
+        <button
+          v-if="showEntryChooser"
+          type="button"
+          class="btn-link"
+          @click="backToChooser"
+        >
+          ← Back to choices
+        </button>
         <p v-if="catalogInstances.length === 1" class="pick-hint">
           Click the instance below, then enter your credentials.
         </p>
@@ -281,6 +346,14 @@ async function onSubmit(e) {
 
       <!-- Credentials -->
       <template v-if="step === 'credentials'">
+        <button
+          v-if="showEntryChooser"
+          type="button"
+          class="btn-link"
+          @click="backToChooser"
+        >
+          ← Back to choices
+        </button>
         <div v-if="recents.length && (catalogError || showManualApiUrl)" class="recents">
           <p class="section-label">Recent instances</p>
           <ul class="instance-list">
@@ -301,7 +374,7 @@ async function onSubmit(e) {
           <p class="selected-instance-k">Selected instance</p>
           <p class="selected-instance-v">{{ selectedSummary }}</p>
           <button
-            v-if="fleetMode && catalogInstances.length > 0"
+            v-if="directoryEnabled && catalogInstances.length > 0"
             type="button"
             class="btn-link-inline"
             @click="backToPicker"
@@ -321,7 +394,7 @@ async function onSubmit(e) {
         />
 
         <button
-          v-if="fleetMode && !showManualApiUrl && catalogInstances.length !== 0"
+          v-if="directoryEnabled && !showManualApiUrl && catalogInstances.length !== 0"
           type="button"
           class="btn-link"
           @click="showManualApiUrl = true"
@@ -343,7 +416,7 @@ async function onSubmit(e) {
           type="email"
           placeholder="admin@pbx3.com"
           required
-          autocomplete="email"
+          autocomplete="username"
         />
 
         <label for="password">Password</label>
@@ -358,7 +431,7 @@ async function onSubmit(e) {
 
         <p v-if="error" class="error">{{ error }}</p>
 
-        <button type="submit" :disabled="loading">
+        <button type="submit" class="btn-primary" :disabled="loading">
           {{ loading ? 'Signing in…' : 'Sign in' }}
         </button>
       </template>
@@ -413,6 +486,66 @@ async function onSubmit(e) {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+.chooser-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+.chooser-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.45;
+}
+.chooser-btn {
+  width: 100%;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.chooser-btn:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+.chooser-btn--fleet {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+}
+.chooser-btn-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+.chooser-btn-meta {
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+.btn-primary {
+  margin-top: 0.25rem;
+  padding: 0.5rem 1rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .section-label {
   font-size: 0.75rem;

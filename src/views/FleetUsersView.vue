@@ -19,7 +19,6 @@ import {
   FLEET_ABILITY,
   FLEET_ABILITY_ALL
 } from '@/config/fleetGatekeeper'
-import FleetTokenGate from '@/components/FleetTokenGate.vue'
 
 const users = ref([])
 const abilityVocab = ref([...FLEET_ABILITY_ALL])
@@ -238,8 +237,6 @@ onBeforeUnmount(() => {
       Control-plane operators on the gatekeeper auth DB (not instance Sanctum).
       Requires <code>fleet_admin</code>. Disable revokes sessions; break-glass API token is separate.
     </p>
-
-    <FleetTokenGate @saved="load" @cleared="load" />
 
     <div v-if="hasFleetGatekeeperToken()" class="toolbar">
       <button type="button" class="primary" :disabled="loading" @click="load">

@@ -3,6 +3,7 @@
  * Fleet gatekeeper auth for Fleet mode panels.
  * Prefer email/password login; break-glass paste stays collapsed (ops/emergency only).
  * S10.1: session must include fleet_read (enforced after login /me).
+ * S10.8: form kinship with LoginView credentials.
  */
 import { ref, computed } from 'vue'
 import {
@@ -93,21 +94,25 @@ defineExpose({
 
     <div v-if="!hasToken" class="token-box">
       <form class="token-form login" @submit.prevent="doLogin">
+        <label for="fleet-gate-email">Email</label>
         <input
+          id="fleet-gate-email"
           v-model="email"
           type="email"
           autocomplete="username"
-          placeholder="Email"
+          placeholder="fleet@pbx3.com"
           required
         />
+        <label for="fleet-gate-password">Password</label>
         <input
+          id="fleet-gate-password"
           v-model="password"
           type="password"
           autocomplete="current-password"
           placeholder="Password"
           required
         />
-        <button type="submit" class="primary" :disabled="busy">
+        <button type="submit" class="btn-primary" :disabled="busy">
           {{ busy ? 'Signing in…' : 'Sign in' }}
         </button>
       </form>
@@ -119,14 +124,16 @@ defineExpose({
           Emergency access with the control-plane <code>GATEKEEPER_API_TOKEN</code>
           (treated as <code>fleet_admin</code>). Day-to-day operators should use Sign in above.
         </p>
-        <form class="token-form" @submit.prevent="saveToken">
+        <form class="token-form break-glass-form" @submit.prevent="saveToken">
+          <label for="fleet-gate-token">Break-glass token</label>
           <input
+            id="fleet-gate-token"
             v-model="tokenDraft"
             type="password"
             autocomplete="off"
             placeholder="Paste break-glass token"
           />
-          <button type="submit" class="primary" :disabled="busy">Save for session</button>
+          <button type="submit" class="btn-secondary" :disabled="busy">Save for session</button>
         </form>
       </details>
     </div>
@@ -142,53 +149,84 @@ defineExpose({
   margin-bottom: 1rem;
 }
 .hint {
-  color: var(--pbx-text-muted);
-  font-size: 0.9rem;
+  color: var(--pbx-text-muted, #64748b);
+  font-size: 0.875rem;
   margin: 0.35rem 0;
 }
 .hint.lab {
-  color: var(--pbx-text-muted);
+  color: var(--pbx-text-muted, #64748b);
 }
 .error {
   color: #b91c1c;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   margin: 0.5rem 0 0;
 }
 .token-box {
   margin: 0.75rem 0;
   padding: 1rem;
-  border: 1px solid var(--pbx-border);
-  border-radius: 0.5rem;
+  border: 1px solid var(--pbx-border, #e2e8f0);
+  border-radius: 0.375rem;
   background: var(--pbx-surface-subtle, #f8fafc);
+  max-width: 26rem;
 }
-.token-form {
+.token-form.login,
+.break-glass-form {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 0.5rem;
 }
-.token-form.login {
-  flex-direction: column;
-  max-width: 22rem;
+.token-form label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--pbx-text, #0f172a);
 }
 .token-form input {
-  flex: 1 1 12rem;
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--pbx-border, #e2e8f0);
+  border-radius: 0.375rem;
+  font: inherit;
+  font-size: 0.875rem;
 }
-.token-form.login input {
-  flex: none;
-  width: 100%;
+.btn-primary {
+  margin-top: 0.25rem;
+  padding: 0.5rem 1rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-secondary {
+  margin-top: 0.25rem;
+  padding: 0.45rem 0.85rem;
+  background: #fff;
+  color: var(--pbx-text, #0f172a);
+  border: 1px solid var(--pbx-border, #e2e8f0);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  cursor: pointer;
 }
 .break-glass {
   margin-top: 1rem;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--pbx-border);
-  color: var(--pbx-text-muted);
+  border-top: 1px solid var(--pbx-border, #e2e8f0);
+  color: var(--pbx-text-muted, #64748b);
   font-size: 0.85rem;
 }
 .break-glass summary {
   cursor: pointer;
   list-style: none;
-  color: var(--pbx-text-muted);
+  color: var(--pbx-text-muted, #64748b);
 }
 .break-glass summary::-webkit-details-marker {
   display: none;
