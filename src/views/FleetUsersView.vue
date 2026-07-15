@@ -2,7 +2,7 @@
 /**
  * S10.6 — fleet user manage (gatekeeper SQLite). fleet_admin only.
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import {
   listFleetUsers,
   createFleetUser,
@@ -155,6 +155,7 @@ async function submitEdit() {
     }
     const updated = await updateFleetUser(editingId.value, patch)
     actionMsg.value = `Updated ${updated.email}`
+    editForm.value.password = ''
     editingId.value = null
     await load()
   } catch (e) {
@@ -220,6 +221,14 @@ async function doRevoke(row) {
 }
 
 onMounted(load)
+
+onBeforeUnmount(() => {
+  // Avoid browser "save password" when leaving with form values still mounted.
+  createForm.value.password = ''
+  editForm.value.password = ''
+  showCreate.value = false
+  editingId.value = null
+})
 </script>
 
 <template>
@@ -253,20 +262,50 @@ onMounted(load)
     <form
       v-if="showCreate && canAdmin"
       class="panel"
+      autocomplete="off"
+      data-lpignore="true"
+      data-1p-ignore="true"
       @submit.prevent="submitCreate"
     >
       <h2>Create fleet user</h2>
       <label>
         Email
-        <input v-model="createForm.email" type="email" required autocomplete="off" />
+        <input
+          v-model="createForm.email"
+          type="text"
+          inputmode="email"
+          autocapitalize="off"
+          spellcheck="false"
+          name="fleet_user_email"
+          autocomplete="off"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          required
+        />
       </label>
       <label>
         Name
-        <input v-model="createForm.name" autocomplete="off" />
+        <input
+          v-model="createForm.name"
+          name="fleet_user_name"
+          autocomplete="off"
+          data-lpignore="true"
+          data-1p-ignore="true"
+        />
       </label>
       <label>
         Password (min 10)
-        <input v-model="createForm.password" type="password" required minlength="10" autocomplete="new-password" />
+        <input
+          v-model="createForm.password"
+          type="password"
+          name="fleet_user_new_password"
+          autocomplete="new-password"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-form-type="other"
+          required
+          minlength="10"
+        />
       </label>
       <fieldset class="abilities">
         <legend>Abilities</legend>
@@ -349,18 +388,34 @@ onMounted(load)
           </tr>
           <tr v-if="editingId === row.id" class="edit-row">
             <td colspan="6">
-              <form class="edit-form" @submit.prevent="submitEdit">
+              <form
+                class="edit-form"
+                autocomplete="off"
+                data-lpignore="true"
+                data-1p-ignore="true"
+                @submit.prevent="submitEdit"
+              >
                 <label>
                   Name
-                  <input v-model="editForm.name" autocomplete="off" />
+                  <input
+                    v-model="editForm.name"
+                    name="fleet_user_edit_name"
+                    autocomplete="off"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                  />
                 </label>
                 <label>
                   New password (optional)
                   <input
                     v-model="editForm.password"
                     type="password"
-                    minlength="10"
+                    name="fleet_user_edit_password"
                     autocomplete="new-password"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
+                    minlength="10"
                   />
                 </label>
                 <fieldset class="abilities">
