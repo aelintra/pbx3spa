@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-14 — S10.1–S10.3 fleet abilities + Instances + job control
+## Session end 2026-07-14 — S10.4 catalog ↔ SBC reconcile + setid guard
 
-**On `main`:** **pbx3** **`4498a4c`** (abilities, catalog register/PATCH/decommission, move abort/retry/rollback). **pbx3spa** **`18f957d`** (Fleet abilities UX, Instances panel, job Abort/Retry/Rollback, Jobs started-by). Gatekeeper deployed on **control.pbx3.com**.
+**On `main`:** **pbx3** **`96e432e`** (reconcile + project + `SbcSetidGuard`). **pbx3sbc-admin** **`2d232f8`** (`/fleet/domains`, `dispatcher-sets`). **pbx3spa** **`15c5090`** (Fleet Reconcile; Instances Link setid from live sets; Apply button only when mismatches). Live on control + SBC.
 
-**Day:** S10.1→S10.3 via branches **`s102`/`s103`** FF-merged to **`main`**. Lab `/up` probes need SG allow from control public IP (EIP later). Instances UI functional; layout polish deferred.
+**Day:** Catalog is HoR; Apply catalog→SBC is projection only (not undo). Invented setids rejected. Operator copy on Reconcile + Instances.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · Fleet Instances/Jobs against live gatekeeper
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · Fleet Reconcile / Instances against live gatekeeper (`npm run dev` on spa `main`)
 
-**Docs / TODO:** tip **S10.4** reconcile; S10.1–S10.3 [x].
+**Docs / TODO:** tip **S10.5** DID/edge; S10.4 [x].
 
-**Resume:** S10.4 catalog↔SBC reconcile, or Fleet login / Instances UX polish.
+**Resume:** S10.5 edge/DID, or Fleet login / Instances UX polish.
+
+---
+
+## Session end 2026-07-14 — S10.1–S10.3 fleet abilities + Instances + job control — historical
+
+**On `main`:** **pbx3** **`4498a4c`**, **pbx3spa** **`18f957d`**. Superseded by block above.
+
+**Resume:** see block above.
 
 ---
 
