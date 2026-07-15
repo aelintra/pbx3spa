@@ -6,23 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-15 — S10.8 login chooser + fleet shell gate
+## Session end 2026-07-15 — pbx3-docs MkDocs + Pages (lab guide)
 
-**On `main`:** **pbx3spa** **`54cced4`** / code **`59225b9`** (S10.8); **pbx3** **`6f4facd`**. Gatekeeper live from S10.6.
+**On `main`:** SPA code unchanged this session. **pbx3-docs** **`2a37a00`** → **https://aelintra.github.io/pbx3-docs/**. **pbx3** content map + handoff tips.
 
-**Day:** S10.6 Users earlier; park S10.7; S10.8 entry polish + dual-hat Enter Fleet with locked nav until gatekeeper Sign in.
+**Day:** Stood up operator MkDocs (nav + schematic + Cloud/S3); seeded install/TLS/admin/fleet/troubleshoot from runbooks for lab use; human edit expected.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · spa **`main`** (`npm run dev` from **`pbx3spa/`**)
+**Dev against golden:** unchanged — `https://08jzwn.pbx3.com:44300/api` · **`https://control.pbx3.com`** · spa `npm run dev`
 
-**Docs / TODO:** tip egress / failover planning; S10.8 [x]; S10.7 parked.
+**Docs / TODO:** MkDocs seed [x]; polish optional; egress / S10.7 still parked.
 
-**Resume:** operator priorities outside S10 panel v1 (egress availability, etc.).
+**Resume:** product next (egress/failover or Fleet UX) **or** edit live docs; do not start S10.7 orchestrator without ask.
 
 ---
 
-## Session end 2026-07-15 — S10.5 complete (edge + Rule 13 + Exit Fleet) — historical
+## Session end 2026-07-15 — S10.8 login chooser + fleet shell gate — historical
 
-**On `main`:** superseded — S10.6–S10.8 same day. See block above.
+**On `main`:** superseded — docs session above. Tips were **pbx3spa** **`54cced4`** / **`59225b9`**; **pbx3** **`6f4facd`**.
 
 **Resume:** see block above.
 
