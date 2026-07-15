@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-15 — S10.8 login chooser + fleet shell gate
 
-**On `main`:** **pbx3spa** **`59225b9`** (S10.8); **pbx3** **`a170c68`** (handoff). Gatekeeper live from S10.6.
+**On `main`:** **pbx3spa** **`54cced4`** / code **`59225b9`** (S10.8); **pbx3** **`6f4facd`**. Gatekeeper live from S10.6.
 
 **Day:** S10.6 Users earlier; park S10.7; S10.8 entry polish + dual-hat Enter Fleet with locked nav until gatekeeper Sign in.
 
