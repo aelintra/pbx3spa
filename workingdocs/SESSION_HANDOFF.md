@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-14 — S7 recordings S3 offload + Storage UI + S7.10 sweeper
+## Session end 2026-07-14 — S10.1–S10.3 fleet abilities + Instances + job control
 
-**On `main`:** **pbx3** **`ed484f3`** (bucket ops, gatekeeper `presign-recordings`, lifecycle/docs). **pbx3api** **`6f46712`** (upload, play proxy, `s3_only` retention, reconcile sweeper). **pbx3spa** **`6e23fa3`** (Recordings **Storage** column: Spool / Local / Local + S3 / S3 only).
+**On `main`:** **pbx3** **`4498a4c`** (abilities, catalog register/PATCH/decommission, move abort/retry/rollback). **pbx3spa** **`18f957d`** (Fleet abilities UX, Instances panel, job Abort/Retry/Rollback, Jobs started-by). Gatekeeper deployed on **control.pbx3.com**.
 
-**Day:** Created **`08jzwn-pbx3-recordings`**; wired control + golden; smoked upload/GET + reconcile path rediscovery. PCI-shaped only — not attested.
+**Day:** S10.1→S10.3 via branches **`s102`/`s103`** FF-merged to **`main`**. Lab `/up` probes need SG allow from control public IP (EIP later). Instances UI functional; layout polish deferred.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · Recordings show Storage badges against live golden
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · Fleet Instances/Jobs against live gatekeeper
 
-**Docs / TODO:** tip **S10.1** abilities; S7 implement [x]; S7+ parked.
+**Docs / TODO:** tip **S10.4** reconcile; S10.1–S10.3 [x].
 
-**Resume:** S10.1 gatekeeper abilities, or Fleet login UI kinship. No further S7 code required for baseline.
+**Resume:** S10.4 catalog↔SBC reconcile, or Fleet login / Instances UX polish.
+
+---
+
+## Session end 2026-07-14 — S7 recordings S3 offload + Storage UI + S7.10 sweeper — historical
+
+**On `main`:** **pbx3** **`ed484f3`**, **pbx3api** **`6f46712`**, **pbx3spa** **`6e23fa3`**. Superseded by block above.
+
+**Resume:** see block above.
 
 ---
 
