@@ -82,7 +82,15 @@ function toggleAbility(target, ability) {
   target.abilities = abilityVocab.value.filter((a) => set.has(a))
 }
 
+function toggleCreate() {
+  showCreate.value = !showCreate.value
+  if (showCreate.value) {
+    editingId.value = null
+  }
+}
+
 function startEdit(row) {
+  showCreate.value = false
   editingId.value = row.id
   editForm.value = {
     name: row.name || '',
@@ -233,9 +241,9 @@ onMounted(load)
         type="button"
         class="primary"
         :disabled="!!busyId"
-        @click="showCreate = !showCreate"
+        @click="toggleCreate"
       >
-        {{ showCreate ? 'Cancel' : 'Create user' }}
+        {{ showCreate ? 'Cancel create' : 'Create user' }}
       </button>
     </div>
 
