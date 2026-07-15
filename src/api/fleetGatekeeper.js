@@ -232,6 +232,18 @@ export function patchFleetInstance(id, body) {
 }
 
 /**
+ * S10.5 — provision SBC dispatcher set + Asterisk Peer; write catalog setid + sbc_backend_uri.
+ * @param {string} id
+ * @param {{ backend_uri?: string, confirm?: boolean, source_ip?: string, dry_run?: boolean }} [body]
+ */
+export function provisionFleetInstanceEdge(id, body = {}) {
+  return gkFetch(`/api/v1/instances/${encodeURIComponent(id)}/provision-edge`, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+/**
  * Soft decommission (status=decommissioned).
  * @param {string} id
  * @param {{ notes?: string }} [opts]

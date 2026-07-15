@@ -1,6 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { listFleetTenants, getFleetCatalog, refreshFleetSession } from '@/api/fleetGatekeeper'
+import {
+  listFleetTenants,
+  getFleetCatalog,
+  refreshFleetSession,
+  registerFleetTenantDomain
+} from '@/api/fleetGatekeeper'
 import {
   hasFleetGatekeeperToken,
   canFleet,
@@ -13,7 +18,10 @@ const tenants = ref([])
 const instancesById = ref({})
 const loading = ref(true)
 const error = ref('')
+const actionError = ref('')
+const busyId = ref('')
 const canMove = ref(false)
+const canEdge = ref(false)
 
 async function loadTenants() {
   if (!hasFleetGatekeeperToken()) {
@@ -21,15 +29,18 @@ async function loadTenants() {
     error.value = ''
     tenants.value = []
     canMove.value = false
+    canEdge.value = false
     return
   }
   loading.value = true
   error.value = ''
+  actionError.value = ''
   try {
     if (getFleetAbilities().length === 0) {
       await refreshFleetSession()
     }
     canMove.value = canFleet(FLEET_ABILITY.MOVES)
+    canEdge.value = canFleet(FLEET_ABILITY.EDGE)
     const [tList, catalog] = await Promise.all([listFleetTenants(), getFleetCatalog()])
     const map = {}
     for (const i of catalog.instances || []) {
@@ -40,6 +51,7 @@ async function loadTenants() {
   } catch (e) {
     error.value = e?.message || 'Failed to load fleet tenants'
     canMove.value = false
+    canEdge.value = false
   } finally {
     loading.value = false
   }
@@ -54,6 +66,29 @@ function instanceLabel(instanceId) {
   return i.label || i.fqdn || instanceId
 }
 
+function hostHasSetid(instanceId) {
+  const i = instancesById.value[instanceId]
+  return i != null && Number(i.sbc_dispatcher_setid) >= 1
+}
+
+async function doRegisterDomain(t) {
+  actionError.value = ''
+  if (!hostHasSetid(t.instance_id)) {
+    actionError.value =
+      'Host instance needs sbc_dispatcher_setid first (Instances → Provision edge or Link setid).'
+    return
+  }
+  busyId.value = t.shortuid
+  try {
+    await registerFleetTenantDomain(t.shortuid)
+    await loadTenants()
+  } catch (e) {
+    actionError.value = e?.message || 'Register domain failed'
+  } finally {
+    busyId.value = ''
+  }
+}
+
 onMounted(loadTenants)
 </script>
 
@@ -61,11 +96,13 @@ onMounted(loadTenants)
   <div class="fleet-tenants-view">
     <h1>Fleet tenants</h1>
     <p class="hint">
-      Org catalog via gatekeeper. Move a tenant between instances without mixing tenant-node panels.
+      Org catalog via gatekeeper. Register on SBC projects the tenant FQDN → host setid (phones).
+      Move a tenant between instances without mixing tenant-node panels.
     </p>
 
     <FleetTokenGate @saved="loadTenants" @cleared="loadTenants" />
 
+    <p v-if="actionError" class="error">{{ actionError }}</p>
     <p v-if="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
 
@@ -87,14 +124,23 @@ onMounted(loadTenants)
           <td>{{ t.fqdn || '—' }}</td>
           <td><code>{{ t.shortuid }}</code></td>
           <td>{{ t.status }}</td>
-          <td>
+          <td class="actions">
+            <button
+              v-if="canEdge"
+              type="button"
+              class="linkish"
+              :disabled="busyId === t.shortuid"
+              @click="doRegisterDomain(t)"
+            >
+              Register on SBC
+            </button>
             <RouterLink
               v-if="canMove"
               :to="{ name: 'fleet-tenant-move', query: { tenant: t.shortuid } }"
             >
               Move
             </RouterLink>
-            <span v-else class="muted">—</span>
+            <span v-if="!canMove && !canEdge" class="muted">—</span>
           </td>
         </tr>
       </tbody>
@@ -116,6 +162,20 @@ onMounted(loadTenants)
 }
 .muted {
   color: var(--pbx-text-muted);
+}
+.actions .linkish {
+  margin-right: 0.65rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--pbx-link, #2563eb);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.actions .linkish:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 .data-table {
   width: 100%;

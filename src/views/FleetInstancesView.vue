@@ -9,7 +9,8 @@ import {
   refreshFleetSession,
   registerFleetInstance,
   patchFleetInstance,
-  decommissionFleetInstance
+  decommissionFleetInstance,
+  provisionFleetInstanceEdge
 } from '@/api/fleetGatekeeper'
 import {
   hasFleetGatekeeperToken,
@@ -26,6 +27,7 @@ const error = ref('')
 const actionError = ref('')
 const busyId = ref('')
 const canManage = computed(() => canFleet(FLEET_ABILITY.INSTANCES))
+const canEdge = computed(() => canFleet(FLEET_ABILITY.EDGE))
 
 const showRegister = ref(false)
 const registerBusy = ref(false)
@@ -37,6 +39,7 @@ const reg = ref({
   environment: 'lab',
   status: 'active',
   sbc_dispatcher_setid: '',
+  sbc_backend_uri: '',
   skip_verify: false
 })
 
@@ -44,6 +47,12 @@ const editingId = ref('')
 const editDraft = ref({ label: '', notes: '', environment: '' })
 const linkingId = ref('')
 const linkSetid = ref('')
+const provisioningId = ref('')
+const provisionUri = ref('')
+
+const provisioningRow = computed(() =>
+  instances.value.find((i) => i.id === provisioningId.value) || null
+)
 
 async function load() {
   if (!hasFleetGatekeeperToken()) {
@@ -76,6 +85,7 @@ async function load() {
 function startEdit(row) {
   editingId.value = row.id
   linkingId.value = ''
+  provisioningId.value = ''
   editDraft.value = {
     label: row.label || '',
     notes: row.notes || '',
@@ -91,6 +101,7 @@ function cancelEdit() {
 function startLink(row) {
   linkingId.value = row.id
   editingId.value = ''
+  provisioningId.value = ''
   linkSetid.value =
     row.sbc_dispatcher_setid != null && row.sbc_dispatcher_setid !== ''
       ? String(row.sbc_dispatcher_setid)
@@ -101,6 +112,54 @@ function startLink(row) {
 function cancelLink() {
   linkingId.value = ''
   linkSetid.value = ''
+}
+
+function startProvision(row) {
+  provisioningId.value = row.id
+  editingId.value = ''
+  linkingId.value = ''
+  provisionUri.value =
+    row.sbc_backend_uri ||
+    (row.fqdn ? `sip:${String(row.fqdn).toLowerCase()}:5060` : '')
+  actionError.value = ''
+}
+
+function cancelProvision() {
+  provisioningId.value = ''
+  provisionUri.value = ''
+}
+
+async function doProvision() {
+  const row = provisioningRow.value
+  if (!row) return
+  actionError.value = ''
+  const hasSetid = Number(row.sbc_dispatcher_setid) >= 1
+  if (hasSetid) {
+    const ok = window.confirm(
+      `Update SBC edge for "${row.label || row.fqdn || row.id}" (setid ${row.sbc_dispatcher_setid})?\n\n` +
+        'Changes the dispatcher destination and Asterisk Peer URI. Live calls may be affected.'
+    )
+    if (!ok) return
+  }
+  busyId.value = row.id
+  try {
+    const body = {}
+    const uri = provisionUri.value.trim()
+    if (uri) {
+      body.backend_uri = uri
+    }
+    if (hasSetid) {
+      body.confirm = true
+    }
+    await provisionFleetInstanceEdge(row.id, body)
+    provisioningId.value = ''
+    provisionUri.value = ''
+    await load()
+  } catch (e) {
+    actionError.value = e?.message || 'Provision edge failed'
+  } finally {
+    busyId.value = ''
+  }
 }
 
 async function saveEdit(id) {
@@ -199,6 +258,9 @@ async function doRegister() {
       }
       body.sbc_dispatcher_setid = setid
     }
+    if (reg.value.sbc_backend_uri.trim()) {
+      body.sbc_backend_uri = reg.value.sbc_backend_uri.trim()
+    }
     if (!body.id || !body.fqdn || !body.api_base_url) {
       throw new Error('id, fqdn, and api_base_url are required')
     }
@@ -212,6 +274,7 @@ async function doRegister() {
       environment: 'lab',
       status: 'active',
       sbc_dispatcher_setid: '',
+      sbc_backend_uri: '',
       skip_verify: false
     }
     await load()
@@ -238,9 +301,10 @@ onMounted(load)
     <p class="hint">
       Org catalog via gatekeeper (S3 home of record). Register upserts the directory row after a live
       <code>/up</code> check. Soft decommission hides from the picker only.
-      <strong>SBC setid</strong> is catalog intent linked only to a
-      <em>live</em> SBC dispatcher set (not a free-typed number). Applying that intent onto tenant
-      domains is <RouterLink to="/fleet/reconcile">Reconcile → Apply catalog → SBC</RouterLink>.
+      <strong>Provision edge</strong> creates a dispatcher set + Asterisk Peer on the SBC and writes
+      catalog setid (Rule 13). <strong>Link setid</strong> only attaches an already-live set.
+      Applying catalog setid onto tenant domains is
+      <RouterLink to="/fleet/reconcile">Reconcile → Apply catalog → SBC</RouterLink>.
     </p>
 
     <FleetTokenGate @saved="load" @cleared="load" />
@@ -295,11 +359,19 @@ onMounted(load)
       <label>
         SBC dispatcher setid
         <select v-model="reg.sbc_dispatcher_setid">
-          <option value="">— unset (link later) —</option>
+          <option value="">— unset (provision / link later) —</option>
           <option v-for="s in dispatcherSets" :key="s.setid" :value="String(s.setid)">
             set {{ s.setid }} ({{ s.destinations }} dest)
           </option>
         </select>
+      </label>
+      <label>
+        SBC backend URI (optional)
+        <input
+          v-model="reg.sbc_backend_uri"
+          placeholder="sip:fqdn:5060 — used by Provision edge"
+          autocomplete="off"
+        />
       </label>
       <label class="checkbox-row">
         <input v-model="reg.skip_verify" type="checkbox" />
@@ -318,35 +390,88 @@ onMounted(load)
       </button>
     </form>
 
+    <div v-if="provisioningRow" class="edge-panel">
+      <div class="edge-panel__title">
+        {{ Number(provisioningRow.sbc_dispatcher_setid) >= 1 ? 'Update' : 'Provision' }} edge —
+        {{ provisioningRow.label || provisioningRow.fqdn || provisioningRow.id }}
+        <span v-if="provisioningRow.sbc_dispatcher_setid" class="muted">
+          (setid {{ provisioningRow.sbc_dispatcher_setid }})
+        </span>
+      </div>
+      <label class="edge-panel__field">
+        Backend SIP URI
+        <input
+          v-model="provisionUri"
+          class="inline-input"
+          placeholder="sip:host:5060"
+          autocomplete="off"
+        />
+      </label>
+      <div class="edge-panel__actions">
+        <button
+          type="button"
+          class="primary"
+          :disabled="busyId === provisioningRow.id"
+          @click="doProvision"
+        >
+          {{ Number(provisioningRow.sbc_dispatcher_setid) >= 1 ? 'Confirm update' : 'Create edge' }}
+        </button>
+        <button type="button" class="linkish" :disabled="busyId === provisioningRow.id" @click="cancelProvision">
+          Cancel
+        </button>
+      </div>
+    </div>
+
     <p v-if="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
 
     <table v-else-if="instances.length" class="data-table">
       <thead>
         <tr>
-          <th>Label</th>
+          <th>Instance</th>
           <th>FQDN</th>
-          <th>Environment</th>
-          <th>SBC setid</th>
+          <th>Env</th>
+          <th>Setid</th>
           <th>Status</th>
-          <th>ID</th>
-          <th v-if="canManage"></th>
+          <th v-if="canManage || canEdge">Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="i in instances" :key="i.id">
+        <tr
+          v-for="i in instances"
+          :key="i.id"
+          :class="{ 'row-active': provisioningId === i.id || linkingId === i.id || editingId === i.id }"
+        >
           <td>
             <template v-if="editingId === i.id">
               <input v-model="editDraft.label" class="inline-input" />
+              <label class="notes-edit">
+                Notes
+                <input v-model="editDraft.notes" class="inline-input" />
+              </label>
+              <div class="action-row">
+                <button type="button" class="linkish" :disabled="busyId === i.id" @click="saveEdit(i.id)">
+                  Save
+                </button>
+                <button type="button" class="linkish" :disabled="busyId === i.id" @click="cancelEdit">
+                  Cancel
+                </button>
+              </div>
             </template>
             <template v-else>
-              {{ i.label || i.fqdn || i.id }}
+              <div class="inst-label">{{ i.label || i.fqdn || i.id }}</div>
+              <code class="inst-id" :title="i.id">{{ i.id }}</code>
             </template>
           </td>
-          <td>{{ i.fqdn || '—' }}</td>
+          <td class="cell-fqdn">
+            {{ i.fqdn || '—' }}
+            <div v-if="i.sbc_backend_uri" class="muted tiny" :title="i.sbc_backend_uri">
+              {{ i.sbc_backend_uri }}
+            </div>
+          </td>
           <td>
             <template v-if="editingId === i.id">
-              <select v-model="editDraft.environment" class="inline-input">
+              <select v-model="editDraft.environment" class="inline-input env-input">
                 <option value="">—</option>
                 <option value="lab">lab</option>
                 <option value="staging">staging</option>
@@ -357,14 +482,27 @@ onMounted(load)
               {{ i.environment || '—' }}
             </template>
           </td>
-          <td>
+          <td class="cell-setid">
             <template v-if="linkingId === i.id">
-              <select v-model="linkSetid" class="inline-input">
-                <option disabled value="">Pick live set…</option>
+              <select v-model="linkSetid" class="inline-input setid-input">
+                <option disabled value="">…</option>
                 <option v-for="s in dispatcherSets" :key="s.setid" :value="String(s.setid)">
-                  set {{ s.setid }} ({{ s.destinations }} dest)
+                  {{ s.setid }}
                 </option>
               </select>
+              <div class="action-row">
+                <button
+                  type="button"
+                  class="linkish"
+                  :disabled="busyId === i.id || !linkSetid"
+                  @click="saveLink(i.id)"
+                >
+                  Save
+                </button>
+                <button type="button" class="linkish" :disabled="busyId === i.id" @click="cancelLink">
+                  Cancel
+                </button>
+              </div>
             </template>
             <template v-else>
               {{ i.sbc_dispatcher_setid ?? '—' }}
@@ -373,40 +511,10 @@ onMounted(load)
           <td>
             <span :class="statusClass(i.status)">{{ i.status || 'active' }}</span>
           </td>
-          <td><code>{{ i.id }}</code></td>
-          <td v-if="canManage" class="actions">
-            <template v-if="editingId === i.id">
-              <label class="notes-edit">
-                Notes
-                <input v-model="editDraft.notes" class="inline-input" />
-              </label>
+          <td v-if="canManage || canEdge" class="actions">
+            <template v-if="editingId !== i.id && linkingId !== i.id">
               <button
-                type="button"
-                class="linkish"
-                :disabled="busyId === i.id"
-                @click="saveEdit(i.id)"
-              >
-                Save
-              </button>
-              <button type="button" class="linkish" :disabled="busyId === i.id" @click="cancelEdit">
-                Cancel
-              </button>
-            </template>
-            <template v-else-if="linkingId === i.id">
-              <button
-                type="button"
-                class="linkish"
-                :disabled="busyId === i.id || !linkSetid"
-                @click="saveLink(i.id)"
-              >
-                Save setid
-              </button>
-              <button type="button" class="linkish" :disabled="busyId === i.id" @click="cancelLink">
-                Cancel
-              </button>
-            </template>
-            <template v-else>
-              <button
+                v-if="canManage"
                 type="button"
                 class="linkish"
                 :disabled="busyId === i.id"
@@ -415,24 +523,34 @@ onMounted(load)
                 Edit
               </button>
               <button
+                v-if="canEdge"
+                type="button"
+                class="linkish"
+                :disabled="busyId === i.id"
+                @click="startProvision(i)"
+              >
+                {{ Number(i.sbc_dispatcher_setid) >= 1 ? 'Edge' : 'Provision' }}
+              </button>
+              <button
+                v-if="canManage"
                 type="button"
                 class="linkish"
                 :disabled="busyId === i.id || !dispatcherSets.length"
                 @click="startLink(i)"
               >
-                Link setid
+                Link
               </button>
               <button
-                v-if="(i.status || 'active') !== 'maintenance'"
+                v-if="canManage && (i.status || 'active') !== 'maintenance'"
                 type="button"
                 class="linkish"
                 :disabled="busyId === i.id"
                 @click="setStatus(i.id, 'maintenance')"
               >
-                Maintenance
+                Maint
               </button>
               <button
-                v-if="(i.status || 'active') !== 'active'"
+                v-if="canManage && (i.status || 'active') !== 'active'"
                 type="button"
                 class="linkish"
                 :disabled="busyId === i.id"
@@ -441,15 +559,16 @@ onMounted(load)
                 Activate
               </button>
               <button
-                v-if="(i.status || 'active') !== 'decommissioned'"
+                v-if="canManage && (i.status || 'active') !== 'decommissioned'"
                 type="button"
                 class="linkish danger"
                 :disabled="busyId === i.id"
                 @click="doDecommission(i)"
               >
-                Decommission
+                Decom
               </button>
             </template>
+            <span v-else class="muted">…</span>
           </td>
         </tr>
       </tbody>
@@ -460,7 +579,7 @@ onMounted(load)
 
 <style scoped>
 .fleet-instances-view {
-  max-width: 64rem;
+  max-width: 56rem;
 }
 .hint {
   color: var(--pbx-text-muted);
@@ -506,8 +625,35 @@ onMounted(load)
   font: inherit;
   color: var(--pbx-text, inherit);
 }
-.setid-input {
-  max-width: 5.5rem;
+.edge-panel {
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--pbx-border);
+  border-radius: 0.5rem;
+  background: var(--pbx-surface-subtle, #f8fafc);
+  max-width: 32rem;
+}
+.edge-panel__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+.edge-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--pbx-text-muted);
+  margin-bottom: 0.65rem;
+}
+.edge-panel__field .inline-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.edge-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
 }
 .data-table {
   width: 100%;
@@ -517,20 +663,70 @@ onMounted(load)
 .data-table th,
 .data-table td {
   text-align: left;
-  padding: 0.5rem 0.65rem;
+  padding: 0.45rem 0.5rem;
   border-bottom: 1px solid var(--pbx-border);
   font-size: 0.875rem;
-  vertical-align: top;
+  vertical-align: middle;
+}
+.data-table th {
+  color: var(--pbx-text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.row-active {
+  background: var(--pbx-surface-subtle, #f8fafc);
+}
+.inst-label {
+  font-weight: 500;
+}
+.inst-id {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.7rem;
+  color: var(--pbx-text-muted);
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cell-fqdn {
+  max-width: 12rem;
+}
+.cell-fqdn .tiny {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cell-setid {
+  width: 4.5rem;
+  white-space: nowrap;
+}
+.setid-input,
+.env-input {
+  max-width: 4.5rem;
+}
+.muted {
+  color: var(--pbx-text-muted);
+}
+.muted.tiny {
+  font-size: 0.75rem;
+  margin-top: 0.15rem;
 }
 .actions {
   white-space: nowrap;
 }
 .actions .linkish {
-  margin-right: 0.65rem;
+  margin-right: 0.55rem;
+}
+.action-row {
+  display: flex;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
 }
 .notes-edit {
   display: block;
-  margin-bottom: 0.35rem;
+  margin: 0.35rem 0;
   font-size: 0.8rem;
   color: var(--pbx-text-muted);
 }
@@ -578,6 +774,5 @@ button.primary {
 }
 button.primary:disabled {
   opacity: 0.6;
-  cursor: default;
 }
 </style>
