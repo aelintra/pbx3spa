@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { listTenantMoves } from '@/api/fleetGatekeeper'
-import { hasFleetGatekeeperToken } from '@/config/fleetGatekeeper'
+import { listTenantMoves, refreshFleetSession } from '@/api/fleetGatekeeper'
+import { hasFleetGatekeeperToken, getFleetAbilities } from '@/config/fleetGatekeeper'
 import FleetTokenGate from '@/components/FleetTokenGate.vue'
 
 const jobs = ref([])
@@ -18,6 +18,9 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
+    if (getFleetAbilities().length === 0) {
+      await refreshFleetSession()
+    }
     jobs.value = await listTenantMoves(50)
   } catch (e) {
     error.value = e?.message || 'Failed to load move jobs'

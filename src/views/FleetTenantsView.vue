@@ -1,24 +1,35 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { listFleetTenants, getFleetCatalog } from '@/api/fleetGatekeeper'
-import { hasFleetGatekeeperToken } from '@/config/fleetGatekeeper'
+import { listFleetTenants, getFleetCatalog, refreshFleetSession } from '@/api/fleetGatekeeper'
+import {
+  hasFleetGatekeeperToken,
+  canFleet,
+  FLEET_ABILITY,
+  getFleetAbilities
+} from '@/config/fleetGatekeeper'
 import FleetTokenGate from '@/components/FleetTokenGate.vue'
 
 const tenants = ref([])
 const instancesById = ref({})
 const loading = ref(true)
 const error = ref('')
+const canMove = ref(false)
 
 async function loadTenants() {
   if (!hasFleetGatekeeperToken()) {
     loading.value = false
     error.value = ''
     tenants.value = []
+    canMove.value = false
     return
   }
   loading.value = true
   error.value = ''
   try {
+    if (getFleetAbilities().length === 0) {
+      await refreshFleetSession()
+    }
+    canMove.value = canFleet(FLEET_ABILITY.MOVES)
     const [tList, catalog] = await Promise.all([listFleetTenants(), getFleetCatalog()])
     const map = {}
     for (const i of catalog.instances || []) {
@@ -28,6 +39,7 @@ async function loadTenants() {
     tenants.value = tList
   } catch (e) {
     error.value = e?.message || 'Failed to load fleet tenants'
+    canMove.value = false
   } finally {
     loading.value = false
   }
@@ -77,10 +89,12 @@ onMounted(loadTenants)
           <td>{{ t.status }}</td>
           <td>
             <RouterLink
+              v-if="canMove"
               :to="{ name: 'fleet-tenant-move', query: { tenant: t.shortuid } }"
             >
               Move
             </RouterLink>
+            <span v-else class="muted">—</span>
           </td>
         </tr>
       </tbody>
@@ -99,6 +113,9 @@ onMounted(loadTenants)
 }
 .error {
   color: var(--pbx-danger, #b91c1c);
+}
+.muted {
+  color: var(--pbx-text-muted);
 }
 .data-table {
   width: 100%;

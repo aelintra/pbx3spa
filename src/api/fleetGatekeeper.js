@@ -7,7 +7,10 @@ import {
   getFleetGatekeeperUrl,
   getFleetGatekeeperToken,
   setFleetGatekeeperToken,
-  clearFleetGatekeeperToken
+  clearFleetGatekeeperToken,
+  setFleetAbilities,
+  FLEET_ABILITY,
+  canFleet
 } from '@/config/fleetGatekeeper'
 
 function token() {
@@ -53,6 +56,12 @@ async function gkFetch(path, options = {}) {
   return parseJsonResponse(res)
 }
 
+function applyAbilitiesFromAuthPayload(data) {
+  const abilities = data?.abilities ?? data?.user?.abilities ?? []
+  setFleetAbilities(abilities)
+  return abilities
+}
+
 /** Public — no Bearer. */
 export async function fleetAuthStatus() {
   return gkFetch('/api/v1/auth/status')
@@ -60,7 +69,7 @@ export async function fleetAuthStatus() {
 
 /**
  * Login with fleet operator email/password; stores returned Bearer in sessionStorage.
- * @returns {{ token: string, user: object, expires_at?: string }}
+ * @returns {{ token: string, user: object, abilities: string[], expires_at?: string }}
  */
 export async function loginFleet(email, password) {
   const headers = {
@@ -77,7 +86,30 @@ export async function loginFleet(email, password) {
     throw new Error('Login response missing token')
   }
   setFleetGatekeeperToken(data.token)
+  applyAbilitiesFromAuthPayload(data)
+  if (!canFleet(FLEET_ABILITY.READ)) {
+    clearFleetGatekeeperToken()
+    throw new Error('This account lacks fleet_read — cannot enter Fleet mode')
+  }
   return data
+}
+
+/**
+ * After paste / DEV token: load /me and store abilities.
+ * Rejects sessions without fleet_read.
+ */
+export async function refreshFleetSession() {
+  if (!token()) {
+    setFleetAbilities([])
+    return null
+  }
+  const me = await getFleetMe()
+  applyAbilitiesFromAuthPayload(me)
+  if (!canFleet(FLEET_ABILITY.READ)) {
+    clearFleetGatekeeperToken()
+    throw new Error('This account lacks fleet_read — cannot enter Fleet mode')
+  }
+  return me
 }
 
 export async function logoutFleet() {

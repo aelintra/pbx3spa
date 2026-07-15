@@ -2,14 +2,15 @@
 /**
  * Fleet gatekeeper auth for Fleet mode panels.
  * Prefer email/password login; break-glass paste stays collapsed (ops/emergency only).
+ * S10.1: session must include fleet_read (enforced after login /me).
  */
 import { ref, computed } from 'vue'
 import {
   hasFleetGatekeeperToken,
   setFleetGatekeeperToken,
-  clearFleetGatekeeperToken
+  canEnterFleet
 } from '@/config/fleetGatekeeper'
-import { loginFleet, logoutFleet } from '@/api/fleetGatekeeper'
+import { loginFleet, logoutFleet, refreshFleetSession } from '@/api/fleetGatekeeper'
 
 const emit = defineEmits(['saved', 'cleared'])
 
@@ -34,17 +35,30 @@ async function doLogin() {
     emit('saved')
   } catch (e) {
     error.value = e?.message || 'Login failed'
+    hasToken.value = hasFleetGatekeeperToken()
   } finally {
     busy.value = false
   }
 }
 
-function saveToken() {
+async function saveToken() {
   error.value = ''
-  setFleetGatekeeperToken(tokenDraft.value)
-  tokenDraft.value = ''
-  hasToken.value = hasFleetGatekeeperToken()
-  emit('saved')
+  busy.value = true
+  try {
+    setFleetGatekeeperToken(tokenDraft.value)
+    tokenDraft.value = ''
+    await refreshFleetSession()
+    hasToken.value = hasFleetGatekeeperToken()
+    if (!canEnterFleet()) {
+      throw new Error('This account lacks fleet_read — cannot enter Fleet mode')
+    }
+    emit('saved')
+  } catch (e) {
+    error.value = e?.message || 'Could not validate fleet session'
+    hasToken.value = hasFleetGatekeeperToken()
+  } finally {
+    busy.value = false
+  }
 }
 
 async function clearToken() {
@@ -102,8 +116,8 @@ defineExpose({
       <details class="break-glass" :open="showAdvanced" @toggle="showAdvanced = $event.target.open">
         <summary>Break-glass (ops only)</summary>
         <p class="hint break-glass-hint">
-          Emergency access with the control-plane <code>GATEKEEPER_API_TOKEN</code>.
-          Day-to-day operators should use Sign in above.
+          Emergency access with the control-plane <code>GATEKEEPER_API_TOKEN</code>
+          (treated as <code>fleet_admin</code>). Day-to-day operators should use Sign in above.
         </p>
         <form class="token-form" @submit.prevent="saveToken">
           <input
@@ -112,7 +126,7 @@ defineExpose({
             autocomplete="off"
             placeholder="Paste break-glass token"
           />
-          <button type="submit" class="primary">Save for session</button>
+          <button type="submit" class="primary" :disabled="busy">Save for session</button>
         </form>
       </details>
     </div>

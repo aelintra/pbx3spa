@@ -37,7 +37,11 @@ describe('fleetGatekeeper config helpers', () => {
       setFleetGatekeeperToken,
       getFleetGatekeeperToken,
       hasFleetGatekeeperToken,
-      clearFleetGatekeeperToken
+      clearFleetGatekeeperToken,
+      setFleetAbilities,
+      getFleetAbilities,
+      canFleet,
+      FLEET_ABILITY
     } = await import('@/config/fleetGatekeeper.js')
 
     setFleetGatekeeperToken('  abc123  ')
@@ -45,14 +49,30 @@ describe('fleetGatekeeper config helpers', () => {
     expect(hasFleetGatekeeperToken()).toBe(true)
     expect(session.getItem(TOKEN_KEY)).toBe('abc123')
 
+    setFleetAbilities(['fleet_admin'])
+    expect(canFleet(FLEET_ABILITY.READ)).toBe(true)
+    expect(canFleet(FLEET_ABILITY.MOVES)).toBe(true)
+
     setFleetGatekeeperToken('')
     expect(getFleetGatekeeperToken()).toBe('')
     expect(hasFleetGatekeeperToken()).toBe(false)
     expect(session.getItem(TOKEN_KEY)).toBe(null)
+    expect(getFleetAbilities()).toEqual([])
 
     setFleetGatekeeperToken('again')
+    setFleetAbilities(['fleet_read'])
     clearFleetGatekeeperToken()
     expect(getFleetGatekeeperToken()).toBe('')
+    expect(getFleetAbilities()).toEqual([])
+  })
+
+  it('canFleet requires specific ability unless fleet_admin', async () => {
+    const { setFleetAbilities, canFleet, FLEET_ABILITY } = await import(
+      '@/config/fleetGatekeeper.js'
+    )
+    setFleetAbilities(['fleet_read'])
+    expect(canFleet(FLEET_ABILITY.READ)).toBe(true)
+    expect(canFleet(FLEET_ABILITY.MOVES)).toBe(false)
   })
 
   it('sessionStorage wins over DEV env token', async () => {
@@ -81,14 +101,49 @@ describe('fleetGatekeeper API login/logout', () => {
     vi.resetModules()
   })
 
-  it('loginFleet stores returned token', async () => {
+  it('loginFleet stores returned token and abilities', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       text: async () =>
         JSON.stringify({
           token: 'login-token',
-          user: { email: 'fleet@example.com' }
+          user: { email: 'fleet@example.com', abilities: ['fleet_admin'] },
+          abilities: [
+            'fleet_read',
+            'fleet_instances',
+            'fleet_moves',
+            'fleet_edge',
+            'fleet_admin'
+          ]
+        })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { loginFleet } = await import('@/api/fleetGatekeeper.js')
+    const { getFleetGatekeeperToken, canFleet, FLEET_ABILITY } = await import(
+      '@/config/fleetGatekeeper.js'
+    )
+
+    const data = await loginFleet('fleet@example.com', 'GimmeTheFleet')
+    expect(data.token).toBe('login-token')
+    expect(getFleetGatekeeperToken()).toBe('login-token')
+    expect(canFleet(FLEET_ABILITY.MOVES)).toBe(true)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://control.test/api/v1/auth/login',
+      expect.objectContaining({ method: 'POST' })
+    )
+  })
+
+  it('loginFleet rejects accounts without fleet_read', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({
+          token: 'login-token',
+          user: { email: 'none@example.com', abilities: [] },
+          abilities: []
         })
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -96,13 +151,8 @@ describe('fleetGatekeeper API login/logout', () => {
     const { loginFleet } = await import('@/api/fleetGatekeeper.js')
     const { getFleetGatekeeperToken } = await import('@/config/fleetGatekeeper.js')
 
-    const data = await loginFleet('fleet@example.com', 'GimmeTheFleet')
-    expect(data.token).toBe('login-token')
-    expect(getFleetGatekeeperToken()).toBe('login-token')
-    expect(fetchMock).toHaveBeenCalledWith(
-      'https://control.test/api/v1/auth/login',
-      expect.objectContaining({ method: 'POST' })
-    )
+    await expect(loginFleet('none@example.com', 'GimmeTheFleet')).rejects.toThrow(/fleet_read/)
+    expect(getFleetGatekeeperToken()).toBe('')
   })
 
   it('logoutFleet clears local token even when HTTP fails', async () => {

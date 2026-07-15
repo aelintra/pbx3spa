@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getFleetCatalog } from '@/api/fleetGatekeeper'
-import { hasFleetGatekeeperToken } from '@/config/fleetGatekeeper'
+import { getFleetCatalog, refreshFleetSession } from '@/api/fleetGatekeeper'
+import { hasFleetGatekeeperToken, getFleetAbilities } from '@/config/fleetGatekeeper'
 import FleetTokenGate from '@/components/FleetTokenGate.vue'
 
 const instances = ref([])
@@ -18,6 +18,9 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
+    if (getFleetAbilities().length === 0) {
+      await refreshFleetSession()
+    }
     const catalog = await getFleetCatalog()
     instances.value = catalog.instances || []
   } catch (e) {
