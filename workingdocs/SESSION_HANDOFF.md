@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-15 — S10.5 DID ownership + SBC project (residue paused)
+## Session end 2026-07-15 — S10.5 complete (edge + Rule 13 + Exit Fleet)
 
-**On `s105`:** **pbx3** **`9b3c8fa`**, **pbx3spa** **`44fefff`**, **pbx3sbc-admin** **`97c9d05`**. Live on control + SBC. Not merged to `main`.
+**On `main`:** **pbx3** **`e8d2a8e`** (+ handoff), **pbx3spa** **`854ca8b`**, **pbx3sbc-admin** **`95bd61c`**. Live on control + SBC.
 
-**Day:** Fleet **DIDs** panel — catalog assign/release + Project all → SBC inbound `dr_rules`. Lab Magrathea DID → duns call OK. S10.5 **DID path done**; residue (domain register UI + dispatcher-set create) **paused for product decisions**.
+**Day:** Finished S10.5 residue (Provision edge + Register on SBC); documented Rule 13 standalone vs fleet authorship; Exit Fleet in topbar; login **chooser** deferred as **S10.8** polish. Gatekeeper redeployed.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · Fleet DIDs on spa **`s105`** (`npm run dev`)
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa **`main`/`s105`** (`npm run dev` from **`pbx3spa/`**)
 
-**Docs / TODO:** tip decide S10.5 residue then S10.6 / polish; S10.5 DID [x].
+**Docs / TODO:** tip **S10.6** then Fleet UX / S10.8 chooser; S10.5 [x].
 
-**Resume:** Decision session on domain register + dispatcher-set onboard — do not implement until settled. Or merge `s105` / S10.6 / UX polish.
+**Resume:** **S10.6** fleet user manage (or small UX: demote Link setid).
+
+---
+
+## Session end 2026-07-15 — S10.5 DID ownership + SBC project (residue paused) — historical
+
+**On `s105`:** superseded — residue shipped later same day. See block above.
+
+**Resume:** see block above.
 
 ---
 
