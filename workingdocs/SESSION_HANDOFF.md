@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-15 — S10.5 complete (edge + Rule 13 + Exit Fleet)
 
-**On `main`:** **pbx3** **`e8d2a8e`** (+ handoff), **pbx3spa** **`854ca8b`**, **pbx3sbc-admin** **`95bd61c`**. Live on control + SBC.
+**On `main`:** **pbx3** **`f074b07`**, **pbx3spa** **`ee9a4f3`**, **pbx3sbc-admin** **`95bd61c`**. Live on control + SBC.
 
 **Day:** Finished S10.5 residue (Provision edge + Register on SBC); documented Rule 13 standalone vs fleet authorship; Exit Fleet in topbar; login **chooser** deferred as **S10.8** polish. Gatekeeper redeployed.
 
