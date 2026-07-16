@@ -33,14 +33,16 @@ const createForm = ref({
   email: '',
   name: '',
   password: '',
-  abilities: [FLEET_ABILITY.READ]
+  abilities: [FLEET_ABILITY.READ],
+  notify_failures: false
 })
 
 const editingId = ref(null)
 const editForm = ref({
   name: '',
   password: '',
-  abilities: []
+  abilities: [],
+  notify_failures: false
 })
 
 async function load() {
@@ -94,7 +96,8 @@ function startEdit(row) {
   editForm.value = {
     name: row.name || '',
     password: '',
-    abilities: [...(row.abilities || [])]
+    abilities: [...(row.abilities || [])],
+    notify_failures: !!row.notify_failures
   }
   actionMsg.value = ''
   error.value = ''
@@ -114,7 +117,8 @@ async function submitCreate() {
       email: createForm.value.email.trim(),
       password: createForm.value.password,
       name: createForm.value.name.trim(),
-      abilities: [...createForm.value.abilities]
+      abilities: [...createForm.value.abilities],
+      notify_failures: !!createForm.value.notify_failures
     }
     if (!body.abilities.length) {
       throw new Error('Pick at least one ability')
@@ -126,7 +130,8 @@ async function submitCreate() {
       email: '',
       name: '',
       password: '',
-      abilities: [FLEET_ABILITY.READ]
+      abilities: [FLEET_ABILITY.READ],
+      notify_failures: false
     }
     await load()
   } catch (e) {
@@ -147,7 +152,8 @@ async function submitEdit() {
     }
     const patch = {
       name: editForm.value.name.trim(),
-      abilities: [...editForm.value.abilities]
+      abilities: [...editForm.value.abilities],
+      notify_failures: !!editForm.value.notify_failures
     }
     if (editForm.value.password) {
       patch.password = editForm.value.password
@@ -315,6 +321,10 @@ onBeforeUnmount(() => {
           <code>{{ a }}</code>
         </label>
       </fieldset>
+      <label class="check">
+        <input v-model="createForm.notify_failures" type="checkbox" />
+        Email on instance down
+      </label>
       <button type="submit" class="primary" :disabled="busyId === 'create'">
         {{ busyId === 'create' ? 'Creating…' : 'Create' }}
       </button>
@@ -326,6 +336,7 @@ onBeforeUnmount(() => {
           <th>Email</th>
           <th>Name</th>
           <th>Abilities</th>
+          <th>Notify</th>
           <th>Sessions</th>
           <th>Status</th>
           <th />
@@ -339,6 +350,7 @@ onBeforeUnmount(() => {
             <td class="abilities-cell">
               <code v-for="a in row.abilities" :key="a" class="chip">{{ a }}</code>
             </td>
+            <td>{{ row.notify_failures ? 'yes' : '—' }}</td>
             <td>{{ row.session_count }}</td>
             <td>
               <span v-if="row.disabled_at" class="badge badge--muted">disabled</span>
@@ -384,7 +396,7 @@ onBeforeUnmount(() => {
             </td>
           </tr>
           <tr v-if="editingId === row.id" class="edit-row">
-            <td colspan="6">
+            <td colspan="7">
               <form
                 class="edit-form"
                 autocomplete="off"
@@ -426,6 +438,10 @@ onBeforeUnmount(() => {
                     <code>{{ a }}</code>
                   </label>
                 </fieldset>
+                <label class="check">
+                  <input v-model="editForm.notify_failures" type="checkbox" />
+                  Email on instance down
+                </label>
                 <button
                   type="submit"
                   class="primary"
