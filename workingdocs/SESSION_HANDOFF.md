@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-15 — pbx3-docs MkDocs + Pages (lab guide)
+## Session end 2026-07-16 — What is PBX3 + ops notify requirements
 
-**On `main`:** SPA code unchanged (**`d4d3e71`** tip). **pbx3** **`1d8316a`**. **pbx3-docs** **`2a37a00`** → **https://aelintra.github.io/pbx3-docs/**.
+**On `main`:** SPA code unchanged (**`4131fcc`** tip). **pbx3** **`5a133ff`**. **pbx3-docs** **`a020422`**. **pbx3sbc** **`32b20e6`**.
 
-**Day:** Stood up operator MkDocs (nav + schematic + Cloud/S3); seeded install/TLS/admin/fleet/troubleshoot from runbooks for lab use; human edit expected.
+**Day:** Replaced MkDocs **What is PBX3?** with fleet overview; opened **`FLEET_OPS_NOTIFICATION_REQUIREMENTS.md`** (probe+email v1; velocity later; Prometheus = metrics only; Fail2ban ban→email later). Fail2ban: auto inbound Peers (defer to next carrier); site IPs manual. Docs polish **ongoing**.
 
 **Dev against golden:** unchanged — `https://08jzwn.pbx3.com:44300/api` · **`https://control.pbx3.com`** · spa `npm run dev`
 
-**Docs / TODO:** MkDocs seed [x]; polish optional; egress / S10.7 still parked.
+**Docs / TODO:** ops notify planned [ ]; Fail2ban Peer auto-whitelist deferred; pbx3-docs polish ongoing; egress / S10.7 parked.
 
-**Resume:** product next (egress/failover or Fleet UX) **or** edit live docs; do not start S10.7 orchestrator without ask.
+**Resume:** egress/failover **or** docs sections on request **or** ops-notify when prioritized; Peer→whitelist when next carrier onboarded.
+
+---
+
+## Session end 2026-07-15 — pbx3-docs MkDocs + Pages (lab guide) — historical
+
+**On `main`:** superseded — tips were SPA **`d4d3e71`**, **pbx3** **`1d8316a`**, **pbx3-docs** **`2a37a00`**.
+
+**Resume:** see block above.
 
 ---
 
