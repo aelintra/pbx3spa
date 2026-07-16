@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-16 — What is PBX3 + ops notify requirements
 
-**On `main`:** SPA code unchanged (**`ef2ab88`** tip). **pbx3** **`6f0efb9`**. **pbx3-docs** **`e76c451`**. **pbx3sbc** **`32b20e6`**.
+**On `main`:** SPA code unchanged (**`cf64ea7`** tip). **pbx3** **`0aac37b`**. **pbx3-docs** **`e76c451`**. **pbx3sbc** **`32b20e6`**.
 
 **Day:** Replaced MkDocs **What is PBX3?** with fleet overview; opened **`FLEET_OPS_NOTIFICATION_REQUIREMENTS.md`** (probe+email v1; velocity later; Prometheus = metrics only; Fail2ban ban→email later). Fail2ban: auto inbound Peers (defer to next carrier); site IPs manual. Docs polish **ongoing**.
 
