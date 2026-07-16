@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-16 — ops notify live (probe + REGISTER loops)
 
-**On `main`:** **pbx3spa** **`e705584`**. **pbx3** **`0838886`**. **pbx3api** **`4b2aa99`**.
+**On `main`:** **pbx3spa** **`aa8b22a`**. **pbx3** **`8622fd8`**. **pbx3api** **`4b2aa99`**.
 
 **Day:** Gatekeeper `/up` probe + SMTP (lab: down/cleared + maintenance mail to jeff@aelintra.com). Misconfig REGISTER scanner on nodes (ignoreip only). Golden + bzy54n enabled + cron. Stance: known sites notify; unknown IPs still Fail2ban-bannable.
 
