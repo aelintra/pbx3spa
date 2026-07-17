@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-17 — log retention Phases 5–6
 
-**Merged to `main`:** **pbx3api** **`6c28486`**, **pbx3spa** **`45594bf`**, **pbx3** **`28cac1a`** (+ Phase 7 proposal docs). Branch **`logs56`** merged.
+**Merged to `main`:** **pbx3api** **`6c28486`**, **pbx3spa** **`a9ce18c`**, **pbx3** **`7c9f8d4`**. Branch **`logs56`** merged.
 
 **Operator:** Instance Globals → Logging retention knobs; System Logs → S3 archive list/download; ACD → **CDR** (`/cdr`). Hot local log viewer unchanged.
 
