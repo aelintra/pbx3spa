@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-16 — REGISTER-loop lab + Asterisk F2B off
+## Session end 2026-07-17 — log retention Phases 1–4 (`logs`)
 
-**On `main`:** **pbx3** **`59b5dc5`**, **pbx3api** **`16fba66`**, **pbx3spa** **`305faec`**.
+**On `logs`:** **pbx3** **`4df64c9`**, **pbx3api** **`19f3f9c`**, **pbx3sbc** **`5071fa2`**. SPA **`main`** unchanged.
 
-**Day:** Lab REGISTER via SBC (Fail2ban ban on cellphone IP; notify after SBC on golden ignoreip). Mail enrichment dialable+(uid)+name. Instance Asterisk F2B **disabled**; SIP ban on SBC. bzy54n Fail2ban restarted (was dead on auth_log). TODO: Instances full KSUID + RTT by Active.
+**Day:** Instance log ship to S3 (golden smoke OK); fleet siplog off; SBC + control ship scripts; CDR/velocity design locked in requirements. Control IAM v2 for `control/*` — ship retry pending cred cache.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **`https://control.pbx3.com`** · spa `npm run dev`.
 
-**Docs / TODO:** Instances polish; move-job / SBC ban→email / badges; egress parked.
+**Docs / TODO:** **`FLEET_LOG_RETENTION_REQUIREMENTS.md`**; ops finish + merge `logs`; Instances KSUID/RTT polish still open.
 
-**Resume:** SPA Instances polish **or** egress/failover **or** move-job notify **or** docs on request.
+**Resume:** Log-retention ops (control/SBC/lifecycle) **or** merge `logs` **or** SPA Instances polish.
+
+---
+
+## Session end 2026-07-16 — REGISTER-loop lab + Asterisk F2B off — historical
+
+**On `main`:** superseded — tips were **pbx3** **`59b5dc5`**, **pbx3api** **`16fba66`**, **pbx3spa** **`305faec`**.
+
+**Resume:** see block above.
 
 ---
 
