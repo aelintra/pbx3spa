@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-16 — ops notify live (probe + REGISTER loops)
+## Session end 2026-07-16 — REGISTER-loop lab + Asterisk F2B off
 
-**On `main`:** **pbx3spa** **`aa8b22a`**. **pbx3** **`8622fd8`**. **pbx3api** **`4b2aa99`**.
+**On `main`:** **pbx3** **`1a5229c`**, **pbx3api** **`16fba66`**, **pbx3spa** **`947aa83`**.
 
-**Day:** Gatekeeper `/up` probe + SMTP (lab: down/cleared + maintenance mail to jeff@aelintra.com). Misconfig REGISTER scanner on nodes (ignoreip only). Golden + bzy54n enabled + cron. Stance: known sites notify; unknown IPs still Fail2ban-bannable.
+**Day:** Lab REGISTER via SBC (Fail2ban ban on cellphone IP; notify after SBC on golden ignoreip). Mail enrichment dialable+(uid)+name. Instance Asterisk F2B **disabled**; SIP ban on SBC. bzy54n Fail2ban restarted (was dead on auth_log). TODO: Instances full KSUID + RTT by Active.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **`https://control.pbx3.com`** · spa `npm run dev` · Fleet Users notify checkbox needs spa tip.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **`https://control.pbx3.com`** · spa `npm run dev`.
 
-**Docs / TODO:** ops notify follow-ons = move-job mail / Fail2ban ban→email / SPA badges; egress parked.
+**Docs / TODO:** Instances polish; move-job / SBC ban→email / badges; egress parked.
 
-**Resume:** egress/failover **or** move-job notify **or** docs on request.
+**Resume:** SPA Instances polish **or** egress/failover **or** move-job notify **or** docs on request.
+
+---
+
+## Session end 2026-07-16 — ops notify live (probe + REGISTER loops) — historical
+
+**On `main`:** superseded — tips were SPA **`aa8b22a`**, **pbx3** **`8622fd8`**, **pbx3api** **`4b2aa99`**.
+
+**Resume:** see block above.
 
 ---
 
