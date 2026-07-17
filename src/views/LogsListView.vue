@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { useStickyFilter } from '@/composables/useStickyFilter'
@@ -14,6 +14,19 @@ const loading = ref(true)
 const error = ref('')
 const filterInputRef = ref(null)
 const selectedLogPath = ref(null)
+
+const archiveClass = ref('syslog')
+const archiveObjects = ref([])
+const archiveAvailable = ref(false)
+const archiveLoading = ref(false)
+const archiveError = ref('')
+const archiveDownloading = ref(null)
+
+const ARCHIVE_CLASSES = [
+  { value: 'syslog', label: 'syslog' },
+  { value: 'asterisk-messages', label: 'Asterisk messages' },
+  { value: 'cdr', label: 'CDR CSV' }
+]
 
 const filteredLogs = computed(() => {
   const list = logs.value
@@ -36,11 +49,9 @@ async function loadLogs() {
   error.value = ''
   try {
     const res = await getApiClient().get('logs')
-    // Handle both old format { Log: 'Master.csv' } and new format { logs: [...] }
     if (res.logs && Array.isArray(res.logs)) {
       logs.value = res.logs
     } else if (res.Log) {
-      // Old format - return empty for now
       logs.value = []
       error.value = 'Legacy API format detected. Please refresh.'
     } else {
@@ -48,11 +59,32 @@ async function loadLogs() {
       error.value = 'Unexpected API response format'
     }
   } catch (err) {
-    console.error('Logs API error:', err) // Debug
+    console.error('Logs API error:', err)
     error.value = firstErrorMessage(err, 'Failed to load logs')
     logs.value = []
   } finally {
     loading.value = false
+  }
+}
+
+async function loadArchive() {
+  archiveLoading.value = true
+  archiveError.value = ''
+  try {
+    const res = await getApiClient().get('logs/archive', {
+      params: { class: archiveClass.value }
+    })
+    archiveAvailable.value = Boolean(res.available)
+    archiveObjects.value = Array.isArray(res.objects) ? res.objects : []
+    if (!res.available) {
+      archiveError.value = 'Org bucket not configured — S3 archive unavailable on this node.'
+    }
+  } catch (err) {
+    archiveObjects.value = []
+    archiveAvailable.value = false
+    archiveError.value = firstErrorMessage(err, 'Failed to list S3 archive')
+  } finally {
+    archiveLoading.value = false
   }
 }
 
@@ -67,13 +99,11 @@ function closeLogModal() {
 async function downloadLog(path, e) {
   e.stopPropagation()
   try {
-    // path is now a symbolic name (e.g., astmessages) - no encoding needed
     const url = `logs/${path}/download`
     const blob = await getApiClient().getBlob(url)
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    // Extract filename from path (symbolic names don't have slashes, so just use the name)
     link.download = path.includes('/') ? path.split('/').pop() : `${path}.log`
     document.body.appendChild(link)
     link.click()
@@ -85,9 +115,36 @@ async function downloadLog(path, e) {
   }
 }
 
+async function downloadArchive(obj) {
+  archiveDownloading.value = obj.key
+  try {
+    const { url, filename } = await getApiClient().get('logs/archive/download-url', {
+      params: { key: obj.key }
+    })
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename || obj.basename
+    a.rel = 'noopener'
+    a.target = '_blank'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    toast.show('Archive download started')
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Archive download failed'), 'error')
+  } finally {
+    archiveDownloading.value = null
+  }
+}
+
+watch(archiveClass, () => {
+  loadArchive()
+})
+
 onMounted(async () => {
   await loadLogs()
   filterInputRef.value?.focus()
+  await loadArchive()
 })
 </script>
 
@@ -113,6 +170,7 @@ onMounted(async () => {
     </section>
 
     <section v-else class="list-body">
+      <h2 class="section-heading">Local (hot)</h2>
       <div v-if="logs.length === 0" class="empty">No log files found.</div>
       <p v-else-if="filterText && filteredLogs.length === 0" class="empty">
         No logs match the filter.
@@ -155,6 +213,58 @@ onMounted(async () => {
       </table>
     </section>
 
+    <section class="archive-section">
+      <h2 class="section-heading">S3 archive (cold)</h2>
+      <p class="archive-hint">
+        Rotated files already shipped to the org bucket. Download a file and use local tools to
+        inspect it.
+      </p>
+      <p class="toolbar archive-toolbar">
+        <label class="class-label">
+          Class
+          <select v-model="archiveClass" class="class-select" aria-label="Archive log class">
+            <option v-for="c in ARCHIVE_CLASSES" :key="c.value" :value="c.value">
+              {{ c.label }}
+            </option>
+          </select>
+        </label>
+        <button type="button" class="btn btn-secondary" :disabled="archiveLoading" @click="loadArchive">
+          Refresh
+        </button>
+      </p>
+      <ListLoadingState v-if="archiveLoading" message="Listing S3 archive…" />
+      <p v-else-if="archiveError && !archiveAvailable" class="empty">{{ archiveError }}</p>
+      <p v-else-if="archiveError" class="error">{{ archiveError }}</p>
+      <div v-else-if="archiveObjects.length === 0" class="empty">No archived objects for this class.</div>
+      <table v-else class="table">
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Stamp</th>
+            <th class="size-col">Size</th>
+            <th class="actions-col">Download</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="obj in archiveObjects" :key="obj.key">
+            <td class="log-path">{{ obj.basename }}</td>
+            <td class="mono">{{ obj.stamp }}</td>
+            <td class="size-col">{{ formatSize(obj.size) }}</td>
+            <td class="actions-col">
+              <button
+                type="button"
+                class="download-btn"
+                :disabled="archiveDownloading === obj.key"
+                @click="downloadArchive(obj)"
+              >
+                {{ archiveDownloading === obj.key ? '…' : 'Download' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
     <LogViewerModal v-if="selectedLogPath" :log-path="selectedLogPath" @close="closeLogModal" />
   </div>
 </template>
@@ -171,8 +281,42 @@ onMounted(async () => {
 .list-states {
   margin: 0;
 }
-.list-body {
+.list-body,
+.archive-section {
   margin: 0;
+}
+.section-heading {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #334155;
+}
+.archive-hint {
+  margin: 0 0 0.75rem;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+.archive-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.class-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #475569;
+}
+.class-select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9rem;
 }
 .error,
 .empty {
@@ -212,55 +356,51 @@ onMounted(async () => {
 .log-row:hover {
   background: #f8fafc;
 }
-.log-row.log-missing {
+.log-missing {
+  cursor: default;
   opacity: 0.6;
-  cursor: not-allowed;
-}
-.log-row.log-missing:hover {
-  background: transparent;
 }
 .log-path {
-  color: #2563eb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9rem;
 }
 .missing-badge {
-  font-size: 0.875rem;
-  color: #94a3b8;
-  font-weight: normal;
   margin-left: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+.download-btn {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  background: #fff;
+  cursor: pointer;
+}
+.download-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+.download-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .no-action {
   color: #94a3b8;
 }
-.download-btn {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
+.filter-input {
+  min-width: 16rem;
+  padding: 0.4rem 0.6rem;
   border: 1px solid #cbd5e1;
   border-radius: 0.375rem;
-  background: #f8fafc;
-  color: #475569;
+}
+.btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
   cursor: pointer;
 }
-.download-btn:hover {
-  background: #e2e8f0;
-}
-.toolbar {
-  margin: 0.75rem 0 0 0;
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-}
-.filter-input {
-  padding: 0.5rem 0.75rem;
-  font-size: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  min-width: 16rem;
-}
-.filter-input:focus {
-  outline: none;
-  border-color: #2563eb;
+.btn-secondary:hover:not(:disabled) {
+  background: #f1f5f9;
 }
 </style>

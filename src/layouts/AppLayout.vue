@@ -25,6 +25,7 @@ const COMMIT_HIDDEN_PATH_PREFIXES = [
   '/ip-settings',
   '/logs',
   '/recordings',
+  '/cdr',
   '/users'
 ]
 
@@ -77,7 +78,8 @@ const navGroups = computed(() => {
       { to: '/ivrs', label: 'IVRs', icon: 'git-branch' },
       { to: '/greetings', label: 'Greetings', icon: 'volume2' },
       { to: '/agents', label: 'Agents', icon: 'headset' },
-      { to: '/recordings', label: 'Recordings', icon: 'mic' }
+      { to: '/recordings', label: 'Recordings', icon: 'mic' },
+      { to: '/cdr', label: 'CDR', icon: 'scroll-text' }
     ]
   },
   {

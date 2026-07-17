@@ -71,6 +71,7 @@ import AsteriskFilesListView from '../views/AsteriskFilesListView.vue'
 import AsteriskFileDetailView from '../views/AsteriskFileDetailView.vue'
 import LogsListView from '../views/LogsListView.vue'
 import RecordingsListView from '../views/RecordingsListView.vue'
+import CdrListView from '../views/CdrListView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import NoAccessView from '../views/NoAccessView.vue'
 import UsersListView from '../views/UsersListView.vue'
@@ -185,7 +186,8 @@ const router = createRouter({
           component: AsteriskFileDetailView
         },
         { path: 'logs', name: 'logs', component: LogsListView },
-        { path: 'recordings', name: 'recordings', component: RecordingsListView }
+        { path: 'recordings', name: 'recordings', component: RecordingsListView },
+        { path: 'cdr', name: 'cdr', component: CdrListView }
       ]
     },
     {
