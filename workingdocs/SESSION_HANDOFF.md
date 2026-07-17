@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-16 — REGISTER-loop lab + Asterisk F2B off
 
-**On `main`:** **pbx3** **`1a5229c`**, **pbx3api** **`16fba66`**, **pbx3spa** **`947aa83`**.
+**On `main`:** **pbx3** **`e05484b`**, **pbx3api** **`16fba66`**, **pbx3spa** **`ff1caeb`**.
 
 **Day:** Lab REGISTER via SBC (Fail2ban ban on cellphone IP; notify after SBC on golden ignoreip). Mail enrichment dialable+(uid)+name. Instance Asterisk F2B **disabled**; SIP ban on SBC. bzy54n Fail2ban restarted (was dead on auth_log). TODO: Instances full KSUID + RTT by Active.
 
