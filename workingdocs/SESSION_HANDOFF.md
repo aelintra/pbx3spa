@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-17 — log retention Phases 1–4 (`logs`)
 
-**On `logs`:** **pbx3** **`4df64c9`**, **pbx3api** **`19f3f9c`**, **pbx3sbc** **`5071fa2`**. SPA **`main`** unchanged.
+**On `logs`:** **pbx3** **`e0d31d6`**, **pbx3api** **`19f3f9c`**, **pbx3sbc** **`5071fa2`**. SPA **`main`** unchanged.
 
 **Day:** Instance log ship to S3 (golden smoke OK); fleet siplog off; SBC + control ship scripts; CDR/velocity design locked in requirements. Control IAM v2 for `control/*` — ship retry pending cred cache.
 
