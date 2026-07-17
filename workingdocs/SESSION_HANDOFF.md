@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-17 — log retention Phases 1–4 (`logs`)
+## Session end 2026-07-17 — log retention Phases 5–6
 
-**On `logs`:** **pbx3** **`e0d31d6`**, **pbx3api** **`19f3f9c`**, **pbx3sbc** **`5071fa2`**. SPA **`main`** unchanged.
+**Merged to `main`:** **pbx3api** **`6c28486`**, **pbx3spa** **`45594bf`**, **pbx3** **`28cac1a`** (+ Phase 7 proposal docs). Branch **`logs56`** merged.
 
-**Day:** Instance log ship to S3 (golden smoke OK); fleet siplog off; SBC + control ship scripts; CDR/velocity design locked in requirements. Control IAM v2 for `control/*` — ship retry pending cred cache.
+**Operator:** Instance Globals → Logging retention knobs; System Logs → S3 archive list/download; ACD → **CDR** (`/cdr`). Hot local log viewer unchanged.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **`https://control.pbx3.com`** · spa `npm run dev`.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy54n same tip · spa `npm run dev` on **`main`**.
 
-**Docs / TODO:** **`FLEET_LOG_RETENTION_REQUIREMENTS.md`**; ops finish + merge `logs`; Instances KSUID/RTT polish still open.
+**Docs / TODO:** **`FLEET_LOG_RETENTION_REQUIREMENTS.md`** Phases 1–6 done; Phase 7 proposal for later review. **`TODO.md`**.
 
-**Resume:** Log-retention ops (control/SBC/lifecycle) **or** merge `logs` **or** SPA Instances polish.
+**Resume:** SPA Instances polish (KSUID/RTT) **or** next non-log priority. Do not start Phase 7 without ask.
+
+---
+
+## Session end 2026-07-17 — log retention Phases 1–4 (`logs`) — historical
+
+**On `logs` then `main`:** superseded by Phases 5–6 block above.
+
+**Resume:** see block above.
 
 ---
 
