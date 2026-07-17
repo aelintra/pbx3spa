@@ -30,6 +30,12 @@ const editLoglevel = ref('')
 const editLogsipdispsize = ref('')
 const editLogsipnumfiles = ref('')
 const editLogsipfilesize = ref('')
+const editLogLocalSyslog = ref('7')
+const editLogLocalMessages = ref('7')
+const editLogLocalCdr = ref('7')
+const editLogS3Syslog = ref('30')
+const editLogS3Messages = ref('30')
+const editLogS3Cdr = ref('60')
 const editMaxin = ref('')
 const editMaxout = ref('')
 const editOperator = ref('')
@@ -96,6 +102,17 @@ async function fetchSysglobal() {
     sysglobal.value = await getApiClient().get('sysglobals')
     syncEditFromSysglobal()
     auth.setGlobalsFqdnFromSysglobal(sysglobal.value)
+    try {
+      const ret = await getApiClient().get('logs/retention')
+      editLogLocalSyslog.value = String(ret.local_days?.syslog ?? 7)
+      editLogLocalMessages.value = String(ret.local_days?.['asterisk-messages'] ?? 7)
+      editLogLocalCdr.value = String(ret.local_days?.cdr ?? 7)
+      editLogS3Syslog.value = String(ret.s3_maxage_days?.syslog ?? 30)
+      editLogS3Messages.value = String(ret.s3_maxage_days?.['asterisk-messages'] ?? 30)
+      editLogS3Cdr.value = String(ret.s3_maxage_days?.cdr ?? 60)
+    } catch {
+      // Retention API optional on older nodes
+    }
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load instance globals')
     sysglobal.value = null
@@ -191,6 +208,27 @@ async function saveEdit(e) {
     body.cosstart = editCosstart.value === 'OFF' ? 'OFF' : 'ON'
 
     await getApiClient().put('sysglobals', body)
+    try {
+      await getApiClient().put('logs/retention', {
+        local_days: {
+          syslog: parseInt(editLogLocalSyslog.value, 10) || 7,
+          'asterisk-messages': parseInt(editLogLocalMessages.value, 10) || 7,
+          cdr: parseInt(editLogLocalCdr.value, 10) || 7
+        },
+        s3_maxage_days: {
+          syslog: parseInt(editLogS3Syslog.value, 10) || 30,
+          'asterisk-messages': parseInt(editLogS3Messages.value, 10) || 30,
+          cdr: parseInt(editLogS3Cdr.value, 10) || 60
+        }
+      })
+    } catch (retErr) {
+      toast.show(
+        firstErrorMessage(retErr, 'Globals saved; log retention update failed'),
+        'error'
+      )
+      await fetchSysglobal()
+      return
+    }
     toast.show('Instance globals saved')
     await fetchSysglobal()
   } catch (err) {
@@ -223,6 +261,7 @@ onMounted(fetchSysglobal)
 
       <p class="scope-note">
         These values are stored in the instance <strong>globals</strong> table (one row per server).
+        Log retention knobs below are saved separately to an on-node override file.
         Per-tenant limits, MOH, LDAP, call-control flags, and tenant passwords are on each tenant —
         <router-link :to="{ name: 'tenant-detail', params: { pkey: 'default' } }"
           >Default tenant</router-link
@@ -328,6 +367,48 @@ onMounted(fetchSysglobal)
           v-model="editLogsipfilesize"
           type="number"
           label="SIP File Size"
+        />
+      </div>
+      <p class="scope-note retention-note">
+        Log retention (local hot store + S3 cold archive). Saved to an on-node override file, not
+        the globals row. Ops still apply S3 lifecycle rules from the Mac.
+      </p>
+      <div class="form-fields">
+        <FormField
+          id="edit-log-local-syslog"
+          v-model="editLogLocalSyslog"
+          type="number"
+          label="Local days — syslog"
+        />
+        <FormField
+          id="edit-log-local-messages"
+          v-model="editLogLocalMessages"
+          type="number"
+          label="Local days — Asterisk messages"
+        />
+        <FormField
+          id="edit-log-local-cdr"
+          v-model="editLogLocalCdr"
+          type="number"
+          label="Local days — CDR CSV"
+        />
+        <FormField
+          id="edit-log-s3-syslog"
+          v-model="editLogS3Syslog"
+          type="number"
+          label="S3 maxage days — syslog"
+        />
+        <FormField
+          id="edit-log-s3-messages"
+          v-model="editLogS3Messages"
+          type="number"
+          label="S3 maxage days — Asterisk messages"
+        />
+        <FormField
+          id="edit-log-s3-cdr"
+          v-model="editLogS3Cdr"
+          type="number"
+          label="S3 maxage days — CDR"
         />
       </div>
 
