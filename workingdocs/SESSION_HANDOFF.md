@@ -8,8 +8,8 @@
 
 ## Session end 2026-07-18 — Instances polish + SPA panel polish
 
-**On `main` (pbx3):** Gatekeeper health overlay + RTT — tip **`f0473c4`**; live on control.  
-**On `changes` (pbx3spa):** Panel polish tip **`a14af54`** — DID UID off; extension SIP Registrar / Behaviour / no Common name; latency colors; searchable Network timezone. **Not merged to `main`.** Log: **`workingdocs/PANEL_POLISH_2026-07-18.md`**.
+**On `main` (pbx3):** Gatekeeper health overlay + RTT — tip **`b5fee3e`**; live on control.  
+**On `changes` (pbx3spa):** Panel polish tip **`6b15302`** — DID UID off; extension SIP Registrar / Behaviour / no Common name; latency colors; searchable Network timezone. **Not merged to `main`.** Log: **`workingdocs/PANEL_POLISH_2026-07-18.md`**.
 
 **Operator:** Fleet → Instances (KSUID copy, health, RTT, Refresh). Instance panels: run spa on **`changes`**.
 
