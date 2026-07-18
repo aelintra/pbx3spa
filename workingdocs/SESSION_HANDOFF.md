@@ -6,17 +6,26 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-17 — log retention Phases 5–6
+## Session end 2026-07-18 — Instances polish + SPA panel polish
 
-**Merged to `main`:** **pbx3api** **`6c28486`**, **pbx3spa** **`a9ce18c`**, **pbx3** **`7c9f8d4`**. Branch **`logs56`** merged.
+**On `main` (pbx3):** Gatekeeper health overlay + RTT — tip **`f0473c4`**; live on control.  
+**On `changes` (pbx3spa):** Panel polish tip **`a14af54`** — DID UID off; extension SIP Registrar / Behaviour / no Common name; latency colors; searchable Network timezone. **Not merged to `main`.** Log: **`workingdocs/PANEL_POLISH_2026-07-18.md`**.
 
-**Operator:** Instance Globals → Logging retention knobs; System Logs → S3 archive list/download; ACD → **CDR** (`/cdr`). Hot local log viewer unchanged.
+**Operator:** Fleet → Instances (KSUID copy, health, RTT, Refresh). Instance panels: run spa on **`changes`**.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy54n same tip · spa `npm run dev` on **`main`**.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · spa `npm run dev` on **`changes`**.
 
-**Docs / TODO:** **`FLEET_LOG_RETENTION_REQUIREMENTS.md`** Phases 1–6 done; Phase 7 proposal for later review. **`TODO.md`**.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`**.
 
-**Resume:** SPA Instances polish (KSUID/RTT) **or** next non-log priority. Do not start Phase 7 without ask.
+**Resume:** More panel polish on **`changes`** **or** merge **`changes`→`main`**; else egress / ops-notify follow-ons.
+
+---
+
+## Session end 2026-07-17 — log retention Phases 5–6 — historical
+
+**Merged to `main`:** superseded — tips were **pbx3api** **`6c28486`**, **pbx3spa** **`a9ce18c`**, **pbx3** **`7c9f8d4`**.
+
+**Resume:** see block above.
 
 ---
 
