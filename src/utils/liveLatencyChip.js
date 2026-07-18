@@ -1,6 +1,13 @@
 /** AMI latency string often starts with OK, e.g. `OK (5 ms)`. */
 export const STATUS_OK_REGEX = /^OK/
 
+/** Green below this. */
+export const LATENCY_GREEN_BELOW_MS = 100
+/** Yellow through this (inclusive). */
+export const LATENCY_YELLOW_MAX_MS = 200
+/** Orange through this (inclusive); red above. */
+export const LATENCY_ORANGE_MAX_MS = 300
+
 /** Parse RTT milliseconds from AMI latency string, e.g. `OK (5 ms)` → 5. */
 export function parseLatencyMsFromStatus(s) {
   if (!s || typeof s !== 'string') return null
@@ -20,14 +27,18 @@ export function liveLatencyChipLabel(s) {
   return String(s ?? '')
 }
 
-/** Pill class suffix (use with `.list-chip`). Green ≤100ms, orange 101–200ms, red >200ms. */
+/**
+ * Pill class suffix (use with `.list-chip`).
+ * Green below 100ms, yellow 100–200, orange 201–300, red above 300.
+ */
 export function liveLatencyChipClassSuffix(s) {
   if (s === '…') return 'list-chip--pending'
   if (s === 'Unknown') return 'list-chip--unknown'
   const ms = parseLatencyMsFromStatus(s)
   if (ms != null) {
-    if (ms <= 100) return 'list-chip--on'
-    if (ms <= 200) return 'list-chip--latency-warn'
+    if (ms < LATENCY_GREEN_BELOW_MS) return 'list-chip--on'
+    if (ms <= LATENCY_YELLOW_MAX_MS) return 'list-chip--latency-warn'
+    if (ms <= LATENCY_ORANGE_MAX_MS) return 'list-chip--latency-caution'
     return 'list-chip--latency-bad'
   }
   if (STATUS_OK_REGEX.test((s ?? '').trim())) return 'list-chip--on'

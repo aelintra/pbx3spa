@@ -32,7 +32,6 @@ const loading = ref(true)
 const error = ref('')
 const editCluster = ref('')
 const editDesc = ref('')
-const editCname = ref('')
 const editDescription = ref('')
 const editCallmax = ref('')
 const editActive = ref('YES')
@@ -101,6 +100,27 @@ const tenantOptionsForSelect = computed(() => {
   return list
 })
 
+/** Tenant FQDN for SIP phone registrar (matches selected Tenant on this form). */
+const sipRegistrar = computed(() => {
+  const keys = [
+    editCluster.value,
+    extension.value?.tenant_pkey,
+    extension.value?.cluster
+  ]
+    .filter((v) => v != null && String(v).trim() !== '')
+    .map((v) => String(v).trim())
+  if (!keys.length) return '—'
+  for (const t of tenants.value) {
+    const ids = [t.pkey, t.shortuid, t.id]
+      .filter((v) => v != null && String(v).trim() !== '')
+      .map((v) => String(v).trim())
+    if (!keys.some((k) => ids.includes(k))) continue
+    const fqdn = t.fqdn != null ? String(t.fqdn).trim() : ''
+    return fqdn || '—'
+  }
+  return '—'
+})
+
 async function fetchTenants() {
   try {
     const response = await getApiClient().get('tenants')
@@ -122,7 +142,6 @@ async function fetchExtension() {
     const tenantPkey = ext?.tenant_pkey ?? tenantPkeyDisplay(ext?.cluster)
     editCluster.value = tenantPkey ?? 'default'
     editDesc.value = ext?.desc ?? ext?.description ?? ''
-    editCname.value = ext?.cname ?? ''
     editDescription.value = ext?.description ?? ''
     editCallmax.value = ext?.callmax != null && ext?.callmax !== '' ? String(ext.callmax) : ''
     editActive.value = ext?.active ?? 'YES'
@@ -247,7 +266,6 @@ async function saveEdit(e) {
       cluster: editCluster.value.trim(),
       device: extension.value?.device ?? 'General SIP',
       desc: editDesc.value.trim() || undefined,
-      cname: editCname.value.trim() || undefined,
       description: editDescription.value.trim() || undefined,
       callmax: editCallmax.value.trim() ? parseInt(editCallmax.value, 10) : undefined,
       active: editActive.value,
@@ -539,6 +557,13 @@ const panelTitleTenantSuffix = computed(() => {
               </div>
             </div>
             <FormReadonly
+              id="edit-identity-sip-registrar"
+              label="SIP Registrar"
+              :value="sipRegistrar"
+              class="readonly-identity"
+              hide-help
+            />
+            <FormReadonly
               v-if="isReadOnly('macaddr')"
               id="edit-identity-macaddr"
               label="MAC address"
@@ -581,13 +606,6 @@ const panelTitleTenantSuffix = computed(() => {
               label="User (extension name)"
               type="text"
               placeholder="e.g. John Doe"
-            />
-            <FormField
-              id="edit-cname"
-              v-model="editCname"
-              label="Common name"
-              type="text"
-              placeholder="Display name"
             />
             <FormField
               id="edit-description"

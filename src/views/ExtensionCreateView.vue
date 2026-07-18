@@ -22,7 +22,6 @@ const extensionType = ref('SIP')
 const pkey = ref('')
 const cluster = ref('default')
 const desc = ref('')
-const cname = ref('')
 const description = ref('')
 const macaddr = ref('')
 const active = ref('YES')
@@ -74,7 +73,6 @@ function resetForm() {
   pkey.value = ''
   cluster.value = 'default'
   desc.value = ''
-  cname.value = ''
   description.value = ''
   macaddr.value = ''
   active.value = 'YES'
@@ -117,7 +115,6 @@ onMounted(async () => {
     celltwin,
     devicerec,
     desc,
-    cname,
     description,
     protocol
   })
@@ -163,7 +160,6 @@ async function onSubmit(e) {
       protocol: protocol.value
     }
     if (desc.value.trim()) body.desc = desc.value.trim()
-    if (cname.value.trim()) body.cname = cname.value.trim()
     if (description.value.trim()) body.description = description.value.trim()
     if (dvrvmail.value.trim()) body.dvrvmail = dvrvmail.value.trim()
     if (extensionType.value === 'SIP' && macaddr.value.trim()) {
@@ -265,13 +261,6 @@ function onKeydown(e) {
           label="Name (optional)"
           type="text"
           placeholder="Short description or display name"
-        />
-        <FormField
-          id="cname"
-          v-model="cname"
-          label="Common name"
-          type="text"
-          placeholder="Display name"
         />
         <FormField
           id="description"

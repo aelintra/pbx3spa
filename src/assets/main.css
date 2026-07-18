@@ -282,6 +282,12 @@ body {
 }
 
 .list-view .list-chip--latency-warn {
+  color: #854d0e;
+  background: #fef08a;
+  border-color: #facc15;
+}
+
+.list-view .list-chip--latency-caution {
   color: #9a3412;
   background: #ffedd5;
   border-color: #fdba74;

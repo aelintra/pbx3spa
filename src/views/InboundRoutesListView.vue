@@ -42,11 +42,6 @@ function tenantPkeyDisplay(item) {
   return clusterToTenantPkey.value.get(String(v)) ?? String(v)
 }
 
-function localUidDisplay(r) {
-  const v = r.shortuid
-  return v == null || v === '' ? '—' : String(v)
-}
-
 const filteredRoutes = computed(() => {
   const list = inboundRoutes.value
   const q = (filterText.value || '').trim().toLowerCase()
@@ -54,7 +49,6 @@ const filteredRoutes = computed(() => {
   const map = clusterToTenantPkey.value
   return list.filter((r) => {
     const pkey = (r.pkey ?? '').toString().toLowerCase()
-    const shortuid = (r.shortuid ?? '').toString().toLowerCase()
     const tenantPkey = (r.tenant_pkey ?? map.get(String(r.cluster)) ?? r.cluster ?? '')
       .toString()
       .toLowerCase()
@@ -66,7 +60,6 @@ const filteredRoutes = computed(() => {
     const active = (r.active ?? '').toString().toLowerCase()
     return (
       pkey.includes(q) ||
-      shortuid.includes(q) ||
       tenantPkey.includes(q) ||
       trunkname.includes(q) ||
       openroute.includes(q) ||
@@ -117,7 +110,6 @@ function sortClass(key) {
 
 const inboundRouteExportColumns = computed(() => [
   { key: 'pkey', label: 'DiD/CLiD' },
-  { key: 'shortuid', label: 'UID', getValue: (r) => localUidDisplay(r) },
   { key: 'cluster', label: 'Tenant', getValue: (r) => tenantPkeyDisplay(r) },
   { key: 'active', label: 'Active' },
   { key: 'trunkname', label: 'Name' },
@@ -220,7 +212,7 @@ onMounted(loadInboundRoutes)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by DiD/CLiD, UID, tenant, name, Open, Closed, Type, description, active"
+          placeholder="Filter by DiD/CLiD, tenant, name, Open, Closed, Type, description, active"
           aria-label="Filter inbound routes"
         />
       </p>
@@ -258,14 +250,6 @@ onMounted(loadInboundRoutes)
               @click="setSort('pkey')"
             >
               DiD/CLiD
-            </th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('shortuid')"
-              @click="setSort('shortuid')"
-            >
-              UID
             </th>
             <th
               class="th-sortable"
@@ -359,7 +343,6 @@ onMounted(loadInboundRoutes)
             :key="r.shortuid || r.id || (r.cluster || '') + '-' + (r.pkey || '')"
           >
             <td>{{ r.pkey }}</td>
-            <td class="cell-immutable" title="Immutable">{{ localUidDisplay(r) }}</td>
             <td>{{ tenantPkeyDisplay(r) }}</td>
             <ListActiveChip :active="r.active" />
             <td>{{ r.trunkname ?? '—' }}</td>
@@ -513,10 +496,6 @@ onMounted(loadInboundRoutes)
 .table th {
   font-weight: 600;
   color: #475569;
-  background: #f8fafc;
-}
-.cell-immutable {
-  color: #64748b;
   background: #f8fafc;
 }
 .th-sortable {
