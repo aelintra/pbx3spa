@@ -86,3 +86,19 @@
 **Files:** `src/views/ExtensionDetailView.vue`
 
 **Verified:** Code change only (await browser check).
+
+---
+
+### Network → Timezone picker
+
+**Requested / agreed:** Native dropdown of 400+ IANA ids is unusable (operators look for EST / US states). Use a searchable control with friendly labels; still save IANA ids.
+
+**Done:**
+- `FormTimezoneSelect` combobox (type to filter; common US zones first).
+- Labels like `Eastern Time (US) — America/New_York`.
+- Section heading **Timezone** (was NTP).
+- Hint explains IANA / DST behaviour.
+
+**Files:** `src/components/forms/FormTimezoneSelect.vue`, `src/utils/timezoneLabels.js`, `src/utils/timezoneLabels.test.js`, `src/views/NetworkView.vue`
+
+**Verified:** Unit tests for label/filter helpers.

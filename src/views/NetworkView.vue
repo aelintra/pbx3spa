@@ -6,9 +6,10 @@ import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
-import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
+import FormTimezoneSelect from '@/components/forms/FormTimezoneSelect.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { buildTimezoneOptions } from '@/utils/timezoneLabels'
 
 const YESNO_OPTIONS = ['YES', 'NO']
 const ICMP_OPTIONS = ['YES', 'NO'] // YES = allow ping
@@ -80,11 +81,9 @@ async function fetchData(options = {}) {
     const currentTz = notesRes?.timezone ?? ''
     editTimezone.value = currentTz
     const tzArray = Array.isArray(tzList) ? tzList : []
-    if (currentTz && !tzArray.includes(currentTz)) {
-      timezoneOptions.value = [currentTz, ...tzArray]
-    } else {
-      timezoneOptions.value = tzArray
-    }
+    const ids =
+      currentTz && !tzArray.includes(currentTz) ? [currentTz, ...tzArray] : tzArray
+    timezoneOptions.value = buildTimezoneOptions(ids)
     editIcmp.value = notesRes?.icmp === true ? 'YES' : 'NO'
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load network')
@@ -260,14 +259,14 @@ onMounted(fetchData)
         </div>
       </template>
 
-      <h2 class="detail-heading">NTP</h2>
+      <h2 class="detail-heading">Timezone</h2>
       <div class="form-fields">
-        <FormSelect
+        <FormTimezoneSelect
           id="ip-timezone"
           v-model="editTimezone"
           label="Timezone"
           :options="timezoneOptions"
-          empty-text="—"
+          hint="Type a city or region (e.g. New York, Chicago). Saves an IANA zone that handles daylight saving."
         />
       </div>
 
