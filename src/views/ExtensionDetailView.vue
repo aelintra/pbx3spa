@@ -54,12 +54,9 @@ const saving = ref(false)
 const deleteError = ref('')
 const deleting = ref(false)
 const confirmDeleteOpen = ref(false)
-const editingRuntime = ref(false)
 const editCfim = ref('')
 const editCfbs = ref('')
 const editRingdelay = ref('')
-const runtimeSaveError = ref('')
-const runtimeSaving = ref(false)
 const confirmRegenerateSipOpen = ref(false)
 const regeneratingSip = ref(false)
 const regenerateSipError = ref('')
@@ -300,8 +297,14 @@ async function saveEdit(e) {
         closed
       })
     }
+    await getApiClient().put(`extensions/${encodeURIComponent(shortuid.value)}/runtime`, {
+      cfim: editCfim.value.trim() || null,
+      cfbs: editCfbs.value.trim() || null,
+      ringdelay: editRingdelay.value === '' ? null : parseInt(editRingdelay.value, 10)
+    })
     await fetchExtension()
     if (cosLoaded.value) await fetchCos()
+    await fetchRuntime()
     toast.show(`Extension saved`)
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update extension')
@@ -363,39 +366,6 @@ async function confirmRegenerateSip() {
     regenerateSipError.value = firstErrorMessage(err, 'Failed to regenerate SIP password')
   } finally {
     regeneratingSip.value = false
-  }
-}
-
-function startEditRuntime() {
-  editCfim.value = runtime.value?.cfim ?? ''
-  editCfbs.value = runtime.value?.cfbs ?? ''
-  editRingdelay.value = runtime.value?.ringdelay != null ? String(runtime.value.ringdelay) : ''
-  runtimeSaveError.value = ''
-  editingRuntime.value = true
-}
-
-function cancelEditRuntime() {
-  editingRuntime.value = false
-  runtimeSaveError.value = ''
-}
-
-async function saveRuntime(e) {
-  e.preventDefault()
-  runtimeSaveError.value = ''
-  runtimeSaving.value = true
-  try {
-    await getApiClient().put(`extensions/${encodeURIComponent(shortuid.value)}/runtime`, {
-      cfim: editCfim.value.trim() || null,
-      cfbs: editCfbs.value.trim() || null,
-      ringdelay: editRingdelay.value === '' ? null : parseInt(editRingdelay.value, 10)
-    })
-    await fetchRuntime()
-    editingRuntime.value = false
-    toast.show('Runtime settings saved')
-  } catch (err) {
-    runtimeSaveError.value = firstErrorMessage(err, 'Failed to update runtime')
-  } finally {
-    runtimeSaving.value = false
   }
 }
 
@@ -626,6 +596,35 @@ const panelTitleTenantSuffix = computed(() => {
             />
           </div>
 
+          <h2 class="detail-heading">Behaviour</h2>
+          <p v-if="runtimeError" class="muted behaviour-hint">
+            Live Asterisk values unavailable ({{ runtimeError }}). You can still set CFIM / CFBS /
+            ring delay; Save writes them to the PBX.
+          </p>
+          <div class="form-fields">
+            <FormField
+              id="edit-cfim"
+              v-model="editCfim"
+              label="CFIM (call forward no answer)"
+              type="text"
+              placeholder="e.g. +1234567890"
+            />
+            <FormField
+              id="edit-cfbs"
+              v-model="editCfbs"
+              label="CFBS (call forward busy)"
+              type="text"
+              placeholder="e.g. +1234567890"
+            />
+            <FormField
+              id="edit-ringdelay"
+              v-model="editRingdelay"
+              label="Ring delay (seconds)"
+              type="number"
+              placeholder="0"
+            />
+          </div>
+
           <h2 class="detail-heading">Advanced</h2>
           <div class="form-fields">
             <FormSegmentedPill
@@ -762,63 +761,6 @@ const panelTitleTenantSuffix = computed(() => {
             </button>
           </div>
         </form>
-
-        <section class="detail-section">
-          <h2 class="detail-heading">Runtime</h2>
-          <p v-if="runtimeError" class="error">{{ runtimeError }}</p>
-          <p v-else-if="!runtime" class="muted">
-            Runtime params appear after Asterisk config is regenerated.
-          </p>
-          <template v-else-if="runtime">
-            <p v-if="!editingRuntime" class="toolbar">
-              <button type="button" class="edit-btn" @click="startEditRuntime">Edit runtime</button>
-            </p>
-            <form v-else class="edit-form runtime-form" @submit="saveRuntime">
-              <FormField
-                id="edit-cfim"
-                v-model="editCfim"
-                label="cfim (call forward no answer)"
-                type="text"
-                placeholder="e.g. +1234567890"
-              />
-              <FormField
-                id="edit-cfbs"
-                v-model="editCfbs"
-                label="cfbs (call forward busy)"
-                type="text"
-                placeholder="e.g. +1234567890"
-              />
-              <FormField
-                id="edit-ringdelay"
-                v-model="editRingdelay"
-                label="ringdelay (seconds)"
-                type="number"
-                placeholder="0"
-              />
-              <p v-if="runtimeSaveError" class="error">{{ runtimeSaveError }}</p>
-              <div class="edit-actions">
-                <button type="submit" :disabled="runtimeSaving">
-                  {{ runtimeSaving ? 'Saving…' : 'Save' }}
-                </button>
-                <button type="button" class="secondary" @click="cancelEditRuntime">Cancel</button>
-              </div>
-            </form>
-            <dl v-if="!editingRuntime" class="detail-list">
-              <template v-if="runtime.ip != null || runtime.latency != null">
-                <dt>IP (from Asterisk)</dt>
-                <dd>{{ runtime.ip ?? 'Unknown' }}</dd>
-                <dt>Status (RTT)</dt>
-                <dd>{{ runtime.latency ?? 'Unknown' }}</dd>
-              </template>
-              <dt>cfim</dt>
-              <dd>{{ runtime.cfim ?? '—' }}</dd>
-              <dt>cfbs</dt>
-              <dd>{{ runtime.cfbs ?? '—' }}</dd>
-              <dt>ringdelay</dt>
-              <dd>{{ runtime.ringdelay != null ? runtime.ringdelay : '—' }}</dd>
-            </dl>
-          </template>
-        </section>
       </div>
     </template>
 
@@ -974,40 +916,9 @@ const panelTitleTenantSuffix = computed(() => {
   gap: 0.75rem;
   max-width: 52rem;
 }
-.edit-form.runtime-form {
-  margin-top: 0.5rem;
-}
-.detail-list {
-  margin-top: 0.5rem;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.25rem 2rem;
-  font-size: 0.9375rem;
-}
-.detail-list dt {
-  font-weight: 500;
-  color: #475569;
-}
-.detail-list dd {
-  margin: 0;
-}
-.detail-section {
-  margin-top: 1.5rem;
-}
-.toolbar {
-  margin: 0 0 0.75rem 0;
-}
-.edit-btn {
-  padding: 0.375rem 0.75rem;
+.behaviour-hint {
+  margin: 0 0 0.75rem;
   font-size: 0.875rem;
-  color: #2563eb;
-  background: transparent;
-  border: 1px solid #93c5fd;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-.edit-btn:hover {
-  background: #eff6ff;
 }
 .edit-actions {
   display: flex;

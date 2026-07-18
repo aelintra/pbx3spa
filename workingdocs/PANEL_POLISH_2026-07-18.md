@@ -70,3 +70,19 @@
 **Files:** `src/utils/liveLatencyChip.js`, `src/utils/liveLatencyChip.test.js`, `src/assets/main.css`, `workingdocs/EXTENSIONS_LIVE_DATA.md`
 
 **Verified:** Unit tests for thresholds.
+
+---
+
+### Extensions → Edit — Behaviour (was Runtime)
+
+**Requested:** CFIM / CFBS / ring delay no longer need a separate Runtime edit mode (AMI is fast enough). Put the three fields inline in a **Behaviour** section after Transport and before Advanced.
+
+**Done:**
+- Added **Behaviour** section with always-editable CFIM, CFBS, Ring delay.
+- Saved with the main **Save** (PUT `…/runtime` after extension + CoS).
+- Removed bottom **Runtime** section and **Edit runtime** / Cancel sub-form.
+- Dropped IP / Status (RTT) from edit (still on Extensions list).
+
+**Files:** `src/views/ExtensionDetailView.vue`
+
+**Verified:** Code change only (await browser check).
