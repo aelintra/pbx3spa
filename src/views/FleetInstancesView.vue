@@ -18,13 +18,17 @@ import {
   canFleet,
   FLEET_ABILITY
 } from '@/config/fleetGatekeeper'
+import { instanceHealthBadge, probeRttLabel } from '@/utils/fleetInstanceHealth'
 
 const instances = ref([])
 const dispatcherSets = ref([])
 const loading = ref(true)
+const refreshing = ref(false)
 const error = ref('')
 const actionError = ref('')
 const busyId = ref('')
+const copiedId = ref('')
+let copiedTimer = 0
 const canManage = computed(() => canFleet(FLEET_ABILITY.INSTANCES))
 const canEdge = computed(() => canFleet(FLEET_ABILITY.EDGE))
 
@@ -53,15 +57,20 @@ const provisioningRow = computed(() =>
   instances.value.find((i) => i.id === provisioningId.value) || null
 )
 
-async function load() {
+async function load({ soft = false } = {}) {
   if (!hasFleetGatekeeperToken()) {
     loading.value = false
+    refreshing.value = false
     error.value = ''
     instances.value = []
     dispatcherSets.value = []
     return
   }
-  loading.value = true
+  if (soft) {
+    refreshing.value = true
+  } else {
+    loading.value = true
+  }
   error.value = ''
   actionError.value = ''
   try {
@@ -78,7 +87,12 @@ async function load() {
     error.value = e?.message || 'Failed to load fleet instances'
   } finally {
     loading.value = false
+    refreshing.value = false
   }
+}
+
+function refresh() {
+  return load({ soft: true })
 }
 
 function startEdit(row) {
@@ -291,6 +305,37 @@ function statusClass(status) {
   return 'badge'
 }
 
+function healthClass(kind) {
+  if (kind === 'healthy') return 'badge badge--ok'
+  if (kind === 'warning') return 'badge badge--warn'
+  if (kind === 'degraded') return 'badge badge--degraded'
+  if (kind === 'down') return 'badge badge--down'
+  if (kind === 'paused') return 'badge badge--muted'
+  return 'badge badge--muted'
+}
+
+/** @returns {{ health: ReturnType<typeof instanceHealthBadge>, rtt: string|null }} */
+function statusBits(row) {
+  return {
+    health: instanceHealthBadge(row),
+    rtt: probeRttLabel(row)
+  }
+}
+
+async function copyId(id) {
+  actionError.value = ''
+  try {
+    await navigator.clipboard.writeText(id)
+    copiedId.value = id
+    window.clearTimeout(copiedTimer)
+    copiedTimer = window.setTimeout(() => {
+      if (copiedId.value === id) copiedId.value = ''
+    }, 1500)
+  } catch {
+    actionError.value = 'Could not copy instance id'
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -303,12 +348,21 @@ onMounted(load)
       <strong>Provision edge</strong> creates a dispatcher set + Asterisk Peer on the SBC and writes
       catalog setid (Rule 13). Applying catalog setid onto tenant domains is
       <RouterLink to="/fleet/reconcile">Reconcile → Apply catalog → SBC</RouterLink>.
+      Health badges use Gatekeeper probe state (manual refresh).
     </p>
 
     <p v-if="actionError" class="error">{{ actionError }}</p>
 
-    <div v-if="canManage && hasFleetGatekeeperToken()" class="toolbar">
-      <button type="button" class="primary" @click="showRegister = !showRegister">
+    <div v-if="hasFleetGatekeeperToken()" class="toolbar">
+      <button type="button" class="secondary" :disabled="loading || refreshing" @click="refresh">
+        {{ refreshing ? 'Refreshing…' : 'Refresh' }}
+      </button>
+      <button
+        v-if="canManage"
+        type="button"
+        class="primary"
+        @click="showRegister = !showRegister"
+      >
         {{ showRegister ? 'Cancel register' : 'Register instance' }}
       </button>
     </div>
@@ -456,7 +510,17 @@ onMounted(load)
             </template>
             <template v-else>
               <div class="inst-label">{{ i.label || i.fqdn || i.id }}</div>
-              <code class="inst-id" :title="i.id">{{ i.id }}</code>
+              <div class="inst-id-row">
+                <code class="inst-id">{{ i.id }}</code>
+                <button
+                  type="button"
+                  class="copy-id"
+                  :title="copiedId === i.id ? 'Copied' : 'Copy instance id'"
+                  @click="copyId(i.id)"
+                >
+                  {{ copiedId === i.id ? 'Copied' : 'Copy' }}
+                </button>
+              </div>
             </template>
           </td>
           <td class="cell-fqdn">
@@ -505,7 +569,11 @@ onMounted(load)
             </template>
           </td>
           <td>
-            <span :class="statusClass(i.status)">{{ i.status || 'active' }}</span>
+            <div v-for="bits in [statusBits(i)]" :key="i.id + '-status'" class="status-stack">
+              <span :class="statusClass(i.status)">{{ i.status || 'active' }}</span>
+              <span :class="healthClass(bits.health.kind)">{{ bits.health.label }}</span>
+              <span v-if="bits.rtt" class="rtt" title="Last /up probe round-trip">{{ bits.rtt }}</span>
+            </div>
           </td>
           <td v-if="canManage || canEdge" class="actions">
             <template v-if="editingId !== i.id && linkingId !== i.id">
@@ -581,7 +649,7 @@ onMounted(load)
 
 <style scoped>
 .fleet-instances-view {
-  max-width: 56rem;
+  max-width: 64rem;
 }
 .hint {
   color: var(--pbx-text-muted);
@@ -591,6 +659,9 @@ onMounted(load)
   color: var(--pbx-danger, #b91c1c);
 }
 .toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
   margin: 0.75rem 0;
 }
 .register-box {
@@ -681,15 +752,39 @@ onMounted(load)
 .inst-label {
   font-weight: 500;
 }
-.inst-id {
-  display: block;
+.inst-id-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem;
   margin-top: 0.15rem;
+}
+.inst-id {
   font-size: 0.7rem;
   color: var(--pbx-text-muted);
-  max-width: 11rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-all;
+  white-space: normal;
+}
+.copy-id {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--pbx-accent, #1d4ed8);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  text-decoration: underline;
+}
+.status-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+.rtt {
+  font-size: 0.75rem;
+  color: var(--pbx-text-muted);
+  font-variant-numeric: tabular-nums;
 }
 .cell-fqdn {
   max-width: 12rem;
@@ -770,9 +865,21 @@ onMounted(load)
   background: #e0f2fe;
   color: #075985;
 }
+.badge--ok {
+  background: #dcfce7;
+  color: #166534;
+}
 .badge--warn {
   background: #fef3c7;
   color: #92400e;
+}
+.badge--degraded {
+  background: #ffedd5;
+  color: #9a3412;
+}
+.badge--down {
+  background: #fee2e2;
+  color: #991b1b;
 }
 .badge--muted {
   background: #f1f5f9;
@@ -806,5 +913,19 @@ button.primary {
 }
 button.primary:disabled {
   opacity: 0.6;
+}
+button.secondary {
+  align-self: flex-start;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--pbx-border, #cbd5e1);
+  border-radius: 0.35rem;
+  background: var(--pbx-surface, #fff);
+  color: var(--pbx-text, inherit);
+  font: inherit;
+  cursor: pointer;
+}
+button.secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 </style>
