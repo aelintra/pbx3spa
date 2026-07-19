@@ -6,18 +6,27 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-18 — SBC admin SPA kinship polish
+## Session end 2026-07-19 — auto-logout (SPA + SBC) + downstream peer REGISTER reqs
 
-**On `main` (pbx3sbc-admin):** SPA kinship polish tip **`463431b`** — topbar/Instance chip/Logout, Lucide nav, pill badges, icon-only row actions, Home — FQDN, ← list back links, © Aelintra sidebar. Live on **`https://sbc.pbx3.com/admin`**.  
-**On `main` (pbx3spa):** Handoff tip **`0f9fd65`** (panel polish merge was **`7dda918`** earlier same day).
+**On `main` (pbx3spa):** Auto-logout tip **`5c36ce2`** — instance + Fleet shells; default 10 min; `VITE_AUTO_LOGOUT_MINUTES` build-time (unset → hardcoded 10). See **`DEV_ENVIRONMENT.md`** §7b.  
+**On `main` (pbx3sbc-admin):** Auto-logout tip **`2e56ae3`** — live on **`https://sbc.pbx3.com/admin`** (surgical deploy; live git still dirty / HEAD **`2df6a60`**). SSH key **`opensips.pem`**.  
+**On `main` (pbx3):** Downstream peer registration requirements **`5fc8540`** — **`DOWNSTREAM_PEER_REGISTRATION_REQUIREMENTS.md`**.
 
-**Operator:** Side-by-side SPA + SBC should feel same product family. Hard-refresh SBC for theme `?v=`.
+**Operator:** Hard-refresh SBC after login to pick up idle timer. SPA Pages gets auto-logout on next production build.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
 **Docs / TODO:** **`pbx3/workingdocs/TODO.md`**.
 
-**Resume:** Egress availability / ops-notify follow-ons; else pbx3-docs / parked S10.7.
+**Resume:** Egress availability / ops-notify follow-ons; else pbx3-docs / parked S10.7. Do not start registration-edge without ask.
+
+---
+
+## Session end 2026-07-18 — SBC admin SPA kinship polish — historical
+
+**On `main`:** superseded — see block above. Tips were **pbx3sbc-admin** **`463431b`**, **pbx3spa** **`0f9fd65`**.
+
+**Resume:** see block above.
 
 ---
 
