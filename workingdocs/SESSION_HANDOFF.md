@@ -6,18 +6,26 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-18 — Instances polish + SPA panel polish
+## Session end 2026-07-18 — SBC admin SPA kinship polish
 
-**On `main` (pbx3):** Gatekeeper health overlay + RTT — tip **`b5fee3e`**; live on control.  
-**On `changes` (pbx3spa):** Panel polish tip **`6b15302`** — DID UID off; extension SIP Registrar / Behaviour / no Common name; latency colors; searchable Network timezone. **Not merged to `main`.** Log: **`workingdocs/PANEL_POLISH_2026-07-18.md`**.
+**On `main` (pbx3sbc-admin):** SPA kinship polish tip **`463431b`** — topbar/Instance chip/Logout, Lucide nav, pill badges, icon-only row actions, Home — FQDN, ← list back links, © Aelintra sidebar. Live on **`https://sbc.pbx3.com/admin`**.  
+**On `main` (pbx3spa):** Panel polish already merged tip **`7dda918`** (earlier same day).
 
-**Operator:** Fleet → Instances (KSUID copy, health, RTT, Refresh). Instance panels: run spa on **`changes`**.
+**Operator:** Side-by-side SPA + SBC should feel same product family. Hard-refresh SBC for theme `?v=`.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · spa `npm run dev` on **`changes`**.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
 **Docs / TODO:** **`pbx3/workingdocs/TODO.md`**.
 
-**Resume:** More panel polish on **`changes`** **or** merge **`changes`→`main`**; else egress / ops-notify follow-ons.
+**Resume:** Egress availability / ops-notify follow-ons; else pbx3-docs / parked S10.7.
+
+---
+
+## Session end 2026-07-18 — Instances polish + SPA panel polish — historical
+
+**On `main` / `changes`:** superseded — SPA **`changes`** later merged to **`7dda918`**; see block above.
+
+**Resume:** see block above.
 
 ---
 
