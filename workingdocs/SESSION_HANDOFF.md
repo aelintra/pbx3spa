@@ -8,9 +8,9 @@
 
 ## Session end 2026-07-19 — auto-logout (SPA + SBC) + downstream peer REGISTER reqs
 
-**On `main` (pbx3spa):** Handoff tip **`b6f5deb`** (auto-logout feature **`5c36ce2`**) — instance + Fleet shells; default 10 min; `VITE_AUTO_LOGOUT_MINUTES` build-time (unset → hardcoded 10). See **`DEV_ENVIRONMENT.md`** §7b.  
+**On `main` (pbx3spa):** Handoff tip **`1868242`** (auto-logout feature **`5c36ce2`**) — instance + Fleet shells; default 10 min; `VITE_AUTO_LOGOUT_MINUTES` build-time (unset → hardcoded 10). See **`DEV_ENVIRONMENT.md`** §7b.  
 **On `main` (pbx3sbc-admin):** Auto-logout tip **`2e56ae3`** — live on **`https://sbc.pbx3.com/admin`** (surgical deploy; live git still dirty / HEAD **`2df6a60`**). SSH key **`opensips.pem`**.  
-**On `main` (pbx3):** Handoff tip **`de659a1`** (downstream peer registration requirements **`5fc8540`** — **`DOWNSTREAM_PEER_REGISTRATION_REQUIREMENTS.md`**).
+**On `main` (pbx3):** Handoff tip **`af70342`** (downstream peer registration requirements **`5fc8540`** — **`DOWNSTREAM_PEER_REGISTRATION_REQUIREMENTS.md`**).
 
 **Operator:** Hard-refresh SBC after login to pick up idle timer. SPA Pages gets auto-logout on next production build.
 
