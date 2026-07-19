@@ -17,6 +17,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useFleetModeStore } from '@/stores/fleetMode'
 import NavIcon from '@/components/NavIcon.vue'
 import FleetTokenGate from '@/components/FleetTokenGate.vue'
+import { useInactivityLogout } from '@/composables/useInactivityLogout'
 import { getApiClient } from '@/api/client'
 import { hasFleetGatekeeperToken } from '@/config/fleetGatekeeper'
 
@@ -76,18 +77,21 @@ async function exitFleet() {
 }
 
 async function logout() {
-  await fleetMode.reset()
+  const revokeFleet = fleetMode.reset()
+  const revokeInstance = auth.isLoggedIn
+    ? getApiClient()
+        .get('auth/logout')
+        .catch(() => undefined)
+    : Promise.resolve()
   fleetSignedIn.value = false
   if (auth.isLoggedIn) {
-    try {
-      await getApiClient().get('auth/logout')
-    } catch {
-      // still clear and redirect
-    }
     auth.clearCredentials()
   }
-  router.push('/login')
+  void router.push('/login')
+  await Promise.allSettled([revokeFleet, revokeInstance])
 }
+
+useInactivityLogout(logout, computed(() => fleetSignedIn.value || auth.isLoggedIn))
 </script>
 
 <template>

@@ -3,6 +3,7 @@ import { ref, onMounted, onBeforeUnmount, watch, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useHelp } from '@/composables/useHelp'
+import { useInactivityLogout } from '@/composables/useInactivityLogout'
 import { getApiClient } from '@/api/client'
 import CommitButton from '@/components/CommitButton.vue'
 import NavIcon from '@/components/NavIcon.vue'
@@ -255,15 +256,16 @@ function enterFleet() {
 }
 
 async function logout() {
-  await fleetMode.reset()
-  try {
-    await getApiClient().get('auth/logout')
-  } catch {
-    // still clear and redirect
-  }
+  const revokeFleet = fleetMode.reset()
+  const revokeInstance = getApiClient()
+    .get('auth/logout')
+    .catch(() => undefined)
   auth.clearCredentials()
-  router.push('/login')
+  void router.push('/login')
+  await Promise.allSettled([revokeFleet, revokeInstance])
 }
+
+useInactivityLogout(logout, computed(() => auth.isLoggedIn))
 </script>
 
 <template>
