@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useHelp } from '@/composables/useHelp'
 import { useInactivityLogout } from '@/composables/useInactivityLogout'
 import { getApiClient } from '@/api/client'
+import BrandMark from '@/components/BrandMark.vue'
 import CommitButton from '@/components/CommitButton.vue'
 import NavIcon from '@/components/NavIcon.vue'
 import SessionContextChips from '@/components/SessionContextChips.vue'
@@ -271,7 +272,7 @@ useInactivityLogout(logout, computed(() => auth.isLoggedIn))
 <template>
   <div class="app-layout">
     <aside class="sidebar">
-      <div class="sidebar-top-spacer" aria-hidden="true" />
+      <BrandMark to="/" />
       <nav ref="sidebarRef" class="nav" @scroll.passive="onSidebarScroll">
         <template v-if="auth.can('admin')">
           <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">
@@ -331,7 +332,7 @@ useInactivityLogout(logout, computed(() => auth.isLoggedIn))
     <div class="main">
       <header class="topbar">
         <div class="topbar-left">
-          <h1 class="logo">PBX3 Admin</h1>
+          <h1 class="logo">Admin</h1>
         </div>
         <div class="topbar-center">
           <SessionContextChips />
@@ -378,12 +379,6 @@ useInactivityLogout(logout, computed(() => auth.isLoggedIn))
   background: var(--pbx-sidebar-bg);
   color: var(--pbx-sidebar-fg);
   border-right: 1px solid var(--pbx-border);
-}
-/* Same vertical offset as former sidebar PBX³ block: pad + 2rem × 1.25 line */
-.sidebar-top-spacer {
-  flex: 0 0 auto;
-  box-sizing: border-box;
-  min-height: calc(0.75rem * 2 + 2rem * 1.25);
 }
 .nav {
   flex: 1 1 auto;

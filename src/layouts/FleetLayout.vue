@@ -15,6 +15,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useFleetModeStore } from '@/stores/fleetMode'
+import BrandMark from '@/components/BrandMark.vue'
 import NavIcon from '@/components/NavIcon.vue'
 import FleetTokenGate from '@/components/FleetTokenGate.vue'
 import { useInactivityLogout } from '@/composables/useInactivityLogout'
@@ -97,7 +98,7 @@ useInactivityLogout(logout, computed(() => fleetSignedIn.value || auth.isLoggedI
 <template>
   <div class="fleet-layout">
     <aside class="sidebar">
-      <div class="sidebar-top-spacer" aria-hidden="true" />
+      <BrandMark to="/fleet" />
       <nav class="nav" :class="{ 'nav--locked': !fleetSignedIn }" aria-label="Fleet">
         <p class="nav-mode-label">Fleet console</p>
         <p v-if="!fleetSignedIn" class="nav-lock-hint">Sign in to open panels</p>
@@ -132,7 +133,7 @@ useInactivityLogout(logout, computed(() => fleetSignedIn.value || auth.isLoggedI
     <div class="main">
       <header class="topbar">
         <div class="topbar-left">
-          <h1 class="logo">PBX3 Fleet</h1>
+          <h1 class="logo">Fleet</h1>
         </div>
         <div class="topbar-center">
           <span class="fleet-chip">Fleet mode</span>
@@ -179,11 +180,6 @@ useInactivityLogout(logout, computed(() => fleetSignedIn.value || auth.isLoggedI
   background: var(--pbx-sidebar-bg);
   color: var(--pbx-sidebar-fg);
   border-right: 1px solid var(--pbx-border);
-}
-.sidebar-top-spacer {
-  flex: 0 0 auto;
-  box-sizing: border-box;
-  min-height: calc(0.75rem * 2 + 2rem * 1.25);
 }
 .nav {
   flex: 1 1 auto;
