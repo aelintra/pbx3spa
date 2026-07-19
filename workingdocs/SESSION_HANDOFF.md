@@ -9,7 +9,7 @@
 ## Session end 2026-07-18 — SBC admin SPA kinship polish
 
 **On `main` (pbx3sbc-admin):** SPA kinship polish tip **`463431b`** — topbar/Instance chip/Logout, Lucide nav, pill badges, icon-only row actions, Home — FQDN, ← list back links, © Aelintra sidebar. Live on **`https://sbc.pbx3.com/admin`**.  
-**On `main` (pbx3spa):** Panel polish already merged tip **`7dda918`** (earlier same day).
+**On `main` (pbx3spa):** Panel polish already merged tip **`1e024ed`** (handoff; panel polish was ).
 
 **Operator:** Side-by-side SPA + SBC should feel same product family. Hard-refresh SBC for theme `?v=`.
 
