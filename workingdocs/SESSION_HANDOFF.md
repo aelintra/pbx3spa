@@ -6,20 +6,28 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-20 — SPA/SBC brand mark + Fail2ban log + SBC aging review
+## Session end 2026-07-20 — SBC data aging complete (WS0–WS4)
 
-**On `main` (pbx3spa):** tip **`858c084`** (handoff; BrandMark **`847ddb8`**) — sidebar **PBX³**; topbar **Admin** / **Fleet**.  
-**On `main` (pbx3sbc-admin):** tip **`0210d10`** — matching sidebar mark; light-only; Call Route view fixed; **Logs → Fail2ban log** (live surgical deploy).  
-**On `main` (pbx3sbc):** tip **`7311b2e`** (docs stub; tail helper **`2989166`**).  
-**On `main` (pbx3):** tip **`b511d59`** — **`SBC_DATA_RETENTION_REQUIREMENTS.md`** + handoff/TODO.
+**On `main` (pbx3sbc-admin):** tip **`82641ad`** — purge artisan + cron example; **Logs → Data retention** knobs/status.  
+**On `main` (pbx3):** tip **`9be6599`** (+ handoff commit) — aging requirements done; **`SBC_BACKUP_RESTORE_REQUIREMENTS.md`** stub; Litestream parked.  
+**On `main` (pbx3sbc):** tip **`a5d62c4`**. **pbx3-docs:** tip **`553c8e7`** — `fleet/sbc-data-retention.md`.  
+**SPA / pbx3api:** unchanged this session.
 
-**Operator:** Hard-refresh SBC admin for brand / Fail2ban log. SPA `npm run dev` shows BrandMark immediately; Pages needs next production build for brand.
+**Operator:** Hard-refresh SBC admin for Data retention. Lab cron `/etc/cron.d/pbx3sbc-retention` live. Surgical overlay on dirty SBC tree.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — tip **SBC data aging review**.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — tip **SBC backup & restore**.
 
-**Resume:** Lab-measure SBC MySQL growth → fill **`SBC_DATA_RETENTION_REQUIREMENTS.md`** decisions; else egress / ops-notify. No destructive purge without ask.
+**Resume:** Open **`SBC_BACKUP_RESTORE_REQUIREMENTS.md`** (production gate); else egress / ops-notify.
+
+---
+
+## Session end 2026-07-20 — SPA/SBC brand mark + Fail2ban log + SBC aging review — historical
+
+**On `main`:** superseded — see block above. Tips were spa **`858c084`**, sbc-admin **`0210d10`**, pbx3 **`b511d59`**.
+
+**Resume:** see block above.
 
 ---
 
