@@ -46,7 +46,10 @@ defineProps({
   font-size: 0.72em;
   font-weight: 800;
   line-height: 1;
-  vertical-align: super;
+  /* Explicit offset so SPA matches SBC (browser <sup> / font metrics differ) */
+  vertical-align: baseline;
+  position: relative;
+  top: -0.52em;
   color: var(--pbx-accent-bright);
 }
 </style>
