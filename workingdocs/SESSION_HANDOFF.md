@@ -8,10 +8,10 @@
 
 ## Session end 2026-07-20 — SPA/SBC brand mark + Fail2ban log + SBC aging review
 
-**On `main` (pbx3spa):** tip **`847ddb8`** — sidebar **PBX³** BrandMark (Admin + Fleet); topbar **Admin** / **Fleet**.  
+**On `main` (pbx3spa):** tip **`f231a51`** (handoff; BrandMark **`847ddb8`**) — sidebar **PBX³**; topbar **Admin** / **Fleet**.  
 **On `main` (pbx3sbc-admin):** tip **`0210d10`** — matching sidebar mark; light-only; Call Route view fixed; **Logs → Fail2ban log** (live surgical deploy).  
-**On `main` (pbx3sbc):** tip **`2989166`** — `tail-fail2ban-log.sh` + sudoers (+ docs stub if pushed).  
-**On `main` (pbx3):** SBC aging reqs **`SBC_DATA_RETENTION_REQUIREMENTS.md`** + handoff/TODO (tip after handoff commit).
+**On `main` (pbx3sbc):** tip **`7311b2e`** (docs stub; tail helper **`2989166`**).  
+**On `main` (pbx3):** tip **`336789a`** — **`SBC_DATA_RETENTION_REQUIREMENTS.md`** + handoff/TODO.
 
 **Operator:** Hard-refresh SBC admin for brand / Fail2ban log. SPA `npm run dev` shows BrandMark immediately; Pages needs next production build for brand.
 
