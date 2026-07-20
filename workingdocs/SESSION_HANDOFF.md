@@ -6,19 +6,28 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-19 — auto-logout (SPA + SBC) + downstream peer REGISTER reqs
+## Session end 2026-07-20 — SPA/SBC brand mark + Fail2ban log + SBC aging review
 
-**On `main` (pbx3spa):** Handoff tip **`1868242`** (auto-logout feature **`5c36ce2`**) — instance + Fleet shells; default 10 min; `VITE_AUTO_LOGOUT_MINUTES` build-time (unset → hardcoded 10). See **`DEV_ENVIRONMENT.md`** §7b.  
-**On `main` (pbx3sbc-admin):** Auto-logout tip **`2e56ae3`** — live on **`https://sbc.pbx3.com/admin`** (surgical deploy; live git still dirty / HEAD **`2df6a60`**). SSH key **`opensips.pem`**.  
-**On `main` (pbx3):** Handoff tip **`af70342`** (downstream peer registration requirements **`5fc8540`** — **`DOWNSTREAM_PEER_REGISTRATION_REQUIREMENTS.md`**).
+**On `main` (pbx3spa):** tip **`847ddb8`** — sidebar **PBX³** BrandMark (Admin + Fleet); topbar **Admin** / **Fleet**.  
+**On `main` (pbx3sbc-admin):** tip **`0210d10`** — matching sidebar mark; light-only; Call Route view fixed; **Logs → Fail2ban log** (live surgical deploy).  
+**On `main` (pbx3sbc):** tip **`2989166`** — `tail-fail2ban-log.sh` + sudoers (+ docs stub if pushed).  
+**On `main` (pbx3):** SBC aging reqs **`SBC_DATA_RETENTION_REQUIREMENTS.md`** + handoff/TODO (tip after handoff commit).
 
-**Operator:** Hard-refresh SBC after login to pick up idle timer. SPA Pages gets auto-logout on next production build.
+**Operator:** Hard-refresh SBC admin for brand / Fail2ban log. SPA `npm run dev` shows BrandMark immediately; Pages needs next production build for brand.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`**.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — tip **SBC data aging review**.
 
-**Resume:** Egress availability / ops-notify follow-ons; else pbx3-docs / parked S10.7. Do not start registration-edge without ask.
+**Resume:** Lab-measure SBC MySQL growth → fill **`SBC_DATA_RETENTION_REQUIREMENTS.md`** decisions; else egress / ops-notify. No destructive purge without ask.
+
+---
+
+## Session end 2026-07-19 — auto-logout (SPA + SBC) + downstream peer REGISTER reqs — historical
+
+**On `main`:** superseded — see block above. Tips were SPA **`1868242`**, SBC admin **`2e56ae3`**, pbx3 **`af70342`**.
+
+**Resume:** see block above.
 
 ---
 
