@@ -9,9 +9,9 @@
 ## Session end 2026-07-20 — SBC data aging complete (WS0–WS4)
 
 **On `main` (pbx3sbc-admin):** tip **`82641ad`** — purge artisan + cron example; **Logs → Data retention** knobs/status.  
-**On `main` (pbx3):** tip **`9be6599`** (+ handoff commit) — aging requirements done; **`SBC_BACKUP_RESTORE_REQUIREMENTS.md`** stub; Litestream parked.  
+**On `main` (pbx3):** tip **`5471d9c`** — aging requirements done; **`SBC_BACKUP_RESTORE_REQUIREMENTS.md`** stub; Litestream parked.  
 **On `main` (pbx3sbc):** tip **`a5d62c4`**. **pbx3-docs:** tip **`553c8e7`** — `fleet/sbc-data-retention.md`.  
-**SPA / pbx3api:** unchanged this session.
+**On `main` (pbx3spa):** tip **`f97d8af`** (handoff only). **pbx3api:** unchanged.
 
 **Operator:** Hard-refresh SBC admin for Data retention. Lab cron `/etc/cron.d/pbx3sbc-retention` live. Surgical overlay on dirty SBC tree.
 
