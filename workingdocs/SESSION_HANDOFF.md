@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-20 — SBC backup/restore v1 + scratch drill
 
-**On `main`:** **pbx3** / **pbx3sbc** / **pbx3sbc-admin** / **pbx3-docs** — SBC DR scripts + requirements + MkDocs scratch runbook (`fleet/sbc-backup-restore.md`). **pbx3spa** handoff only (tip **`37f554c`**). **pbx3api** unchanged (**`6c28486`**).
+**On `main`:** **pbx3** **`3c1b26f`** · **pbx3sbc** **`0a326d0`** · **pbx3sbc-admin** **`70071db`** · **pbx3-docs** **`7873efe`** — SBC DR scripts + requirements + MkDocs scratch runbook (`fleet/sbc-backup-restore.md`). **pbx3spa** **`9a6e5c4`** (handoff). **pbx3api** unchanged (**`6c28486`**).
 
 **Operator:** Lab backup in S3 `sbc/sbc/backups/`; scratch restore validated on amd64 LAN host. Post-restore needs password/`advertised_address`/sudoers (see MkDocs). Live SBC still surgical overlay — no wholesale pull.
 
