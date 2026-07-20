@@ -6,26 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-20 — SBC data aging complete (WS0–WS4)
+## Session end 2026-07-20 — SBC backup/restore v1 + scratch drill
 
-**On `main` (pbx3sbc-admin):** tip **`82641ad`** — purge artisan + cron example; **Logs → Data retention** knobs/status.  
-**On `main` (pbx3):** tip **`5471d9c`** — aging requirements done; **`SBC_BACKUP_RESTORE_REQUIREMENTS.md`** stub; Litestream parked.  
-**On `main` (pbx3sbc):** tip **`a5d62c4`**. **pbx3-docs:** tip **`553c8e7`** — `fleet/sbc-data-retention.md`.  
-**On `main` (pbx3spa):** tip **`f97d8af`** (handoff only). **pbx3api:** unchanged.
+**On `main`:** **pbx3** / **pbx3sbc** / **pbx3sbc-admin** / **pbx3-docs** — SBC DR scripts + requirements + MkDocs scratch runbook (`fleet/sbc-backup-restore.md`). **pbx3spa** handoff only (tip **`37f554c`**). **pbx3api** unchanged (**`6c28486`**).
 
-**Operator:** Hard-refresh SBC admin for Data retention. Lab cron `/etc/cron.d/pbx3sbc-retention` live. Surgical overlay on dirty SBC tree.
+**Operator:** Lab backup in S3 `sbc/sbc/backups/`; scratch restore validated on amd64 LAN host. Post-restore needs password/`advertised_address`/sudoers (see MkDocs). Live SBC still surgical overlay — no wholesale pull.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — tip **SBC backup & restore**.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — backup/restore [x]; tip egress / ops-notify / Pages publish.
 
-**Resume:** Open **`SBC_BACKUP_RESTORE_REQUIREMENTS.md`** (production gate); else egress / ops-notify.
+**Resume:** Egress availability or ops-notify follow-ons; publish pbx3-docs Pages. No Litestream / Filament backup UI unless asked.
+
+---
+
+## Session end 2026-07-20 — SBC data aging complete (WS0–WS4) — historical
+
+**On `main`:** superseded — see block above. Tips were sbc-admin **`82641ad`**, pbx3 **`5471d9c`**, docs **`553c8e7`**.
+
+**Resume:** see block above.
 
 ---
 
 ## Session end 2026-07-20 — SPA/SBC brand mark + Fail2ban log + SBC aging review — historical
 
-**On `main`:** superseded — see block above. Tips were spa **`858c084`**, sbc-admin **`0210d10`**, pbx3 **`b511d59`**.
+**On `main`:** superseded — see blocks above. Tips were spa **`858c084`**, sbc-admin **`0210d10`**, pbx3 **`b511d59`**.
 
 **Resume:** see block above.
 
