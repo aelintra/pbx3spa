@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-20 — SBC HA requirements + portability
+## Session end 2026-07-21 — HA FO greenfield + SBC Certificates/LE
 
-**On `main`:** **pbx3** **`a5e19d4`** — HA reqs + schematic + edge portability scorecard (peer-first). **pbx3sbc** **`994eb68`** — PEERING-PLAN HA line. **pbx3spa** **`a3dc665`** (handoff). **pbx3-docs** Pages live (**`7873efe`**).
+**On `main`:** **pbx3sbc-admin** **`a0ded23`** — FQDN install, Certificates panel (SPA kinship), LE helper + spinner. **pbx3sbc** **`c085b50`** — LE sudoers args. **pbx3-docs** **`25b3917`** — `fleet/install-sbc.md`. **pbx3** handoff **`1630137`**.
 
-**Operator:** HA not implemented — decide tomorrow **minimal EC2 pair** (lean) vs LAN for promote lab. Do not touch live Magrathea VIP until throwaway drill. Live SBC surgical overlay only.
+**Operator HA lab:** **FO1** `https://sbcfo.pbx3.com/admin` (EIP `98.82.58.59`, LE live). **FO2** `35.175.113.204` (HTTP; advertised EIP). SSH `opensips.pem`. Do not Magrathea-promote onto FO EIP yet. Live **`sbc.pbx3.com`** unchanged (surgical).
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · lab SBC **`https://sbc.pbx3.com/admin`** · FO **`https://sbcfo.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
-**Docs / TODO:** **`SBC_HA_FAILOVER_REQUIREMENTS.md`**, **`EDGE_PORTABILITY_SCORECARD.md`** — tip HA lab decide.
+**Docs / TODO:** warm sync + promote drill tip; MkDocs install-sbc.
 
-**Resume:** User picks HA lab env → standby + warm sync + EIP runbook + ≤20 min drill. Or egress OPTIONS. No vocab rename / Litestream.
+**Resume:** Warm sync FO1→FO2 + EIP promote drill ≤20 min. Or egress OPTIONS.
+
+---
+
+## Session end 2026-07-20 — SBC HA requirements + portability — historical
+
+**On `main`:** superseded — see block above. Tips were pbx3 **`a5e19d4`**, sbc **`994eb68`**, spa **`a3dc665`**, docs **`7873efe`**.
+
+**Resume:** see block above.
 
 ---
 
