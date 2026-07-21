@@ -356,3 +356,31 @@ export function revokeFleetUserSessions(id) {
     body: '{}'
   })
 }
+
+/** SBC HA edge pairs */
+export function listEdgePairs() {
+  return gkFetch('/api/v1/edge-pairs')
+}
+
+export function getEdgePair(id) {
+  return gkFetch(`/api/v1/edge-pairs/${encodeURIComponent(id)}`)
+}
+
+/**
+ * @param {string} id
+ * @param {{ mode?: string, active_member?: string, enabled?: boolean, label?: string }} body
+ */
+export function patchEdgePair(id, body) {
+  return gkFetch(`/api/v1/edge-pairs/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body)
+  })
+}
+
+/** Managed “Promote now” — EIP to standby (fleet_admin). */
+export function promoteEdgePair(id) {
+  return gkFetch(`/api/v1/edge-pairs/${encodeURIComponent(id)}/promote`, {
+    method: 'POST',
+    body: '{}'
+  })
+}

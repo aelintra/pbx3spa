@@ -55,6 +55,7 @@ const navLinks = [
   { to: '/fleet/dids', label: 'DIDs', icon: 'phone' },
   { to: '/fleet/jobs', label: 'Jobs', icon: 'list-ordered' },
   { to: '/fleet/reconcile', label: 'Reconcile', icon: 'git-branch' },
+  { to: '/fleet/edge', label: 'Edge HA', icon: 'shield' },
   { to: '/fleet/users', label: 'Users', icon: 'users' }
 ]
 
