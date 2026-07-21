@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-20 — SBC backup/restore v1 + scratch drill
+## Session end 2026-07-20 — SBC HA requirements + portability
 
-**On `main`:** **pbx3** **`9cc0d11`** · **pbx3sbc** **`0a326d0`** · **pbx3sbc-admin** **`70071db`** · **pbx3-docs** **`7873efe`** — SBC DR scripts + requirements + MkDocs scratch runbook (`fleet/sbc-backup-restore.md`). **pbx3spa** **`e8d1398`** (handoff). **pbx3api** unchanged (**`6c28486`**).
+**On `main`:** **pbx3** — HA reqs + schematic + edge portability scorecard (peer-first); cross-links. **pbx3sbc** — PEERING-PLAN HA line (VIP/EIP). **pbx3-docs** Pages already live (**`7873efe`**). **pbx3spa** handoff only.
 
-**Operator:** Lab backup in S3 `sbc/sbc/backups/`; scratch restore validated on amd64 LAN host. Post-restore needs password/`advertised_address`/sudoers (see MkDocs). Live SBC still surgical overlay — no wholesale pull.
+**Operator:** HA not implemented — decide tomorrow **minimal EC2 pair** (lean) vs LAN for promote lab. Do not touch live Magrathea VIP until throwaway drill. Live SBC surgical overlay only.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — backup/restore [x]; tip egress / ops-notify / Pages publish.
+**Docs / TODO:** **`SBC_HA_FAILOVER_REQUIREMENTS.md`**, **`EDGE_PORTABILITY_SCORECARD.md`** — tip HA lab decide.
 
-**Resume:** Egress availability or ops-notify follow-ons; publish pbx3-docs Pages. No Litestream / Filament backup UI unless asked.
+**Resume:** User picks HA lab env → standby + warm sync + EIP runbook + ≤20 min drill. Or egress OPTIONS. No vocab rename / Litestream.
+
+---
+
+## Session end 2026-07-20 — SBC backup/restore v1 + scratch drill — historical
+
+**On `main`:** superseded — see block above. Tips were pbx3 **`9cc0d11`**, sbc **`0a326d0`**, docs **`7873efe`**.
+
+**Resume:** see block above.
 
 ---
 
