@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-20 — SBC HA requirements + portability
 
-**On `main`:** **pbx3** **`a7bd2b4`** — HA reqs + schematic + edge portability scorecard (peer-first). **pbx3sbc** **`994eb68`** — PEERING-PLAN HA line. **pbx3spa** **`1614f7e`** (handoff). **pbx3-docs** Pages live (**`7873efe`**).
+**On `main`:** **pbx3** **`a5e19d4`** — HA reqs + schematic + edge portability scorecard (peer-first). **pbx3sbc** **`994eb68`** — PEERING-PLAN HA line. **pbx3spa** **`a3dc665`** (handoff). **pbx3-docs** Pages live (**`7873efe`**).
 
 **Operator:** HA not implemented — decide tomorrow **minimal EC2 pair** (lean) vs LAN for promote lab. Do not touch live Magrathea VIP until throwaway drill. Live SBC surgical overlay only.
 
