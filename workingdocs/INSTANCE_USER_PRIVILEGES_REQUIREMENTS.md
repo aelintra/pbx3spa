@@ -90,13 +90,16 @@ Keep the matrix slim partly **because** every extra identity relationship is ano
 | Challenger | Idea | DNS on move? | Notes |
 |------------|------|--------------|--------|
 | **A — Stable tenant admin URL** | Bookmarkable front door per tenant (e.g. `https://{tenant}.admin…` or path on a broker) that always lands on the **current** home SPA/API | **Maybe** — only if the stable name is a DNS name that must retarget | Same *shape* as SIP stable naming; pairs with catalog `meta.json.instance_id` |
-| **B — Login broker (no per-move DNS)** | Fixed Gatekeeper/control-plane login origin; email or tenant id → redirect/proxy to current instance (reads directory homing) | **No** (broker FQDN stays put) | Customers never see instance FQDNs; Model B instance picker stays MSP-facing |
+| **B — Login broker (no per-move DNS)** | Fixed Gatekeeper/control-plane (or Pages) login origin; resolve home → hit correct instance API | **No** (broker FQDN stays put) | Customers need not memorize instance FQDNs; Model B instance picker stays MSP-facing |
+| **B′ — Tenant id on login** (**leaning**) | Login fields: **tenant shortuid *or* tenant URL/FQDN** + email + password. SPA (or broker) resolves that id via directory (`meta.json` / cname) → `instance_id` → instance API base **in real time**, then `POST …/auth/login` on that node | **No** | Cheap UX; customers already know shortuid and/or dialable tenant FQDN; no per-move DNS. After move, same id + password just works. |
 | **C — Ops tell / bookmark update** | After move, MSP sends new instance URL | **No** | Honest for lab / early fleet; weak product story |
 | **D — Per-move DNS to instance** | Customer URL is the node; update A/CNAME when tenant moves | **Yes** | Works; **least preferred** given DNS churn + TTL |
 
-**Not decided:** URL shape, TLS (shared broker cert vs per-tenant), whether redirect is full SPA origin or API-only. Record here so move + portable auth stay honest; pick when fleet login UX is prioritized (likely with Gatekeeper / Model B, not inside instance abilities).
+**B′ sketch:** Accept **either** `vqcwd4` **or** `vqcwd4.pbx3.com` (normalize host → shortuid / match `cname`/`fqdn` in catalog). Needs a **read-only homing lookup** (Gatekeeper or public-safe catalog slice → API base URL). Do **not** invent a second password store — Sanctum stays on the instance; broker only **routes**. Uniform “unknown tenant / bad credentials” responses to limit enumeration. Multi-cluster users: enter the **home** tenant they care about for this session (same one-home preference as portable export).
 
-**Relation:** Orthogonal to ability matrix. Does **not** reopen tenant-admin user ladder. Multi-cluster customer users still hard for a single tenant URL — prefer one home cluster per customer user (same move tension as above).
+**Not decided:** Exact lookup API, TLS, whether admin login stays instance-picker / direct URL. Record here so move + portable auth stay honest; pick when fleet customer login UX is prioritized.
+
+**Relation:** Orthogonal to ability matrix. Does **not** reopen tenant-admin user ladder.
 
 ---
 
@@ -251,4 +254,4 @@ Customers define dial policy for **their** users (bar prefixes/ranges, etc.) via
 
 ---
 
-*Last updated: 2026-07-22 — P1–P4 shipped; login-homing / tenant URL recorded as challenger (prefer avoid per-move DNS).*
+*Last updated: 2026-07-22 — P1–P4 shipped; login-homing **B′** leaning (tenant SUID **or** tenant URL/FQDN → realtime home lookup); prefer avoid per-move DNS.*

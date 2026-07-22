@@ -10,11 +10,13 @@
 
 **On `main`:** pbx3api + pbx3spa privileges ship (abilities `admin`/`tenant`/`recordings`, cluster scope, portable users in tenant export). Lab: **sandycroft** (`vqcwd4`) → **bzy54n** with **`joe@gmail.com`**; golden **`tenant.demo@pbx3.test`** on duns. Orphan shortuid leftovers cleaned (willand/affcot). FormField bind fix on User create.
 
+**Login homing (challenger, leaning):** **B′** — tenant enters **shortuid or tenant URL/FQDN** at login; SPA/broker resolves home from directory and posts Sanctum login to that instance (no per-move DNS).
+
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api` · spa `npm run dev` (proxy may still target golden — change API base for joe on bzy).
 
-**Docs / TODO:** **`INSTANCE_USER_PRIVILEGES_REQUIREMENTS.md`** (login-homing challenger); **`TODO.md`** — source wipe in move job; velocity parked.
+**Docs / TODO:** **`INSTANCE_USER_PRIVILEGES_REQUIREMENTS.md`**; **`TODO.md`** — source wipe in move job; velocity parked.
 
-**Resume:** Operator soak/demo; else move-job source wipe or login-homing.
+**Resume:** Operator soak/demo; else move-job source wipe or login-homing **B′**.
 
 ---
 
