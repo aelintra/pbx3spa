@@ -6,23 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-22 — Egress qualify + ops notify + Fleet Instances badge
+## Session end 2026-07-22 — PSTN number dialects
 
-**On `main`:** **pbx3** **`d377631`** — OpenSIPS R1 + Gatekeeper egress probe/overlay + ops-event mail. **pbx3api** **`5426f58`** — qualify live + `ops-egress-qualify` + `GET /fleet/egress-qualify`. **pbx3spa** **`8b9fc83`** — Trunks/Routes/Fleet Instances Egress badges. **pbx3sbc** **`b6135b2`** / **pbx3sbc-admin** **`69e1893`** — OPTIONS qualify + Backup On S3? / LE PHP sock fix. Live Magrathea, companion, golden, bzy, control.
+**On `main`:** **pbx3** **`0e764c1`** — dialect requirements + UK Egress `+CC` docs. **pbx3sbc** **`3404608`** / **pbx3sbc-admin** **`c623d0c`** — OpenSIPS dialect routes + Peer Number dialect UI (live Magrathea/companion). **pbx3-docs** **`12f32e3`** — [Number dialects](https://aelintra.github.io/pbx3-docs/fleet/number-dialect/). SPA/API tips unchanged (**`6ece4b3`** / **`5426f58`**).
 
-**Operator:** Egress **Avail** on Trunks, Routes list, Fleet Instances. Unavail → email (stop OpenSIPS on VIP to test). Filament Backup **On S3?** on VIP. Edge HA Promote still fences + Phase D LE.
+**Operator:** SBC Peers → **Number dialect** (Magrathea/Gamma). Node DNID transform → `+CC`; CLID as-is (store as `+CC`). Twilio US/EU lab later. Egress Avail badges / HA Backup still as prior session.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
-**Docs / TODO:** Next: velocity (later) or parked shadowing/Litestream. **`pbx3/workingdocs/TODO.md`**.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — velocity later; number-dialect multi-region lab when trunks exist.
 
-**Resume:** Pick next from TODO; no open egress/ops-notify polish in this slice.
+**Resume:** Leave dialects as-is until Twilio trunks; else pick velocity / parked tracks from TODO.
+
+---
+
+## Session end 2026-07-22 — Egress qualify + ops notify + Fleet Instances badge — historical
+
+**On `main`:** superseded — see number-dialects block above. Tips were pbx3 **`d377631`**, spa **`8b9fc83`**, api **`5426f58`**, sbc **`b6135b2`**, sbc-admin **`69e1893`**.
+
+**Resume:** see block above.
 
 ---
 
 ## Session end 2026-07-21 — Filament Backup + Fleet warm sync — historical
 
-**On `main`:** superseded — see 2026-07-22 block above. Tips were pbx3 **`129ef40`**, spa **`d021f60`**, sbc **`9373d30`**, sbc-admin **`7dda7fb`**, docs **`b9fb77f`**.
+**On `main`:** superseded — see 2026-07-22 blocks above. Tips were pbx3 **`129ef40`**, spa **`d021f60`**, sbc **`9373d30`**, sbc-admin **`7dda7fb`**, docs **`b9fb77f`**.
 
 **Resume:** see block above.
 
