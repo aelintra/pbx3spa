@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-21 — Magrathea live HA + Edge HA panel
+## Session end 2026-07-21 — Filament Backup + Fleet warm sync
 
-**On `main`:** **pbx3** **`3a9dbb2`** — edge pair CRUD, SBC URL settings, one-pair rule. **pbx3spa** **`acfb13b`** — Fleet → Edge HA Add/Delete + SBC API URL. Control deployed.
+**On `main`:** **pbx3** **`129ef40`** — warm-sync API + daily timer. **pbx3spa** **`d021f60`** — Edge HA Sync now + progress spinner. **pbx3sbc** **`9373d30`** / **pbx3sbc-admin** **`7dda7fb`** — Backup panel + fleet backup/warm-pull. **pbx3-docs** **`b9fb77f`**. Deployed Magrathea, companion, control.
 
-**Operator:** Live pair **`magrathea-lab`** on VIP **`sbc.pbx3.com`** / EIP **`3.93.26.82`**. Active **Magrathea** (`i-078cca73d4a4106bb`); warm companion (`i-00964a57ac65383d1`). Manual promote drilled both ways (~3–5 s EIP); new calls OK. Soft-state: in-call PSTN/media may survive; find hosts by **instance id**. Fleet Edge HA: one pair; SBC URL `https://sbc.pbx3.com/api`.
+**Operator:** Filament **System → Backup** on VIP only (`https://sbc.pbx3.com/admin`). Fleet **Edge HA → Sync now** for standby warmth (S3 dump → `--db-only`). Companion must pass `check-ha-standby-ready.sh` (token, log-ship, aws CLI, IAM `pbx3-sbc`). Cold rebuild: MkDocs **SBC backup and restore** scratch runbook. Pair **`magrathea-lab`**; companion IP via describe-instances (`opensips.pem`).
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · lab SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
-**Docs / TODO:** **Next:** SBC backup/restore UI (replace manual-only CLI). Then fence reliability; TLS/Phase D later. **`pbx3/workingdocs/TODO.md`**.
+**Docs / TODO:** **Next:** promoter SSH fence. Optional: Backup “On S3?” column; Magrathea cron confirm. **`pbx3/workingdocs/TODO.md`**.
 
-**Resume:** Filament (or Fleet) SBC backup/list/restore + Magrathea cron/S3. Then promote SSH fence; keep companion warm-synced after drills.
+**Resume:** Harden EdgePairPromoter fence (or document mandatory ops fence) before Auto promote.
+
+---
+
+## Session end 2026-07-21 — Magrathea live HA + Edge HA panel — historical
+
+**On `main`:** superseded — see Filament Backup + Fleet warm sync block above.
+
+**Resume:** see block above.
 
 ---
 
