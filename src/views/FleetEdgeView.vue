@@ -213,7 +213,16 @@ async function promoteNow(p) {
         : fenced === false
           ? ` (fence skipped/failed${data?.result?.fence_detail ? ': ' + data.result.fence_detail : ''})`
           : ''
-    actionMsg.value = `Promoted ${p.label} → member ${data?.pair?.active_member || '?'}${sipNote}${fenceNote}. Run Phase D LE if needed.`
+    const le = data?.result?.le
+    const leNote =
+      le && le.ok
+        ? ` (Phase D LE OK${le.domain ? ': ' + le.domain : ''})`
+        : le && le.skipped
+          ? ` (Phase D LE skipped: ${le.detail || 'n/a'})`
+          : le
+            ? ` (Phase D LE failed: ${le.detail || 'n/a'})`
+            : ''
+    actionMsg.value = `Promoted ${p.label} → member ${data?.pair?.active_member || '?'}${sipNote}${fenceNote}${leNote}.`
     await load()
   } catch (e) {
     error.value = e?.message || 'Promote failed'
@@ -772,9 +781,9 @@ h1 {
   cursor: not-allowed;
 }
 .btn-primary {
-  background: #1e3a5f;
+  background: var(--pbx-primary, #2563eb);
   color: #fff;
-  border-color: #1e3a5f;
+  border-color: var(--pbx-primary, #2563eb);
 }
 .btn-danger {
   background: #fff;
