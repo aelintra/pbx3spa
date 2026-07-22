@@ -14,9 +14,9 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · lab SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
-**Docs / TODO:** fence reliability next; TLS/Phase D later. **`pbx3/workingdocs/TODO.md`**.
+**Docs / TODO:** **Next:** SBC backup/restore UI (replace manual-only CLI). Then fence reliability; TLS/Phase D later. **`pbx3/workingdocs/TODO.md`**.
 
-**Resume:** Harden promote SSH fence; or egress OPTIONS. Keep companion warm-synced after drills.
+**Resume:** Filament (or Fleet) SBC backup/list/restore + Magrathea cron/S3. Then promote SSH fence; keep companion warm-synced after drills.
 
 ---
 
