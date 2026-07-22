@@ -3,6 +3,7 @@ import {
   ageMsFromIso,
   formatProbeRtt,
   instanceHealthBadge,
+  instanceEgressBadge,
   probeRttLabel,
   HEALTHY_MAX_MS,
   WARNING_MAX_MS
@@ -86,5 +87,27 @@ describe('fleetInstanceHealth', () => {
     expect(
       probeRttLabel({ status: 'active', health: { reachable: false, last_rtt_ms: 18 } })
     ).toBeNull()
+  })
+
+  it('egress badge: Avail / Unavail / hide when down', () => {
+    expect(
+      instanceEgressBadge({
+        status: 'active',
+        health: { reachable: true, egress_state: 'Avail', egress_rtt_ms: 9 }
+      })
+    ).toEqual({ kind: 'avail', label: 'Egress Avail · 9 ms' })
+    expect(
+      instanceEgressBadge({
+        status: 'active',
+        health: { reachable: true, egress_state: 'Unavail' }
+      })
+    ).toEqual({ kind: 'unavail', label: 'Egress Unavail' })
+    expect(
+      instanceEgressBadge({
+        status: 'active',
+        health: { reachable: false, egress_state: 'Avail', egress_rtt_ms: 9 }
+      })
+    ).toBeNull()
+    expect(instanceEgressBadge({ status: 'maintenance' })).toBeNull()
   })
 })

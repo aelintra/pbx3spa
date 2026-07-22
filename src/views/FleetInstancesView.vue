@@ -18,7 +18,7 @@ import {
   canFleet,
   FLEET_ABILITY
 } from '@/config/fleetGatekeeper'
-import { instanceHealthBadge, probeRttLabel } from '@/utils/fleetInstanceHealth'
+import { instanceHealthBadge, probeRttLabel, instanceEgressBadge } from '@/utils/fleetInstanceHealth'
 
 const instances = ref([])
 const dispatcherSets = ref([])
@@ -314,11 +314,18 @@ function healthClass(kind) {
   return 'badge badge--muted'
 }
 
-/** @returns {{ health: ReturnType<typeof instanceHealthBadge>, rtt: string|null }} */
+function egressClass(kind) {
+  if (kind === 'avail') return 'badge badge--ok'
+  if (kind === 'unavail') return 'badge badge--down'
+  return 'badge badge--muted'
+}
+
+/** @returns {{ health: ReturnType<typeof instanceHealthBadge>, rtt: string|null, egress: ReturnType<typeof instanceEgressBadge> }} */
 function statusBits(row) {
   return {
     health: instanceHealthBadge(row),
-    rtt: probeRttLabel(row)
+    rtt: probeRttLabel(row),
+    egress: instanceEgressBadge(row)
   }
 }
 
@@ -573,6 +580,11 @@ onMounted(load)
               <span :class="statusClass(i.status)">{{ i.status || 'active' }}</span>
               <span :class="healthClass(bits.health.kind)">{{ bits.health.label }}</span>
               <span v-if="bits.rtt" class="rtt" title="Last /up probe round-trip">{{ bits.rtt }}</span>
+              <span
+                v-if="bits.egress"
+                :class="egressClass(bits.egress.kind)"
+                :title="bits.egress.label"
+              >{{ bits.egress.label }}</span>
             </div>
           </td>
           <td v-if="canManage || canEdge" class="actions">

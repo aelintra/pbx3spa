@@ -16,6 +16,9 @@ export const WARNING_MAX_MS = 5 * 60 * 1000
  * @property {string|null} [last_ok_at]
  * @property {string|null} [last_probe_at]
  * @property {number|null} [last_rtt_ms]
+ * @property {string|null} [egress_state]
+ * @property {number|null} [egress_rtt_ms]
+ * @property {string|null} [egress_probed_at]
  */
 
 /**
@@ -99,4 +102,38 @@ export function probeRttLabel(row) {
   const health = row?.health
   if (health?.probe_paused || health?.reachable === false) return null
   return formatProbeRtt(health?.last_rtt_ms)
+}
+
+/**
+ * Egress qualify badge from Gatekeeper health overlay (AMI via fleet.token probe).
+ * @param {{
+ *   status?: string|null,
+ *   health?: InstanceHealthOverlay|null
+ * }} row
+ * @returns {{ kind: 'avail'|'unavail'|'unknown'|'hidden', label: string }|null}
+ */
+export function instanceEgressBadge(row) {
+  const status = String(row?.status ?? 'active').toLowerCase()
+  if (status === 'maintenance' || status === 'decommissioned') {
+    return null
+  }
+  const health = row?.health
+  if (health?.probe_paused || health?.reachable === false) {
+    return null
+  }
+  const state = String(health?.egress_state ?? '')
+  if (state === 'Avail') {
+    const rtt = formatProbeRtt(health?.egress_rtt_ms)
+    return {
+      kind: 'avail',
+      label: rtt ? `Egress Avail · ${rtt}` : 'Egress Avail'
+    }
+  }
+  if (state === 'Unavail') {
+    return { kind: 'unavail', label: 'Egress Unavail' }
+  }
+  if (state === 'Unknown' || state === '') {
+    return { kind: 'unknown', label: 'Egress Unknown' }
+  }
+  return { kind: 'unknown', label: 'Egress Unknown' }
 }
