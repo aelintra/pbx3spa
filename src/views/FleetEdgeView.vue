@@ -206,7 +206,14 @@ async function promoteNow(p) {
         : sip && sip.ok
           ? ` (standby SIP OK @ ${sip.host})`
           : ''
-    actionMsg.value = `Promoted ${p.label} → member ${data?.pair?.active_member || '?'}${sipNote}. Run Phase D LE if needed.`
+    const fenced = data?.result?.fenced
+    const fenceNote =
+      fenced === true
+        ? ' (old active fenced)'
+        : fenced === false
+          ? ` (fence skipped/failed${data?.result?.fence_detail ? ': ' + data.result.fence_detail : ''})`
+          : ''
+    actionMsg.value = `Promoted ${p.label} → member ${data?.pair?.active_member || '?'}${sipNote}${fenceNote}. Run Phase D LE if needed.`
     await load()
   } catch (e) {
     error.value = e?.message || 'Promote failed'
