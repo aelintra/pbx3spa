@@ -394,12 +394,48 @@ export function deleteEdgePair(id) {
   })
 }
 
-/** Managed “Promote now” — EIP to standby (fleet_admin). */
-export function promoteEdgePair(id) {
-  return gkFetch(`/api/v1/edge-pairs/${encodeURIComponent(id)}/promote`, {
+/**
+ * Managed “Promote now” — EIP to standby (fleet_admin).
+ * If standby SIP OPTIONS fails, gatekeeper returns 409 needs_confirm (no EIP move).
+ * Pass confirmStandbySipWarning: true to proceed after the operator acknowledges.
+ *
+ * @param {string} id
+ * @param {{ confirmStandbySipWarning?: boolean }} [opts]
+ * @returns {Promise<object>} — may be { needs_confirm: true, warning, standby_sip } on soft block
+ */
+export async function promoteEdgePair(id, opts = {}) {
+  const body = {}
+  if (opts.confirmStandbySipWarning) {
+    body.confirm_standby_sip_warning = true
+  }
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json'
+  }
+  const t = token()
+  if (t) {
+    headers.Authorization = `Bearer ${t}`
+  }
+  const res = await fetch(`${base()}/api/v1/edge-pairs/${encodeURIComponent(id)}/promote`, {
     method: 'POST',
-    body: '{}'
+    headers,
+    body: JSON.stringify(body)
   })
+  const text = await res.text()
+  let data = null
+  try {
+    data = text ? JSON.parse(text) : null
+  } catch {
+    data = { raw: text }
+  }
+  if (res.status === 409 && data?.needs_confirm) {
+    return data
+  }
+  if (!res.ok) {
+    const msg = data?.error || data?.message || `Gatekeeper ${res.status}`
+    throw new Error(msg)
+  }
+  return data
 }
 
 /** Warm sync — active backup+upload → standby --db-only (fleet_admin). */

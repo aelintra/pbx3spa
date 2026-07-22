@@ -174,7 +174,7 @@ async function promoteNow(p) {
   if (!canAdmin.value) return
   if (
     !confirm(
-      `Promote ${p.label}?\nEIP moves to the standby. HTTPS may break until Phase D LE on the new active.`
+      `Promote ${p.label}?\nEIP moves to the standby. HTTPS may break until Phase D LE on the new active.\n\nControl will SIP-OPTIONS the standby’s public IP first and warn if it cannot see SIP.`
     )
   ) {
     return
@@ -184,8 +184,29 @@ async function promoteNow(p) {
   actionMsg.value = ''
   error.value = ''
   try {
-    const data = await promoteEdgePair(p.id)
-    actionMsg.value = `Promoted ${p.label} → member ${data?.pair?.active_member || '?'}. Run Phase D LE if needed.`
+    let data = await promoteEdgePair(p.id)
+    if (data?.needs_confirm) {
+      const warn =
+        data.warning ||
+        'Cannot confirm SIP on standby. Promote anyway?'
+      if (!confirm(`${warn}\n\nPromote anyway?`)) {
+        actionMsg.value = 'Promote cancelled — standby SIP not confirmed.'
+        return
+      }
+      data = await promoteEdgePair(p.id, { confirmStandbySipWarning: true })
+      if (data?.needs_confirm) {
+        error.value = 'Promote still blocked after confirm — unexpected response'
+        return
+      }
+    }
+    const sip = data?.result?.standby_sip
+    const sipNote =
+      sip && sip.ok === false
+        ? ' (standby SIP was not confirmed — operator override)'
+        : sip && sip.ok
+          ? ` (standby SIP OK @ ${sip.host})`
+          : ''
+    actionMsg.value = `Promoted ${p.label} → member ${data?.pair?.active_member || '?'}${sipNote}. Run Phase D LE if needed.`
     await load()
   } catch (e) {
     error.value = e?.message || 'Promote failed'
@@ -314,8 +335,10 @@ onMounted(load)
       <div>
         <h1>Edge HA</h1>
         <p class="lede">
-          One active–passive SBC pair. Probe = SIP OPTIONS on the VIP.
+          One active–passive SBC pair. Health probe = SIP OPTIONS on the VIP.
+          <strong>Promote now</strong> also OPTIONS the standby’s public IP and warns if SIP is unseen (confirm to proceed).
           <strong>Manual</strong> = alert only (human moves EIP).
+          <strong>Auto</strong> = control may promote after probe failures (lab flag).
           <strong>Auto</strong> = control may move EIP when enabled on control.
           <strong>Sync now</strong> = warm standby (S3 dump → DB-only on standby); daily backstop on control.
           To replace the pair: Delete, then Add. Control-down: AWS Console EIP → warm standby.
