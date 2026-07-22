@@ -6,23 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-22 — PSTN number dialects
+## Session end 2026-07-22 — Twilio dialect lab
 
-**On `main`:** **pbx3** **`0e764c1`** — dialect requirements + UK Egress `+CC` docs. **pbx3sbc** **`3404608`** / **pbx3sbc-admin** **`c623d0c`** — OpenSIPS dialect routes + Peer Number dialect UI (live Magrathea/companion). **pbx3-docs** **`12f32e3`** — [Number dialects](https://aelintra.github.io/pbx3-docs/fleet/number-dialect/). SPA/API tips unchanged (**`6ece4b3`** / **`5426f58`**).
+**On `main`:** code tips unchanged (**pbx3sbc** **`3404608`**, **pbx3sbc-admin** **`c623d0c`**, **pbx3-docs** **`12f32e3`**, spa prior handoff **`07c0969`**, api **`5426f58`**). Live lab only: Twilio DID **`+15139279738`** → golden **1000**; Peer dialect **`strict-plus-e164`**; outbound Peer **50**; gwlist **`1,20,50`** (Brindley first). Inbound + Twilio egress audio OK; DID trombone abandoned (trial/no answer).
 
-**Operator:** SBC Peers → **Number dialect** (Magrathea/Gamma). Node DNID transform → `+CC`; CLID as-is (store as `+CC`). Twilio US/EU lab later. Egress Avail badges / HA Backup still as prior session.
+**Operator:** UK golden dials intl as **`001…`**. SBC Peers → Number dialect. Paid Twilio + named recipe / US `011:+` seed later. Future: global DID→EU CC may stay SBC signaling; RTP stage TBD.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — velocity later; number-dialect multi-region lab when trunks exist.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — velocity later; paid Twilio dialect follow-ons.
 
-**Resume:** Leave dialects as-is until Twilio trunks; else pick velocity / parked tracks from TODO.
+**Resume:** Leave live Twilio Peers as-is until full Twilio account; else velocity / parked tracks.
+
+---
+
+## Session end 2026-07-22 — PSTN number dialects — historical
+
+**On `main`:** superseded — see Twilio lab block above. Tips were pbx3 **`0e764c1`**/`f36db55`, sbc **`3404608`**, sbc-admin **`c623d0c`**, docs **`12f32e3`**, spa **`07c0969`**.
+
+**Resume:** see block above.
 
 ---
 
 ## Session end 2026-07-22 — Egress qualify + ops notify + Fleet Instances badge — historical
 
-**On `main`:** superseded — see number-dialects block above. Tips were pbx3 **`d377631`**, spa **`8b9fc83`**, api **`5426f58`**, sbc **`b6135b2`**, sbc-admin **`69e1893`**.
+**On `main`:** superseded. Tips were pbx3 **`d377631`**, spa **`8b9fc83`**, api **`5426f58`**, sbc **`b6135b2`**, sbc-admin **`69e1893`**.
 
 **Resume:** see block above.
 
