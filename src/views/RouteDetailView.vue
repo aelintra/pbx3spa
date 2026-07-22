@@ -271,6 +271,12 @@ const panelTitleTenantSuffix = computed(() => {
           <h1 class="detail-panel-title">
             Edit Route {{ routeData?.pkey ?? '…' }}{{ panelTitleTenantSuffix }}
           </h1>
+          <span
+            v-if="hideRoutePaths()"
+            class="list-chip fleet-egress-chip"
+            :class="egressQualifyChipClass"
+            :title="egressQualifyTitle"
+          >{{ egressQualifyLabel }}</span>
           <DetailActiveStatusBar
             v-if="routeData"
             v-model="editActive"

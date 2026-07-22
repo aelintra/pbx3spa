@@ -11,9 +11,32 @@ import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import { countActiveRows } from '@/utils/listActive'
+import { useFleetPosture } from '@/composables/useFleetPosture'
 
 const { filterText } = useStickyFilter('routes')
 const toast = useToastStore()
+const { loadFleetPosture, isFleetNode, posture } = useFleetPosture()
+
+const egressQualifyState = computed(() => String(posture.value?.egress_qualify?.state || 'Unknown'))
+const egressQualifyLabel = computed(() => {
+  const state = egressQualifyState.value
+  const rtt = posture.value?.egress_qualify?.rtt_ms
+  if (state === 'Avail' && rtt != null) return `Egress Avail · ${rtt} ms`
+  if (state === 'Avail') return 'Egress Avail'
+  if (state === 'Unavail') return 'Egress Unavail'
+  return 'Egress Unknown'
+})
+const egressQualifyChipClass = computed(() => {
+  const state = egressQualifyState.value
+  if (state === 'Avail') return 'list-chip--on'
+  if (state === 'Unavail') return 'list-chip--latency-bad'
+  return 'list-chip--unknown'
+})
+const egressQualifyTitle = computed(() => {
+  const q = posture.value?.egress_qualify
+  return q?.latency || egressQualifyLabel.value
+})
+
 const routes = ref([])
 const tenants = ref([])
 const loading = ref(true)
@@ -161,7 +184,8 @@ async function loadRoutes() {
   try {
     const [routeResponse, tenantResponse] = await Promise.all([
       getApiClient().get('routes'),
-      getApiClient().get('tenants')
+      getApiClient().get('tenants'),
+      loadFleetPosture({ force: true })
     ])
     routes.value = normalizeList(routeResponse, 'routes')
     tenants.value = normalizeList(tenantResponse, 'tenants')
@@ -203,7 +227,15 @@ onMounted(loadRoutes)
 <template>
   <div class="list-view">
     <header class="list-header">
-      <h1>Routes (Outbound)</h1>
+      <div class="list-header-title-row">
+        <h1>Routes (Outbound)</h1>
+        <span
+          v-if="isFleetNode()"
+          class="list-chip fleet-egress-chip"
+          :class="egressQualifyChipClass"
+          :title="egressQualifyTitle"
+        >{{ egressQualifyLabel }}</span>
+      </div>
       <p class="toolbar">
         <router-link :to="{ name: 'route-create' }" class="add-btn">Create</router-link>
         <button
