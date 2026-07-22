@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-21 — HA FO greenfield + SBC Certificates/LE
+## Session end 2026-07-21 — Magrathea live HA + Edge HA panel
 
-**On `main`:** **pbx3sbc-admin** **`a0ded23`** — FQDN install, Certificates panel (SPA kinship), LE helper + spinner. **pbx3sbc** **`c085b50`** — LE sudoers args. **pbx3-docs** **`25b3917`** — `fleet/install-sbc.md`. **pbx3** handoff **`1630137`**.
+**On `main`:** **pbx3** **`3a9dbb2`** — edge pair CRUD, SBC URL settings, one-pair rule. **pbx3spa** **`acfb13b`** — Fleet → Edge HA Add/Delete + SBC API URL. Control deployed.
 
-**Operator HA lab:** **FO1** `https://sbcfo.pbx3.com/admin` (EIP `98.82.58.59`, LE live). **FO2** `35.175.113.204` (HTTP; advertised EIP). SSH `opensips.pem`. Do not Magrathea-promote onto FO EIP yet. Live **`sbc.pbx3.com`** unchanged (surgical).
+**Operator:** Live pair **`magrathea-lab`** on VIP **`sbc.pbx3.com`** / EIP **`3.93.26.82`**. Active **Magrathea** (`i-078cca73d4a4106bb`); warm companion (`i-00964a57ac65383d1`). Manual promote drilled both ways (~3–5 s EIP); new calls OK. Soft-state: in-call PSTN/media may survive; find hosts by **instance id**. Fleet Edge HA: one pair; SBC URL `https://sbc.pbx3.com/api`.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · lab SBC **`https://sbc.pbx3.com/admin`** · FO **`https://sbcfo.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · lab SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
-**Docs / TODO:** warm sync + promote drill tip; MkDocs install-sbc.
+**Docs / TODO:** fence reliability next; TLS/Phase D later. **`pbx3/workingdocs/TODO.md`**.
 
-**Resume:** Warm sync FO1→FO2 + EIP promote drill ≤20 min. Or egress OPTIONS.
+**Resume:** Harden promote SSH fence; or egress OPTIONS. Keep companion warm-synced after drills.
+
+---
+
+## Session end 2026-07-21 — HA FO greenfield + SBC Certificates/LE — historical
+
+**On `main`:** superseded — see Magrathea live HA block above.
+
+**Resume:** see block above.
 
 ---
 
