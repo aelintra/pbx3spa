@@ -21,6 +21,27 @@ const router = useRouter()
 const toast = useToastStore()
 const { getSchema, ensureFetched } = useSchema()
 const { loadFleetPosture, hideRoutePaths, posture } = useFleetPosture()
+
+const egressQualifyState = computed(() => String(posture.value?.egress_qualify?.state || 'Unknown'))
+const egressQualifyLabel = computed(() => {
+  const state = egressQualifyState.value
+  const rtt = posture.value?.egress_qualify?.rtt_ms
+  if (state === 'Avail' && rtt != null) return `Egress Avail · ${rtt} ms`
+  if (state === 'Avail') return 'Egress Avail'
+  if (state === 'Unavail') return 'Egress Unavail'
+  return 'Egress Unknown'
+})
+const egressQualifyChipClass = computed(() => {
+  const state = egressQualifyState.value
+  if (state === 'Avail') return 'list-chip--on'
+  if (state === 'Unavail') return 'list-chip--latency-bad'
+  return 'list-chip--unknown'
+})
+const egressQualifyTitle = computed(() => {
+  const q = posture.value?.egress_qualify
+  return q?.latency || egressQualifyLabel.value
+})
+
 function isReadOnly(field) {
   return getSchema('routes')?.read_only?.includes(field) ?? false
 }
@@ -145,7 +166,7 @@ async function fetchRoute() {
 
 onMounted(async () => {
   await ensureFetched()
-  await loadFleetPosture()
+  await loadFleetPosture({ force: true })
   await Promise.all([fetchTenants(), fetchTrunks()])
   await fetchRoute()
 })
@@ -394,6 +415,11 @@ const panelTitleTenantSuffix = computed(() => {
           <p v-else class="fleet-route-note">
             Fleet node: outbound uses fixed <strong>{{ posture?.egress_trunk || 'Egress' }}</strong> trunk to
             {{ posture?.sbc_egress_host || 'SBC' }}.
+            <span
+              class="list-chip fleet-egress-chip"
+              :class="egressQualifyChipClass"
+              :title="egressQualifyTitle"
+            >{{ egressQualifyLabel }}</span>
           </p>
 
           <div class="edit-actions">

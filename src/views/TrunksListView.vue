@@ -77,6 +77,7 @@ function statusDisplay(tr) {
     return '…'
   }
   const live = liveData.value[key]
+  if (live?.qualify === 'Unavail') return 'Unavail'
   return liveValueDisplay(live?.latency)
 }
 

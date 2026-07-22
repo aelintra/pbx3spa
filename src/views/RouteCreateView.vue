@@ -19,6 +19,27 @@ const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
 const { loadFleetPosture, hideRoutePaths, posture } = useFleetPosture()
+
+const egressQualifyState = computed(() => String(posture.value?.egress_qualify?.state || 'Unknown'))
+const egressQualifyLabel = computed(() => {
+  const state = egressQualifyState.value
+  const rtt = posture.value?.egress_qualify?.rtt_ms
+  if (state === 'Avail' && rtt != null) return `Egress Avail · ${rtt} ms`
+  if (state === 'Avail') return 'Egress Avail'
+  if (state === 'Unavail') return 'Egress Unavail'
+  return 'Egress Unknown'
+})
+const egressQualifyChipClass = computed(() => {
+  const state = egressQualifyState.value
+  if (state === 'Avail') return 'list-chip--on'
+  if (state === 'Unavail') return 'list-chip--latency-bad'
+  return 'list-chip--unknown'
+})
+const egressQualifyTitle = computed(() => {
+  const q = posture.value?.egress_qualify
+  return q?.latency || egressQualifyLabel.value
+})
+
 const pkey = ref('')
 const cluster = ref('default')
 const description = ref('')
@@ -197,7 +218,7 @@ function onKeydown(e) {
 onMounted(async () => {
   await ensureFetched()
   applySchemaDefaults('routes', { cluster, description, cname, active, strategy })
-  await loadFleetPosture()
+  await loadFleetPosture({ force: true })
   await loadTenants()
   await loadTrunks()
   if (hideRoutePaths()) {
@@ -306,6 +327,11 @@ onMounted(async () => {
       <p v-else class="fleet-route-note">
         Fleet node: outbound uses fixed <strong>{{ posture?.egress_trunk || 'Egress' }}</strong> trunk to
         {{ posture?.sbc_egress_host || 'SBC' }} — dialplan defines policy only.
+        <span
+          class="list-chip fleet-egress-chip"
+          :class="egressQualifyChipClass"
+          :title="egressQualifyTitle"
+        >{{ egressQualifyLabel }}</span>
       </p>
 
       <div class="actions">

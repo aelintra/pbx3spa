@@ -7,11 +7,12 @@ const error = ref(null)
 
 /**
  * Fleet node posture from GET /api/fleet-posture (Phase A).
- * @returns {{ posture: import('vue').Ref<object|null>, loading: import('vue').Ref<boolean>, error: import('vue').Ref<string|null>, loadFleetPosture: () => Promise<object|null>, isFleetNode: () => boolean }}
+ * @returns {{ posture: import('vue').Ref<object|null>, loading: import('vue').Ref<boolean>, error: import('vue').Ref<string|null>, loadFleetPosture: (opts?: { force?: boolean }) => Promise<object|null>, isFleetNode: () => boolean }}
  */
 export function useFleetPosture() {
-  async function loadFleetPosture() {
-    if (posture.value !== null) {
+  async function loadFleetPosture(opts = {}) {
+    const force = Boolean(opts?.force)
+    if (posture.value !== null && !force) {
       return posture.value
     }
     loading.value = true

@@ -21,6 +21,8 @@ export function parseLatencyMsFromStatus(s) {
 export function liveLatencyChipLabel(s) {
   if (s === '…') return 'Live…'
   if (s === 'Unknown') return 'Unknown'
+  if (/^unavail/i.test((s ?? '').trim())) return 'Unavail'
+  if (/^avail$/i.test((s ?? '').trim())) return 'Avail'
   const ms = parseLatencyMsFromStatus(s)
   if (ms != null) return `${ms} ms`
   if (STATUS_OK_REGEX.test((s ?? '').trim())) return 'Online'
@@ -34,6 +36,8 @@ export function liveLatencyChipLabel(s) {
 export function liveLatencyChipClassSuffix(s) {
   if (s === '…') return 'list-chip--pending'
   if (s === 'Unknown') return 'list-chip--unknown'
+  if (/^unavail/i.test((s ?? '').trim())) return 'list-chip--latency-bad'
+  if (/^avail$/i.test((s ?? '').trim())) return 'list-chip--on'
   const ms = parseLatencyMsFromStatus(s)
   if (ms != null) {
     if (ms < LATENCY_GREEN_BELOW_MS) return 'list-chip--on'
@@ -45,8 +49,10 @@ export function liveLatencyChipClassSuffix(s) {
   return 'list-chip--neutral'
 }
 
-/** Row counts “online” when live string looks like a reachable OK* response. */
+/** Row counts “online” when live string looks like a reachable OK* / Avail response. */
 export function isLiveStatusOnline(s) {
   if (s === '…' || s === 'Unknown') return false
+  if (/^unavail/i.test((s ?? '').trim())) return false
+  if (/^avail$/i.test((s ?? '').trim())) return true
   return STATUS_OK_REGEX.test((s ?? '').trim())
 }
