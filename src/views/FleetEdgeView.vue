@@ -1,6 +1,7 @@
 <script setup>
 /**
- * SBC HA edge pair — health, manual|auto mode, Promote now.
+ * SBC HA edge pair — health, Manual|Auto mode, Promote now.
+ * Also: SBC admin API URL + create HA pair (fleet_admin).
  * API still uses mode=managed|auto; UI says Manual for managed.
  */
 import { ref, computed, onMounted } from 'vue'
@@ -8,6 +9,10 @@ import {
   listEdgePairs,
   patchEdgePair,
   promoteEdgePair,
+  createEdgePair,
+  deleteEdgePair,
+  getEdgeSettings,
+  patchEdgeSettings,
   refreshFleetSession
 } from '@/api/fleetGatekeeper'
 import {
@@ -24,9 +29,28 @@ const actionMsg = ref('')
 const busyId = ref('')
 const canAdmin = computed(() => canFleet(FLEET_ABILITY.ADMIN))
 
+const settings = ref(null)
+const sbcUrlDraft = ref('')
+const settingsBusy = ref(false)
+const showAddPair = ref(false)
+const createBusy = ref(false)
+const createForm = ref({
+  id: '',
+  label: '',
+  fqdn: '',
+  eip: '',
+  allocation_id: '',
+  member_a_instance_id: '',
+  member_b_instance_id: '',
+  active_member: 'a',
+  mode: 'managed',
+  region: 'us-east-1'
+})
+
 async function load() {
   if (!hasFleetGatekeeperToken()) {
     pairs.value = []
+    settings.value = null
     error.value = ''
     return
   }
@@ -36,8 +60,10 @@ async function load() {
     if (getFleetAbilities().length === 0) {
       await refreshFleetSession()
     }
-    const data = await listEdgePairs()
+    const [data, edgeSettings] = await Promise.all([listEdgePairs(), getEdgeSettings()])
     pairs.value = data.edge_pairs || []
+    settings.value = edgeSettings
+    sbcUrlDraft.value = edgeSettings?.sbc_admin_api_url || ''
   } catch (e) {
     pairs.value = []
     error.value = e?.message || 'Failed to load edge pairs'
@@ -66,6 +92,40 @@ function modeLabel(mode) {
 
 function modeClass(mode) {
   return mode === 'auto' ? 'mode-auto' : 'mode-manual'
+}
+
+function sourceHint() {
+  const s = settings.value
+  if (!s) return ''
+  if (s.sbc_admin_api_url_source === 'db') return 'Saved in control DB (overrides env)'
+  if (s.sbc_admin_api_url_source === 'env') return 'From control .env (PBX3_SBC_ADMIN_API_URL)'
+  return 'Not set'
+}
+
+async function saveSbcUrl() {
+  if (!canAdmin.value) return
+  settingsBusy.value = true
+  actionMsg.value = ''
+  error.value = ''
+  try {
+    settings.value = await patchEdgeSettings({
+      sbc_admin_api_url: sbcUrlDraft.value.trim()
+    })
+    sbcUrlDraft.value = settings.value.sbc_admin_api_url || ''
+    actionMsg.value = sbcUrlDraft.value
+      ? 'SBC admin API URL saved'
+      : 'SBC admin API URL cleared (env fallback)'
+  } catch (e) {
+    error.value = e?.message || 'Save settings failed'
+  } finally {
+    settingsBusy.value = false
+  }
+}
+
+async function clearSbcUrlOverride() {
+  if (!canAdmin.value) return
+  sbcUrlDraft.value = ''
+  await saveSbcUrl()
 }
 
 async function setMode(p, mode) {
@@ -107,6 +167,71 @@ async function promoteNow(p) {
   }
 }
 
+async function deletePair(p) {
+  if (!canAdmin.value) return
+  if (
+    !confirm(
+      `Delete HA pair “${p.label}” (${p.id})?\n\nRemoves it from control only (probe/promote stop). Does not release the EIP or terminate instances.`
+    )
+  ) {
+    return
+  }
+  busyId.value = p.id
+  actionMsg.value = ''
+  error.value = ''
+  try {
+    await deleteEdgePair(p.id)
+    actionMsg.value = `Deleted edge pair ${p.id}`
+    await load()
+  } catch (e) {
+    error.value = e?.message || 'Delete failed'
+  } finally {
+    busyId.value = ''
+  }
+}
+
+async function doCreatePair() {
+  if (!canAdmin.value) return
+  createBusy.value = true
+  actionMsg.value = ''
+  error.value = ''
+  try {
+    const f = createForm.value
+    const body = {
+      label: f.label.trim(),
+      fqdn: f.fqdn.trim(),
+      eip: f.eip.trim(),
+      allocation_id: f.allocation_id.trim(),
+      member_a_instance_id: f.member_a_instance_id.trim(),
+      member_b_instance_id: f.member_b_instance_id.trim(),
+      active_member: f.active_member,
+      mode: f.mode,
+      region: f.region.trim() || 'us-east-1'
+    }
+    if (f.id.trim()) body.id = f.id.trim()
+    const pair = await createEdgePair(body)
+    actionMsg.value = `Created edge pair ${pair.id}`
+    showAddPair.value = false
+    createForm.value = {
+      id: '',
+      label: '',
+      fqdn: '',
+      eip: '',
+      allocation_id: '',
+      member_a_instance_id: '',
+      member_b_instance_id: '',
+      active_member: 'a',
+      mode: 'managed',
+      region: 'us-east-1'
+    }
+    await load()
+  } catch (e) {
+    error.value = e?.message || 'Create pair failed'
+  } finally {
+    createBusy.value = false
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -116,10 +241,10 @@ onMounted(load)
       <div>
         <h1>Edge HA</h1>
         <p class="lede">
-          SBC active–passive pair. Probe = SIP OPTIONS on the VIP.
+          One active–passive SBC pair. Probe = SIP OPTIONS on the VIP.
           <strong>Manual</strong> = alert only (human moves EIP).
           <strong>Auto</strong> = control may move EIP when enabled on control.
-          Control-down: AWS Console EIP → warm standby.
+          To replace the pair: Delete, then Add. Control-down: AWS Console EIP → warm standby.
         </p>
       </div>
       <button type="button" class="btn" :disabled="loading" @click="load">Refresh</button>
@@ -128,6 +253,127 @@ onMounted(load)
     <p v-if="error" class="err">{{ error }}</p>
     <p v-if="actionMsg" class="ok">{{ actionMsg }}</p>
     <p v-if="loading" class="muted">Loading…</p>
+
+    <section v-if="settings || canAdmin" class="card settings-card">
+      <h2>SBC admin API</h2>
+      <p class="hint">
+        Control calls this URL for fleet↔SBC (domains, DIDs, moves). Empty clears the DB override and
+        falls back to control <code>.env</code>.
+      </p>
+      <p v-if="settings" class="source">Source: {{ sourceHint() }}</p>
+      <form v-if="canAdmin" class="settings-form" @submit.prevent="saveSbcUrl">
+        <label>
+          Base URL
+          <input
+            v-model="sbcUrlDraft"
+            type="url"
+            placeholder="https://sbc.pbx3.com/api"
+            autocomplete="off"
+          />
+        </label>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary" :disabled="settingsBusy">
+            {{ settingsBusy ? 'Saving…' : 'Save URL' }}
+          </button>
+          <button
+            type="button"
+            class="btn"
+            :disabled="settingsBusy || settings?.sbc_admin_api_url_source !== 'db'"
+            @click="clearSbcUrlOverride"
+          >
+            Clear override
+          </button>
+        </div>
+      </form>
+      <p v-else-if="settings" class="mono">{{ settings.sbc_admin_api_url || '— unset —' }}</p>
+    </section>
+
+    <div v-if="canAdmin && !pairs.length" class="toolbar">
+      <button type="button" class="btn btn-primary" @click="showAddPair = !showAddPair">
+        {{ showAddPair ? 'Cancel' : 'Add HA pair' }}
+      </button>
+    </div>
+
+    <form
+      v-if="showAddPair && canAdmin && !pairs.length"
+      class="card register-box"
+      @submit.prevent="doCreatePair"
+    >
+      <h2>Add HA pair</h2>
+      <p class="hint">
+        Registers the pair in control SQLite for probe / promote. Does not provision EIP or instances.
+        Only one pair at a time.
+      </p>
+      <label>
+        Label
+        <input v-model="createForm.label" required placeholder="Live lab pair" autocomplete="off" />
+      </label>
+      <label>
+        Id (optional)
+        <input
+          v-model="createForm.id"
+          placeholder="auto from label"
+          pattern="[a-z0-9][a-z0-9_-]{1,63}"
+          autocomplete="off"
+        />
+      </label>
+      <label>
+        FQDN
+        <input v-model="createForm.fqdn" required placeholder="sbc.pbx3.com" autocomplete="off" />
+      </label>
+      <label>
+        EIP
+        <input v-model="createForm.eip" required placeholder="x.x.x.x" autocomplete="off" />
+      </label>
+      <label>
+        Allocation id
+        <input
+          v-model="createForm.allocation_id"
+          required
+          placeholder="eipalloc-…"
+          autocomplete="off"
+        />
+      </label>
+      <label>
+        Member A instance id
+        <input
+          v-model="createForm.member_a_instance_id"
+          required
+          placeholder="i-…"
+          autocomplete="off"
+        />
+      </label>
+      <label>
+        Member B instance id
+        <input
+          v-model="createForm.member_b_instance_id"
+          required
+          placeholder="i-…"
+          autocomplete="off"
+        />
+      </label>
+      <label>
+        Active member
+        <select v-model="createForm.active_member">
+          <option value="a">a</option>
+          <option value="b">b</option>
+        </select>
+      </label>
+      <label>
+        Mode
+        <select v-model="createForm.mode">
+          <option value="managed">Manual</option>
+          <option value="auto">Auto</option>
+        </select>
+      </label>
+      <label>
+        Region
+        <input v-model="createForm.region" placeholder="us-east-1" autocomplete="off" />
+      </label>
+      <button type="submit" class="btn btn-primary" :disabled="createBusy">
+        {{ createBusy ? 'Creating…' : 'Create pair' }}
+      </button>
+    </form>
 
     <div v-for="p in pairs" :key="p.id" class="card">
       <div class="card-top">
@@ -174,6 +420,14 @@ onMounted(load)
         >
           Promote now
         </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          :disabled="busyId === p.id"
+          @click="deletePair(p)"
+        >
+          Delete pair
+        </button>
       </div>
       <p v-else class="muted">Sign in as fleet_admin to change mode or promote.</p>
     </div>
@@ -211,6 +465,49 @@ h1 {
   padding: 1rem 1.1rem;
   margin-bottom: 1rem;
   background: #fff;
+}
+.settings-card h2,
+.register-box h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.hint {
+  margin: 0 0 0.5rem;
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.source {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+.settings-form,
+.register-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 28rem;
+}
+.settings-form label,
+.register-box label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+.settings-form input,
+.register-box input,
+.register-box select {
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+}
+.toolbar {
+  margin-bottom: 0.75rem;
 }
 .card-top {
   display: flex;
@@ -286,6 +583,11 @@ h1 {
   color: #fff;
   border-color: #1e3a5f;
 }
+.btn-danger {
+  background: #fff;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
 .badge {
   font-size: 0.75rem;
   font-weight: 600;
@@ -313,6 +615,11 @@ h1 {
 .muted {
   color: #94a3b8;
   font-size: 0.875rem;
+}
+.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.9rem;
+  margin: 0;
 }
 code {
   font-size: 0.85em;

@@ -367,6 +367,16 @@ export function getEdgePair(id) {
 }
 
 /**
+ * @param {Record<string, unknown>} body
+ */
+export function createEdgePair(body) {
+  return gkFetch('/api/v1/edge-pairs', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+/**
  * @param {string} id
  * @param {{ mode?: string, active_member?: string, enabled?: boolean, label?: string }} body
  */
@@ -377,10 +387,32 @@ export function patchEdgePair(id, body) {
   })
 }
 
+/** Remove pair from control registry (does not touch AWS). */
+export function deleteEdgePair(id) {
+  return gkFetch(`/api/v1/edge-pairs/${encodeURIComponent(id)}`, {
+    method: 'DELETE'
+  })
+}
+
 /** Managed “Promote now” — EIP to standby (fleet_admin). */
 export function promoteEdgePair(id) {
   return gkFetch(`/api/v1/edge-pairs/${encodeURIComponent(id)}/promote`, {
     method: 'POST',
     body: '{}'
+  })
+}
+
+/** Edge settings (SBC admin API URL). */
+export function getEdgeSettings() {
+  return gkFetch('/api/v1/edge-settings')
+}
+
+/**
+ * @param {{ sbc_admin_api_url?: string }} body — empty string clears DB override (env fallback)
+ */
+export function patchEdgeSettings(body) {
+  return gkFetch('/api/v1/edge-settings', {
+    method: 'PATCH',
+    body: JSON.stringify(body)
   })
 }
