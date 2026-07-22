@@ -402,6 +402,14 @@ export function promoteEdgePair(id) {
   })
 }
 
+/** Warm sync — active backup+upload → standby --db-only (fleet_admin). */
+export function warmSyncEdgePair(id) {
+  return gkFetch(`/api/v1/edge-pairs/${encodeURIComponent(id)}/warm-sync`, {
+    method: 'POST',
+    body: '{}'
+  })
+}
+
 /** Edge settings (SBC admin API URL). */
 export function getEdgeSettings() {
   return gkFetch('/api/v1/edge-settings')

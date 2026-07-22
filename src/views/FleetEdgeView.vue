@@ -9,6 +9,7 @@ import {
   listEdgePairs,
   patchEdgePair,
   promoteEdgePair,
+  warmSyncEdgePair,
   createEdgePair,
   deleteEdgePair,
   getEdgeSettings,
@@ -167,6 +168,42 @@ async function promoteNow(p) {
   }
 }
 
+async function syncNow(p) {
+  if (!canAdmin.value) return
+  if (
+    !confirm(
+      `Warm-sync ${p.label}?\nActive creates+uploads a backup; standby pulls it (--db-only). May restart OpenSIPS on standby.`
+    )
+  ) {
+    return
+  }
+  busyId.value = p.id
+  actionMsg.value = ''
+  error.value = ''
+  try {
+    const data = await warmSyncEdgePair(p.id)
+    const stamp = data?.result?.backup_stamp || data?.pair?.last_warm_sync_stamp || '?'
+    actionMsg.value = `Warm sync OK for ${p.label} (stamp ${stamp}).`
+    await load()
+  } catch (e) {
+    error.value = e?.message || 'Warm sync failed'
+    await load()
+  } finally {
+    busyId.value = ''
+  }
+}
+
+function warmSyncAge(p) {
+  if (p.last_warm_sync_error) {
+    return `Error: ${p.last_warm_sync_error}`
+  }
+  if (!p.last_warm_sync_at) {
+    return 'Never synced'
+  }
+  const stamp = p.last_warm_sync_stamp ? ` · ${p.last_warm_sync_stamp}` : ''
+  return `${p.last_warm_sync_at}${stamp}`
+}
+
 async function deletePair(p) {
   if (!canAdmin.value) return
   if (
@@ -244,6 +281,7 @@ onMounted(load)
           One active–passive SBC pair. Probe = SIP OPTIONS on the VIP.
           <strong>Manual</strong> = alert only (human moves EIP).
           <strong>Auto</strong> = control may move EIP when enabled on control.
+          <strong>Sync now</strong> = warm standby (S3 dump → DB-only on standby); daily backstop on control.
           To replace the pair: Delete, then Add. Control-down: AWS Console EIP → warm standby.
         </p>
       </div>
@@ -394,6 +432,10 @@ onMounted(load)
         <div v-if="p.health?.last_ok_at">
           <dt>Last OK</dt><dd>{{ p.health.last_ok_at }}</dd>
         </div>
+        <div>
+          <dt>Last warm sync</dt>
+          <dd :class="p.last_warm_sync_error ? 'sync-err' : ''">{{ warmSyncAge(p) }}</dd>
+        </div>
       </dl>
       <div v-if="canAdmin" class="actions">
         <button
@@ -414,6 +456,14 @@ onMounted(load)
         </button>
         <button
           type="button"
+          class="btn"
+          :disabled="busyId === p.id"
+          @click="syncNow(p)"
+        >
+          Sync now
+        </button>
+        <button
+          type="button"
           class="btn btn-primary"
           :disabled="busyId === p.id"
           @click="promoteNow(p)"
@@ -429,7 +479,7 @@ onMounted(load)
           Delete pair
         </button>
       </div>
-      <p v-else class="muted">Sign in as fleet_admin to change mode or promote.</p>
+      <p v-else class="muted">Sign in as fleet_admin to change mode, sync, or promote.</p>
     </div>
 
     <p v-if="!loading && !pairs.length && !error" class="muted">No edge pairs registered.</p>
@@ -560,6 +610,11 @@ h1 {
 .meta dd {
   margin: 0.1rem 0 0;
   font-size: 0.9rem;
+}
+.sync-err {
+  color: #b91c1c;
+  font-size: 0.8rem;
+  word-break: break-word;
 }
 .actions {
   display: flex;
