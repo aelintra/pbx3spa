@@ -28,7 +28,30 @@ const loading = ref(false)
 const error = ref('')
 const actionMsg = ref('')
 const busyId = ref('')
+/** 'sync' | 'promote' | 'delete' | 'mode' | '' — which action owns busyId */
+const busyAction = ref('')
+const syncStartedAt = ref(0)
+const syncElapsedSec = ref(0)
+let syncTickTimer = null
 const canAdmin = computed(() => canFleet(FLEET_ABILITY.ADMIN))
+
+function clearSyncTick() {
+  if (syncTickTimer != null) {
+    clearInterval(syncTickTimer)
+    syncTickTimer = null
+  }
+  syncStartedAt.value = 0
+  syncElapsedSec.value = 0
+}
+
+function startSyncTick() {
+  clearSyncTick()
+  syncStartedAt.value = Date.now()
+  syncElapsedSec.value = 0
+  syncTickTimer = setInterval(() => {
+    syncElapsedSec.value = Math.floor((Date.now() - syncStartedAt.value) / 1000)
+  }, 250)
+}
 
 const settings = ref(null)
 const sbcUrlDraft = ref('')
@@ -132,6 +155,7 @@ async function clearSbcUrlOverride() {
 async function setMode(p, mode) {
   if (!canAdmin.value) return
   busyId.value = p.id
+  busyAction.value = 'mode'
   actionMsg.value = ''
   error.value = ''
   try {
@@ -142,6 +166,7 @@ async function setMode(p, mode) {
     error.value = e?.message || 'Patch failed'
   } finally {
     busyId.value = ''
+    busyAction.value = ''
   }
 }
 
@@ -155,6 +180,7 @@ async function promoteNow(p) {
     return
   }
   busyId.value = p.id
+  busyAction.value = 'promote'
   actionMsg.value = ''
   error.value = ''
   try {
@@ -165,6 +191,7 @@ async function promoteNow(p) {
     error.value = e?.message || 'Promote failed'
   } finally {
     busyId.value = ''
+    busyAction.value = ''
   }
 }
 
@@ -172,28 +199,35 @@ async function syncNow(p) {
   if (!canAdmin.value) return
   if (
     !confirm(
-      `Warm-sync ${p.label}?\nActive creates+uploads a backup; standby pulls it (--db-only). May restart OpenSIPS on standby.`
+      `Warm-sync ${p.label}?\nActive creates+uploads a backup; standby pulls it (--db-only). May restart OpenSIPS on standby.\n\nThis often takes 1–3 minutes — leave this tab open.`
     )
   ) {
     return
   }
   busyId.value = p.id
+  busyAction.value = 'sync'
   actionMsg.value = ''
   error.value = ''
+  startSyncTick()
   try {
     const data = await warmSyncEdgePair(p.id)
     const stamp = data?.result?.backup_stamp || data?.pair?.last_warm_sync_stamp || '?'
-    actionMsg.value = `Warm sync OK for ${p.label} (stamp ${stamp}).`
+    actionMsg.value = `Warm sync OK for ${p.label} (stamp ${stamp}, ${syncElapsedSec.value}s).`
     await load()
   } catch (e) {
     error.value = e?.message || 'Warm sync failed'
     await load()
   } finally {
+    clearSyncTick()
     busyId.value = ''
+    busyAction.value = ''
   }
 }
 
 function warmSyncAge(p) {
+  if (busyAction.value === 'sync' && busyId.value === p.id) {
+    return `Syncing… ${syncElapsedSec.value}s (backup → S3 → standby)`
+  }
   if (p.last_warm_sync_error) {
     return `Error: ${p.last_warm_sync_error}`
   }
@@ -214,6 +248,7 @@ async function deletePair(p) {
     return
   }
   busyId.value = p.id
+  busyAction.value = 'delete'
   actionMsg.value = ''
   error.value = ''
   try {
@@ -224,6 +259,7 @@ async function deletePair(p) {
     error.value = e?.message || 'Delete failed'
   } finally {
     busyId.value = ''
+    busyAction.value = ''
   }
 }
 
@@ -290,6 +326,11 @@ onMounted(load)
 
     <p v-if="error" class="err">{{ error }}</p>
     <p v-if="actionMsg" class="ok">{{ actionMsg }}</p>
+    <p v-if="busyAction === 'sync'" class="sync-progress" role="status" aria-live="polite">
+      <span class="spinner" aria-hidden="true" />
+      Warm sync in progress… {{ syncElapsedSec }}s
+      <span class="muted-inline">— active backup → S3 → standby DB. Often 1–3 minutes.</span>
+    </p>
     <p v-if="loading" class="muted">Loading…</p>
 
     <section v-if="settings || canAdmin" class="card settings-card">
@@ -434,7 +475,19 @@ onMounted(load)
         </div>
         <div>
           <dt>Last warm sync</dt>
-          <dd :class="p.last_warm_sync_error ? 'sync-err' : ''">{{ warmSyncAge(p) }}</dd>
+          <dd
+            :class="{
+              'sync-err': p.last_warm_sync_error && !(busyAction === 'sync' && busyId === p.id),
+              'sync-live': busyAction === 'sync' && busyId === p.id
+            }"
+          >
+            <span
+              v-if="busyAction === 'sync' && busyId === p.id"
+              class="spinner spinner-inline"
+              aria-hidden="true"
+            />
+            {{ warmSyncAge(p) }}
+          </dd>
         </div>
       </dl>
       <div v-if="canAdmin" class="actions">
@@ -458,9 +511,19 @@ onMounted(load)
           type="button"
           class="btn"
           :disabled="busyId === p.id"
+          :aria-busy="busyAction === 'sync' && busyId === p.id"
           @click="syncNow(p)"
         >
-          Sync now
+          <span
+            v-if="busyAction === 'sync' && busyId === p.id"
+            class="spinner spinner-inline"
+            aria-hidden="true"
+          />
+          {{
+            busyAction === 'sync' && busyId === p.id
+              ? `Syncing… ${syncElapsedSec}s`
+              : 'Sync now'
+          }}
         </button>
         <button
           type="button"
@@ -615,6 +678,51 @@ h1 {
   color: #b91c1c;
   font-size: 0.8rem;
   word-break: break-word;
+}
+.sync-live {
+  color: #1e3a8a;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.sync-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  border-radius: 0.375rem;
+  color: #1e3a8a;
+  font-size: 0.9rem;
+}
+.muted-inline {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #93c5fd;
+  border-top-color: #1e3a8a;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+.spinner-inline {
+  width: 0.85rem;
+  height: 0.85rem;
+  display: inline-block;
+  vertical-align: -0.1rem;
+  margin-right: 0.25rem;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .actions {
   display: flex;
