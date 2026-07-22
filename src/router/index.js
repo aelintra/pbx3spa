@@ -77,6 +77,7 @@ import DashboardView from '../views/DashboardView.vue'
 import NoAccessView from '../views/NoAccessView.vue'
 import UsersListView from '../views/UsersListView.vue'
 import UserCreateView from '../views/UserCreateView.vue'
+import AccountPasswordView from '../views/AccountPasswordView.vue'
 import { getApiClient } from '@/api/client'
 
 /** Routes that require neither login nor admin. Add e.g. '/register' here when adding self-service sign-up. */
@@ -96,6 +97,7 @@ const router = createRouter({
       children: [
         { path: '', name: 'dashboard', component: DashboardView },
         { path: 'no-access', name: 'no-access', component: NoAccessView },
+        { path: 'account/password', name: 'account-password', component: AccountPasswordView },
         { path: 'tenants', name: 'tenants', component: TenantsListView },
         { path: 'tenants/new', name: 'tenant-create', component: TenantCreateView },
         { path: 'tenants/:pkey', name: 'tenant-detail', component: TenantDetailView },
@@ -263,8 +265,33 @@ router.beforeEach(async (to, from) => {
     }
   }
 
-  if (!auth.can('admin')) {
+  if (!auth.canAccessPanels) {
     return { name: 'no-access' }
+  }
+
+  const path = to.path.replace(/\/$/, '') || '/'
+  const adminOnlyPrefixes = [
+    '/tenants',
+    '/trunks',
+    '/routes',
+    '/asterisk-files',
+    '/backup',
+    '/snapshots',
+    '/certificates',
+    '/customapps',
+    '/devices',
+    '/firewall',
+    '/help-messages',
+    '/sysglobals',
+    '/logs',
+    '/ip-settings',
+    '/users'
+  ]
+  if (adminOnlyPrefixes.some((p) => path === p || path.startsWith(p + '/'))) {
+    if (!auth.isAdmin) return { name: 'no-access' }
+  }
+  if (path === '/recordings' || path.startsWith('/recordings/')) {
+    if (!auth.canRecordings) return { name: 'no-access' }
   }
 
   if (fleetMode.isFleetMode) {

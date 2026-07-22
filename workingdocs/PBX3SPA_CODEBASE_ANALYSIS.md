@@ -196,7 +196,9 @@ Work through in order unless you skip an entire phase. **Phase F** is **on hold*
 
 ### Phase F — Granular permissions (cross-repo) — **deferred**
 
-**Do not start until** the **wider permissions upgrade** is scheduled; **pbx3api** and **pbx3spa** should move together (abilities, `whoami`, middleware, router, nav).
+**Product HoR:** **`INSTANCE_USER_PRIVILEGES_REQUIREMENTS.md`** (P0 framing done; build P1–P3 when prioritized).
+
+**Do not start until** scheduled; **pbx3api** and **pbx3spa** should move together (`admin` / `tenant` / `recordings`, `allowed_clusters`, middleware, router, nav).
 
 1. Read **PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** and **ADMIN_PANELS_AND_PERMISSIONS.md** in `pbx3spa/workingdocs/`.
 2. **pbx3api:** Add or confirm abilities in `config/abilities.php`, middleware on route groups, and `whoami` payload.

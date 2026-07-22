@@ -58,10 +58,11 @@
 
 ## Phase 1 — Expand later (not now)
 
-- Add more abilities to `config/abilities.php` and to user/token assignment (seed/migration or manual).
-- Split API route groups: e.g. admin routes require `admin` or `view_trunk`/`edit_trunk`, tenant routes require `admin` or `view_extension`/`edit_extension`, etc.
-- SPA: use `can('view_trunk')` etc. to show/hide nav items and buttons; add route meta `{ requiresAbility: 'view_trunk' }` and guard by it.
-- Optionally group sidebar into “System” and “Tenant” and gate by area.
+**Product HoR:** **`INSTANCE_USER_PRIVILEGES_REQUIREMENTS.md`** (P0 framing → P1–P3 build). Summary:
+
+- First-out abilities: `admin`, `tenant`, `recordings` (+ headroom); `allowed_clusters`; context switcher for multi-cluster.
+- Tenant nav: Endpoints, Inbound, ACD (recordings gated), Schedules & policy; Commit with `tenant`; no Trunks/Routes/System.
+- API + SPA together; self-service change-own-password; token re-issue on ability change.
 
 ---
 

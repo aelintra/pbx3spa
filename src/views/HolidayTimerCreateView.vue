@@ -7,6 +7,7 @@ import { useToastStore } from '@/stores/toast'
 import { useFormValidation } from '@/composables/useFormValidation'
 import { validateTenant } from '@/utils/validation'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
@@ -40,8 +41,7 @@ const tenantOptionsForSelect = computed(() => {
 async function loadTenants() {
   tenantsLoading.value = true
   try {
-    const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response, 'tenants')
+    tenants.value = await loadTenantOptions()
     if (tenants.value.length && !cluster.value) {
       const first = tenants.value.find((t) => t.pkey === 'default')?.pkey ?? tenants.value[0]?.pkey
       if (first) cluster.value = first

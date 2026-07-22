@@ -169,7 +169,7 @@ onMounted(() => {
       </template>
     </h1>
 
-    <section class="actions-section">
+    <section v-if="auth.isAdmin" class="actions-section">
       <h2 class="detail-heading">Actions</h2>
       <p v-if="actionMessage" class="message">{{ actionMessage }}</p>
       <p v-if="actionError" class="error">{{ actionError }}</p>
@@ -189,6 +189,7 @@ onMounted(() => {
     </section>
 
     <ConfirmModal
+      v-if="auth.isAdmin"
       :show="actionConfirmShow"
       :title="actionConfirmTitle"
       :body-text="actionConfirmBody"

@@ -5,6 +5,7 @@ import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
@@ -127,8 +128,7 @@ async function loadDestinations() {
 
 async function fetchTenants() {
   try {
-    const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response, 'tenants')
+    tenants.value = await loadTenantOptions()
   } catch {
     tenants.value = []
   }

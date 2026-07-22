@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
@@ -138,9 +139,7 @@ async function loadAgents() {
 
     // Load tenants separately - don't block on this
     try {
-      const tenantsRes = await getApiClient().get('tenants')
-      const tenantsList = normalizeList(tenantsRes, 'tenants')
-      tenants.value = tenantsList
+      tenants.value = await loadTenantOptions()
     } catch {
       // If tenants fail, continue - agents list can still work
       tenants.value = []

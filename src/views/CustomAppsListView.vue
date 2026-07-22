@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import ListActiveChip from '@/components/ListActiveChip.vue'
@@ -122,10 +123,10 @@ async function loadApps() {
   try {
     const [appsRes, tenantsRes] = await Promise.all([
       getApiClient().get('customapps'),
-      getApiClient().get('tenants')
+      loadTenantOptions()
     ])
     apps.value = normalizeList(appsRes, 'customapps')
-    tenants.value = normalizeList(tenantsRes, 'tenants')
+    tenants.value = tenantsRes
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load custom apps')
     apps.value = []

@@ -7,6 +7,7 @@ import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateQueuePkey, validateTenant } from '@/utils/validation'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { buildGreetnumSelectOptions, filterGreetingsForTenant } from '@/utils/greetingSelectOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
@@ -121,8 +122,7 @@ async function loadGreetingRecords() {
 async function loadTenants() {
   tenantsLoading.value = true
   try {
-    const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response, 'tenants')
+    tenants.value = await loadTenantOptions()
     if (tenants.value.length && !cluster.value) {
       const first = tenants.value.find((t) => t.pkey === 'default')?.pkey ?? tenants.value[0]?.pkey
       if (first) cluster.value = first

@@ -6,6 +6,10 @@ const auth = useAuthStore()
 
 const show = computed(() => auth.isLoggedIn && Boolean(auth.displayInstanceLabel?.trim()))
 
+const showSwitcher = computed(
+  () => !auth.isAdmin && auth.allowedClusterDetails.length > 1
+)
+
 const tenantSecondary = computed(() => {
   const t = auth.tenantContext
   if (!t) return ''
@@ -14,6 +18,25 @@ const tenantSecondary = computed(() => {
   const pk = (t.pkey ?? '').trim()
   if (pk && pk !== main) return pk
   return ''
+})
+
+function onSwitchTenant(e) {
+  const id = e.target.value
+  const detail = auth.allowedClusterDetails.find(
+    (d) => String(d.shortuid) === id || String(d.pkey) === id
+  )
+  if (!detail) return
+  auth.setTenantContext(detail.pkey || detail.shortuid, detail.label || detail.pkey || detail.shortuid)
+}
+
+const switcherValue = computed(() => {
+  const t = auth.tenantContext
+  if (!t) return ''
+  const pk = String(t.pkey || '')
+  const match = auth.allowedClusterDetails.find(
+    (d) => String(d.pkey) === pk || String(d.shortuid) === pk
+  )
+  return match ? String(match.shortuid || match.pkey) : pk
 })
 </script>
 
@@ -31,8 +54,21 @@ const tenantSecondary = computed(() => {
         </template>
       </span>
     </span>
+    <label v-if="showSwitcher" class="context-chip context-chip--tenant context-chip--switch">
+      <span class="context-chip-k">Tenant</span>
+      <select class="tenant-switch" :value="switcherValue" @change="onSwitchTenant">
+        <option v-if="!switcherValue" value="" disabled>Select tenant…</option>
+        <option
+          v-for="c in auth.allowedClusterDetails"
+          :key="c.shortuid || c.pkey"
+          :value="c.shortuid || c.pkey"
+        >
+          {{ c.label || c.pkey || c.shortuid }}
+        </option>
+      </select>
+    </label>
     <span
-      v-if="auth.tenantContext"
+      v-else-if="auth.tenantContext"
       class="context-chip context-chip--tenant"
       :title="tenantSecondary ? `Tenant: ${tenantSecondary}` : 'Tenant in focus'"
     >
@@ -70,6 +106,19 @@ const tenantSecondary = computed(() => {
 
 .context-chip--tenant {
   background: var(--pbx-canvas, #f8fafc);
+}
+
+.context-chip--switch {
+  align-items: center;
+}
+
+.tenant-switch {
+  max-width: 12rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: inherit;
 }
 
 .context-chip-k {

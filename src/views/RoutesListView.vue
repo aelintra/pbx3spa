@@ -4,6 +4,7 @@ import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
@@ -184,11 +185,11 @@ async function loadRoutes() {
   try {
     const [routeResponse, tenantResponse] = await Promise.all([
       getApiClient().get('routes'),
-      getApiClient().get('tenants'),
+      loadTenantOptions(),
       loadFleetPosture({ force: true })
     ])
     routes.value = normalizeList(routeResponse, 'routes')
-    tenants.value = normalizeList(tenantResponse, 'tenants')
+    tenants.value = tenantResponse
   } catch (err) {
     error.value = err.data?.message || err.message || 'Failed to load routes'
   } finally {

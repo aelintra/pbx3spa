@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
@@ -212,10 +213,10 @@ async function loadTrunks() {
   try {
     const [trunkResponse, tenantResponse] = await Promise.all([
       getApiClient().get('trunks'),
-      getApiClient().get('tenants')
+      loadTenantOptions()
     ])
     trunks.value = normalizeList(trunkResponse, 'trunks')
-    tenants.value = normalizeList(tenantResponse, 'tenants')
+    tenants.value = tenantResponse
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load trunks')
     liveData.value = {}

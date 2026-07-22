@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
@@ -124,7 +125,7 @@ async function loadDaytimers() {
   try {
     const [dtRes, tRes] = await Promise.all([
       getApiClient().get('daytimers'),
-      getApiClient().get('tenants')
+      loadTenantOptions()
     ])
     daytimers.value = normalizeList(dtRes, 'daytimers') || normalizeList(dtRes)
     tenants.value = normalizeList(tRes, 'tenants')

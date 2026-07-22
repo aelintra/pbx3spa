@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import ListActiveChip from '@/components/ListActiveChip.vue'
@@ -132,10 +133,10 @@ async function loadConferences() {
   try {
     const [confRes, tenantsRes] = await Promise.all([
       getApiClient().get('conferences'),
-      getApiClient().get('tenants')
+      loadTenantOptions()
     ])
     conferences.value = normalizeList(confRes, 'conferences') || normalizeList(confRes)
-    tenants.value = normalizeList(tenantsRes, 'tenants')
+    tenants.value = tenantsRes
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load conferences')
   } finally {

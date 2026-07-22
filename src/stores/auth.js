@@ -55,7 +55,49 @@ export const useAuthStore = defineStore('auth', {
     },
     can(state) {
       const abilities = state.user?.abilities ?? []
-      return (ability) => abilities.includes(ability)
+      return (ability) => {
+        if (abilities.includes('admin')) return true
+        return abilities.includes(ability)
+      }
+    },
+    /** Instance MSP / full box access. */
+    isAdmin(state) {
+      return (state.user?.abilities ?? []).includes('admin')
+    },
+    /** Can use tenant panel surface (admin implies true). */
+    canTenantPanels(state) {
+      const a = state.user?.abilities ?? []
+      return a.includes('admin') || a.includes('tenant')
+    },
+    canRecordings(state) {
+      const a = state.user?.abilities ?? []
+      return a.includes('admin') || a.includes('recordings')
+    },
+    /** Any panel access (admin or tenant). Recordings-only is not enough for general panels. */
+    canAccessPanels(state) {
+      const a = state.user?.abilities ?? []
+      return a.includes('admin') || a.includes('tenant')
+    },
+    /** Cluster shortuids/pkeys the user may work on (empty = admin / all). */
+    allowedClusters(state) {
+      if ((state.user?.abilities ?? []).includes('admin')) return []
+      const raw = state.user?.allowed_clusters
+      return Array.isArray(raw) ? raw.map((c) => String(c)).filter(Boolean) : []
+    },
+    allowedClusterDetails(state) {
+      const details = state.user?.clusters ?? state.user?.allowed_cluster_details
+      if (Array.isArray(details) && details.length) {
+        return details.map((d) => ({
+          shortuid: String(d.shortuid ?? d.pkey ?? ''),
+          pkey: String(d.pkey ?? d.shortuid ?? ''),
+          label: String(d.label ?? d.pkey ?? d.shortuid ?? '')
+        }))
+      }
+      return (state.user?.allowed_clusters ?? []).map((id) => ({
+        shortuid: String(id),
+        pkey: String(id),
+        label: String(id)
+      }))
     },
     /** Top bar instance line: globals FQDN first, then whoami, then API host from base URL. */
     displayInstanceLabel(state) {
@@ -95,6 +137,27 @@ export const useAuthStore = defineStore('auth', {
 
     setUser(user) {
       this.user = user
+      // Single-cluster tenant users: lock context; multi: keep stored if still allowed
+      const a = user?.abilities ?? []
+      if (a.includes('admin')) return
+      const clusters = Array.isArray(user?.allowed_clusters)
+        ? user.allowed_clusters.map((c) => String(c)).filter(Boolean)
+        : []
+      if (clusters.length === 1) {
+        const id = clusters[0]
+        const detail = (user?.clusters || user?.allowed_cluster_details || []).find(
+          (d) => String(d.shortuid) === id || String(d.pkey) === id
+        )
+        this.setTenantContext(detail?.pkey || id, detail?.label || detail?.pkey || id)
+      } else if (clusters.length > 1 && this.tenantContext?.pkey) {
+        const pk = this.tenantContext.pkey
+        const still =
+          clusters.includes(pk) ||
+          (user?.clusters || user?.allowed_cluster_details || []).some(
+            (d) => String(d.pkey) === pk || String(d.shortuid) === pk
+          )
+        if (!still) this.clearTenantContext()
+      }
     },
 
     /** @param {import('@/utils/instanceCatalog').InstanceRecord | null} instance */

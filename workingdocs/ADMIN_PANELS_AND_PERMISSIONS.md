@@ -1,25 +1,26 @@
 # Admin panels and permissions — pattern to adopt
 
-**Purpose:** Single reference for how admin-style panels and user permissions fit the existing panel pattern. Defines the model so we can add enforcement gradually without blocking panel work.
+**Purpose:** Mechanics for area layout, abilities, and row-level cluster scope.  
+**Product HoR (first-out locks):** **`INSTANCE_USER_PRIVILEGES_REQUIREMENTS.md`** (P0 framing, 2026-07-22) — `admin` / `tenant` / `recordings`, tenant nav matrix, no trunks/routes/System for customers, Commit with `tenant`, CoS tenant-scoped, etc. Prefer that doc when deciding *what* to allow; use this file for *how* panels and APIs enforce it.
 
 ---
 
 ## 1. Area-based layout (admin vs tenant)
 
-- **Admin / system area:** e.g. `/admin` or a distinct nav section — Trunks, Tenants, system config, future User/role management. Intended for **system admins** (MSP, instance owner). Resources here are instance-owned or system-wide (see TRUNK_ROUTE_MULTITENANCY).
-- **Tenant / operational area:** Extensions, Routes, Queues, Agents, IVRs, Inbound routes (DIDs). Used by **tenant admins** and optionally system admins. Resources are tenant-scoped (cluster).
-- **Pattern:** Separate route groups (and nav sections) for “Admin” vs “Tenant”. Access control is per area: “can access admin” vs “can access tenant panels”. New panels are placed in one area and wired to the right ability.
+- **Admin / system area:** Trunks, Routes, Tenants list, System nav (Backup, Globals, Devices/provisioning templates, Users, …). **Instance `admin` only** (see privileges requirements).
+- **Tenant / operational area:** Endpoints, Inbound (DID routes), ACD (queues/IVRs/agents/CDR; recordings gated), Schedules & policy (timers + CoS). Used by **`tenant`** (scoped) and `admin`.
+- **Pattern:** Separate route groups (and nav sections). New panels are placed in one area and wired to the right ability.
+- **Not tenant UI:** Outbound **Routes** and **Trunks** — even if route rows are tenant-owned for export (**`TRUNK_ROUTE_MULTITENANCY.md`**).
 
 ---
 
 ## 2. Permission model: abilities (and optional roles)
 
-- **Abilities** are the main mechanism: e.g. `view_trunk`, `edit_trunk`, `manage_trunk_tenant`, `view_extension`, `edit_extension`, `view_routes`, etc. Stored on the user (e.g. in token or from whoami) and checked on every relevant request.
-- **Roles** (e.g. `system_admin`, `tenant_admin`) are optional and map to a set of abilities. API and SPA can work with abilities only; roles simplify assignment.
-- **API:** Middleware or policy checks ability for the route (e.g. `ability:edit_trunk`). Returns 403 if the user’s token/abilities don’t include it.
-- **SPA:** Store abilities (and optionally role) from login/whoami. Composable or guard, e.g. `can('edit_trunk')`. Use `v-if="can('edit_trunk')"` on nav items and buttons; route guard redirects if user lacks ability for that area or resource.
-
-Fits existing Sanctum/abilities usage in pbx3api; “layered permissions” (e.g. who can modify trunk tenant) are additional abilities granted to some users later.
+- **Abilities** are the main mechanism. **First-out set:** `admin`, `tenant`, `recordings` — see **`INSTANCE_USER_PRIVILEGES_REQUIREMENTS.md`**. Leave headroom in `config/abilities.php` for later skills.
+- **Do not** start with a large `view_*` / `edit_*` matrix; add named abilities when a real split appears.
+- **Roles** (optional later) map to a set of abilities — presets only; API/SPA work with abilities.
+- **API:** Middleware checks ability for the route group; **plus** cluster scope for non-admin.
+- **SPA:** `can(ability)` from whoami; nav + route guards; multi-cluster **context switcher** when `allowed_clusters.length > 1`.
 
 ---
 
@@ -60,21 +61,13 @@ When adding a new panel, wire it to the chosen ability (e.g. “this route requi
 
 ## 6. Example ability set (starter)
 
-| Ability | Scope | Notes |
-|--------|--------|-------|
-| `view_trunk`, `edit_trunk` | Admin | Trunk list/detail/create/update/delete. |
-| `manage_trunk_tenant` | Admin | Allow changing trunk cluster (later phase; not in first cut). |
-| `view_extension`, `edit_extension` | Tenant | Extensions. |
-| `view_routes`, `edit_routes` | Tenant | Outbound routes. |
-| … | … | Same pattern for queues, agents, IVRs, inroutes (DIDs), tenants. |
-| `admin` | Admin | Full system access; can imply all other abilities. |
-
-Roles (optional): e.g. `system_admin` → all abilities; `tenant_admin` → tenant-scoped view/edit only for extensions, routes, IVRs, DIDs, etc.
+**Superseded for product intent** by **`INSTANCE_USER_PRIVILEGES_REQUIREMENTS.md`** first-out table (`admin` / `tenant` / `recordings`). Historical sketch of fine-grained `view_trunk` / `edit_extension` / … retained only as optional future headroom — not first-out.
 
 ---
 
 ## 7. References
 
+- **INSTANCE_USER_PRIVILEGES_REQUIREMENTS.md** — Product HoR (first-out abilities, nav matrix, phases).
 - **AUTH_PATTERNS.md** — Auth contract and rules for agents (2FA, self-service, centralized auth); follow when touching login, tokens, whoami, or guards.
 - **PANEL_PATTERN.md** — List/detail/create structure; no change.
 - **TRUNK_ROUTE_MULTITENANCY.md** — Trunks = system/admin; DIDs = tenant. Aligns with admin vs tenant area.

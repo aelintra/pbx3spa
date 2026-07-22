@@ -10,6 +10,7 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { OPTION_ENTRIES, buildIvrPayload } from '@/constants/ivrDestinations'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import PanelBackLink from '@/components/PanelBackLink.vue'
@@ -145,8 +146,7 @@ async function loadDestinations() {
 async function loadTenants() {
   tenantsLoading.value = true
   try {
-    const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response, 'tenants')
+    tenants.value = await loadTenantOptions()
     if (tenants.value.length && !cluster.value) {
       const first = tenants.value.find((t) => t.pkey === 'default')?.pkey ?? tenants.value[0]?.pkey
       if (first) cluster.value = first

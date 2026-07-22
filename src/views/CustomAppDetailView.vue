@@ -6,6 +6,7 @@ import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
@@ -90,8 +91,7 @@ function parseIntOrNull(v) {
 async function loadTenants() {
   tenantsLoading.value = true
   try {
-    const res = await getApiClient().get('tenants')
-    tenants.value = normalizeList(res, 'tenants')
+    tenants.value = await loadTenantOptions()
   } catch {
     tenants.value = []
   } finally {

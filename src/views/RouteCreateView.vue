@@ -7,6 +7,7 @@ import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateRoutePkey, validateTenant, validateDialplan } from '@/utils/validation'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
@@ -86,8 +87,7 @@ const pathOptions = computed(() => ['None', ...trunkPkeys.value])
 async function loadTenants() {
   tenantsLoading.value = true
   try {
-    const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response, 'tenants')
+    tenants.value = await loadTenantOptions()
   } catch {
     tenants.value = []
   } finally {

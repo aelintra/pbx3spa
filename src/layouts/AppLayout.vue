@@ -32,7 +32,7 @@ const COMMIT_HIDDEN_PATH_PREFIXES = [
 ]
 
 const showCommitButton = computed(() => {
-  if (!auth.can('admin')) return false
+  if (!auth.canTenantPanels) return false
   const path = route.path.replace(/\/$/, '') || '/'
   return !COMMIT_HIDDEN_PATH_PREFIXES.some(
     (prefix) => path === prefix || path.startsWith(prefix + '/')
@@ -40,80 +40,102 @@ const showCommitButton = computed(() => {
 })
 
 const navGroups = computed(() => {
-  const groups = [
-  {
-    id: 'tenancy',
-    heading: 'Tenancy',
-    icon: 'building2',
-    links: [{ to: '/tenants', label: 'Tenants', icon: 'building2' }]
-  },
-  {
-    id: 'endpoints',
-    heading: 'Endpoints',
-    icon: 'phone',
-    links: [
-      { to: '/extensions', label: 'Extensions', icon: 'phone' },
-      { to: '/conferences', label: 'Conferences', icon: 'users' }
-    ]
-  },
-  {
-    id: 'inbound',
-    heading: 'Inbound',
-    icon: 'phone-incoming',
-    links: [{ to: '/inbound-routes', label: 'DID routes', icon: 'phone-incoming' }]
-  },
-  {
-    id: 'outbound',
-    heading: 'Outbound',
-    icon: 'link',
-    links: [
-      { to: '/trunks', label: 'Trunks', icon: 'link' },
-      { to: '/routes', label: 'Routes', icon: 'route' }
-    ]
-  },
-  {
-    id: 'acd',
-    heading: 'ACD',
-    icon: 'list-ordered',
-    links: [
+  const isAdmin = auth.isAdmin
+  const canTenant = auth.canTenantPanels
+  const canRec = auth.canRecordings
+
+  const groups = []
+
+  if (isAdmin) {
+    groups.push({
+      id: 'tenancy',
+      heading: 'Tenancy',
+      icon: 'building2',
+      links: [{ to: '/tenants', label: 'Tenants', icon: 'building2' }]
+    })
+  }
+
+  if (canTenant) {
+    groups.push({
+      id: 'endpoints',
+      heading: 'Endpoints',
+      icon: 'phone',
+      links: [
+        { to: '/extensions', label: 'Extensions', icon: 'phone' },
+        { to: '/conferences', label: 'Conferences', icon: 'users' }
+      ]
+    })
+    groups.push({
+      id: 'inbound',
+      heading: 'Inbound',
+      icon: 'phone-incoming',
+      links: [{ to: '/inbound-routes', label: 'DID routes', icon: 'phone-incoming' }]
+    })
+  }
+
+  if (isAdmin) {
+    groups.push({
+      id: 'outbound',
+      heading: 'Outbound',
+      icon: 'link',
+      links: [
+        { to: '/trunks', label: 'Trunks', icon: 'link' },
+        { to: '/routes', label: 'Routes', icon: 'route' }
+      ]
+    })
+  }
+
+  if (canTenant) {
+    const acdLinks = [
       { to: '/queues', label: 'Queues / Ring groups', icon: 'list-ordered' },
       { to: '/ivrs', label: 'IVRs', icon: 'git-branch' },
       { to: '/greetings', label: 'Greetings', icon: 'volume2' },
       { to: '/agents', label: 'Agents', icon: 'headset' },
-      { to: '/recordings', label: 'Recordings', icon: 'mic' },
       { to: '/cdr', label: 'CDR', icon: 'scroll-text' }
     ]
-  },
-  {
-    id: 'schedules',
-    heading: 'Schedules & policy',
-    icon: 'clock',
-    links: [
-      { to: '/daytimers', label: 'Day timers', icon: 'clock' },
-      { to: '/holidaytimers', label: 'Holiday timers', icon: 'calendar' },
-      { to: '/cosrules', label: 'Class of Service', icon: 'shield' }
-    ]
-  },
-  {
-    id: 'system',
-    heading: 'System',
-    icon: 'layers',
-    links: [
-      { to: '/asterisk-files', label: 'Asterisk Files', icon: 'file-code' },
-      { to: '/backup', label: 'Backup', icon: 'database' },
-      { to: '/snapshots', label: 'Snapshots', icon: 'layers' },
-      { to: '/certificates', label: 'Certificates', icon: 'lock' },
-      { to: '/customapps', label: 'Custom Apps', icon: 'package' },
-      { to: '/devices', label: 'Devices', icon: 'smartphone' },
-      { to: '/firewall', label: 'Firewall', icon: 'shield-alert' },
-      { to: '/help-messages', label: 'Help messages', icon: 'help-circle' },
-      { to: '/sysglobals', label: 'Instance Globals', icon: 'sliders' },
-      { to: '/logs', label: 'Logs', icon: 'scroll-text' },
-      { to: '/ip-settings', label: 'Network', icon: 'wifi' },
-      { to: '/users', label: 'Users', icon: 'user-cog' }
-    ]
+    if (canRec) {
+      acdLinks.splice(4, 0, { to: '/recordings', label: 'Recordings', icon: 'mic' })
+    }
+    groups.push({
+      id: 'acd',
+      heading: 'ACD',
+      icon: 'list-ordered',
+      links: acdLinks
+    })
+    groups.push({
+      id: 'schedules',
+      heading: 'Schedules & policy',
+      icon: 'clock',
+      links: [
+        { to: '/daytimers', label: 'Day timers', icon: 'clock' },
+        { to: '/holidaytimers', label: 'Holiday timers', icon: 'calendar' },
+        { to: '/cosrules', label: 'Class of Service', icon: 'shield' }
+      ]
+    })
   }
-  ]
+
+  if (isAdmin) {
+    groups.push({
+      id: 'system',
+      heading: 'System',
+      icon: 'layers',
+      links: [
+        { to: '/asterisk-files', label: 'Asterisk Files', icon: 'file-code' },
+        { to: '/backup', label: 'Backup', icon: 'database' },
+        { to: '/snapshots', label: 'Snapshots', icon: 'layers' },
+        { to: '/certificates', label: 'Certificates', icon: 'lock' },
+        { to: '/customapps', label: 'Custom Apps', icon: 'package' },
+        { to: '/devices', label: 'Devices', icon: 'smartphone' },
+        { to: '/firewall', label: 'Firewall', icon: 'shield-alert' },
+        { to: '/help-messages', label: 'Help messages', icon: 'help-circle' },
+        { to: '/sysglobals', label: 'Instance Globals', icon: 'sliders' },
+        { to: '/logs', label: 'Logs', icon: 'scroll-text' },
+        { to: '/ip-settings', label: 'Network', icon: 'wifi' },
+        { to: '/users', label: 'Users', icon: 'user-cog' }
+      ]
+    })
+  }
+
   return groups
 })
 
@@ -206,7 +228,7 @@ async function refreshGlobalsFqdnForTopBar() {
 
 onMounted(async () => {
   ensureCurrentGroupOpen()
-  if (auth.can('admin')) {
+  if (auth.canAccessPanels) {
     const { ensureFetched } = useHelp()
     await ensureFetched()
   }
@@ -274,7 +296,7 @@ useInactivityLogout(logout, computed(() => auth.isLoggedIn))
     <aside class="sidebar">
       <BrandMark to="/" />
       <nav ref="sidebarRef" class="nav" @scroll.passive="onSidebarScroll">
-        <template v-if="auth.can('admin')">
+        <template v-if="auth.canAccessPanels">
           <router-link to="/" class="nav-link" active-class="active" exact-active-class="active">
             <NavIcon name="home" />
             <span class="nav-link-label">Home</span>
@@ -340,13 +362,20 @@ useInactivityLogout(logout, computed(() => auth.isLoggedIn))
         <div class="topbar-right">
           <CommitButton v-if="showCommitButton" />
           <button
-            v-if="fleetMode.fleetAvailable && auth.can('admin')"
+            v-if="fleetMode.fleetAvailable && auth.isAdmin"
             type="button"
             class="enter-fleet-btn"
             @click="enterFleet"
           >
             Enter Fleet
           </button>
+          <router-link
+            v-if="auth.canAccessPanels"
+            :to="{ name: 'account-password' }"
+            class="account-link"
+          >
+            Password
+          </router-link>
           <span v-if="auth.user" class="user"
             >Logged in as {{ auth.user.name || auth.user.email }}</span
           >
@@ -571,6 +600,16 @@ useInactivityLogout(logout, computed(() => auth.isLoggedIn))
 }
 .enter-fleet-btn:hover {
   background: var(--pbx-surface-subtle);
+}
+.account-link {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--pbx-accent, #1d4ed8);
+  text-decoration: none;
+}
+.account-link:hover {
+  text-decoration: underline;
 }
 .logout-btn {
   padding: 0.375rem 0.75rem;

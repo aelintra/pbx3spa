@@ -14,7 +14,7 @@ Discrete job steps. Each step is **testable**, **sign-off-able**, and **committa
 
 **Parked:** Backups — review after first CRUD set; behaviour may depend on PBX3 internals.
 
-**Later (API-dependent):** Admin user management panel (admins only; API needs stronger user/privilege support first). Pattern: **workingdocs/ADMIN_PANELS_AND_PERMISSIONS.md**. Minimal rollout: **workingdocs/PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** (Phase 0: SPA `can('admin')`, route guard, optional nav gate; Phase 1 later). **Auth rules for agents:** **workingdocs/AUTH_PATTERNS.md** — follow when touching login, tokens, whoami, or guards; preserves 2FA, self-service, and centralized auth options. **Help messages:** Done — API exposes tt_help_core (helpcore resource); SPA has list/create/detail panel under "Help messages" in nav.
+**Later (API-dependent):** Admin user management + tenant privileges — product HoR **`INSTANCE_USER_PRIVILEGES_REQUIREMENTS.md`** (P0 framing). Pattern: **workingdocs/ADMIN_PANELS_AND_PERMISSIONS.md**. Minimal rollout done: **workingdocs/PERMISSIONS_MINIMAL_DEPLOY_PLAN.md** (Phase 0). **Auth rules for agents:** **workingdocs/AUTH_PATTERNS.md**.
 
 **To-do (Extensions – defer for now):** Allow changing extension number (pkey). Can wait for now but we’ll need to do it at some point. API needs to support pkey update (e.g. add to updateable columns or dedicated rename flow) before enabling.
 

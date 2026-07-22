@@ -8,6 +8,7 @@ import { useFormValidation, validateAll, focusFirstError } from '@/composables/u
 import { validateCustomAppPkey, validateTenant } from '@/utils/validation'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
@@ -55,8 +56,7 @@ const tenantOptionsForSelect = computed(() => {
 async function loadTenants() {
   tenantsLoading.value = true
   try {
-    const res = await getApiClient().get('tenants')
-    tenants.value = normalizeList(res, 'tenants')
+    tenants.value = await loadTenantOptions()
   } catch {
     tenants.value = []
   } finally {

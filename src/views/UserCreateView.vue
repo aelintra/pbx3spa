@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { fieldErrors } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -14,8 +15,14 @@ const email = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
 const abilityAdmin = ref(false)
+const abilityTenant = ref(true)
+const abilityRecordings = ref(false)
+const selectedClusters = ref([])
+const tenants = ref([])
 const error = ref('')
 const loading = ref(false)
+
+const showClusterPicker = computed(() => !abilityAdmin.value && abilityTenant.value)
 
 function resetForm() {
   name.value = ''
@@ -23,7 +30,29 @@ function resetForm() {
   password.value = ''
   passwordConfirm.value = ''
   abilityAdmin.value = false
+  abilityTenant.value = true
+  abilityRecordings.value = false
+  selectedClusters.value = []
   error.value = ''
+}
+
+function buildAbilities() {
+  const a = []
+  if (abilityAdmin.value) {
+    a.push('admin')
+    return a
+  }
+  if (abilityTenant.value) a.push('tenant')
+  if (abilityRecordings.value) a.push('recordings')
+  return a
+}
+
+async function loadTenants() {
+  try {
+    tenants.value = await loadTenantOptions()
+  } catch {
+    tenants.value = []
+  }
 }
 
 async function onSubmit(e) {
@@ -40,13 +69,26 @@ async function onSubmit(e) {
     return
   }
 
+  const abilities = buildAbilities()
+  if (abilities.length === 0) {
+    error.value = 'Select at least one ability (admin, tenant, and/or recordings)'
+    return
+  }
+
+  if (!abilityAdmin.value && abilityTenant.value && selectedClusters.value.length === 0) {
+    error.value = 'Select at least one tenant (allowed clusters) for a tenant user'
+    return
+  }
+
   loading.value = true
   try {
     const body = {
       name: name.value.trim(),
       email: email.value.trim(),
       password: password.value,
-      abilities: abilityAdmin.value ? ['admin'] : []
+      abilities,
+      allowed_clusters: abilityAdmin.value ? [] : selectedClusters.value,
+      portable: !abilityAdmin.value
     }
     await getApiClient().post('auth/register', body)
     toast.show(`User ${email.value.trim()} created`)
@@ -69,8 +111,16 @@ function goBack() {
   router.push({ name: 'users' })
 }
 
+function toggleCluster(id) {
+  const s = String(id)
+  const i = selectedClusters.value.indexOf(s)
+  if (i >= 0) selectedClusters.value.splice(i, 1)
+  else selectedClusters.value.push(s)
+}
+
 onMounted(() => {
   resetForm()
+  loadTenants()
 })
 </script>
 
@@ -83,57 +133,88 @@ onMounted(() => {
     <form class="create-form" @submit="onSubmit">
       <section class="form-section">
         <h2 class="section-title">Identity</h2>
-        <FormField label="Name" required>
-          <input
-            id="name"
-            v-model="name"
-            type="text"
-            required
-            placeholder="Display name"
-            autocomplete="name"
-          />
-        </FormField>
-        <FormField label="Email" required>
-          <input
-            id="email"
-            v-model="email"
-            type="email"
-            required
-            placeholder="user@example.com"
-            autocomplete="email"
-          />
-        </FormField>
+        <FormField
+          id="name"
+          v-model="name"
+          label="Name"
+          required
+          placeholder="Display name"
+          autocomplete="name"
+        />
+        <FormField
+          id="email"
+          v-model="email"
+          label="Email"
+          type="email"
+          required
+          placeholder="user@example.com"
+          autocomplete="email"
+        />
       </section>
 
       <section class="form-section">
         <h2 class="section-title">Password</h2>
-        <FormField label="Password" required>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            required
-            placeholder="Password"
-            autocomplete="new-password"
-          />
-        </FormField>
-        <FormField label="Confirm password" required>
-          <input
-            id="passwordConfirm"
-            v-model="passwordConfirm"
-            type="password"
-            required
-            placeholder="Confirm password"
-            autocomplete="new-password"
-          />
-        </FormField>
+        <FormField
+          id="password"
+          v-model="password"
+          label="Password"
+          type="password"
+          required
+          placeholder="Password"
+          autocomplete="new-password"
+        />
+        <FormField
+          id="passwordConfirm"
+          v-model="passwordConfirm"
+          label="Confirm password"
+          type="password"
+          required
+          placeholder="Confirm password"
+          autocomplete="new-password"
+        />
       </section>
 
       <section class="form-section">
         <h2 class="section-title">Abilities</h2>
         <div class="field-row">
           <input id="abilityAdmin" v-model="abilityAdmin" type="checkbox" />
-          <label for="abilityAdmin">Admin (full access)</label>
+          <label for="abilityAdmin">Admin (full instance — not portable with tenant)</label>
+        </div>
+        <div class="field-row">
+          <input
+            id="abilityTenant"
+            v-model="abilityTenant"
+            type="checkbox"
+            :disabled="abilityAdmin"
+          />
+          <label for="abilityTenant">Tenant (day-to-day panels + Commit)</label>
+        </div>
+        <div class="field-row">
+          <input
+            id="abilityRecordings"
+            v-model="abilityRecordings"
+            type="checkbox"
+            :disabled="abilityAdmin"
+          />
+          <label for="abilityRecordings">Recordings (listen / download)</label>
+        </div>
+      </section>
+
+      <section v-if="showClusterPicker" class="form-section">
+        <h2 class="section-title">Allowed tenants</h2>
+        <p class="hint">Customer users are scoped to these clusters and should move with the tenant.</p>
+        <div v-if="!tenants.length" class="hint">No tenants loaded.</div>
+        <div v-for="t in tenants" :key="t.shortuid || t.pkey || t.id" class="field-row">
+          <input
+            :id="'cluster-' + (t.shortuid || t.pkey)"
+            type="checkbox"
+            :checked="selectedClusters.includes(String(t.shortuid || t.pkey))"
+            @change="toggleCluster(t.shortuid || t.pkey)"
+          />
+          <label :for="'cluster-' + (t.shortuid || t.pkey)">
+            {{ t.pkey || t.name || t.shortuid }}
+            <span v-if="t.shortuid" class="muted">({{ t.shortuid }})</span>
+          </label>
         </div>
       </section>
 
@@ -176,10 +257,20 @@ onMounted(() => {
   margin: 0 0 0.75rem 0;
   color: #0f172a;
 }
+.hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+.muted {
+  color: #94a3b8;
+  font-size: 0.8125rem;
+}
 .field-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 .field-row input[type='checkbox'] {
   width: 1rem;
@@ -198,33 +289,25 @@ onMounted(() => {
   gap: 0.75rem;
   margin-top: 0.5rem;
 }
-.btn-cancel {
-  padding: 0.5rem 1rem;
-  font-size: 0.9375rem;
-  color: #64748b;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-.btn-cancel:hover {
-  background: #e2e8f0;
-}
+.btn-cancel,
 .btn-submit {
   padding: 0.5rem 1rem;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: #fff;
-  background: #2563eb;
-  border: none;
   border-radius: 0.375rem;
+  font-size: 0.9375rem;
   cursor: pointer;
 }
-.btn-submit:hover:not(:disabled) {
-  background: #1d4ed8;
+.btn-cancel {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+}
+.btn-submit {
+  border: none;
+  background: #2563eb;
+  color: #fff;
 }
 .btn-submit:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 </style>

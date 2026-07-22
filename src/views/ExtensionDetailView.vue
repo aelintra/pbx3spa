@@ -5,6 +5,7 @@ import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
@@ -15,7 +16,9 @@ import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
+import { useAuthStore } from '@/stores/auth'
 const route = useRoute()
+const auth = useAuthStore()
 const { getSchema, ensureFetched } = useSchema()
 
 /** True if field is read-only per schema (extensions). */
@@ -120,8 +123,7 @@ const sipRegistrar = computed(() => {
 
 async function fetchTenants() {
   try {
-    const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response, 'tenants')
+    tenants.value = await loadTenantOptions()
   } catch {
     tenants.value = []
   }
@@ -278,10 +280,12 @@ async function saveEdit(e) {
         ? editMacaddr.value.trim().replace(/[^0-9a-fA-F]/g, '')
         : null,
       protocol: editProtocol.value,
-      provision: editProvision.value.trim() || undefined,
-      provisionwith: editProvisionwith.value,
       technology: editTechnology.value || undefined,
       vmailfwd: editVmailfwd.value.trim() || undefined
+    }
+    if (auth.isAdmin) {
+      body.provision = editProvision.value.trim() || undefined
+      body.provisionwith = editProvisionwith.value
     }
     if (body.callmax !== undefined && Number.isNaN(body.callmax)) delete body.callmax
     await getApiClient().put(`extensions/${encodeURIComponent(shortuid.value)}`, body)
@@ -688,6 +692,7 @@ const panelTitleTenantSuffix = computed(() => {
               type="email"
             />
             <FormField
+              v-if="auth.isAdmin"
               id="edit-provision"
               v-model="editProvision"
               label="Provision"
@@ -697,6 +702,7 @@ const panelTitleTenantSuffix = computed(() => {
               :rows="8"
             />
             <FormSelect
+              v-if="auth.isAdmin"
               id="edit-provisionwith"
               v-model="editProvisionwith"
               label="Provision with"

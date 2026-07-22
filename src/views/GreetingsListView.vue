@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
@@ -129,10 +130,10 @@ async function loadGreetings() {
   try {
     const [gRes, tRes] = await Promise.all([
       getApiClient().get('greetingrecords'),
-      getApiClient().get('tenants')
+      loadTenantOptions()
     ])
     greetings.value = normalizeList(gRes, 'greetingrecords') || normalizeList(gRes)
-    tenants.value = normalizeList(tRes, 'tenants')
+    tenants.value = tRes
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load greetings')
   } finally {

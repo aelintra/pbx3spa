@@ -5,6 +5,7 @@ import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { validateAgentPkey } from '@/utils/validation'
 import FormField from '@/components/forms/FormField.vue'
@@ -112,8 +113,7 @@ function clearQueuesNotInTenant() {
 
 async function fetchTenants() {
   try {
-    const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response, 'tenants')
+    tenants.value = await loadTenantOptions()
   } catch {
     tenants.value = []
   }

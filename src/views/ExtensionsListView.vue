@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
@@ -221,10 +222,10 @@ async function loadExtensions() {
   try {
     const [extResponse, tenantResponse] = await Promise.all([
       getApiClient().get('extensions'),
-      getApiClient().get('tenants')
+      loadTenantOptions()
     ])
     extensions.value = normalizeList(extResponse)
-    tenants.value = normalizeList(tenantResponse, 'tenants')
+    tenants.value = tenantResponse
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load extensions')
     liveData.value = {}

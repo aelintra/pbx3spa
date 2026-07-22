@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-22 — Twilio dialect lab
+## Session end 2026-07-22 — instance user privileges P1–P4
 
-**On `main`:** code tips unchanged (**pbx3sbc** **`3404608`**, **pbx3sbc-admin** **`c623d0c`**, **pbx3-docs** **`12f32e3`**, spa prior handoff **`07c0969`**, api **`5426f58`**). Live lab only: Twilio DID **`+15139279738`** → golden **1000**; Peer dialect **`strict-plus-e164`**; outbound Peer **50**; gwlist **`1,20,50`** (Brindley first). Inbound + Twilio egress audio OK; DID trombone abandoned (trial/no answer).
+**On `main`:** pbx3api + pbx3spa privileges ship (abilities `admin`/`tenant`/`recordings`, cluster scope, portable users in tenant export). Lab: **sandycroft** (`vqcwd4`) → **bzy54n** with **`joe@gmail.com`**; golden **`tenant.demo@pbx3.test`** on duns. Orphan shortuid leftovers cleaned (willand/affcot). FormField bind fix on User create.
 
-**Operator:** UK golden dials intl as **`001…`**. SBC Peers → Number dialect. Paid Twilio + named recipe / US `011:+` seed later. Future: global DID→EU CC may stay SBC signaling; RTP stage TBD.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api` · spa `npm run dev` (proxy may still target golden — change API base for joe on bzy).
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
+**Docs / TODO:** **`INSTANCE_USER_PRIVILEGES_REQUIREMENTS.md`** (login-homing challenger); **`TODO.md`** — source wipe in move job; velocity parked.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — velocity later; paid Twilio dialect follow-ons.
+**Resume:** Operator soak/demo; else move-job source wipe or login-homing.
 
-**Resume:** Leave live Twilio Peers as-is until full Twilio account; else velocity / parked tracks.
+---
+
+## Session end 2026-07-22 — Twilio dialect lab — historical
+
+**On `main`:** superseded — see privileges block above. Live Twilio Peers may still be on Magrathea.
+
+**Resume:** see block above.
 
 ---
 

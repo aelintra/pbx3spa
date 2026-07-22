@@ -11,6 +11,7 @@ import {
   validateInboundCarrier
 } from '@/utils/validation'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
@@ -93,8 +94,7 @@ const closerouteOptions = computed(() => ['None', 'Operator'])
 async function loadTenants() {
   tenantsLoading.value = true
   try {
-    const response = await getApiClient().get('tenants')
-    tenants.value = normalizeList(response, 'tenants')
+    tenants.value = await loadTenantOptions()
     if (tenants.value.length && !cluster.value) {
       const first = tenants.value.find((t) => t.pkey)?.pkey
       if (first) cluster.value = first

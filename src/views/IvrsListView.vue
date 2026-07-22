@@ -4,6 +4,7 @@ import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { normalizeList } from '@/utils/listResponse'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
@@ -142,10 +143,10 @@ async function loadIvrs() {
   error.value = ''
   try {
     const [tenantsRes, ivrsRes] = await Promise.all([
-      getApiClient().get('tenants'),
+      loadTenantOptions(),
       getApiClient().get('ivrs')
     ])
-    tenants.value = normalizeList(tenantsRes, 'tenants')
+    tenants.value = tenantsRes
     ivrs.value = normalizeList(ivrsRes, 'ivrs')
   } catch (err) {
     error.value = err.data?.message || err.message || 'Failed to load IVRs'
