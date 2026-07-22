@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-21 — Filament Backup + Fleet warm sync
+## Session end 2026-07-22 — Egress qualify + ops notify + Fleet Instances badge
 
-**On `main`:** **pbx3** **`129ef40`** — warm-sync API + daily timer. **pbx3spa** **`d021f60`** — Edge HA Sync now + progress spinner. **pbx3sbc** **`9373d30`** / **pbx3sbc-admin** **`7dda7fb`** — Backup panel + fleet backup/warm-pull. **pbx3-docs** **`b9fb77f`**. Deployed Magrathea, companion, control.
+**On `main`:** **pbx3** **`d377631`** — OpenSIPS R1 + Gatekeeper egress probe/overlay + ops-event mail. **pbx3api** **`5426f58`** — qualify live + `ops-egress-qualify` + `GET /fleet/egress-qualify`. **pbx3spa** **`8b9fc83`** — Trunks/Routes/Fleet Instances Egress badges. **pbx3sbc** **`b6135b2`** / **pbx3sbc-admin** **`69e1893`** — OPTIONS qualify + Backup On S3? / LE PHP sock fix. Live Magrathea, companion, golden, bzy, control.
 
-**Operator:** Filament **System → Backup** on VIP only (`https://sbc.pbx3.com/admin`). Fleet **Edge HA → Sync now** for standby warmth (S3 dump → `--db-only`). Companion must pass `check-ha-standby-ready.sh` (token, log-ship, aws CLI, IAM `pbx3-sbc`). Cold rebuild: MkDocs **SBC backup and restore** scratch runbook. Pair **`magrathea-lab`**; companion IP via describe-instances (`opensips.pem`).
+**Operator:** Egress **Avail** on Trunks, Routes list, Fleet Instances. Unavail → email (stop OpenSIPS on VIP to test). Filament Backup **On S3?** on VIP. Edge HA Promote still fences + Phase D LE.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · lab SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · gatekeeper **`https://control.pbx3.com`** · SBC **`https://sbc.pbx3.com/admin`** · spa `npm run dev` on **`main`**.
 
-**Docs / TODO:** **Next:** promoter SSH fence. Optional: Backup “On S3?” column; Magrathea cron confirm. **`pbx3/workingdocs/TODO.md`**.
+**Docs / TODO:** Next: velocity (later) or parked shadowing/Litestream. **`pbx3/workingdocs/TODO.md`**.
 
-**Resume:** Harden EdgePairPromoter fence (or document mandatory ops fence) before Auto promote.
+**Resume:** Pick next from TODO; no open egress/ops-notify polish in this slice.
+
+---
+
+## Session end 2026-07-21 — Filament Backup + Fleet warm sync — historical
+
+**On `main`:** superseded — see 2026-07-22 block above. Tips were pbx3 **`129ef40`**, spa **`d021f60`**, sbc **`9373d30`**, sbc-admin **`7dda7fb`**, docs **`b9fb77f`**.
+
+**Resume:** see block above.
 
 ---
 
