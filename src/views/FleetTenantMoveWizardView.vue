@@ -266,27 +266,56 @@ onMounted(load)
   margin: 1rem 0;
 }
 .panel label {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
   margin: 0.75rem 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--pbx-text-label, #475569);
 }
 .panel select {
   display: block;
   width: 100%;
-  margin-top: 0.35rem;
-  padding: 0.4rem 0.5rem;
+  box-sizing: border-box;
+  min-height: 2.5rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--pbx-text, #0f172a);
+  background-color: var(--pbx-panel, #fff);
+  border: 1px solid var(--pbx-border, #e2e8f0);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.panel select:focus {
+  outline: none;
+  border-color: var(--pbx-accent-bright, #3b82f6);
+  box-shadow: 0 0 0 3px var(--pbx-focus-ring, rgba(59, 130, 246, 0.1));
 }
 .check {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 0.5rem;
+  font-weight: 400;
+  color: var(--pbx-text, #0f172a);
 }
 .review {
   display: grid;
   grid-template-columns: 8rem 1fr;
-  gap: 0.35rem 1rem;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
 }
 .review dt {
   color: #64748b;
+}
+.review dd {
+  margin: 0;
+  line-height: 1.5;
+  min-height: 1.5rem;
 }
 .hint {
   color: #64748b;
