@@ -181,7 +181,7 @@ onUnmounted(() => {
         <button
           v-if="job.state === 'verifying' && canMoves"
           type="button"
-          class="primary"
+          class="btn btn-primary"
           :disabled="busy"
           @click="confirmGate('verifying')"
         >
@@ -190,7 +190,7 @@ onUnmounted(() => {
         <button
           v-if="job.state === 'awaiting_cleanup' && canMoves"
           type="button"
-          class="danger"
+          class="btn btn-danger"
           :disabled="busy"
           :aria-busy="wiping"
           @click="confirmGate('cleanup')"
@@ -200,7 +200,7 @@ onUnmounted(() => {
         </button>
         <p
           v-if="job.state === 'awaiting_cleanup'"
-          class="hint"
+          class="hint hint-inline"
         >
           <template v-if="wiping">
             Deleting source tenant data, then Commit (cert sync is best-effort). This can take a minute…
@@ -213,6 +213,7 @@ onUnmounted(() => {
         <button
           v-if="['pending', 'failed'].includes(job.state) && canMoves"
           type="button"
+          class="btn"
           :disabled="busy"
           @click="retryRun"
         >
@@ -221,6 +222,7 @@ onUnmounted(() => {
         <button
           v-if="canAbort"
           type="button"
+          class="btn"
           :disabled="busy"
           @click="doAbort"
         >
@@ -229,13 +231,13 @@ onUnmounted(() => {
         <button
           v-if="canRollback"
           type="button"
-          class="danger"
+          class="btn btn-danger"
           :disabled="busy"
           @click="doRollback"
         >
           Rollback cutover
         </button>
-        <button type="button" :disabled="busy" @click="refresh">Refresh</button>
+        <button type="button" class="btn" :disabled="busy" @click="refresh">Refresh</button>
       </div>
 
       <p v-if="job.rollback?.hint" class="hint">Rollback: {{ job.rollback.hint }}</p>
@@ -264,6 +266,11 @@ onUnmounted(() => {
   font-size: 0.9rem;
   margin-top: 1rem;
 }
+.hint-inline {
+  flex: 1 1 100%;
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+}
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -280,32 +287,42 @@ onUnmounted(() => {
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 1rem;
+  align-items: center;
 }
-button.primary {
-  background: #0f172a;
-  color: #fff;
-  border: none;
-  padding: 0.45rem 0.9rem;
-  cursor: pointer;
-}
-button.danger {
-  background: #b91c1c;
-  color: #fff;
-  border: none;
-  padding: 0.45rem 0.9rem;
-  cursor: pointer;
+.btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  border-radius: 0.375rem;
+  border: 1px solid var(--pbx-border, #cbd5e1);
+  background: var(--pbx-panel, #fff);
+  color: var(--pbx-text, #0f172a);
+  cursor: pointer;
 }
-button:disabled {
-  opacity: 0.5;
+.btn-primary {
+  background: var(--pbx-primary, var(--pbx-accent, #2563eb));
+  color: #fff;
+  border-color: var(--pbx-primary, var(--pbx-accent, #2563eb));
+}
+.btn-danger {
+  background: #fff;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 .spinner {
   width: 1rem;
   height: 1rem;
   border: 2px solid #fecaca;
-  border-top-color: #fff;
+  border-top-color: #b91c1c;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;

@@ -230,16 +230,27 @@ onMounted(load)
           fleet APIs on nodes/SBC and matching service tokens.
         </p>
         <p v-if="error" class="error">{{ error }}</p>
-        <button type="button" class="primary" :disabled="submitting || !canStart" @click="startMove">
+        <button
+          type="button"
+          class="btn btn-primary"
+          :disabled="submitting || !canStart"
+          @click="startMove"
+        >
           {{ submitting ? 'Starting…' : 'Start move' }}
         </button>
       </section>
 
       <div class="nav">
-        <button v-if="step > 1 && step < 4" type="button" :disabled="submitting" @click="back">
+        <button
+          v-if="step > 1 && step < 4"
+          type="button"
+          class="btn"
+          :disabled="submitting"
+          @click="back"
+        >
           Back
         </button>
-        <button v-if="step < 4" type="button" class="primary" @click="next">Next</button>
+        <button v-if="step < 4" type="button" class="btn btn-primary" @click="next">Next</button>
       </div>
     </template>
   </div>
@@ -335,15 +346,29 @@ onMounted(load)
   gap: 0.75rem;
   margin-top: 1.25rem;
 }
-button.primary {
-  background: #0f172a;
-  color: #fff;
-  border: none;
-  padding: 0.45rem 0.9rem;
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  border-radius: 0.375rem;
+  border: 1px solid var(--pbx-border, #cbd5e1);
+  background: var(--pbx-panel, #fff);
+  color: var(--pbx-text, #0f172a);
   cursor: pointer;
 }
-button:disabled {
-  opacity: 0.5;
+.btn-primary {
+  background: var(--pbx-primary, var(--pbx-accent, #2563eb));
+  color: #fff;
+  border-color: var(--pbx-primary, var(--pbx-accent, #2563eb));
+}
+.btn:disabled,
+.btn-primary:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
 }
 </style>
