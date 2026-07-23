@@ -6,23 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-22 — instance user privileges P1–P4
+## Session end 2026-07-23 — fleet multi-tenant phone dial / SBC AoR
 
-**On `main`:** pbx3api + pbx3spa privileges ship (abilities `admin`/`tenant`/`recordings`, cluster scope, portable users in tenant export). Lab: **sandycroft** (`vqcwd4`) → **bzy54n** with **`joe@gmail.com`**; golden **`tenant.demo@pbx3.test`** on duns. Orphan shortuid leftovers cleaned (willand/affcot). FormField bind fix on User create.
+**On `main`:** no SPA code this slice. Backend/edge: multi-tenant phone rings via tenant AoR + SBC hop (fleet-gated). Golden + bzy live; ring groups OK. Source wipe in move job already on `main` from earlier same day.
 
-**Login homing (challenger, leaning):** **B′** — tenant enters **shortuid or tenant URL/FQDN** at login; SPA/broker resolves home from directory and posts Sanctum login to that instance (no per-move DNS).
+**Operator impact:** phones behind SBC on multi-tenant nodes should dial correctly; after phone-tmpl changes, refresh staged `endpoints/*_phone.conf` then Commit.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api` · spa `npm run dev` (proxy may still target golden — change API base for joe on bzy).
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
 
-**Docs / TODO:** **`INSTANCE_USER_PRIVILEGES_REQUIREMENTS.md`**; **`TODO.md`** — source wipe in move job; velocity parked.
+**Docs / TODO:** **`TODO.md`** — AoR item closed; login-homing **B′** next; phone staging parked.
 
-**Resume:** Operator soak/demo; else move-job source wipe or login-homing **B′**.
+**Resume:** Login-homing **B′**, or soak; SPA unchanged this session.
+
+---
+
+## Session end 2026-07-22 — instance user privileges P1–P4 — historical
+
+**On `main`:** privileges P1–P4 + portable users; sandycroft→bzy. **Superseded** by 2026-07-23 AoR block for resume. Login-homing **B′** still open.
+
+**Resume:** see block above.
 
 ---
 
 ## Session end 2026-07-22 — Twilio dialect lab — historical
 
-**On `main`:** superseded — see privileges block above. Live Twilio Peers may still be on Magrathea.
+**On `main`:** superseded — see 2026-07-23 block above. Live Twilio Peers may still be on Magrathea.
 
 **Resume:** see block above.
 
