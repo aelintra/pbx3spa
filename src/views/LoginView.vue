@@ -366,14 +366,10 @@ async function onSubmit(e) {
       <!-- S10.8 login chooser + B′ tenant door -->
       <section v-if="step === 'chooser'" class="chooser-section">
         <p class="chooser-hint">
-          <strong>Manage instance</strong> uses your PBX node login.
-          <strong>Sign in to tenant</strong> finds the home node from your tenant id.
+          <strong>Sign in to tenant</strong> finds the home node from your tenant id (customers).
+          <strong>Manage instance</strong> uses your PBX node login (MSP).
           <strong>Fleet console</strong> uses the control-plane fleet account (not the same password).
         </p>
-        <button type="button" class="chooser-btn" @click="chooseManageInstance">
-          <span class="chooser-btn-title">Manage instance</span>
-          <span class="chooser-btn-meta">Tenants, extensions, trunks on one node</span>
-        </button>
         <button
           type="button"
           class="chooser-btn"
@@ -381,7 +377,11 @@ async function onSubmit(e) {
           @click="chooseSignInToTenant"
         >
           <span class="chooser-btn-title">Sign in to tenant</span>
-          <span class="chooser-btn-meta">Tenant id or URL → home node (customer)</span>
+          <span class="chooser-btn-meta">Tenant id or URL → home node</span>
+        </button>
+        <button type="button" class="chooser-btn" @click="chooseManageInstance">
+          <span class="chooser-btn-title">Manage instance</span>
+          <span class="chooser-btn-meta">Tenants, extensions, trunks on one node</span>
         </button>
         <button type="button" class="chooser-btn chooser-btn--fleet" @click="chooseFleetConsole">
           <span class="chooser-btn-title">Fleet console</span>
