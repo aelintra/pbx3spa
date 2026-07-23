@@ -35,7 +35,10 @@ onMounted(load)
 <template>
   <div class="fleet-jobs-view">
     <h1>Move jobs</h1>
-    <p class="hint">Recent tenant-move jobs from the gatekeeper (S3 catalog).</p>
+    <p class="hint">
+      Recent tenant-move jobs from the gatekeeper (S3 catalog). Open a job in
+      <code>awaiting_cleanup</code> to wipe the source after drain — you do not need to stay on the job page.
+    </p>
 
     <p v-if="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>

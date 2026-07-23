@@ -208,6 +208,7 @@ onUnmounted(() => {
           <template v-else>
             Irreversible: deletes all cluster-scoped rows and portable users on the source,
             then runs certificates sync and Commit. Catalog already points at the destination.
+            Safe to leave while phones drain — reopen this job from Fleet → Jobs when ready to wipe.
           </template>
         </p>
         <button
