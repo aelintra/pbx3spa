@@ -188,8 +188,15 @@ onUnmounted(() => {
           :disabled="busy"
           @click="confirmGate('cleanup')"
         >
-          Delete tenant on source
+          Wipe tenant on source
         </button>
+        <p
+          v-if="job.state === 'awaiting_cleanup'"
+          class="hint"
+        >
+          Irreversible: deletes all cluster-scoped rows and portable users on the source,
+          then runs certificates sync and Commit. Catalog already points at the destination.
+        </p>
         <button
           v-if="['pending', 'failed'].includes(job.state) && canMoves"
           type="button"
