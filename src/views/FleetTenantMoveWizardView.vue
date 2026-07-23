@@ -303,6 +303,12 @@ onMounted(load)
   font-weight: 400;
   color: var(--pbx-text, #0f172a);
 }
+.panel label.check {
+  flex-direction: row;
+  align-items: center;
+  font-weight: 400;
+  color: var(--pbx-text, #0f172a);
+}
 .review {
   display: grid;
   grid-template-columns: 8rem 1fr;
