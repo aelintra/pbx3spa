@@ -22,7 +22,10 @@ const tenantShortuid = computed(() => String(route.query.tenant || ''))
 const job = ref(null)
 const error = ref('')
 const busy = ref(false)
+/** Which confirm gate is in flight — drives wipe spinner label. */
+const busyGate = ref('')
 const canMoves = computed(() => canFleet(FLEET_ABILITY.MOVES))
+const wiping = computed(() => busy.value && busyGate.value === 'cleanup')
 let timer = null
 
 const phases = computed(() => {
@@ -77,6 +80,8 @@ async function retryRun() {
 
 async function confirmGate(gate) {
   busy.value = true
+  busyGate.value = gate
+  error.value = ''
   try {
     job.value = await advanceTenantMove(jobId.value, {
       confirm: gate,
@@ -87,6 +92,7 @@ async function confirmGate(gate) {
     await refresh()
   } finally {
     busy.value = false
+    busyGate.value = ''
   }
 }
 
@@ -186,16 +192,23 @@ onUnmounted(() => {
           type="button"
           class="danger"
           :disabled="busy"
+          :aria-busy="wiping"
           @click="confirmGate('cleanup')"
         >
-          Wipe tenant on source
+          <span v-if="wiping" class="spinner spinner-inline" aria-hidden="true" />
+          {{ wiping ? 'Wiping…' : 'Wipe tenant on source' }}
         </button>
         <p
           v-if="job.state === 'awaiting_cleanup'"
           class="hint"
         >
-          Irreversible: deletes all cluster-scoped rows and portable users on the source,
-          then runs certificates sync and Commit. Catalog already points at the destination.
+          <template v-if="wiping">
+            Deleting source tenant data, then Commit (cert sync is best-effort). This can take a minute…
+          </template>
+          <template v-else>
+            Irreversible: deletes all cluster-scoped rows and portable users on the source,
+            then runs certificates sync and Commit. Catalog already points at the destination.
+          </template>
         </p>
         <button
           v-if="['pending', 'failed'].includes(job.state) && canMoves"
@@ -281,8 +294,31 @@ button.danger {
   border: none;
   padding: 0.45rem 0.9rem;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 button:disabled {
   opacity: 0.5;
+}
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #fecaca;
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+.spinner-inline {
+  width: 0.85rem;
+  height: 0.85rem;
+  display: inline-block;
+  vertical-align: -0.1rem;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
