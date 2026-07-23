@@ -6,10 +6,13 @@ import { useAuthStore } from '@/stores/auth'
 import {
   getInstanceDirectoryUrl,
   getDefaultApiBaseUrl,
-  isFleetDirectoryEnabled
+  getTenantHomeUrl,
+  isFleetDirectoryEnabled,
+  isTenantHomeEnabled
 } from '@/config/instanceDirectory'
 import { useFleetModeStore } from '@/stores/fleetMode'
 import { fetchInstanceCatalog, findInstanceById } from '@/utils/instanceCatalog'
+import { fetchTenantHome, findTenantHome } from '@/utils/tenantHome'
 import { loadInstanceRecents, pushInstanceRecent } from '@/utils/instanceRecents'
 import { resolveApiBaseUrl, usesDevApiProxy } from '@/config/apiBaseUrl'
 import { loginNetworkErrorMessage } from '@/utils/loginErrors'
@@ -24,9 +27,11 @@ const viteProxyTarget = import.meta.env.VITE_API_PROXY_TARGET ?? ''
 
 const directoryEnabled = isFleetDirectoryEnabled()
 const directoryUrl = getInstanceDirectoryUrl()
+const tenantHomeEnabled = isTenantHomeEnabled()
+const tenantHomeUrl = getTenantHomeUrl()
 const showEntryChooser = computed(() => fleetUi.fleetAvailable)
 
-/** @type {import('vue').Ref<'chooser'|'loading'|'pick'|'credentials'>} */
+/** @type {import('vue').Ref<'chooser'|'loading'|'pick'|'tenant'|'credentials'>} */
 const step = ref(
   showEntryChooser.value ? 'chooser' : directoryEnabled ? 'loading' : 'credentials'
 )
@@ -39,6 +44,10 @@ const recents = ref(loadInstanceRecents())
 
 /** @type {import('vue').Ref<import('@/utils/instanceCatalog').InstanceRecord | null>} */
 const selectedInstance = ref(null)
+
+const tenantIdInput = ref('')
+const tenantResolveLoading = ref(false)
+const resolvedTenantShortuid = ref('')
 
 const showManualApiUrl = ref(!directoryEnabled)
 const baseUrl = ref(getDefaultApiBaseUrl() ?? '')
@@ -66,6 +75,9 @@ const selectedSummary = computed(() => {
   if (!i) return ''
   const parts = [i.label, i.fqdn].filter(Boolean)
   if (i.environment) parts.push(i.environment)
+  if (resolvedTenantShortuid.value) {
+    parts.unshift(`tenant ${resolvedTenantShortuid.value}`)
+  }
   return parts.join(' · ')
 })
 
@@ -79,6 +91,7 @@ function goToCredentials(instance) {
 }
 
 function pickInstance(instance) {
+  resolvedTenantShortuid.value = ''
   if ((instance.status ?? '').toLowerCase() === 'maintenance') {
     const ok = window.confirm(
       `${instance.label} is in maintenance. Open this instance anyway?`
@@ -89,6 +102,7 @@ function pickInstance(instance) {
 }
 
 function pickRecent(instance) {
+  resolvedTenantShortuid.value = ''
   goToCredentials(instance)
 }
 
@@ -96,6 +110,7 @@ function backToPicker() {
   if (directoryEnabled && catalogInstances.value.length > 0) {
     step.value = 'pick'
     selectedInstance.value = null
+    resolvedTenantShortuid.value = ''
     showManualApiUrl.value = false
     error.value = ''
   }
@@ -105,6 +120,8 @@ function backToChooser() {
   if (!showEntryChooser.value) return
   step.value = 'chooser'
   selectedInstance.value = null
+  resolvedTenantShortuid.value = ''
+  tenantIdInput.value = ''
   showManualApiUrl.value = false
   error.value = ''
   catalogError.value = ''
@@ -113,6 +130,7 @@ function backToChooser() {
 function chooseManageInstance() {
   error.value = ''
   catalogError.value = ''
+  resolvedTenantShortuid.value = ''
   if (catalogInstances.value.length > 0) {
     step.value = 'pick'
     return
@@ -121,9 +139,83 @@ function chooseManageInstance() {
   void loadCatalog()
 }
 
+function chooseSignInToTenant() {
+  error.value = ''
+  catalogError.value = ''
+  selectedInstance.value = null
+  resolvedTenantShortuid.value = ''
+  showManualApiUrl.value = false
+  step.value = 'tenant'
+  if (catalogInstances.value.length === 0 && directoryUrl) {
+    void loadCatalog()
+  }
+}
+
 function chooseFleetConsole() {
   fleetUi.enterFleet('/')
   router.push({ name: 'fleet-tenants' })
+}
+
+function backFromCredentials() {
+  if (resolvedTenantShortuid.value) {
+    selectedInstance.value = null
+    resolvedTenantShortuid.value = ''
+    step.value = 'tenant'
+    return
+  }
+  backToChooser()
+}
+
+function changeTenantFromCredentials() {
+  selectedInstance.value = null
+  resolvedTenantShortuid.value = ''
+  step.value = 'tenant'
+}
+
+async function resolveTenantAndContinue() {
+  error.value = ''
+  if (!tenantHomeUrl) {
+    error.value = 'Tenant directory is not configured for this SPA build.'
+    return
+  }
+  const q = tenantIdInput.value.trim()
+  if (!q) {
+    error.value = 'Enter a tenant id or tenant URL'
+    return
+  }
+
+  tenantResolveLoading.value = true
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(new Error('Tenant lookup timed out')), 15_000)
+  try {
+    if (catalogInstances.value.length === 0 && directoryUrl) {
+      await loadCatalog()
+    }
+    const home = await fetchTenantHome(tenantHomeUrl, { signal: controller.signal })
+    const row = findTenantHome(home.tenants, q)
+    if (!row) {
+      error.value = 'Could not resolve tenant'
+      return
+    }
+    const instance = findInstanceById(catalogInstances.value, row.instance_id)
+    if (!instance?.api_base_url) {
+      error.value = 'Could not resolve tenant'
+      return
+    }
+    if ((instance.status ?? '').toLowerCase() === 'maintenance') {
+      const ok = window.confirm(
+        `${instance.label} is in maintenance. Sign in anyway?`
+      )
+      if (!ok) return
+    }
+    resolvedTenantShortuid.value = row.shortuid
+    goToCredentials(instance)
+  } catch (err) {
+    error.value = err?.message || 'Could not resolve tenant'
+  } finally {
+    clearTimeout(timer)
+    tenantResolveLoading.value = false
+  }
 }
 
 async function loadCatalog() {
@@ -261,6 +353,7 @@ async function onSubmit(e) {
       <p v-else-if="step === 'pick'" class="subtitle">
         {{ catalogInstances.length === 1 ? 'Select your PBX instance' : 'Choose a PBX instance' }}
       </p>
+      <p v-else-if="step === 'tenant'" class="subtitle">Sign in with your tenant</p>
       <p v-else-if="selectedInstance" class="subtitle">
         Sign in to {{ selectedInstance.label }}
       </p>
@@ -270,19 +363,60 @@ async function onSubmit(e) {
         {{ catalogError }}
       </p>
 
-      <!-- S10.8 login chooser -->
+      <!-- S10.8 login chooser + B′ tenant door -->
       <section v-if="step === 'chooser'" class="chooser-section">
         <p class="chooser-hint">
           <strong>Manage instance</strong> uses your PBX node login.
+          <strong>Sign in to tenant</strong> finds the home node from your tenant id.
           <strong>Fleet console</strong> uses the control-plane fleet account (not the same password).
         </p>
         <button type="button" class="chooser-btn" @click="chooseManageInstance">
           <span class="chooser-btn-title">Manage instance</span>
           <span class="chooser-btn-meta">Tenants, extensions, trunks on one node</span>
         </button>
+        <button
+          type="button"
+          class="chooser-btn"
+          :disabled="!tenantHomeEnabled"
+          @click="chooseSignInToTenant"
+        >
+          <span class="chooser-btn-title">Sign in to tenant</span>
+          <span class="chooser-btn-meta">Tenant id or URL → home node (customer)</span>
+        </button>
         <button type="button" class="chooser-btn chooser-btn--fleet" @click="chooseFleetConsole">
           <span class="chooser-btn-title">Fleet console</span>
           <span class="chooser-btn-meta">Catalog, DIDs, moves, edge — gatekeeper only</span>
+        </button>
+      </section>
+
+      <!-- B′ tenant id -->
+      <section v-if="step === 'tenant'" class="tenant-section">
+        <button
+          v-if="showEntryChooser"
+          type="button"
+          class="btn-link"
+          @click="backToChooser"
+        >
+          ← Back to choices
+        </button>
+        <label for="tenantId">Tenant id or URL</label>
+        <input
+          id="tenantId"
+          v-model="tenantIdInput"
+          type="text"
+          autocomplete="organization"
+          placeholder="e.g. abc789 or abc789.pbx3.com"
+          required
+          @keydown.enter.prevent="resolveTenantAndContinue"
+        />
+        <p v-if="error && step === 'tenant'" class="error" role="alert">{{ error }}</p>
+        <button
+          type="button"
+          class="btn-primary"
+          :disabled="tenantResolveLoading"
+          @click="resolveTenantAndContinue"
+        >
+          {{ tenantResolveLoading ? 'Looking up…' : 'Continue' }}
         </button>
       </section>
 
@@ -350,9 +484,9 @@ async function onSubmit(e) {
           v-if="showEntryChooser"
           type="button"
           class="btn-link"
-          @click="backToChooser"
+          @click="backFromCredentials"
         >
-          ← Back to choices
+          ← Back
         </button>
         <div v-if="recents.length && (catalogError || showManualApiUrl)" class="recents">
           <p class="section-label">Recent instances</p>
@@ -374,7 +508,15 @@ async function onSubmit(e) {
           <p class="selected-instance-k">Selected instance</p>
           <p class="selected-instance-v">{{ selectedSummary }}</p>
           <button
-            v-if="directoryEnabled && catalogInstances.length > 0"
+            v-if="resolvedTenantShortuid"
+            type="button"
+            class="btn-link-inline"
+            @click="changeTenantFromCredentials"
+          >
+            Change tenant
+          </button>
+          <button
+            v-else-if="directoryEnabled && catalogInstances.length > 0"
             type="button"
             class="btn-link-inline"
             @click="backToPicker"
@@ -492,6 +634,11 @@ async function onSubmit(e) {
   flex-direction: column;
   gap: 0.75rem;
   margin-top: 0.25rem;
+}
+.tenant-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 .chooser-hint {
   margin: 0;

@@ -81,7 +81,7 @@ Keep the matrix slim partly **because** every extra identity relationship is ano
 
 ---
 
-## Login homing / tenant URL (**challenger** — not locked)
+## Login homing / tenant URL (**B′ leaning — design notes 2026-07-23**)
 
 **Problem:** P4 moves **credentials** with the tenant. It does **not** tell the customer’s browser **which instance origin** to open. That is a **nav** problem, not more Sanctum matrix. Phones already get a stable edge (tenant FQDN → SBC → current node, or solo DNS). SPA login today is **instance-URL-bound**.
 
@@ -91,13 +91,42 @@ Keep the matrix slim partly **because** every extra identity relationship is ano
 |------------|------|--------------|--------|
 | **A — Stable tenant admin URL** | Bookmarkable front door per tenant (e.g. `https://{tenant}.admin…` or path on a broker) that always lands on the **current** home SPA/API | **Maybe** — only if the stable name is a DNS name that must retarget | Same *shape* as SIP stable naming; pairs with catalog `meta.json.instance_id` |
 | **B — Login broker (no per-move DNS)** | Fixed Gatekeeper/control-plane (or Pages) login origin; resolve home → hit correct instance API | **No** (broker FQDN stays put) | Customers need not memorize instance FQDNs; Model B instance picker stays MSP-facing |
-| **B′ — Tenant id on login** (**leaning**) | Login fields: **tenant shortuid *or* tenant URL/FQDN** + email + password. SPA (or broker) resolves that id via directory (`meta.json` / cname) → `instance_id` → instance API base **in real time**, then `POST …/auth/login` on that node | **No** | Cheap UX; customers already know shortuid and/or dialable tenant FQDN; no per-move DNS. After move, same id + password just works. |
+| **B′ — Tenant id on login** (**leaning**) | Login fields: **tenant shortuid *or* tenant URL/FQDN** + email + password. SPA resolves via directory → `instance_id` → instance API base, then `POST …/auth/login` on that node | **No** | Cheap UX; customers already know shortuid and/or dialable tenant FQDN; no per-move DNS. After move, same id + password just works. |
 | **C — Ops tell / bookmark update** | After move, MSP sends new instance URL | **No** | Honest for lab / early fleet; weak product story |
 | **D — Per-move DNS to instance** | Customer URL is the node; update A/CNAME when tenant moves | **Yes** | Works; **least preferred** given DNS churn + TTL |
 
-**B′ sketch:** Accept **either** `vqcwd4` **or** `vqcwd4.pbx3.com` (normalize host → shortuid / match `cname`/`fqdn` in catalog). Needs a **read-only homing lookup** (Gatekeeper or public-safe catalog slice → API base URL). Do **not** invent a second password store — Sanctum stays on the instance; broker only **routes**. Uniform “unknown tenant / bad credentials” responses to limit enumeration. Multi-cluster users: enter the **home** tenant they care about for this session (same one-home preference as portable export).
+### Why a lookup (not DNS alone)
 
-**Not decided:** Exact lookup API, TLS, whether admin login stays instance-picker / direct URL. Record here so move + portable auth stay honest; pick when fleet customer login UX is prioritized.
+Tenant FQDNs are public in DNS, but in an SBC-fronted fleet they typically point at the **SBC VIP**, not the home node’s `:44300`. Instance FQDNs are also public — the missing public fact is **tenant → current `instance_id`**, which lives in `tenants/{shortuid}/meta.json` (and SBC `domain.setid`). B′ publishes a **safe projection** of that join for the SPA.
+
+### Settled direction (2026-07-23) — compiled home index, not Gatekeeper in the customer path
+
+Do **not** make customer login depend on `control.pbx3.com`. Mirror the instance picker: browser `GET`s catalog objects; Gatekeeper/registrar only **writes**.
+
+**Authoritative:** `tenants/{shortuid}/meta.json` (`instance_id`, `cname`/`fqdn`).  
+**Compiled rollup (new):** e.g. `catalog/tenant-home.json` — slim rows only:
+
+```json
+{
+  "version": 1,
+  "updated_at": "…",
+  "tenants": [
+    { "shortuid": "abc789", "cname": "abc789.example.com", "instance_id": "<ksuid>" }
+  ]
+}
+```
+
+SPA: normalize input (`abc789` or `abc789.example.com`) → match row → join `instance_id` to existing **`catalog/instance-index.json`** → seed `api_base_url` → normal Sanctum login on that node. No second password store. Uniform soft-fail on miss (limit enumeration).
+
+**When updated:** same control-plane writers as today — on **tenant register**, **move** (`moveTenant` / move job / `move-tenant.sh`), **cname change**, **decommission**. Rebuild or patch the rollup in the same path as the `meta.json` write (move job: refresh before cutover is “done”). Not on every call/login. Browser cache same class of issue as stale instance catalog.
+
+**Scope:** **one org bucket / one builder’s fleet** — not a global multi-fleet mega-index. Optional `org_id` on instance rows stays in-catalog metadata. Multi-cluster user: type the **home tenant** for this session.
+
+**SPA polymorphism (builder POV):** one codebase; behaviour from **build-time `VITE_*`** (especially `VITE_INSTANCE_DIRECTORY_URL`), **session mode** (tenant vs fleet), and **data** (catalog + whoami). Each system builder (fork/clone) runs **their** SPA wherever they choose, pointed at **their** catalog — n unrelated builders ⇒ n SPA deploys is fine; no need for one universal mega-SPA. Same-builder multi-fleet with one build is optional later (runtime catalog URL), not required for OSS cloners.
+
+**Customer journey (example):** open builder SPA → “Sign in to tenant” → enter `abc789` → GET tenant-home + instance-index → credentials → `POST {api_base_url}/auth/login`. MSP path keeps **Manage instance** / instance picker. Fleet/Gatekeeper remains ops, not the PBX front door.
+
+**Still open / implement status (2026-07-23 thin slice):** Schema `tenant-home.v0.json`; Gatekeeper rebuild on register/move + `POST /api/v1/catalog/tenant-home/rebuild`; Mac `rebuild-tenant-home.sh`; SPA three-door chooser + tenant resolve. **Lab:** publish rollup once (`rebuild-tenant-home.sh` or Gatekeeper rebuild) so `/dev-catalog/catalog/tenant-home.json` (or S3) exists. Cache-Control / Phase D private catalog later.
 
 **Relation:** Orthogonal to ability matrix. Does **not** reopen tenant-admin user ladder.
 
@@ -254,4 +283,4 @@ Customers define dial policy for **their** users (bar prefixes/ranges, etc.) via
 
 ---
 
-*Last updated: 2026-07-22 — P1–P4 shipped; login-homing **B′** leaning (tenant SUID **or** tenant URL/FQDN → realtime home lookup); prefer avoid per-move DNS.*
+*Last updated: 2026-07-23 — P1–P4 shipped; login-homing **B′** design notes (compiled `tenant-home` catalog rollup; no Gatekeeper on customer path; org/builder-scoped SPA).*
