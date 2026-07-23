@@ -225,14 +225,14 @@ onMounted(load)
           <dt>Replace on dest</dt>
           <dd>{{ replaceOnDest ? 'yes' : 'no' }}</dd>
         </dl>
-        <p class="hint">
+        <p class="hint review-hint">
           Start runs automated phases until a human gate (verify call, then source delete). Requires
           fleet APIs on nodes/SBC and matching service tokens.
         </p>
         <p v-if="error" class="error">{{ error }}</p>
         <button
           type="button"
-          class="btn btn-primary"
+          class="btn btn-primary start-move"
           :disabled="submitting || !canStart"
           @click="startMove"
         >
@@ -338,8 +338,15 @@ onMounted(load)
   color: #64748b;
   font-size: 0.9rem;
 }
+.review-hint {
+  margin: 1rem 0 0;
+}
+.start-move {
+  margin-top: 1.25rem;
+}
 .error {
   color: #b91c1c;
+  margin-top: 0.75rem;
 }
 .nav {
   display: flex;
