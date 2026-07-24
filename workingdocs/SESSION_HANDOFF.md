@@ -6,17 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-23 — login-homing B′
+## Session end 2026-07-23 — velocity plan + Gatekeeper tenant-home + generator track
+
+**On `main` (pushed):** no SPA code this evening. **pbx3** docs: velocity requirements fleshed (V1–V5, `active=NO` act, fixture-first); Ast config generator + cagi one TODO track. **Ops:** control Gatekeeper redeployed — tenant-home rebuild live (`POST …/rebuild` OK, 5 tenants).
+
+**Operator impact:** after tenant register/move, `catalog/tenant-home.json` should refresh from Gatekeeper without Mac script. Customer **Sign in to tenant** unchanged. Velocity / generator not operator-facing yet.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`. Catalog `tenant-home.json` on S3.
+
+**Docs / TODO:** tip **pbx3** **`d59e2f5`**; next velocity V1 or generator G1 / phone staging; Twilio when ready.
+
+**Resume:** velocity V1 (CDR fixture) or Ast config generator staging; SSO deferred.
+
+---
+
+## Session end 2026-07-23 — login-homing B′ — historical
 
 **On `main` (pushed):** SPA three-door login with **Sign in to tenant** first; resolve via `catalog/tenant-home.json` + instance-index → node Sanctum. Backend rollup writer in **pbx3** Gatekeeper/tools. Lab QA: `vqcwd4` / joe → bzy tenant UI OK.
 
-**Operator impact:** customers type tenant shortuid/FQDN (not email) on the first door; MSP/Fleet doors unchanged. After tenant register/move, refresh tenant-home (auto once Gatekeeper deployed, or `rebuild-tenant-home.sh`).
+**Operator impact:** customers type tenant shortuid/FQDN (not email) on the first door; MSP/Fleet doors unchanged. Gatekeeper on control now redeployed (same evening) for auto-rebuild.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`. Catalog sibling `tenant-home.json` (dev-catalog proxy or S3).
 
-**Docs / TODO:** B′ closed; next velocity V1+ / Twilio / phone staging / Gatekeeper deploy for auto-rebuild.
+**Docs / TODO:** superseded by block above.
 
-**Resume:** velocity V1+, or deploy control Gatekeeper with tenant-home rebuild; SSO stays deferred.
+**Resume:** see block above.
 
 ---
 
