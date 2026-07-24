@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-23 — velocity plan + Gatekeeper tenant-home + generator track
+## Session end 2026-07-24 — GenAst challenger review parked
+
+**On `main` (docs):** GenAst challenger findings locked in **`pbx3/workingdocs/AST_CONFIG_GENERATOR_SUBPROJECT.md` §0** — phone tmpl + required hand overlay; dialplan thin / one Dial authority in CAGI; note `$row` shadow bug. Premature G2 code **stashed** on branch `genast-phone-overlay` (not shipped). No SPA code this session.
+
+**Operator impact:** none yet. Commit/phone-tmpl chore unchanged until G2 lands. Velocity still notify-on / ACT-off on golden from earlier today.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — generator G2 next; Cursor plan `genast_challenger_review_0db5c469`.
+
+**Resume:** unstash/review G2 overlay + API overlay delete + golden smoke; optional dialplan `$row` fix; not velocity ACT / Twilio first.
+
+---
+
+## Session end 2026-07-23 — velocity plan + Gatekeeper tenant-home + generator track — historical
 
 **On `main` (pushed):** no SPA code this evening. **pbx3** docs: velocity requirements fleshed (V1–V5, `active=NO` act, fixture-first); Ast config generator + cagi one TODO track. **Ops:** control Gatekeeper redeployed — tenant-home rebuild live (`POST …/rebuild` OK, 5 tenants).
 
