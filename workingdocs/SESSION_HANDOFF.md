@@ -14,7 +14,7 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`. Catalog `tenant-home.json` on S3.
 
-**Docs / TODO:** tip **pbx3** **`d59e2f5`**; next velocity V1 or generator G1 / phone staging; Twilio when ready.
+**Docs / TODO:** tips **pbx3** **`cbafc85`** / **pbx3spa** **`eb1d1a5`**; next velocity V1 or generator G1 / phone staging; Twilio when ready.
 
 **Resume:** velocity V1 (CDR fixture) or Ast config generator staging; SSO deferred.
 
