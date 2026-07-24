@@ -6,23 +6,37 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-23 — fleet multi-tenant phone dial / SBC AoR
+## Session end 2026-07-23 — login-homing B′
 
-**On `main`:** no SPA code this slice. Backend/edge: multi-tenant phone rings via tenant AoR + SBC hop (fleet-gated). Golden + bzy live; ring groups OK. Source wipe in move job already on `main` from earlier same day.
+**On `main` (pushed):** SPA three-door login with **Sign in to tenant** first; resolve via `catalog/tenant-home.json` + instance-index → node Sanctum. Backend rollup writer in **pbx3** Gatekeeper/tools. Lab QA: `vqcwd4` / joe → bzy tenant UI OK.
+
+**Operator impact:** customers type tenant shortuid/FQDN (not email) on the first door; MSP/Fleet doors unchanged. After tenant register/move, refresh tenant-home (auto once Gatekeeper deployed, or `rebuild-tenant-home.sh`).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`. Catalog sibling `tenant-home.json` (dev-catalog proxy or S3).
+
+**Docs / TODO:** B′ closed; next velocity V1+ / Twilio / phone staging / Gatekeeper deploy for auto-rebuild.
+
+**Resume:** velocity V1+, or deploy control Gatekeeper with tenant-home rebuild; SSO stays deferred.
+
+---
+
+## Session end 2026-07-23 — fleet multi-tenant phone dial / SBC AoR — historical
+
+**On `main`:** no SPA code that slice. Backend/edge: multi-tenant phone rings via tenant AoR + SBC hop (fleet-gated). Golden + bzy live; ring groups OK. Source wipe in move job already on `main` from earlier same day.
 
 **Operator impact:** phones behind SBC on multi-tenant nodes should dial correctly; after phone-tmpl changes, refresh staged `endpoints/*_phone.conf` then Commit.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
 
-**Docs / TODO:** **`TODO.md`** — AoR item closed; login-homing **B′** next; phone staging parked.
+**Docs / TODO:** superseded by B′ block above.
 
-**Resume:** Login-homing **B′**, or soak; SPA unchanged this session.
+**Resume:** see block above.
 
 ---
 
 ## Session end 2026-07-22 — instance user privileges P1–P4 — historical
 
-**On `main`:** privileges P1–P4 + portable users; sandycroft→bzy. **Superseded** by 2026-07-23 AoR block for resume. Login-homing **B′** still open.
+**On `main`:** privileges P1–P4 + portable users; sandycroft→bzy. **Superseded** by 2026-07-23 blocks.
 
 **Resume:** see block above.
 
