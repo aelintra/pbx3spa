@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-25 — GenAst hermit G+H (LepDial + trunk/queue/park overlay)
+## Session end 2026-07-25 — graph MCP + PHP class `.php` layout
+
+**On `genast-hermit` (pbx3):** code-review-graph MCP fixed + graphs built; hermit review no merge-blockers. Major PHP classes now `*.php` with extensionless **symlinks** for runtime. TODO open for full `.php` requires (drop symlinks). G+H still tip; not merged to main.
+
+**Operator impact:** Hot-patch **`GenClass.php` / `HelperClass.php`** (not the bare names — those are symlinks). SPA unchanged this slice. Velocity still notify-on / ACT-off.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — merge hermit → main next; PHP class path cleanup open.
+
+**Resume:** Merge hermit → main; or roll bzy; optional D WebRTC live lab / class `.php` cleanup.
+
+---
+
+## Session end 2026-07-25 — GenAst hermit G+H (LepDial + trunk/queue/park overlay) — historical
 
 **On `genast-hermit` (pbx3 / pbx3api / pbx3cagi) + SPA `main`:** G LepDial short-run + PostDial (golden call lab OK); H trunk/queue/park C2 overlays (DB + SPA admin; park on Tenant). Not merged to main.
 
@@ -14,9 +28,9 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — merge hermit → main next; **`AST_CONFIG_GENERATOR_SUBPROJECT.md` §0**.
+**Docs / TODO:** superseded by graph/class layout block above.
 
-**Resume:** Merge hermit → main; or roll bzy; optional D WebRTC live lab.
+**Resume:** see block above.
 
 ---
 
