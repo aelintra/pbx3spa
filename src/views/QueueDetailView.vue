@@ -19,9 +19,11 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
+import { useAuthStore } from '@/stores/auth'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const auth = useAuthStore()
 const { getSchema, ensureFetched } = useSchema()
 function isReadOnly(field) {
   return getSchema('queues')?.read_only?.includes(field) ?? false
@@ -52,6 +54,7 @@ const editMaxlen = ref('')
 const editStrategy = ref('ringall')
 const editTimeout = ref('')
 const editAlertinfo = ref('')
+const editQueueOverlay = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -178,6 +181,7 @@ async function fetchQueue() {
     editMembers.value = q?.members ?? ''
     editMusicclass.value = q?.musicclass ?? ''
     editOptions.value = q?.options ?? ''
+    editQueueOverlay.value = q?.queue_overlay ?? ''
     editRetry.value = q?.retry != null && q?.retry !== '' ? String(q.retry) : ''
     editWrapuptime.value = q?.wrapuptime != null && q?.wrapuptime !== '' ? String(q.wrapuptime) : ''
     editMaxlen.value = q?.maxlen != null && q?.maxlen !== '' ? String(q.maxlen) : ''
@@ -255,6 +259,9 @@ async function saveEdit(e) {
     if (Number.isNaN(body.retry)) delete body.retry
     if (Number.isNaN(body.timeout)) delete body.timeout
     if (Number.isNaN(body.wrapuptime)) delete body.wrapuptime
+    if (auth.isAdmin) {
+      body.queue_overlay = editQueueOverlay.value.trim() || null
+    }
     await getApiClient().put(`queues/${encodeURIComponent(shortuid.value)}`, body)
     await fetchQueue()
     toast.show(`Queue ${queue.value?.pkey ?? ''} saved`)
@@ -513,6 +520,17 @@ const panelTitleTenantSuffix = computed(() => {
               :option-groups="destinationGroups"
               :loading="destinationsLoading"
               aria-label="Queue timeout outcome"
+            />
+            <FormField
+              v-if="auth.isAdmin"
+              id="edit-queue-overlay"
+              v-model="editQueueOverlay"
+              label="Queue overlay"
+              type="text"
+              placeholder="Thin overlay fragment (key=value lines)"
+              hint="Thin fragment merged into the stock queue template on Commit (replace/add keys). Leave empty for stock."
+              :multiline="true"
+              :rows="8"
             />
           </div>
 

@@ -12,9 +12,11 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
+import { useAuthStore } from '@/stores/auth'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const auth = useAuthStore()
 const { getSchema, ensureFetched } = useSchema()
 function isReadOnly(field) {
   return getSchema('trunks')?.read_only?.includes(field) ?? false
@@ -71,6 +73,7 @@ function normalizeYesNo(val) {
 
 const editDevicerec = ref('None')
 const editTransform = ref('')
+const editPjsipOverlay = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -104,6 +107,7 @@ async function fetchTrunk() {
     editPjsipreg.value = normalizePjsipregForSelect(trunk.value?.pjsipreg)
     editDevicerec.value = normalizeDevicerec(trunk.value?.devicerec)
     editTransform.value = trunk.value?.transform ?? ''
+    editPjsipOverlay.value = trunk.value?.pjsip_overlay ?? ''
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load trunk')
     trunk.value = null
@@ -171,6 +175,9 @@ async function saveEdit(e) {
           : null,
       devicerec: editDevicerec.value || 'None',
       transform: editTransform.value.trim() || undefined
+    }
+    if (auth.isAdmin) {
+      body.pjsip_overlay = editPjsipOverlay.value.trim() || null
     }
     if (editPassword.value.trim()) body.password = editPassword.value.trim()
     await getApiClient().put(`trunks/${encodeURIComponent(shortuid.value)}`, body)
@@ -426,6 +433,17 @@ async function confirmAndDelete() {
               :options="devicerecOptions"
             />
             <FormField id="edit-transform" v-model="editTransform" label="Transform" type="text" />
+            <FormField
+              v-if="auth.isAdmin"
+              id="edit-pjsip-overlay"
+              v-model="editPjsipOverlay"
+              label="PJSIP overlay"
+              type="text"
+              placeholder="Thin overlay fragment (type= + keys)"
+              hint="Thin fragment merged into the stock trunk template on Commit (replace/add keys by type=). Leave empty for stock."
+              :multiline="true"
+              :rows="8"
+            />
           </div>
 
           <div class="edit-actions">

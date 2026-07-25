@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-25 — GenAst hermit A–F (C2–E lab; F hygiene)
+## Session end 2026-07-25 — GenAst hermit G+H (LepDial + trunk/queue/park overlay)
+
+**On `genast-hermit` (pbx3 / pbx3api / pbx3cagi) + SPA `main`:** G LepDial short-run + PostDial (golden call lab OK); H trunk/queue/park C2 overlays (DB + SPA admin; park on Tenant). Not merged to main.
+
+**Operator impact:** Extension dials: AGI PreDial, dialplan Dial, PostDial on fail. Admin **PJSIP overlay** on Trunks; **Queue overlay** on Queues; **Parking overlay** on Tenant (no Parks panel). Commit picks up tmpl rolls without deleting freeze files (legacy freezes removed on golden). Velocity still notify-on / ACT-off.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — merge hermit → main next; **`AST_CONFIG_GENERATOR_SUBPROJECT.md` §0**.
+
+**Resume:** Merge hermit → main; or roll bzy; optional D WebRTC live lab.
+
+---
+
+## Session end 2026-07-25 — GenAst hermit A–F (C2–E lab; F hygiene) — historical
 
 **On `genast-hermit` (pbx3 / pbx3api / pbx3cagi) + SPA `main`:** C2 DB overlay + SPA field; D WebRTC overlay (WSS lab deferred); E `Q*` short-run (golden Q1060 OK); F SBC host env + `$clstkey` parking fix. Not merged to main.
 
@@ -14,9 +28,9 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — G or merge hermit next; **`AST_CONFIG_GENERATOR_SUBPROJECT.md` §0**.
+**Docs / TODO:** superseded by G+H block above.
 
-**Resume:** Phase G LepDial short-run; or merge hermit → main; optional D WebRTC live lab / roll bzy.
+**Resume:** see block above.
 
 ---
 

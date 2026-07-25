@@ -36,10 +36,12 @@ import {
 } from '@/constants/tenantAdvanced'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { useSessionContext } from '@/composables/useSessionContext'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const auth = useAuthStore()
 const { setTenantContext, clearTenantContext } = useSessionContext()
 const { getSchema, ensureFetched } = useSchema()
 function isReadOnly(field) {
@@ -52,6 +54,7 @@ const editDescription = ref('')
 const editClusterclid = ref('')
 const editLocalarea = ref('')
 const editLocaldplan = ref('')
+const editParkOverlay = ref('')
 const editChanmax = ref('')
 const editMaxin = ref('')
 const editVoipMax = ref('')
@@ -98,6 +101,7 @@ function syncEditFromTenant() {
   if (!tenant.value) return
   const t = tenant.value
   editDescription.value = t.description ?? ''
+  editParkOverlay.value = t.park_overlay ?? ''
   editClusterclid.value = t.clusterclid != null && t.clusterclid !== '' ? String(t.clusterclid) : ''
   editLocalarea.value = t.localarea != null && t.localarea !== '' ? String(t.localarea) : ''
   editLocaldplan.value = t.localdplan != null && t.localdplan !== '' ? String(t.localdplan) : ''
@@ -163,6 +167,9 @@ async function saveEdit(e) {
     await getApiClient().put(`tenants/${encodeURIComponent(pkey.value)}`, {
       description: editDescription.value.trim() || undefined,
       clusterclid: editClusterclid.value.trim() ? editClusterclid.value.trim() : null,
+      ...(auth.isAdmin
+        ? { park_overlay: editParkOverlay.value.trim() || null }
+        : {}),
       ...(parseNum(editLocalarea.value) !== undefined && {
         localarea: parseNum(editLocalarea.value)
       }),
@@ -333,6 +340,21 @@ async function confirmAndDelete() {
               label="Local dialplan"
               type="text"
               placeholder="e.g. _X."
+            />
+          </div>
+
+          <h2 class="detail-heading">Parking</h2>
+          <div class="form-fields">
+            <FormField
+              v-if="auth.isAdmin"
+              id="edit-park-overlay"
+              v-model="editParkOverlay"
+              label="Parking overlay"
+              type="text"
+              placeholder="Thin overlay fragment ([park-$clstshortuid] + keys)"
+              hint="Thin fragment merged into the stock parking lot template on Commit. Leave empty for stock."
+              :multiline="true"
+              :rows="8"
             />
           </div>
 
