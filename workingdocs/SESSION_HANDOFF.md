@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-24 — GenAst challenger review parked
+## Session end 2026-07-25 — GenAst hermit-crab A–C lab OK
+
+**On `genast-hermit` (pbx3 + pbx3api, pushed; not merged to main):** Phone tmpl + thin overlay with key merge; `$row` fix; characterize scripts; hot on golden/bzy. **C2 locked:** DB `pjsip_overlay` on extension + SPA extension-edit field (visibility). No SPA code this session.
+
+**Operator impact:** Commit uses tmpl (no staged `*_phone.conf` chore). One-phone overrides via `endpoints/{suid}_phone.overlay.conf` until C2. Lab: `fkdd5d` qualify=60. Velocity still notify-on / ACT-off.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — C2 next; **`AST_CONFIG_GENERATOR_SUBPROJECT.md` §0**.
+
+**Resume:** C2 DB column + extension-edit overlay; or merge hermit → main; later dialplan thin / webrtc overlay.
+
+---
+
+## Session end 2026-07-24 — GenAst challenger review parked — historical
 
 **On `main` (docs):** GenAst challenger findings locked in **`pbx3/workingdocs/AST_CONFIG_GENERATOR_SUBPROJECT.md` §0** — phone tmpl + required hand overlay; dialplan thin / one Dial authority in CAGI; note `$row` shadow bug. Premature G2 code **stashed** on branch `genast-phone-overlay` (not shipped). No SPA code this session.
 
@@ -14,9 +28,9 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — generator G2 next; Cursor plan `genast_challenger_review_0db5c469`.
+**Docs / TODO:** superseded by **2026-07-25** block above.
 
-**Resume:** unstash/review G2 overlay + API overlay delete + golden smoke; optional dialplan `$row` fix; not velocity ACT / Twilio first.
+**Resume:** see block above.
 
 ---
 
