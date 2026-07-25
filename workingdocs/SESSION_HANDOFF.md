@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-25 — GenAst hermit-crab A–C lab OK
+## Session end 2026-07-25 — GenAst hermit A–F (C2–E lab; F hygiene)
+
+**On `genast-hermit` (pbx3 / pbx3api / pbx3cagi) + SPA `main`:** C2 DB overlay + SPA field; D WebRTC overlay (WSS lab deferred); E `Q*` short-run (golden Q1060 OK); F SBC host env + `$clstkey` parking fix. Not merged to main.
+
+**Operator impact:** Extension edit (admin) has **PJSIP overlay**; Commit after F for parkinglot/`outbound_proxy`. Queue agents use AGI decide + dialplan Dial. Deploy **new cagi before** GenAst Commit when rolling E. Velocity still notify-on / ACT-off.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — G or merge hermit next; **`AST_CONFIG_GENERATOR_SUBPROJECT.md` §0**.
+
+**Resume:** Phase G LepDial short-run; or merge hermit → main; optional D WebRTC live lab / roll bzy.
+
+---
+
+## Session end 2026-07-25 — GenAst hermit-crab A–C lab OK — historical
 
 **On `genast-hermit` (pbx3 + pbx3api, pushed; not merged to main):** Phone tmpl + thin overlay with key merge; `$row` fix; characterize scripts; hot on golden/bzy. **C2 locked:** DB `pjsip_overlay` on extension + SPA extension-edit field (visibility). No SPA code this session.
 
@@ -14,9 +28,9 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — C2 next; **`AST_CONFIG_GENERATOR_SUBPROJECT.md` §0**.
+**Docs / TODO:** superseded by A–F block above.
 
-**Resume:** C2 DB column + extension-edit overlay; or merge hermit → main; later dialplan thin / webrtc overlay.
+**Resume:** see block above.
 
 ---
 
