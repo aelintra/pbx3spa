@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-25 — graph MCP + PHP class `.php` layout
+## Session end 2026-07-25 — pbx3cagi Phase 1.3–3.1 (golden call QA)
+
+**On `main` (pbx3cagi `c4b06bd`):** struct refactor through session pointer + macros gone; golden AGI binary live. Simple extension calls + CFIM OK. SPA unchanged this slice.
+
+**Operator impact:** None for SPA panels. Golden AGI is new build — bzy may still be older cagi until rolled. Velocity still notify-on / ACT-off.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — cagi 1.3–3.1 checked; follow-on thread-`s` / Phase 4 optional.
+
+**Resume:** Roll bzy cagi; or product (D WSS / Twilio / drain / velocity V3); or cagi helper threading — **`REFACTOR_PLAN.md`**.
+
+---
+
+## Session end 2026-07-25 — graph MCP + PHP class `.php` layout — historical
 
 **On `genast-hermit` (pbx3):** code-review-graph MCP fixed + graphs built; hermit review no merge-blockers. Major PHP classes now `*.php` with extensionless **symlinks** for runtime. TODO open for full `.php` requires (drop symlinks). G+H still tip; not merged to main.
 
@@ -14,9 +28,9 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — merge hermit → main next; PHP class path cleanup open.
+**Docs / TODO:** superseded — hermit merged; class `.php` requires done earlier same day.
 
-**Resume:** Merge hermit → main; or roll bzy; optional D WebRTC live lab / class `.php` cleanup.
+**Resume:** see block above.
 
 ---
 
