@@ -719,7 +719,7 @@ const panelTitleTenantSuffix = computed(() => {
               label="PJSIP overlay"
               type="text"
               placeholder="Thin overlay fragment (type= + keys)"
-              hint="Thin fragment merged into the stock phone template on Commit (replace/add keys by type=). Leave empty for stock. SIP phones only."
+              hint="Thin fragment merged into the stock phone/WebRTC template on Commit (replace/add keys by type=). Leave empty for stock."
               :multiline="true"
               :rows="8"
             />
