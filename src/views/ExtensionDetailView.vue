@@ -52,6 +52,7 @@ const editProvision = ref('')
 const editProvisionwith = ref('IP')
 const editTechnology = ref('SIP')
 const editVmailfwd = ref('')
+const editPjsipOverlay = ref('')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -160,6 +161,7 @@ async function fetchExtension() {
     editProvisionwith.value = ext?.provisionwith === 'FQDN' ? 'FQDN' : 'IP'
     editTechnology.value = ext?.technology ?? 'SIP'
     editVmailfwd.value = ext?.vmailfwd ?? ''
+    editPjsipOverlay.value = ext?.pjsip_overlay ?? ''
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load extension')
     extension.value = null
@@ -286,6 +288,8 @@ async function saveEdit(e) {
     if (auth.isAdmin) {
       body.provision = editProvision.value.trim() || undefined
       body.provisionwith = editProvisionwith.value
+      // Always send so clearing the textarea removes the DB overlay
+      body.pjsip_overlay = editPjsipOverlay.value.trim() || null
     }
     if (body.callmax !== undefined && Number.isNaN(body.callmax)) delete body.callmax
     await getApiClient().put(`extensions/${encodeURIComponent(shortuid.value)}`, body)
@@ -707,6 +711,17 @@ const panelTitleTenantSuffix = computed(() => {
               v-model="editProvisionwith"
               label="Provision with"
               :options="['IP', 'FQDN']"
+            />
+            <FormField
+              v-if="auth.isAdmin"
+              id="edit-pjsip-overlay"
+              v-model="editPjsipOverlay"
+              label="PJSIP overlay"
+              type="text"
+              placeholder="Thin overlay fragment (type= + keys)"
+              hint="Thin fragment merged into the stock phone template on Commit (replace/add keys by type=). Leave empty for stock. SIP phones only."
+              :multiline="true"
+              :rows="8"
             />
           </div>
 
