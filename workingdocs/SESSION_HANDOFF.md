@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-26 — emergency rollback pin + bzy cagi parity
+## Session end 2026-07-26 — cagi thread-s + 3.2 AGI wrap (lab OK)
+
+**On `main` (pbx3cagi `9e4bfa9`):** Session pointer threaded into helpers (PR #1); thin `agi_wrap` over AGITool (PR #2). Golden + bzy live same binary. SPA unchanged.
+
+**Operator impact:** None for SPA panels. AGI binary is wrap tip — calls + local CF / diverted validated on golden; bzy rolled to match. Velocity still notify-on / ACT-off. **Emergency roll back point** §5.5 unchanged (pre E/G pair).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — thread-s + 3.2 checked; Phase 4 optional next.
+
+**Resume:** Phase 4 domain splits, or product backlog (D WSS / Twilio / drain / velocity V3).
+
+---
+
+## Session end 2026-07-26 — emergency rollback pin + bzy cagi parity — historical
 
 **On `main`:** Docs only this slice. **Emergency roll back point** (pre E/G dial-locus) in **`AST_CONFIG_GENERATOR_SUBPROJECT.md` §5.5**. **bzy54n** AGI now same as golden **`c4b06bd`**. SPA unchanged.
 
