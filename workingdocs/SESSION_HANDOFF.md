@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-25 — pbx3cagi Phase 1.3–3.1 (golden call QA)
+## Session end 2026-07-26 — emergency rollback pin + bzy cagi parity
+
+**On `main`:** Docs only this slice. **Emergency roll back point** (pre E/G dial-locus) in **`AST_CONFIG_GENERATOR_SUBPROJECT.md` §5.5**. **bzy54n** AGI now same as golden **`c4b06bd`**. SPA unchanged.
+
+**Operator impact:** Both lab nodes on matching cagi tip — run live tests as-is. Velocity still notify-on / ACT-off. Catastrophic dial-locus recovery = paired GenAst+CAGI tips in §5.5 (not CAGI alone).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — bzy lag cleared; operator tests first.
+
+**Resume:** Await test results; then product backlog or optional cagi polish.
+
+---
+
+## Session end 2026-07-25 — pbx3cagi Phase 1.3–3.1 (golden call QA) — historical
 
 **On `main` (pbx3cagi `c4b06bd`):** struct refactor through session pointer + macros gone; golden AGI binary live. Simple extension calls + CFIM OK. SPA unchanged this slice.
 
