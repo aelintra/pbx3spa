@@ -6,7 +6,35 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-27 — L1 pack + SIPp EC2
+## Session end 2026-07-27 — L1 grow outbound + OutVoip fix
+
+**On `main`:** L1 pack 9/9 (`feat-master-closed`, `in-cfim-external`, `out-egress-ok` + prior six). Catcher **SIPP_MAIN**. **pbx3cagi** OutVoip `desc`→`description` (Egress Dial). SPA product unchanged; handoff only.
+
+**Operator impact:** Outbound Egress Dial works again after OutVoip fix. Peer gwid **99** = EIP only. Pack: `ssh -i …/pbx3test.pem ubuntu@98.93.98.162 'cd ~/call-tests && ./run-pack.sh'`.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
+
+**Docs / TODO:** L1 grow done; dial-alias §8 still open — **`TODO.md`**.
+
+**Resume:** Dial-alias §8 lock, or `out-busy-or-reject`. Do not start CAGI Phase 4 first.
+
+---
+
+## Session end 2026-07-27 — L1 +302/multi-tenant + dial-alias reqs — historical
+
+**On `main`:** L1 pack grew (`phone-302-local`, `in-multi-tenant-a-b`) — full pack green on SIPp EC2. **`TENANT_SHORT_DIAL_REQUIREMENTS.md`** drafted. SPA product code unchanged; handoff only this close.
+
+**Operator impact:** Unchanged — Twilio DID → catcher 2000; Peer gwid **99** = EIP `98.93.98.162` only.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
+
+**Docs / TODO:** superseded by block above.
+
+**Resume:** see block above.
+
+---
+
+## Session end 2026-07-27 — L1 pack + SIPp EC2 — historical
 
 **On `main`:** Automated L1 pack on catcher tenant + off-box SIPp host. Pack green: open / CFIM / closed / queue. SPA code unchanged this slice.
 
@@ -14,9 +42,9 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
 
-**Docs / TODO:** **`TODO.md`** — pack v1 done; next phone **302** / grow L1 · **`SIPP_LAB_HOST.md`**.
+**Docs / TODO:** superseded by block above.
 
-**Resume:** Phone-302 pack scenario, or product crumbs / time-based §8. Do not start CAGI Phase 4 first.
+**Resume:** see block above.
 
 ---
 
