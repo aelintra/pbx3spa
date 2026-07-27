@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-26 — call-test strategy (SIPp)
+## Session end 2026-07-26 — close: call test is next
+
+**On `main`:** Docs session closed. Strategy + time-based requirements already pushed. **Next work = SIPp call-test Step 1** (`in-open-ext` on golden). SPA unchanged.
+
+**Operator impact:** None this slice. System treated as largely built; proper pathway/load testing before more edge features. Velocity still notify-on / ACT-off.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`TODO.md`** — call/SIP pack **#1 (locked next)** · **`CALL_TEST_STRATEGY.md`**.
+
+**Resume:** SIPp + first green scenario. Do not start CAGI Phase 4 or day-parts implement first.
+
+---
+
+## Session end 2026-07-26 — call-test strategy (SIPp) — historical
 
 **On `main`:** Docs only. **`CALL_TEST_STRATEGY.md`** (L0–L3; SIPp pathways/load). TODO lists call-test as suggested-next #1. SPA code unchanged.
 
