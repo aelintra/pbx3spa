@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-26 — time-based routing requirements
+## Session end 2026-07-26 — call-test strategy (SIPp)
+
+**On `main`:** Docs only. **`CALL_TEST_STRATEGY.md`** (L0–L3; SIPp pathways/load). TODO lists call-test as suggested-next #1. SPA code unchanged.
+
+**Operator impact:** None yet. Future: lab SIPp recipes against golden DIDs. Velocity still notify-on / ACT-off.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — call/SIP test open; time-based routing still open (§8); Phase 4 parked.
+
+**Resume:** SIPp Step 1 (`in-open-ext`), or product crumbs / time-based §8. Do not start CAGI Phase 4 first.
+
+---
+
+## Session end 2026-07-26 — time-based routing requirements — historical
 
 **On `main`:** Docs only. **`TIME_BASED_ROUTING_REQUIREMENTS.md`** (day-parts + route profiles; cron kept; FreePBX deferred). CAGI Phase 4 parked. SPA code unchanged.
 
