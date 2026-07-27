@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-26 — close: call test is next
+## Session end 2026-07-27 — SIPp in-open-ext green
+
+**On `main`:** Call-test pack Step 1 done. **`in-open-ext`** Successful call (VIP DID → 1000, Snom auto-answer, clean BYE). Inventory + attendance docs. Inbound Route `+E.164` pkey fixed (api/spa; golden hot-file). SBC-admin gwid allocate fixed (deploy VIP later).
+
+**Operator impact:** Edit Inbound Route accepts `+` DIDs after api deploy. Temp SBC Peer gwid **99** for Mac SIPp — remove when done. Restore DID openroute to ring group if still on 1000. Lab Snom may still be always-auto-answer.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`TODO.md`** — grow L1 #1 · **`CALL_TYPE_INVENTORY.md`** · **`call-tests/`**.
+
+**Resume:** Green-lab CFIM/closed/queue scenarios, or product crumbs / time-based §8. Do not start CAGI Phase 4 first.
+
+---
+
+## Session end 2026-07-26 — close: call test is next — historical
 
 **On `main`:** Docs session closed. Strategy + time-based requirements already pushed. **Next work = SIPp call-test Step 1** (`in-open-ext` on golden). SPA unchanged.
 
