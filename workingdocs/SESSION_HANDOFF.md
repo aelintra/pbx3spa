@@ -6,17 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-27 — dial-alias §8 locked + backlog parks
+## Session end 2026-07-27 — SIPp EIP move + control duplex park
 
-**On `main`:** Dial-alias requirements **fully locked** (docs). Litestream dropped; AMI wallboard = side gig; 2nd SIPp phone host when alias lab starts; fleet `/up`≠Asterisk parked pre-live. SPA product unchanged; handoff only.
+**On `main`:** SIPp carrier EIP **`98.82.58.59`** (Peer **99**); pack **11/11 green**. Control-plane duplex/HA parked pre-live. Dial-alias §8 already locked earlier. SPA product unchanged; handoff only.
 
-**Operator impact:** None for SPA. SIPp carrier EIP keep on Peer **99**; stop instance OK. Bring 2nd SIPp (no Peer) only when dial-alias implement starts.
+**Operator impact:** Peer **99** → new EIP (Filament Peers page 2 / SIPp lab). SIPp instance may be stopped — keep EIP. Pack SSH host is **`98.82.58.59`** (not `98.93.98.162`).
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
 
-**Docs / TODO:** **`TENANT_SHORT_DIAL_REQUIREMENTS.md`** locked; **`TODO.md`** next = implement alias when scheduled (or day-parts §8).
+**Docs / TODO:** **`TODO.md`** — alias implement next; pre-live Asterisk health + control duplex parks.
 
-**Resume:** Dial-alias slice A or lock day-parts §8. Not CAGI Phase 4 first.
+**Resume:** Dial-alias slice A or day-parts §8. Not CAGI Phase 4 first.
+
+---
+
+## Session end 2026-07-27 — dial-alias §8 locked + backlog parks — historical
+
+**On `main`:** Dial-alias requirements **fully locked** (docs). Litestream dropped; AMI wallboard = side gig; 2nd SIPp phone host when alias lab starts; fleet `/up`≠Asterisk parked pre-live. SPA product unchanged; handoff only.
+
+**Operator impact:** superseded — SIPp EIP now **`98.82.58.59`** (see block above).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
+
+**Docs / TODO:** superseded by block above.
+
+**Resume:** see block above.
 
 ---
 
