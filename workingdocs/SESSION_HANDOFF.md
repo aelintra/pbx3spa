@@ -6,17 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-27 — SIPp in-open-ext green
+## Session end 2026-07-27 — L1 pack + SIPp EC2
+
+**On `main`:** Automated L1 pack on catcher tenant + off-box SIPp host. Pack green: open / CFIM / closed / queue. SPA code unchanged this slice.
+
+**Operator impact:** Twilio DID `+15139279738` → catcher 2000 (not dhbm8x 1000). SBC Peer gwid **99** = lab EIP `98.93.98.162` only — **do not** Peer office IP (breaks phones). bzy + Magrathea companion stopped (cost). After PBX3 deploy: `ssh -i …/pbx3test.pem ubuntu@98.93.98.162 'cd ~/call-tests && ./run-pack.sh'`.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
+
+**Docs / TODO:** **`TODO.md`** — pack v1 done; next phone **302** / grow L1 · **`SIPP_LAB_HOST.md`**.
+
+**Resume:** Phone-302 pack scenario, or product crumbs / time-based §8. Do not start CAGI Phase 4 first.
+
+---
+
+## Session end 2026-07-27 — SIPp in-open-ext green — historical
 
 **On `main`:** Call-test pack Step 1 done. **`in-open-ext`** Successful call (VIP DID → 1000, Snom auto-answer, clean BYE). Inventory + attendance docs. Inbound Route `+E.164` pkey fixed (api/spa; golden hot-file). SBC-admin gwid allocate fixed (deploy VIP later).
 
-**Operator impact:** Edit Inbound Route accepts `+` DIDs after api deploy. Temp SBC Peer gwid **99** for Mac SIPp — remove when done. Restore DID openroute to ring group if still on 1000. Lab Snom may still be always-auto-answer.
+**Operator impact:** Edit Inbound Route accepts `+` DIDs after api deploy. Temp SBC Peer gwid **99** for Mac SIPp — superseded by EC2 Peer. Restore DID openroute to ring group if still on 1000. Lab Snom may still be always-auto-answer.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
 
-**Docs / TODO:** **`TODO.md`** — grow L1 #1 · **`CALL_TYPE_INVENTORY.md`** · **`call-tests/`**.
+**Docs / TODO:** superseded by L1 pack block above.
 
-**Resume:** Green-lab CFIM/closed/queue scenarios, or product crumbs / time-based §8. Do not start CAGI Phase 4 first.
+**Resume:** see block above.
 
 ---
 
