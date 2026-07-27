@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-26 — cagi thread-s + 3.2 AGI wrap (lab OK)
+## Session end 2026-07-26 — time-based routing requirements
+
+**On `main`:** Docs only. **`TIME_BASED_ROUTING_REQUIREMENTS.md`** (day-parts + route profiles; cron kept; FreePBX deferred). CAGI Phase 4 parked. SPA code unchanged.
+
+**Operator impact:** None yet. Inbound still open/close. Future: DID → route profile; Day timers gain modes. Velocity still notify-on / ACT-off.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · bzy `https://bzy54n.pbx3.com:44300/api`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — Phase 4 parked; time-based routing open (lock §8 before code). Spec **`TIME_BASED_ROUTING_REQUIREMENTS.md`**.
+
+**Resume:** Lock time-based routing §8, or product crumbs (D WSS / Twilio / drain / velocity V3). Do not start CAGI Phase 4 first.
+
+---
+
+## Session end 2026-07-26 — cagi thread-s + 3.2 AGI wrap (lab OK) — historical
 
 **On `main` (pbx3cagi `9e4bfa9`):** Session pointer threaded into helpers (PR #1); thin `agi_wrap` over AGITool (PR #2). Golden + bzy live same binary. SPA unchanged.
 
