@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-27 — L1 pack 11/11 (queue-cancel-vm + out-busy)
+## Session end 2026-07-27 — dial-alias §8 locked + backlog parks
+
+**On `main`:** Dial-alias requirements **fully locked** (docs). Litestream dropped; AMI wallboard = side gig; 2nd SIPp phone host when alias lab starts; fleet `/up`≠Asterisk parked pre-live. SPA product unchanged; handoff only.
+
+**Operator impact:** None for SPA. SIPp carrier EIP keep on Peer **99**; stop instance OK. Bring 2nd SIPp (no Peer) only when dial-alias implement starts.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
+
+**Docs / TODO:** **`TENANT_SHORT_DIAL_REQUIREMENTS.md`** locked; **`TODO.md`** next = implement alias when scheduled (or day-parts §8).
+
+**Resume:** Dial-alias slice A or lock day-parts §8. Not CAGI Phase 4 first.
+
+---
+
+## Session end 2026-07-27 — L1 pack 11/11 (queue-cancel-vm + out-busy) — historical
 
 **On `main`:** L1 pack **11/11** green — added `in-queue-cancel-vm` + `out-busy-or-reject` (`uas-486`). Holiday deferred for day-parts. SPA product unchanged; handoff only.
 
@@ -14,9 +28,9 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
 
-**Docs / TODO:** Pack core done; next dial-alias §8 — **`TODO.md`**.
+**Docs / TODO:** superseded by block above.
 
-**Resume:** Lock dial-alias §8. Do not start CAGI Phase 4 first.
+**Resume:** see block above.
 
 ---
 
