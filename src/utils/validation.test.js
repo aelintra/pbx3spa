@@ -60,11 +60,13 @@ describe('validateAgentPasswd', () => {
 describe('validateInboundRoutePkey', () => {
   it('rejects single 0 and invalid patterns', () => {
     expect(validateInboundRoutePkey('0')).toBe('Number cannot be a single 0')
-    expect(validateInboundRoutePkey('abc')).toContain('valid Asterisk')
+    expect(validateInboundRoutePkey('abc')).toMatch(/digits|E\.164|_XZN/)
   })
 
-  it('accepts digits and pattern / special tokens', () => {
+  it('accepts digits, +E.164, and pattern / special tokens', () => {
     expect(validateInboundRoutePkey('0123456789')).toBeNull()
+    expect(validateInboundRoutePkey('+441924918076')).toBeNull()
+    expect(validateInboundRoutePkey('+15139279738')).toBeNull()
     // After `_`, only X Z N . ! are allowed (not numeric digits)
     expect(validateInboundRoutePkey('_XXXX')).toBeNull()
     expect(validateInboundRoutePkey('s')).toBeNull()
