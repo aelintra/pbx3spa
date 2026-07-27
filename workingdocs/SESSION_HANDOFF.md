@@ -6,17 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-27 — L1 grow outbound + OutVoip fix
+## Session end 2026-07-27 — L1 pack 11/11 (queue-cancel-vm + out-busy)
 
-**On `main`:** L1 pack 9/9 (`feat-master-closed`, `in-cfim-external`, `out-egress-ok` + prior six). Catcher **SIPP_MAIN**. **pbx3cagi** OutVoip `desc`→`description` (Egress Dial). SPA product unchanged; handoff only.
+**On `main`:** L1 pack **11/11** green — added `in-queue-cancel-vm` + `out-busy-or-reject` (`uas-486`). Holiday deferred for day-parts. SPA product unchanged; handoff only.
 
-**Operator impact:** Outbound Egress Dial works again after OutVoip fix. Peer gwid **99** = EIP only. Pack: `ssh -i …/pbx3test.pem ubuntu@98.93.98.162 'cd ~/call-tests && ./run-pack.sh'`.
+**Operator impact:** Unchanged Peer **99** = EIP only. Pack: `ssh -i …/pbx3test.pem ubuntu@98.93.98.162 'cd ~/call-tests && ./run-pack.sh'`.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
 
-**Docs / TODO:** L1 grow done; dial-alias §8 still open — **`TODO.md`**.
+**Docs / TODO:** Pack core done; next dial-alias §8 — **`TODO.md`**.
 
-**Resume:** Dial-alias §8 lock, or `out-busy-or-reject`. Do not start CAGI Phase 4 first.
+**Resume:** Lock dial-alias §8. Do not start CAGI Phase 4 first.
+
+---
+
+## Session end 2026-07-27 — L1 grow outbound + OutVoip fix — historical
+
+**On `main`:** L1 pack 9/9 (`feat-master-closed`, `in-cfim-external`, `out-egress-ok` + prior six). Catcher **SIPP_MAIN**. **pbx3cagi** OutVoip `desc`→`description`. SPA product unchanged; handoff only.
+
+**Operator impact:** Outbound Egress Dial works again after OutVoip fix. Peer gwid **99** = EIP only.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
+
+**Docs / TODO:** superseded by block above.
+
+**Resume:** see block above.
 
 ---
 
