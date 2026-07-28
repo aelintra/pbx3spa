@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-28 — SBC product tracks & roadmap
+## Session end 2026-07-28 — WebRTC golden `:8089` (REGISTER OK)
 
-**On `main`:** Docs — **`pbx3-directory/docs/SBC_PRODUCT_TRACKS.md`** (tracks + capability roadmap). Tips **pbx3** **`c7e1c9a`**, **pbx3spa** **`1ed3e2a`**. No SPA product code.
+**On `main` / dirty docs:** WebRTC demo path on **golden `:8089`** — REGISTER smoke OK (ext **1500** / `dhbm8x`). Magrathea UDP **not** touched. Recovery **`pre-webrtc-wss-20260728`**. pbx3sbc branch **`webrtc-wss`** scaffold only (defer). No SPA product code this slice.
 
-**Operator impact:** None. Posture: Teams = C1 only; STIR = Twilio; Track A = SARK (± FreePBX) behind SBC; FreePBX data-migrate ETL deferred until after that lab.
+**Operator impact:** Webphone demo uses `wss://08jzwn.pbx3.com:8089/ws` (creds on golden `~/webrtc-1500.env`). Desk phones via Magrathea UDP unchanged. SG must allow **8089/tcp** from client.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). WSS: `:8089/ws`.
 
-**Docs / TODO:** **`TODO.md`** — dial-alias #1; Track A lab open; SBC roadmap checked.
+**Docs / TODO:** **`TODO.md`** — WebRTC #1 (audio next); **`WEBRTC_WSS_LAB.md`**.
 
-**Resume:** Dial-alias when scheduled; SARK/FreePBX ↔ SBC lab; Twilio STIR; Teams C1 on customer ask.
+**Resume:** Browser **webphone audio** on golden `:8089`. Stay off Magrathea WSS until booked.
+
+---
+
+## Session end 2026-07-28 — SBC product tracks & roadmap — historical
+
+**On `main`:** Docs — **`SBC_PRODUCT_TRACKS.md`**. Tips **pbx3** **`c7e1c9a`**, **pbx3spa** **`1ed3e2a`**. Superseded same day by WebRTC golden block above.
+
+**Resume:** see block above.
 
 ---
 
