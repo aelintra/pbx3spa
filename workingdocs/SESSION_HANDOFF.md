@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-28 — SBC admin polish + SPA Home reboot
+## Session end 2026-07-28 — SBC product tracks A/B/C (planning)
+
+**On `main`:** Docs only — **`pbx3-directory/docs/SBC_PRODUCT_TRACKS.md`** (+ TODO / AGENT_HANDOFF). No SPA code.
+
+**Operator impact:** None. **Posture locked:** Teams = C1 commercial answer only; STIR = continue Twilio; **Track A lab:** SARK (± FreePBX) behind SBC next when operator stands boxes up.
+
+**Dev against golden:** unchanged — `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
+
+**Docs / TODO:** **`TODO.md`** posture locked + open Track A SARK lab item. Dial-alias still call-path #1.
+
+**Resume:** Dial-alias when scheduled; SARK/FreePBX ↔ SBC lab; Twilio STIR as useful; Teams only on customer C1 ask.
+
+---
+
+## Session end 2026-07-28 — SBC admin polish + SPA Home reboot — historical
 
 **On `main`:** **pbx3sbc-admin** door-knock geo/map, System/Backups/Certificates polish, CDR above-table filters (all-records default; duration row layout) — tip **`919938c`**. **pbx3spa** Home Reboot right-aligned — **`368196b`**. Live on VIP + golden SPA as deployed.
 
@@ -14,9 +28,9 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC admin `https://sbc.pbx3.com/admin`.
 
-**Docs / TODO:** **`TODO.md`** — dial-alias still #1 next; this session was SBC/SPA UX.
+**Docs / TODO:** superseded by planning block above (same day).
 
-**Resume:** Dial-alias slice A or day-parts §8. Not CAGI Phase 4 first.
+**Resume:** see block above.
 
 ---
 
