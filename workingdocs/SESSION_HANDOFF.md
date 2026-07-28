@@ -14,7 +14,7 @@
 
 **Dev against golden:** unchanged — `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
 
-**Docs / TODO:** **`TODO.md`** posture locked + open Track A SARK lab item. Dial-alias still call-path #1.
+**Docs / TODO:** **`TODO.md`** + **`SBC_PRODUCT_TRACKS.md`** (tracks **and** capability roadmap: SIP TLS, media mode, registration-edge, …). Dial-alias still call-path #1.
 
 **Resume:** Dial-alias when scheduled; SARK/FreePBX ↔ SBC lab; Twilio STIR as useful; Teams only on customer C1 ask.
 
