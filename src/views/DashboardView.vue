@@ -180,8 +180,6 @@ onMounted(() => {
         <button type="button" class="btn-action" :disabled="actionBusy != null" @click="stopPbx">
           {{ actionBusy === 'stop' ? 'Running…' : 'Stop PBX' }}
         </button>
-      </div>
-      <div class="danger-zone">
         <button type="button" class="btn-danger" :disabled="actionBusy != null" @click="reboot">
           {{ actionBusy === 'reboot' ? 'Running…' : 'Reboot instance' }}
         </button>
@@ -327,8 +325,8 @@ onMounted(() => {
 .action-buttons {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1rem;
 }
 .btn-action {
   padding: 0.5rem 1rem;
@@ -347,11 +345,8 @@ onMounted(() => {
   opacity: 0.7;
   cursor: not-allowed;
 }
-.danger-zone {
-  padding-top: 0.75rem;
-  border-top: 1px solid #e2e8f0;
-}
 .btn-danger {
+  margin-left: auto;
   padding: 0.5rem 1rem;
   font-size: 0.9375rem;
   font-weight: 500;
