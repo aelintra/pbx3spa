@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-27 — SIPp EIP move + control duplex park
+## Session end 2026-07-28 — SBC admin polish + SPA Home reboot
+
+**On `main`:** **pbx3sbc-admin** door-knock geo/map, System/Backups/Certificates polish, CDR above-table filters (all-records default; duration row layout) — tip **`919938c`**. **pbx3spa** Home Reboot right-aligned — **`368196b`**. Live on VIP + golden SPA as deployed.
+
+**Operator impact:** SBC **System → Backups** / Certificates details; Door-knock View shows location+map; CDR date fields blank = all. SPA Home reboot button position only.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC admin `https://sbc.pbx3.com/admin`.
+
+**Docs / TODO:** **`TODO.md`** — dial-alias still #1 next; this session was SBC/SPA UX.
+
+**Resume:** Dial-alias slice A or day-parts §8. Not CAGI Phase 4 first.
+
+---
+
+## Session end 2026-07-27 — SIPp EIP move + control duplex park — historical
 
 **On `main`:** SIPp carrier EIP **`98.82.58.59`** (Peer **99**); pack **11/11 green**. Control-plane duplex/HA parked pre-live. Dial-alias §8 already locked earlier. SPA product unchanged; handoff only.
 
@@ -14,9 +28,9 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
 
-**Docs / TODO:** **`TODO.md`** — alias implement next; pre-live Asterisk health + control duplex parks.
+**Docs / TODO:** superseded by block above.
 
-**Resume:** Dial-alias slice A or day-parts §8. Not CAGI Phase 4 first.
+**Resume:** see block above.
 
 ---
 
