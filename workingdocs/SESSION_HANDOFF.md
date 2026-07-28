@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-28 — SBC product tracks A/B/C (planning)
+## Session end 2026-07-28 — SBC product tracks & roadmap
 
-**On `main`:** Docs only — **`pbx3-directory/docs/SBC_PRODUCT_TRACKS.md`** (+ TODO / AGENT_HANDOFF). No SPA code.
+**On `main`:** Docs — **`pbx3-directory/docs/SBC_PRODUCT_TRACKS.md`** (tracks + capability roadmap). Tips **pbx3** **`c7e1c9a`**, **pbx3spa** **`1ed3e2a`**. No SPA product code.
 
-**Operator impact:** None. **Posture locked:** Teams = C1 commercial answer only; STIR = continue Twilio; **Track A lab:** SARK (± FreePBX) behind SBC next when operator stands boxes up.
+**Operator impact:** None. Posture: Teams = C1 only; STIR = Twilio; Track A = SARK (± FreePBX) behind SBC; FreePBX data-migrate ETL deferred until after that lab.
 
-**Dev against golden:** unchanged — `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
 
-**Docs / TODO:** **`TODO.md`** + **`SBC_PRODUCT_TRACKS.md`** (tracks **and** capability roadmap: SIP TLS, media mode, registration-edge, …). Dial-alias still call-path #1.
+**Docs / TODO:** **`TODO.md`** — dial-alias #1; Track A lab open; SBC roadmap checked.
 
-**Resume:** Dial-alias when scheduled; SARK/FreePBX ↔ SBC lab; Twilio STIR as useful; Teams only on customer C1 ask.
+**Resume:** Dial-alias when scheduled; SARK/FreePBX ↔ SBC lab; Twilio STIR; Teams C1 on customer ask.
+
+---
+
+## Session end 2026-07-28 — SBC product tracks A/B/C (planning) — historical
+
+**On `main`:** Early planning slice same day — superseded by roadmap block above.
+
+**Resume:** see block above.
 
 ---
 
