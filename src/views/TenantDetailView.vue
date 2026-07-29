@@ -37,12 +37,14 @@ import {
 import { firstErrorMessage } from '@/utils/formErrors'
 import { useSessionContext } from '@/composables/useSessionContext'
 import { useAuthStore } from '@/stores/auth'
+import { useFleetPosture } from '@/composables/useFleetPosture'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const auth = useAuthStore()
 const { setTenantContext, clearTenantContext } = useSessionContext()
+const { loadFleetPosture, isFleetNode } = useFleetPosture()
 const { getSchema, ensureFetched } = useSchema()
 function isReadOnly(field) {
   return getSchema('tenants')?.read_only?.includes(field) ?? false
@@ -63,6 +65,7 @@ const saving = ref(false)
 const deleteError = ref('')
 const deleting = ref(false)
 const confirmDeleteOpen = ref(false)
+const fleetLocked = ref(false)
 
 const pkey = computed(() => route.params.pkey)
 const isDefault = computed(() => tenant.value?.pkey === 'default')
@@ -134,6 +137,8 @@ function syncEditFromTenant() {
 }
 
 onMounted(async () => {
+  await loadFleetPosture()
+  fleetLocked.value = isFleetNode()
   await ensureFetched()
   await fetchTenant()
 })
@@ -243,7 +248,7 @@ async function confirmAndDelete() {
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
             <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
             <button
-              v-if="!isDefault"
+              v-if="!isDefault && !fleetLocked"
               type="button"
               class="action-delete"
               :disabled="deleting"
@@ -691,7 +696,7 @@ async function confirmAndDelete() {
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
             <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
             <button
-              v-if="!isDefault"
+              v-if="!isDefault && !fleetLocked"
               type="button"
               class="action-delete"
               :disabled="deleting"

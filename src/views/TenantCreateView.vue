@@ -37,11 +37,13 @@ import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useFleetPosture } from '@/composables/useFleetPosture'
 
 const router = useRouter()
 const toast = useToastStore()
 const auth = useAuthStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { loadFleetPosture, isFleetNode } = useFleetPosture()
 const pkey = ref('')
 const description = ref('')
 const clusterclid = ref('')
@@ -56,6 +58,7 @@ const pkeyInput = ref(null)
 /** Instance `globals.domain`; used with server-assigned tenant shortuid for domain/fqdn on create. */
 const globalsDomain = ref('')
 const globalsFetchDone = ref(false)
+const fleetBlocked = ref(false)
 
 const autoDomainFqdnPattern = computed(() => {
   const d = globalsDomain.value
@@ -170,6 +173,12 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
+  await loadFleetPosture()
+  if (isFleetNode()) {
+    fleetBlocked.value = true
+    error.value = 'Fleet mode: create tenants via Fleet → Tenants (not on-node Create).'
+    return
+  }
   await ensureFetched()
   try {
     const g = await getApiClient().get('sysglobals')
@@ -202,7 +211,8 @@ onMounted(async () => {
       <h1>Create tenant</h1>
     </PanelBackLink>
 
-    <form class="form create-form" @submit="onSubmit" @keydown="onKeydown">
+    <p v-if="fleetBlocked" class="error" role="alert">{{ error }}</p>
+    <form v-else class="form create-form" @submit="onSubmit" @keydown="onKeydown">
       <p v-if="error" id="tenant-create-error" class="error" role="alert">{{ error }}</p>
 
       <div class="actions actions-top">

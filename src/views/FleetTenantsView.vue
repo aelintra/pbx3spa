@@ -4,7 +4,8 @@ import {
   listFleetTenants,
   getFleetCatalog,
   refreshFleetSession,
-  registerFleetTenantDomain
+  registerFleetTenantDomain,
+  provisionFleetTenant
 } from '@/api/fleetGatekeeper'
 import {
   hasFleetGatekeeperToken,
@@ -12,15 +13,31 @@ import {
   FLEET_ABILITY,
   getFleetAbilities
 } from '@/config/fleetGatekeeper'
+import { validateTenantPkey } from '@/utils/validation'
+import { buildProvisionBody } from '@/utils/fleetTenantProvision'
 
 const tenants = ref([])
 const instancesById = ref({})
+const instanceOptions = ref([])
 const loading = ref(true)
 const error = ref('')
 const actionError = ref('')
 const busyId = ref('')
 const canMove = ref(false)
 const canEdge = ref(false)
+const canCreate = ref(false)
+
+const showCreate = ref(false)
+const createBusy = ref(false)
+const createError = ref('')
+const createOk = ref('')
+const createForm = ref({
+  instance_id: '',
+  pkey: '',
+  description: '',
+  clusterclid: '',
+  localarea: ''
+})
 
 async function loadTenants() {
   if (!hasFleetGatekeeperToken()) {
@@ -29,6 +46,7 @@ async function loadTenants() {
     tenants.value = []
     canMove.value = false
     canEdge.value = false
+    canCreate.value = false
     return
   }
   loading.value = true
@@ -40,17 +58,24 @@ async function loadTenants() {
     }
     canMove.value = canFleet(FLEET_ABILITY.MOVES)
     canEdge.value = canFleet(FLEET_ABILITY.EDGE)
+    canCreate.value = canFleet(FLEET_ABILITY.INSTANCES)
     const [tList, catalog] = await Promise.all([listFleetTenants(), getFleetCatalog()])
     const map = {}
+    const opts = []
     for (const i of catalog.instances || []) {
       map[i.id] = i
+      const status = String(i.status || '').toLowerCase()
+      if (status === 'decommissioned') continue
+      opts.push(i)
     }
     instancesById.value = map
+    instanceOptions.value = opts
     tenants.value = tList
   } catch (e) {
     error.value = e?.message || 'Failed to load fleet tenants'
     canMove.value = false
     canEdge.value = false
+    canCreate.value = false
   } finally {
     loading.value = false
   }
@@ -68,6 +93,82 @@ function instanceLabel(instanceId) {
 function hostHasSetid(instanceId) {
   const i = instancesById.value[instanceId]
   return i != null && Number(i.sbc_dispatcher_setid) >= 1
+}
+
+function openCreate() {
+  createError.value = ''
+  createOk.value = ''
+  const firstWithSetid = instanceOptions.value.find((i) => Number(i.sbc_dispatcher_setid) >= 1)
+  createForm.value = {
+    instance_id: firstWithSetid?.id || instanceOptions.value[0]?.id || '',
+    pkey: '',
+    description: '',
+    clusterclid: '',
+    localarea: ''
+  }
+  showCreate.value = true
+}
+
+function cancelCreate() {
+  showCreate.value = false
+  createError.value = ''
+  createOk.value = ''
+}
+
+async function submitCreate() {
+  createError.value = ''
+  createOk.value = ''
+  const f = createForm.value
+  const pkeyErr = validateTenantPkey(f.pkey)
+  if (pkeyErr) {
+    createError.value = pkeyErr
+    return
+  }
+  if (!(f.description || '').trim()) {
+    createError.value = 'Description is required'
+    return
+  }
+  if (!f.instance_id) {
+    createError.value = 'Home instance is required'
+    return
+  }
+  if (!hostHasSetid(f.instance_id)) {
+    createError.value =
+      'Home instance needs sbc_dispatcher_setid first (Instances → Provision edge or Link setid).'
+    return
+  }
+  createBusy.value = true
+  try {
+    const shaped = buildProvisionBody(f)
+    if (!shaped.ok) {
+      createError.value = shaped.error
+      createBusy.value = false
+      return
+    }
+    const result = await provisionFleetTenant(shaped.body)
+    if (!result?.ok) {
+      const resume = result?.resume
+      createError.value =
+        result?.error ||
+        'Provision failed after node create — use resume payload or Register on SBC after catalog retry'
+      if (resume?.shortuid) {
+        createError.value += ` (node shortuid ${resume.shortuid}; resume with shortuid+fqdn)`
+      }
+      return
+    }
+    const su = result?.tenant?.shortuid || result?.node_tenant?.shortuid || ''
+    if (result.partial && result.stages?.sbc === 'failed') {
+      createOk.value = `Tenant ${su} created on node + catalog; SBC domain failed — use Register on SBC.`
+    } else {
+      createOk.value = `Tenant ${su} provisioned (node + catalog + SBC).`
+    }
+    showCreate.value = false
+    await loadTenants()
+  } catch (e) {
+    createError.value = e?.message || 'Provision failed'
+  } finally {
+    createBusy.value = false
+  }
 }
 
 async function doRegisterDomain(t) {
@@ -95,15 +196,63 @@ onMounted(loadTenants)
   <div class="fleet-tenants-view">
     <h1>Fleet tenants</h1>
     <p class="hint">
-      Org catalog via gatekeeper. Register on SBC projects the tenant FQDN → host setid (phones).
-      Move a tenant between instances without mixing tenant-node panels.
+      Create provisions home node + catalog + SBC domain. Register on SBC repairs a missing domain.
+      Move relocates a tenant between instances.
     </p>
 
+    <p v-if="canCreate" class="toolbar">
+      <button type="button" class="primary" :disabled="loading" @click="openCreate">
+        Create tenant
+      </button>
+    </p>
+
+    <p v-if="createOk" class="ok">{{ createOk }}</p>
     <p v-if="actionError" class="error">{{ actionError }}</p>
     <p v-if="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
 
-    <table v-else-if="tenants.length" class="data-table">
+    <form v-if="showCreate" class="create-panel" @submit.prevent="submitCreate">
+      <h2>Create tenant</h2>
+      <p class="hint">
+        Home instance must already have an SBC dispatcher setid. DID attach is a separate Fleet DIDs
+        step.
+      </p>
+      <label>
+        Home instance
+        <select v-model="createForm.instance_id" required>
+          <option disabled value="">Select instance…</option>
+          <option v-for="i in instanceOptions" :key="i.id" :value="i.id">
+            {{ i.label || i.fqdn || i.id }}
+            {{ Number(i.sbc_dispatcher_setid) >= 1 ? `(setid ${i.sbc_dispatcher_setid})` : '(no setid)' }}
+          </option>
+        </select>
+      </label>
+      <label>
+        Name (pkey)
+        <input v-model="createForm.pkey" type="text" autocomplete="off" required />
+      </label>
+      <label>
+        Description
+        <input v-model="createForm.description" type="text" required />
+      </label>
+      <label>
+        Cluster CLID
+        <input v-model="createForm.clusterclid" type="text" inputmode="numeric" placeholder="digits" />
+      </label>
+      <label>
+        Local area
+        <input v-model="createForm.localarea" type="text" inputmode="numeric" placeholder="digits" />
+      </label>
+      <p v-if="createError" class="error">{{ createError }}</p>
+      <div class="create-actions">
+        <button type="submit" class="primary" :disabled="createBusy">
+          {{ createBusy ? 'Provisioning…' : 'Provision' }}
+        </button>
+        <button type="button" :disabled="createBusy" @click="cancelCreate">Cancel</button>
+      </div>
+    </form>
+
+    <table v-if="!loading && !error && tenants.length" class="data-table">
       <thead>
         <tr>
           <th>Name</th>
@@ -142,7 +291,9 @@ onMounted(loadTenants)
         </tr>
       </tbody>
     </table>
-    <p v-else-if="hasFleetGatekeeperToken()">No tenants in catalog yet.</p>
+    <p v-else-if="hasFleetGatekeeperToken() && !loading && !error && !tenants.length">
+      No tenants in catalog yet.
+    </p>
   </div>
 </template>
 
@@ -154,11 +305,56 @@ onMounted(loadTenants)
   color: var(--pbx-text-muted);
   font-size: 0.9rem;
 }
+.toolbar {
+  margin: 0.75rem 0;
+}
+.primary {
+  background: var(--pbx-accent, #2563eb);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.4rem 0.85rem;
+  font: inherit;
+  cursor: pointer;
+}
 .error {
   color: var(--pbx-danger, #b91c1c);
 }
+.ok {
+  color: var(--pbx-success, #15803d);
+}
 .muted {
   color: var(--pbx-text-muted);
+}
+.create-panel {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid var(--pbx-border);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-width: 28rem;
+}
+.create-panel h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.create-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+.create-panel input,
+.create-panel select {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+}
+.create-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 .actions .linkish {
   margin-right: 0.65rem;

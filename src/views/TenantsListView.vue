@@ -12,9 +12,11 @@ import ListViewMeta from '@/components/ListViewMeta.vue'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import { countActiveRows } from '@/utils/listActive'
 import { useSessionContext } from '@/composables/useSessionContext'
+import { useFleetPosture } from '@/composables/useFleetPosture'
 
 const { filterText } = useStickyFilter('tenants')
 const { clearTenantContext } = useSessionContext()
+const { loadFleetPosture, isFleetNode } = useFleetPosture()
 const toast = useToastStore()
 const tenants = ref([])
 const loading = ref(true)
@@ -24,6 +26,7 @@ const deletingPkey = ref(null)
 const confirmDeletePkey = ref(null)
 const exportPdfLoading = ref(false)
 const { sortKey, sortOrder } = useStickySort('tenants', { defaultKey: 'pkey' })
+const fleetLocked = ref(false)
 
 // --- Display helpers ---
 /** UID (shortuid) for display */
@@ -177,8 +180,10 @@ async function confirmAndDeleteTenant(pkey) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   clearTenantContext()
+  await loadFleetPosture()
+  fleetLocked.value = isFleetNode()
   loadTenants()
 })
 </script>
@@ -188,7 +193,14 @@ onMounted(() => {
     <header class="list-header">
       <h1>Tenants</h1>
       <p class="toolbar">
-        <router-link :to="{ name: 'tenant-create' }" class="add-btn">Create</router-link>
+        <router-link
+          v-if="!fleetLocked"
+          :to="{ name: 'tenant-create' }"
+          class="add-btn"
+        >Create</router-link>
+        <span v-else class="fleet-create-hint" title="Use Fleet → Tenants → Create tenant">
+          Create via Fleet
+        </span>
         <button
           type="button"
           class="export-btn"
@@ -374,7 +386,7 @@ onMounted(() => {
             </td>
             <td>
               <button
-                v-if="t.pkey !== 'default'"
+                v-if="t.pkey !== 'default' && !fleetLocked"
                 type="button"
                 class="cell-link cell-link-delete cell-link-icon"
                 :title="deletingPkey === t.pkey ? 'Deleting…' : 'Delete'"
@@ -600,6 +612,12 @@ onMounted(() => {
 }
 .add-btn:hover {
   background: #1d4ed8;
+}
+.fleet-create-hint {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: #64748b;
 }
 .export-btn {
   padding: 0.5rem 1rem;

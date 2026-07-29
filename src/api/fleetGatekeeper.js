@@ -180,6 +180,42 @@ export function projectFleetDids(body = {}) {
 }
 
 /**
+ * Fleet-first tenant create — node + catalog + SBC domain (`fleet_instances`).
+ * Returns the provision payload even on HTTP 502 (catalog fail after node ok) so the SPA can show resume shortuid.
+ * @param {{ instance_id: string, pkey: string, description: string, clusterclid?: string, localarea?: string, resume?: boolean, shortuid?: string, fqdn?: string }} body
+ */
+export async function provisionFleetTenant(body) {
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json'
+  }
+  const t = token()
+  if (t) {
+    headers.Authorization = `Bearer ${t}`
+  }
+  const res = await fetch(`${base()}/api/v1/tenants/provision`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body)
+  })
+  const text = await res.text()
+  let data = null
+  try {
+    data = text ? JSON.parse(text) : null
+  } catch {
+    data = { raw: text }
+  }
+  if (data && typeof data === 'object' && ('ok' in data || 'stages' in data)) {
+    return data
+  }
+  if (!res.ok) {
+    const msg = data?.error || data?.message || `Gatekeeper ${res.status}`
+    throw new Error(msg)
+  }
+  return data
+}
+
+/**
  * Ensure tenant fqdn exists as SBC domain at catalog setid (`fleet_edge`).
  * @param {string} shortuid
  */
