@@ -170,9 +170,9 @@ async function saveEdit(e) {
       ...(auth.isAdmin
         ? { park_overlay: editParkOverlay.value.trim() || null }
         : {}),
-      ...(parseNum(editLocalarea.value) !== undefined && {
-        localarea: parseNum(editLocalarea.value)
-      }),
+      ...(editLocalarea.value.trim() !== ''
+        ? { localarea: editLocalarea.value.trim() }
+        : { localarea: null }),
       ...(editLocaldplan.value.trim() !== '' && { localdplan: editLocaldplan.value.trim() }),
       chanmax: editChanmax.value.trim() ? editChanmax.value.trim() : undefined,
       ...(parseNum(editMaxin.value) !== undefined && { maxin: parseNum(editMaxin.value) }),
@@ -325,14 +325,18 @@ async function confirmAndDelete() {
               v-model="editClusterclid"
               label="CLID"
               type="text"
-              placeholder="integer"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              placeholder="digits (leading zeros OK)"
             />
             <FormField
               id="edit-identity-localarea"
               v-model="editLocalarea"
               label="Local area"
-              type="number"
-              placeholder="number"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              placeholder="area code (leading zeros OK)"
             />
             <FormField
               id="edit-identity-localdplan"

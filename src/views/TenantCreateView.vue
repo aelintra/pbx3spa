@@ -111,10 +111,11 @@ async function onSubmit(e) {
     const body = {
       pkey: pkey.value.trim(),
       description: description.value.trim(),
-      ...(parseNum(clusterclid.value) !== undefined && {
-        clusterclid: parseNum(clusterclid.value)
+      // API: nullable|string|regex digits — do not parseNum (edit path sends string)
+      ...(clusterclid.value.trim() !== '' && {
+        clusterclid: clusterclid.value.trim()
       }),
-      ...(parseNum(localarea.value) !== undefined && { localarea: parseNum(localarea.value) }),
+      ...(localarea.value.trim() !== '' && { localarea: localarea.value.trim() }),
       ...(localdplan.value.trim() !== '' && { localdplan: localdplan.value.trim() }),
       ...(parseNum(chanmax.value) !== undefined && { chanmax: parseNum(chanmax.value) }),
       ...(parseNum(maxin.value) !== undefined && { maxin: parseNum(maxin.value) }),
@@ -238,15 +239,19 @@ onMounted(async () => {
           id="clusterclid"
           v-model="clusterclid"
           label="CLID"
-          type="number"
-          placeholder="integer"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          placeholder="digits (leading zeros OK)"
         />
         <FormField
           id="localarea"
           v-model="localarea"
           label="Local area"
-          type="number"
-          placeholder="number"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          placeholder="area code (leading zeros OK)"
         />
         <FormField
           id="localdplan"

@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-29 — WebRTC PrepDial tipped; ext create `$desc`; SPA far-end open
+## Session end 2026-07-29 — fleet-first tenant create locked; CLID/localarea string fixes
+
+**On `main`:** Requirements **`FLEET_TENANT_CREATE_REQUIREMENTS.md`** — fleet admin creates tenants (gatekeeper push → node → catalog → SBC); instance Create/Delete/FQDN locked in fleet mode; edit+build PBX still on-node. SPA tenant CLID + local area: text inputs / digit strings (leading zeros). No fleet Create UI yet.
+
+**Operator impact:** On-node Create Tenant still works until fleet-first is implemented; prefer not to rely on CLI catalog register. Leading zeros OK for CLID/local area after SPA+API deploy.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
+
+**Docs / TODO:** Fleet-first open item #2 in suggested order; WebRTC SPA far-end still open.
+
+**Resume:** Implement fleet-first when scheduled, or WebRTC SPA retest.
+
+---
+
+## Session end 2026-07-29 — WebRTC PrepDial tipped; ext create `$desc`; SPA far-end open — historical
 
 **On `main`:** Golden WebRTC path — Mac REGISTER OK; outbound 1500→desk OK. Fleet PrepDial skips FQDN for `device=WebRTC` — tip **pbx3cagi** **`3a9b7d7`** (hot golden). Extension create `$desc` — tip **pbx3api** **`60262a0`** (hot golden). Inbound INVITE reaches SPA on WSS; SPA does not SIP-respond — digit-only sip-user sanitize + inbound handler (operator ↔ SPA team). Parked TODO: `ipphone.desc` vs `description`. No pbx3spa product code.
 
@@ -14,9 +28,9 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). WSS: `:8089/ws` or `dhbm8x.pbx3.com:8089/ws`.
 
-**Docs / TODO:** **`TODO.md`** — WebRTC #1 + SPA far-end open; PrepDial + ext create [x]; desc ambivalence parked.
+**Docs / TODO:** superseded by block above.
 
-**Resume:** SPA team fix → inbound retest. Stay off Magrathea WSS until booked.
+**Resume:** see block above.
 
 ---
 
