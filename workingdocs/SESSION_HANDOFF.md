@@ -6,17 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-28 — WebRTC shortuid REGISTER (SPA mule)
+## Session end 2026-07-29 — WebRTC PrepDial tipped; ext create `$desc`; SPA far-end open
+
+**On `main`:** Golden WebRTC path — Mac REGISTER OK; outbound 1500→desk OK. Fleet PrepDial skips FQDN for `device=WebRTC` — tip **pbx3cagi** **`3a9b7d7`** (hot golden). Extension create `$desc` — tip **pbx3api** **`60262a0`** (hot golden). Inbound INVITE reaches SPA on WSS; SPA does not SIP-respond — digit-only sip-user sanitize + inbound handler (operator ↔ SPA team). Parked TODO: `ipphone.desc` vs `description`. No pbx3spa product code.
+
+**Operator impact:** SIP user remains **shortuid** `8af9ee` (not digits-only `1500`). After SPA fix, retest desk→1500. SG **8089** still may be world-open. Create Extension works again on golden.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). WSS: `:8089/ws` or `dhbm8x.pbx3.com:8089/ws`.
+
+**Docs / TODO:** **`TODO.md`** — WebRTC #1 + SPA far-end open; PrepDial + ext create [x]; desc ambivalence parked.
+
+**Resume:** SPA team fix → inbound retest. Stay off Magrathea WSS until booked.
+
+---
+
+## Session end 2026-07-28 — WebRTC shortuid REGISTER (SPA mule) — historical
 
 **On `main`:** WebRTC golden `:8089` — JsSIP audio already OK; **`pjsip_webrtc.tmpl`** shortuid fix; third-party SPA **REGISTER OK** as **`8af9ee`** (ext **1500**). SPA outbound dial still no INVITE (operator digging). Magrathea UDP untouched. No SPA product code.
 
-**Operator impact:** Webphone SIP user = **shortuid** (`8af9ee`), not extension `1500`. WSS host `08jzwn.pbx3.com` port **8089** path `/ws` (no `wss://` in host field if UI adds scheme). Creds `~/webrtc-1500.env`. Admin shows registered when hint Idle. SG **8089** may still be world-open — clamp when SPA test done.
+**Operator impact:** superseded — see 2026-07-29 block (inbound PrepDial + SPA sanitize).
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). WSS: `:8089/ws`.
 
-**Docs / TODO:** **`TODO.md`** — WebRTC #1 + parked SPA outbound; **`WEBRTC_WSS_LAB.md`**.
+**Docs / TODO:** superseded by block above.
 
-**Resume:** Controlled client outbound / product webphone, or SPA mule root cause. Stay off Magrathea WSS until booked.
+**Resume:** see block above.
 
 ---
 
