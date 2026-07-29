@@ -6,17 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-28 — WebRTC golden `:8089` (REGISTER OK)
+## Session end 2026-07-28 — WebRTC shortuid REGISTER (SPA mule)
 
-**On `main` / dirty docs:** WebRTC demo path on **golden `:8089`** — REGISTER smoke OK (ext **1500** / `dhbm8x`). Magrathea UDP **not** touched. Recovery **`pre-webrtc-wss-20260728`**. pbx3sbc branch **`webrtc-wss`** scaffold only (defer). No SPA product code this slice.
+**On `main`:** WebRTC golden `:8089` — JsSIP audio already OK; **`pjsip_webrtc.tmpl`** shortuid fix; third-party SPA **REGISTER OK** as **`8af9ee`** (ext **1500**). SPA outbound dial still no INVITE (operator digging). Magrathea UDP untouched. No SPA product code.
 
-**Operator impact:** Webphone demo uses `wss://08jzwn.pbx3.com:8089/ws` (creds on golden `~/webrtc-1500.env`). Desk phones via Magrathea UDP unchanged. SG must allow **8089/tcp** from client.
+**Operator impact:** Webphone SIP user = **shortuid** (`8af9ee`), not extension `1500`. WSS host `08jzwn.pbx3.com` port **8089** path `/ws` (no `wss://` in host field if UI adds scheme). Creds `~/webrtc-1500.env`. Admin shows registered when hint Idle. SG **8089** may still be world-open — clamp when SPA test done.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). WSS: `:8089/ws`.
 
-**Docs / TODO:** **`TODO.md`** — WebRTC #1 (audio next); **`WEBRTC_WSS_LAB.md`**.
+**Docs / TODO:** **`TODO.md`** — WebRTC #1 + parked SPA outbound; **`WEBRTC_WSS_LAB.md`**.
 
-**Resume:** Browser **webphone audio** on golden `:8089`. Stay off Magrathea WSS until booked.
+**Resume:** Controlled client outbound / product webphone, or SPA mule root cause. Stay off Magrathea WSS until booked.
+
+---
+
+## Session end 2026-07-28 — WebRTC golden `:8089` (REGISTER OK) — historical
+
+**On `main` / dirty docs:** WebRTC demo path on **golden `:8089`** — REGISTER smoke OK (ext **1500** / `dhbm8x`). Magrathea UDP **not** touched. Recovery **`pre-webrtc-wss-20260728`**. pbx3sbc branch **`webrtc-wss`** scaffold only (defer). No SPA product code this slice.
+
+**Operator impact:** superseded — SIP user is shortuid; see block above.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). WSS: `:8089/ws`.
+
+**Docs / TODO:** superseded by block above.
+
+**Resume:** see block above.
 
 ---
 
