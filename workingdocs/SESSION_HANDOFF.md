@@ -8,13 +8,13 @@
 
 ## Session end 2026-07-29 — fleet-first tenant create locked; CLID/localarea string fixes
 
-**On `main`:** Requirements **`FLEET_TENANT_CREATE_REQUIREMENTS.md`** — fleet admin creates tenants (gatekeeper push → node → catalog → SBC); instance Create/Delete/FQDN locked in fleet mode; edit+build PBX still on-node. SPA tenant CLID + local area: text inputs / digit strings (leading zeros). No fleet Create UI yet.
+**On `main`:** Requirements **`FLEET_TENANT_CREATE_REQUIREMENTS.md`** tip **pbx3** **`e5fa3c4`**. Fleet admin creates tenants (gatekeeper push → node → catalog → SBC); instance Create/Delete/FQDN locked in fleet mode; edit+build PBX still on-node. SPA CLID + local area digit strings — tips **pbx3spa** **`2ebb882`**, **pbx3api** **`0aa5e71`**. No fleet Create UI yet.
 
-**Operator impact:** On-node Create Tenant still works until fleet-first is implemented; prefer not to rely on CLI catalog register. Leading zeros OK for CLID/local area after SPA+API deploy.
+**Operator impact:** On-node Create Tenant still works until fleet-first is implemented; prefer not to rely on CLI catalog register. Leading zeros OK for CLID/local area after SPA+API deploy (API hot-patch on golden optional for `localarea` rule).
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
 
-**Docs / TODO:** Fleet-first open item #2 in suggested order; WebRTC SPA far-end still open.
+**Docs / TODO:** Fleet-first open item #2 in suggested order; WebRTC SPA far-end still open; PrepDial **`3a9b7d7`** / ext `$desc` **`60262a0`** tipped earlier same day.
 
 **Resume:** Implement fleet-first when scheduled, or WebRTC SPA retest.
 
