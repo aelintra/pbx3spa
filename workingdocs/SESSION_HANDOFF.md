@@ -6,17 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-30 — fleet-first on main; Backup Filename; SBC Number-route filter
+## Session end 2026-07-30 — SBC Home ops-pulse + thin system on main
 
-**On `main`:** Fleet-first create merged (api **`5254c7b`**, spa Create + Cancel UX **`fcfb39e`**, Backup **Filename** **`381abf3`**). Gatekeeper + golden fleet API redeployed. **pbx3sbc-admin** **`rename-domain-routes`** **`d0634a1`**: DID aliases hidden; Number route destinations filtered by direction; Backup Filename + local+S3; IP-only Asterisk destinations.
+**On `main`:** **pbx3sbc-admin** **`0073471`** — Home: system load/mem/disk → SIP posture → CDR charts → security; metrics cache; Domain Routes / System nav / DID aliases hidden / Backup Filename already in that merge. Fleet-first create still on spa/api/pbx3 **`main`** from earlier today.
 
-**Operator impact:** Fleet → Tenants → Create for new companies. SBC Number routes: inbound → Asterisk only (no carrier loop pick). Peering → DID aliases gone from nav. Instance + SBC Backup lists use **Filename**; SBC still local inventory only (S3-merge TODO).
+**Operator impact:** SBC Home is useful at a glance (host + calls + security). Magrathea may show amber mem/disk (small root). Grafana stays off the edge; fleet scrape for multi-box host health later (**`HOME_SYSTEM_AND_FLEET_SCRAPE.md`**).
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — WebRTC SPA #1; Backup S3-merge #3; alias_db_lookup review #2.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — WebRTC SPA #1; Backup S3-merge #3; alias_db_lookup #2; Fleet edge-health scrape parked.
 
 **Resume:** WebRTC SPA far-end, or SBC Backup S3-merge list, or alias_db_lookup review when booked.
+
+---
+
+## Session end 2026-07-30 — fleet-first on main; Backup Filename; SBC Number-route filter — historical
+
+**On `main`:** Fleet-first create merged (api **`5254c7b`**, spa Create + Cancel UX **`fcfb39e`**, Backup **Filename** **`381abf3`**). Gatekeeper + golden fleet API redeployed. **pbx3sbc-admin** was on **`rename-domain-routes`** — now superseded by merge to **`main`** above.
+
+**Operator impact:** superseded — see block above.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`.
+
+**Docs / TODO:** superseded by block above.
+
+**Resume:** see block above.
 
 ---
 
