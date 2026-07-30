@@ -6,17 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-30 — SBC Home ops-pulse + thin system on main
+## Session end 2026-07-30 — Instance + SBC Home ops-pulse kinship
+
+**On `main`:** Instance Home pulse (spa **`5ea90df`** / api **`9db216b`**) + SBC Home meters (**`a92aed5`**, VIP live). Sitename = friendly instance label; L1 pack green on SIPp **`98.82.58.59`**. **Uncommitted:** SPA call-volume chart numbers (`HomeBarChart.vue`); pbx3 call-tests teardown notes.
+
+**Operator impact:** Both Homes useful at a glance; Magrathea amber disk/mem expected (small root). Only one SIPp catcher today — 2nd phone host never built.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`. SIPp: `ssh … ubuntu@98.82.58.59 'cd ~/call-tests && ./run-pack.sh'`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — **#1 next = 2nd SIPp EC2** (`SIPP_LAB_HOST.md` §9).
+
+**Resume:** Build **2nd SIPp** (extension platform, non-Peer EIP) for demos/load; then dial-alias when scheduled. Commit leftover chart/docs if still dirty.
+
+---
+
+## Session end 2026-07-30 — SBC Home ops-pulse + thin system on main — historical
 
 **On `main`:** **pbx3sbc-admin** **`0073471`** — Home: system load/mem/disk → SIP posture → CDR charts → security; metrics cache; Domain Routes / System nav / DID aliases hidden / Backup Filename already in that merge. Fleet-first create still on spa/api/pbx3 **`main`** from earlier today.
 
-**Operator impact:** SBC Home is useful at a glance (host + calls + security). Magrathea may show amber mem/disk (small root). Grafana stays off the edge; fleet scrape for multi-box host health later (**`HOME_SYSTEM_AND_FLEET_SCRAPE.md`**).
+**Operator impact:** superseded — see block above.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — WebRTC SPA #1; Backup S3-merge #3; alias_db_lookup #2; Fleet edge-health scrape parked.
+**Docs / TODO:** superseded by block above.
 
-**Resume:** WebRTC SPA far-end, or SBC Backup S3-merge list, or alias_db_lookup review when booked.
+**Resume:** see block above.
 
 ---
 
