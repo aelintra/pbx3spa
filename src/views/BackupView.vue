@@ -60,11 +60,11 @@
               </th>
               <th
                 class="th-sortable col-file"
-                title="Local zip on this node"
+                title="Zip name (pbx3bak.{epoch}.zip). S3-only rows have no copy on this node yet."
                 :class="sortClass('filename')"
                 @click="setSort('filename')"
               >
-                Local file
+                Filename
               </th>
               <th
                 class="th-sortable col-size"
@@ -85,8 +85,8 @@
               <td class="mono col-archive" :title="backup.backup_stamp">
                 {{ backup.backup_stamp || '—' }}
               </td>
-              <td class="mono col-file" :title="localFileLabel(backup)">
-                {{ localFileLabel(backup) }}
+              <td class="mono col-file" :title="fileLabel(backup)">
+                {{ fileLabel(backup) }}
                 <span v-if="backup.source === 's3' && !backup.has_local" class="source-tag" title="Archive only on S3"
                   >S3</span
                 >
@@ -416,10 +416,10 @@ function formatBytes(bytes) {
   return n + ' B'
 }
 
-function localFileLabel(backup) {
+function fileLabel(backup) {
   if (backup.local_file) return backup.local_file
-  if (backup.source === 's3' || backup.has_local === false) return '—'
-  return backup.filename || '—'
+  if (backup.filename && !String(backup.filename).startsWith('archive:')) return backup.filename
+  return '—'
 }
 
 function downloadKey(backup) {
