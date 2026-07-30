@@ -8,7 +8,7 @@
 
 ## Session end 2026-07-29 — fleet-first lab OK; SBC Domain Routes / System nav
 
-**On branch `fleet-first-tenant-create` (not merged):** SPA Fleet Create tenant + on-node Create/Delete locks (**`acfff79`**); hide empty delete column when fleet-locked. Gatekeeper provision + node `/fleet/tenants` lab OK — tenant **Aelintra** / **`s07zmy`**. **pbx3sbc-admin** **`rename-domain-routes`** **`6aa3a43`**: Domain Routes rename; Active Calls + Locations under System (live VIP).
+**On branch `fleet-first-tenant-create` (not merged):** SPA Fleet Create tenant + on-node Create/Delete locks + hide empty delete column — tip **`e37140b`**. Gatekeeper provision + node `/fleet/tenants` lab OK — tenant **Aelintra** / **`s07zmy`**. **pbx3sbc-admin** **`rename-domain-routes`** **`6aa3a43`**: Domain Routes rename; Active Calls + Locations under System (live VIP).
 
 **Operator impact:** Use **Fleet → Tenants → Create** for new tenants (not on-node Create). On-node tenants list has no delete column in fleet mode. SBC Filament: **Routing → Domain Routes**; live state under **System**. Number routes still own PSTN; DID aliases marked for later retire (not torn down).
 
