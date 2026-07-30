@@ -41,7 +41,7 @@ It also recommends whether to keep two panels or merge into one.
 
 | Field (UI label) | Network panel source | System Globals source | Saved by Network | Saved by System Globals | Notes |
 |---|---|---|---|---|---|
-| Site Name (`sitename`) | `sysglobals.sitename` | `sysglobals.sitename` | Yes (`PUT /sysglobals`) | Yes (`PUT /sysglobals`) | Friendly operator label; also shown on **Home** (`DashboardView` loads `GET sysglobals`). |
+| Site Name (`sitename`) | `sysglobals.sitename` | `sysglobals.sitename` | Yes (`PUT /sysglobals`) | Yes (`PUT /sysglobals`) | **On-node friendly name** (HoR). Home header + session chips prefer this over FQDN. Catalog `label` is fleet-picker only (may mirror by convention). **Installer** must prompt and write `sysglobals.sitename` on first provision (see Locked decision below). |
 | Hostname | `sysnotes.network.hostname` (read-only) | N/A | No | No | OS hostname from install/`hostnamectl`; **not editable** in Network (does not update `globals.fqdn`). Use **Site name** for a friendly label. |
 | Bind Port (`bindport`) | `sysglobals.bindport` | `sysglobals.bindport` | Yes (`PUT /sysglobals`) | Yes (`PUT /sysglobals`) | True overlap, same source and destination. |
 | TLS Port (`tlsport`) | `sysglobals.tlsport` | `sysglobals.tlsport` | Yes (`PUT /sysglobals`) | Yes (`PUT /sysglobals`) | True overlap, same source and destination. |
@@ -90,3 +90,23 @@ It also recommends whether to keep two panels or merge into one.
 5. Add a short note in both panels (or docs) describing ownership to avoid future drift.
 
 This keeps complexity manageable and avoids a risky merge while still reducing user confusion.
+
+---
+
+## Locked decision (2026-07-30) — friendly instance name
+
+**Agree:** ops nicknames like “Golden” are invented; they are not node identity.
+
+| Field | Role |
+|-------|------|
+| `globals.fqdn` / OS hostname | Stable identity — not the Home friendly line |
+| **`sysglobals.sitename`** | On-node friendly name HoR — Home header, session chips, System info Site name, Network edit |
+| Catalog `label` | Fleet picker only (directory). May match sitename by convention; not the node HoR |
+
+**Installer (`installer.sh`):** on **first provision**, prompt for Site name (friendly label) and write **`sysglobals.sitename`**. Keep FQDN/subdomain prompts as identity. Env override e.g. `INSTANCE_SITENAME` for non-interactive/rebuild. Empty sitename → SPA falls back to FQDN (current identity display).
+
+**SPA:** `displayInstanceLabel` prefers **sitename → FQDN** (catalog label only when fleet-picked and sitename empty — optional; do not override a set sitename).
+
+**Catalog follow-up (parked):** Fleet `label` can drift from node sitename. Later sync/seed on onboard or Network save — see **`TODO.md`** (*Catalog `label` ↔ node `sitename`*).
+
+**Tracked:** `pbx3/workingdocs/TODO.md` (sitename installer + Home header; catalog sync parked).

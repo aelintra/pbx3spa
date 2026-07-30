@@ -40,6 +40,8 @@ export const useAuthStore = defineStore('auth', {
     user: null,
     /** `sysglobals.fqdn` when loaded (session-only; refreshed after login and when globals are fetched). */
     globalsFqdn: '',
+    /** `sysglobals.sitename` — on-node friendly label (Home / chips). */
+    globalsSitename: '',
     /** Catalog row for connected instance (session-only; from fleet picker). */
     selectedInstance: null,
     /** Current tenant signpost { pkey, label } or null. */
@@ -99,8 +101,10 @@ export const useAuthStore = defineStore('auth', {
         label: String(id)
       }))
     },
-    /** Top bar instance line: globals FQDN first, then whoami, then API host from base URL. */
+    /** Top bar / Home: sitename → FQDN → catalog → whoami → API host. */
     displayInstanceLabel(state) {
+      const fromSitename = (state.globalsSitename || '').trim()
+      if (fromSitename) return fromSitename
       const fromGlobals = (state.globalsFqdn || '').trim()
       if (fromGlobals) return fromGlobals
       const fromCatalog = (state.selectedInstance?.label || state.selectedInstance?.fqdn || '').trim()
@@ -175,17 +179,25 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
-     * Update instance chip from a `GET`/`PUT` sysglobals response (`fqdn` = node identity).
+     * Update instance chip from a `GET`/`PUT` sysglobals response.
+     * Prefer sitename for display; keep fqdn as identity fallback.
      * @param {Record<string, unknown> | null | undefined} g
      */
     setGlobalsFqdnFromSysglobal(g) {
       const fq = g?.fqdn != null ? String(g.fqdn).trim() : ''
+      const sn = g?.sitename != null ? String(g.sitename).trim() : ''
       this.globalsFqdn = fq
+      this.globalsSitename = sn
     },
 
     /** Clear cached globals FQDN (e.g. after failed fetch). */
     setGlobalsFqdn(fqdn) {
       this.globalsFqdn = (fqdn ?? '').toString().trim()
+    },
+
+    /** @param {string} sitename */
+    setGlobalsSitename(sitename) {
+      this.globalsSitename = (sitename ?? '').toString().trim()
     },
 
     setTenantContext(pkey, label) {
@@ -219,6 +231,7 @@ export const useAuthStore = defineStore('auth', {
       this.token = ''
       this.user = null
       this.globalsFqdn = ''
+      this.globalsSitename = ''
       this.selectedInstance = null
       this.clearTenantContext()
       try {

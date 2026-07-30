@@ -215,7 +215,7 @@ async function toggle(id) {
   scrollActiveNavIntoView()
 }
 
-/** Instance chip uses `sysglobals.fqdn`; keep in sync after login and when any view loads globals. */
+/** Instance chip: sitename (friendly) → fqdn; keep in sync after login / globals loads. */
 async function refreshGlobalsFqdnForTopBar() {
   if (!auth.isLoggedIn) return
   try {
@@ -223,6 +223,7 @@ async function refreshGlobalsFqdnForTopBar() {
     auth.setGlobalsFqdnFromSysglobal(g)
   } catch {
     auth.setGlobalsFqdn('')
+    auth.setGlobalsSitename('')
   }
 }
 
