@@ -7,23 +7,25 @@
 }
 
 /**
- * PBX3 SPA — single cool-neutral (slate) scale + accent.
- * Usability-first: main shell uses soft canvas; inputs stay pure white (--pbx-panel).
+ * PBX3 SPA — shell tokens shared with SBC Filament (same hexes).
+ * Canvas = Tailwind gray-50; sidebar = gray-100. Cards/inputs stay --pbx-panel (#fff).
  */
 :root {
-  --pbx-canvas: #f8fafc;
-  /** Raised controls (inputs, etc.) — keep #fff for contrast on --pbx-canvas main column */
+  /** Main column / topbar — match SBC .fi-main / .fi-body (gray-50) */
+  --pbx-canvas: #f9fafb;
+  /** Raised controls (inputs, pulse cards) */
   --pbx-panel: #ffffff;
-  --pbx-surface-subtle: #f1f5f9;
-  --pbx-surface-hover: #e2e8f0;
-  --pbx-border: #e2e8f0;
+  /** Sidebar strip + soft fills — match SBC .fi-sidebar (gray-100) */
+  --pbx-surface-subtle: #f3f4f6;
+  --pbx-surface-hover: #e5e7eb;
+  --pbx-border: #e5e7eb;
   --pbx-text: #0f172a;
   --pbx-text-muted: #64748b;
   --pbx-text-label: #475569;
   --pbx-accent: #2563eb;
   --pbx-accent-hover: #1d4ed8;
   --pbx-accent-bright: #3b82f6;
-  /** Light sidebar: subtle strip vs main canvas (#f1f5f9 vs #f8fafc); border + link states */
+  /** Light sidebar: subtle strip vs main canvas; border + link states */
   --pbx-sidebar-bg: var(--pbx-surface-subtle);
   --pbx-sidebar-fg: var(--pbx-text);
   --pbx-sidebar-heading: var(--pbx-text-muted);
@@ -143,7 +145,7 @@ body {
   background-color: #fef9c3;
 }
 
-/* Row tint must win over scoped .cell-immutable (#f8fafc) in list views */
+/* Row tint must win over scoped .cell-immutable background in list views */
 .list-view .table tbody tr.list-row-inactive > td.cell-immutable {
   background-color: var(--pbx-surface-subtle);
   color: var(--pbx-text-muted);

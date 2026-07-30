@@ -503,8 +503,8 @@ onMounted(loadQueues)
   background: #f8fafc;
 }
 .cell-immutable {
-  color: #64748b;
-  background: #f8fafc;
+  color: var(--pbx-text-muted);
+  background: transparent;
 }
 .th-sortable {
   cursor: pointer;
