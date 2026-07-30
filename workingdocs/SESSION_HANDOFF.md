@@ -6,17 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-29 — fleet-first tenant create locked; CLID/localarea string fixes
+## Session end 2026-07-29 — fleet-first lab OK; SBC Domain Routes / System nav
+
+**On branch `fleet-first-tenant-create` (not merged):** SPA Fleet Create tenant + on-node Create/Delete locks (**`acfff79`**); hide empty delete column when fleet-locked. Gatekeeper provision + node `/fleet/tenants` lab OK — tenant **Aelintra** / **`s07zmy`**. **pbx3sbc-admin** **`rename-domain-routes`** **`6aa3a43`**: Domain Routes rename; Active Calls + Locations under System (live VIP).
+
+**Operator impact:** Use **Fleet → Tenants → Create** for new tenants (not on-node Create). On-node tenants list has no delete column in fleet mode. SBC Filament: **Routing → Domain Routes**; live state under **System**. Number routes still own PSTN; DID aliases marked for later retire (not torn down).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC admin `https://sbc.pbx3.com/admin`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — merge fleet-first #2; DID-alias retire #3; WebRTC SPA far-end still open.
+
+**Resume:** Merge fleet-first → `main`, or WebRTC SPA retest, or DID-alias teardown when booked.
+
+---
+
+## Session end 2026-07-29 — fleet-first tenant create locked; CLID/localarea string fixes — historical
 
 **On `main`:** Requirements **`FLEET_TENANT_CREATE_REQUIREMENTS.md`** tip **pbx3** **`e5fa3c4`**. Fleet admin creates tenants (gatekeeper push → node → catalog → SBC); instance Create/Delete/FQDN locked in fleet mode; edit+build PBX still on-node. SPA CLID + local area digit strings — tips **pbx3spa** **`2ebb882`**, **pbx3api** **`0aa5e71`**. No fleet Create UI yet.
 
-**Operator impact:** On-node Create Tenant still works until fleet-first is implemented; prefer not to rely on CLI catalog register. Leading zeros OK for CLID/local area after SPA+API deploy (API hot-patch on golden optional for `localarea` rule).
+**Operator impact:** superseded — see fleet-first lab block above.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped).
 
-**Docs / TODO:** Fleet-first open item #2 in suggested order; WebRTC SPA far-end still open; PrepDial **`3a9b7d7`** / ext `$desc` **`60262a0`** tipped earlier same day.
+**Docs / TODO:** superseded by block above.
 
-**Resume:** Implement fleet-first when scheduled, or WebRTC SPA retest.
+**Resume:** see block above.
 
 ---
 

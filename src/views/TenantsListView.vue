@@ -329,7 +329,7 @@ onMounted(async () => {
                   <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
               ></span>
             </th>
-            <th class="th-actions" title="Delete">
+            <th v-if="!fleetLocked" class="th-actions" title="Delete">
               <span class="action-icon" aria-hidden="true"
                 ><svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -384,9 +384,9 @@ onMounted(async () => {
                 ></span>
               </router-link>
             </td>
-            <td>
+            <td v-if="!fleetLocked">
               <button
-                v-if="t.pkey !== 'default' && !fleetLocked"
+                v-if="t.pkey !== 'default'"
                 type="button"
                 class="cell-link cell-link-delete cell-link-icon"
                 :title="deletingPkey === t.pkey ? 'Deleting…' : 'Delete'"
