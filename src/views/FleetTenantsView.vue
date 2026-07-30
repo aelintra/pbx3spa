@@ -201,8 +201,13 @@ onMounted(loadTenants)
     </p>
 
     <p v-if="canCreate" class="toolbar">
-      <button type="button" class="primary" :disabled="loading" @click="openCreate">
-        Create tenant
+      <button
+        type="button"
+        class="primary"
+        :disabled="loading || createBusy"
+        @click="showCreate ? cancelCreate() : openCreate()"
+      >
+        {{ showCreate ? 'Cancel create' : 'Create tenant' }}
       </button>
     </p>
 
@@ -248,7 +253,9 @@ onMounted(loadTenants)
         <button type="submit" class="primary" :disabled="createBusy">
           {{ createBusy ? 'Provisioning…' : 'Provision' }}
         </button>
-        <button type="button" :disabled="createBusy" @click="cancelCreate">Cancel</button>
+        <button type="button" class="secondary" :disabled="createBusy" @click="cancelCreate">
+          Cancel
+        </button>
       </div>
     </form>
 
@@ -316,6 +323,20 @@ onMounted(loadTenants)
   padding: 0.4rem 0.85rem;
   font: inherit;
   cursor: pointer;
+}
+.secondary {
+  background: transparent;
+  color: var(--pbx-text, inherit);
+  border: 1px solid var(--pbx-border, #94a3b8);
+  border-radius: 4px;
+  padding: 0.4rem 0.85rem;
+  font: inherit;
+  cursor: pointer;
+}
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.55;
+  cursor: wait;
 }
 .error {
   color: var(--pbx-danger, #b91c1c);
