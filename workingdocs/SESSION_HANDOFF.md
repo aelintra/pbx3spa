@@ -6,17 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-29 — fleet-first lab OK; SBC Domain Routes / System nav
+## Session end 2026-07-30 — fleet-first on main; Backup Filename; SBC Number-route filter
+
+**On `main`:** Fleet-first create merged (api **`5254c7b`**, spa Create + Cancel UX **`fcfb39e`**, Backup **Filename** **`381abf3`**). Gatekeeper + golden fleet API redeployed. **pbx3sbc-admin** **`rename-domain-routes`** **`d0634a1`**: DID aliases hidden; Number route destinations filtered by direction; Backup Filename + local+S3; IP-only Asterisk destinations.
+
+**Operator impact:** Fleet → Tenants → Create for new companies. SBC Number routes: inbound → Asterisk only (no carrier loop pick). Peering → DID aliases gone from nav. Instance + SBC Backup lists use **Filename**; SBC still local inventory only (S3-merge TODO).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — WebRTC SPA #1; Backup S3-merge #3; alias_db_lookup review #2.
+
+**Resume:** WebRTC SPA far-end, or SBC Backup S3-merge list, or alias_db_lookup review when booked.
+
+---
+
+## Session end 2026-07-29 — fleet-first lab OK; SBC Domain Routes / System nav — historical
 
 **On branch `fleet-first-tenant-create` (not merged):** SPA Fleet Create tenant + on-node Create/Delete locks + hide empty delete column — tip **`e37140b`**. Gatekeeper provision + node `/fleet/tenants` lab OK — tenant **Aelintra** / **`s07zmy`**. **pbx3sbc-admin** **`rename-domain-routes`** **`6aa3a43`**: Domain Routes rename; Active Calls + Locations under System (live VIP).
 
-**Operator impact:** Use **Fleet → Tenants → Create** for new tenants (not on-node Create). On-node tenants list has no delete column in fleet mode. SBC Filament: **Routing → Domain Routes**; live state under **System**. Number routes still own PSTN; DID aliases marked for later retire (not torn down).
+**Operator impact:** superseded — see 2026-07-30 block above.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC admin `https://sbc.pbx3.com/admin`.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — merge fleet-first #2; DID-alias retire #3; WebRTC SPA far-end still open.
+**Docs / TODO:** superseded by block above.
 
-**Resume:** Merge fleet-first → `main`, or WebRTC SPA retest, or DID-alias teardown when booked.
+**Resume:** see block above.
 
 ---
 
