@@ -6,31 +6,29 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-30 — sippuac soak (hangup leak)
+## Session end 2026-07-30 — soak hangup parked (EC2 NAT A/B)
 
-**On `main` (pbx3 call-tests):** Extension platform is local VM **`sippuac`** (`192.168.1.51`), not a 2nd EC2. Soak scaffolding shipped; **Active Calls leak on hangup** — demo wallpaper not safe until fixed. Soak stopped; Magrathea dialogs cleared (OpenSIPS restart). SPA/API tips unchanged this session.
+**On `main` (pbx3 call-tests):** Dialer BYE + register-once shipped. One-call on **`sippuac`**: Asterisk clears; Magrathea keeps SIPp answerer-leg state-3 (ACK). Real phones clear Magrathea. **Parked** — operator spins non-Peer EC2 to rule out NAT. SPA/API unchanged.
 
-**Operator impact:** Do not run `./run-soak.sh start` for live Home demos until hangup clears SBC. L1 pack catcher still **`98.82.58.59`**. Magrathea amber disk/mem expected.
+**Operator impact:** Do **not** run soak for Home wallpaper demos. Magrathea may show leftover SIPp Active Calls — clear dialog DB + opensips restart. Amber disk/mem on VIP expected.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`. Extension SIPp: `ssh tech@192.168.1.51` → `~/call-tests`. Pack: `ubuntu@98.82.58.59`.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`. Pack catcher **`98.82.58.59`**. Extension SIPp: `sippuac` for now; **EC2 next**.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — **#1 = L2 soak clean hangup**.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — **#1 = L2 soak Magrathea/NAT A/B (parked)**.
 
-**Resume:** Fix dialer/answerer BYE so Magrathea Active Calls stay ~N under `demo`; then wallpaper demos. SPA `HomeBarChart` numbers may still be uncommitted from earlier.
+**Resume:** EC2 phone UAC → prove Magrathea dialogs 0; bake recipe into `run-soak.sh`; then `demo`.
+
+---
+
+## Session end 2026-07-30 — sippuac soak (hangup leak) — historical
+
+**Superseded** — see block above (Asterisk OK; Magrathea SIPp ACK; EC2 next).
 
 ---
 
 ## Session end 2026-07-30 — Instance + SBC Home ops-pulse kinship — historical
 
-**On `main`:** Instance Home pulse (spa **`5ea90df`** / api **`9db216b`**) + SBC Home meters (**`a92aed5`**, VIP live). Sitename = friendly instance label; L1 pack green on SIPp **`98.82.58.59`**.
-
-**Operator impact:** superseded — see block above (extension platform = **`sippuac`**).
-
-**Dev against golden:** superseded — see block above.
-
-**Docs / TODO:** superseded — see block above.
-
-**Resume:** superseded — see block above.
+**Superseded** — see newer blocks above.
 
 ---
 
