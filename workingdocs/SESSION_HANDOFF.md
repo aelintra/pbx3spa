@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-30 — soak hangup parked (EC2 NAT A/B)
+## Session end 2026-07-30 — L2 soak green (Record-Route)
 
-**On `main` (pbx3 call-tests):** Dialer BYE + register-once shipped. One-call on **`sippuac`**: Asterisk clears; Magrathea keeps SIPp answerer-leg state-3 (ACK). Real phones clear Magrathea. **Parked** — operator spins non-Peer EC2 to rule out NAT. SPA/API unchanged.
+**On `main` (pbx3):** Soak answerer ACK miss fixed — echo `[last_Record-Route:]` in 180/200 (**`36c9ea8`**). Not NAT. EC2 demo 10-pair holds. Leanings **`e576cc2`**. SPA/API unchanged.
 
-**Operator impact:** Do **not** run soak for Home wallpaper demos. Magrathea may show leftover SIPp Active Calls — clear dialog DB + opensips restart. Amber disk/mem on VIP expected.
+**Operator impact:** Home wallpaper soak OK from extension EC2 `13.222.41.98` (`./run-soak.sh start demo`). Magrathea state-5 rows after stop may linger briefly (deleted), not state-3 zombies.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`. Pack catcher **`98.82.58.59`**. Extension SIPp: `sippuac` for now; **EC2 next**.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`. Pack catcher **`98.82.58.59`**. Extension SIPp: **`ubuntu@13.222.41.98`**.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — **#1 = L2 soak Magrathea/NAT A/B (parked)**.
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — **#1 = WebRTC SPA far-end**. SIPp leanings in **`call-tests/README.md`**.
 
-**Resume:** EC2 phone UAC → prove Magrathea dialogs 0; bake recipe into `run-soak.sh`; then `demo`.
+**Resume:** WebRTC inbound SPA response / sip-user sanitize; optional pack graceful teardown.
+
+---
+
+## Session end 2026-07-30 — soak hangup parked (EC2 NAT A/B) — historical
+
+**Superseded** — Record-Route fix; NAT A/B was a red herring.
 
 ---
 
