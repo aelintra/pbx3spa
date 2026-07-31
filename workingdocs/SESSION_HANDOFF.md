@@ -6,17 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-30 — Instance + SBC Home ops-pulse kinship
+## Session end 2026-07-30 — sippuac soak (hangup leak)
 
-**On `main`:** Instance Home pulse (spa **`5ea90df`** / api **`9db216b`**) + SBC Home meters (**`a92aed5`**, VIP live). Sitename = friendly instance label; L1 pack green on SIPp **`98.82.58.59`**. **Uncommitted:** SPA call-volume chart numbers (`HomeBarChart.vue`); pbx3 call-tests teardown notes.
+**On `main` (pbx3 call-tests):** Extension platform is local VM **`sippuac`** (`192.168.1.51`), not a 2nd EC2. Soak scaffolding shipped; **Active Calls leak on hangup** — demo wallpaper not safe until fixed. Soak stopped; Magrathea dialogs cleared (OpenSIPS restart). SPA/API tips unchanged this session.
 
-**Operator impact:** Both Homes useful at a glance; Magrathea amber disk/mem expected (small root). Only one SIPp catcher today — 2nd phone host never built.
+**Operator impact:** Do not run `./run-soak.sh start` for live Home demos until hangup clears SBC. L1 pack catcher still **`98.82.58.59`**. Magrathea amber disk/mem expected.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`. SIPp: `ssh … ubuntu@98.82.58.59 'cd ~/call-tests && ./run-pack.sh'`.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`. Extension SIPp: `ssh tech@192.168.1.51` → `~/call-tests`. Pack: `ubuntu@98.82.58.59`.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — **#1 next = 2nd SIPp EC2** (`SIPP_LAB_HOST.md` §9).
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — **#1 = L2 soak clean hangup**.
 
-**Resume:** Build **2nd SIPp** (extension platform, non-Peer EIP) for demos/load; then dial-alias when scheduled. Commit leftover chart/docs if still dirty.
+**Resume:** Fix dialer/answerer BYE so Magrathea Active Calls stay ~N under `demo`; then wallpaper demos. SPA `HomeBarChart` numbers may still be uncommitted from earlier.
+
+---
+
+## Session end 2026-07-30 — Instance + SBC Home ops-pulse kinship — historical
+
+**On `main`:** Instance Home pulse (spa **`5ea90df`** / api **`9db216b`**) + SBC Home meters (**`a92aed5`**, VIP live). Sitename = friendly instance label; L1 pack green on SIPp **`98.82.58.59`**.
+
+**Operator impact:** superseded — see block above (extension platform = **`sippuac`**).
+
+**Dev against golden:** superseded — see block above.
+
+**Docs / TODO:** superseded — see block above.
+
+**Resume:** superseded — see block above.
 
 ---
 
