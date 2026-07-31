@@ -6,17 +6,33 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-31 — Numbers lab + traffic-profile mini project
+## Session end 2026-07-31 — dialog timeout + mixed-office queue-rr
+
+**On `main`:** **pbx3sbc** / **pbx3sbc-admin** — dialog `default_timeout` 14400 + System → Call limits (pushed earlier). **pbx3** — traffic-profile YAML + queue **2160** `rrmemory` + `run-queue-rr.sh` (GREEN on sippuac); runbook **`TRAFFIC_PROFILE_SIM.md`** §0.
+
+**Operator impact:** Magrathea orphaned Active Calls expire at 4h (was 12h). Call limits page read-only. Domain wallpaper: sippuac `./run-queue-rr.sh start` / `stop` (or soak demo).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin` → System → Call limits. Domain SIPp: **`tech@192.168.1.51`**. Catcher **`98.82.58.59`**.
+
+**Docs / TODO:** **`TODO.md`** — #1 WebRTC SPA; #2 traffic-profile Numbers % / other profiles.
+
+**Resume:** Numbers mix into mixed-office; or freephone-trunk CDR; or WebRTC far-end.
+
+---
+
+## Session end 2026-07-31 — Numbers lab + traffic-profile mini project — historical
+
+**Superseded** — see block above (dialog timeout + queue-rr).
 
 **On `main` (pbx3):** sippuac Domain soak + graceful `stop`; Numbers DID **01924234567** / Peer 99 PSTN UAS; outbound prefix **`019242*`** (real carriers stay `1,20,50`). Mini project **`call-tests/TRAFFIC_PROFILE_SIM.md`**. SPA/API unchanged.
 
-**Operator impact:** Lab can dial `019242…` for fake PSTN via Catcher; other outbound unchanged. Home wallpaper soak: sippuac `./run-soak.sh start demo` then graceful `stop`.
+**Operator impact:** superseded.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`. Catcher **`98.82.58.59`**. Domain SIPp: **`tech@192.168.1.51`**.
 
-**Docs / TODO:** **`TODO.md`** — #1 WebRTC; **#2 traffic-profile sim**. CDR specimen `~/GiT/nonGitStuff/pdh-2026-07-28.csv`.
+**Docs / TODO:** superseded.
 
-**Resume:** Profile schema + mixed-office encode + queue 1→N; or WebRTC SPA far-end.
+**Resume:** see block above.
 
 ---
 
