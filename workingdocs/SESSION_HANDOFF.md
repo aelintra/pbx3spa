@@ -6,17 +6,33 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-30 — L2 soak green (Record-Route)
+## Session end 2026-07-31 — Numbers lab + traffic-profile mini project
+
+**On `main` (pbx3):** sippuac Domain soak + graceful `stop`; Numbers DID **01924234567** / Peer 99 PSTN UAS; outbound prefix **`019242*`** (real carriers stay `1,20,50`). Mini project **`call-tests/TRAFFIC_PROFILE_SIM.md`**. SPA/API unchanged.
+
+**Operator impact:** Lab can dial `019242…` for fake PSTN via Catcher; other outbound unchanged. Home wallpaper soak: sippuac `./run-soak.sh start demo` then graceful `stop`.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`. Catcher **`98.82.58.59`**. Domain SIPp: **`tech@192.168.1.51`**.
+
+**Docs / TODO:** **`TODO.md`** — #1 WebRTC; **#2 traffic-profile sim**. CDR specimen `~/GiT/nonGitStuff/pdh-2026-07-28.csv`.
+
+**Resume:** Profile schema + mixed-office encode + queue 1→N; or WebRTC SPA far-end.
+
+---
+
+## Session end 2026-07-30 — L2 soak green (Record-Route) — historical
+
+**Superseded** — see block above (sippuac + Numbers + profiles).
 
 **On `main` (pbx3):** Soak answerer ACK miss fixed — echo `[last_Record-Route:]` in 180/200 (**`36c9ea8`**). Not NAT. EC2 demo 10-pair holds. Leanings **`e576cc2`**. SPA/API unchanged.
 
-**Operator impact:** Home wallpaper soak OK from extension EC2 `13.222.41.98` (`./run-soak.sh start demo`). Magrathea state-5 rows after stop may linger briefly (deleted), not state-3 zombies.
+**Operator impact:** superseded.
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin`. Pack catcher **`98.82.58.59`**. Extension SIPp: **`ubuntu@13.222.41.98`**.
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — **#1 = WebRTC SPA far-end**. SIPp leanings in **`call-tests/README.md`**.
+**Docs / TODO:** superseded.
 
-**Resume:** WebRTC inbound SPA response / sip-user sanitize; optional pack graceful teardown.
+**Resume:** see block above.
 
 ---
 
