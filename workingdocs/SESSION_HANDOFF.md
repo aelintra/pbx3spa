@@ -6,17 +6,27 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-31 — dialog timeout + mixed-office queue-rr
+## Session end 2026-07-31 — soak startup, CDR UTC, 0.0.4 build plan
 
-**On `main`:** **pbx3sbc** / **pbx3sbc-admin** — dialog `default_timeout` 14400 + System → Call limits (pushed earlier). **pbx3** — traffic-profile YAML + queue **2160** `rrmemory` + `run-queue-rr.sh` (GREEN on sippuac); runbook **`TRAFFIC_PROFILE_SIM.md`** §0.
+**On `main` (pbx3):** Soak cold-start **`TRAFFIC_PROFILE_SIM.md` §0**; CDR HoR **UTC** (`cdr_sqlite3_custom`); policy **`CDR_TIMEZONE_POLICY.md`**; next-session plan **`BUILD_PLAN_0.0.4.md`** (pbx3 **0.0.4-1** + cagi **1.0.0-7** + Mode 4 golden rebuild, empty CDR). SPA product code unchanged this block.
 
-**Operator impact:** Magrathea orphaned Active Calls expire at 4h (was 12h). Call limits page read-only. Domain wallpaper: sippuac `./run-queue-rr.sh start` / `stop` (or soak demo).
+**Operator impact:** Home **Outcomes (today)** works for **new** UTC CDR rows (Laravel UTC midnight). Older local-stamped rows until rebuild. After rebuild: empty CDR then UTC going forward; site-TZ panel display still TODO.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (bzy stopped). SBC `https://sbc.pbx3.com/admin` → System → Call limits. Domain SIPp: **`tech@192.168.1.51`**. Catcher **`98.82.58.59`**.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (heavily patched — rebuild next). SBC `https://sbc.pbx3.com/admin`. Domain SIPp: **`tech@192.168.1.51`**. Catcher **`98.82.58.59`**.
 
-**Docs / TODO:** **`TODO.md`** — #1 WebRTC SPA; #2 traffic-profile Numbers % / other profiles.
+**Docs / TODO:** **`TODO.md`** #1 = build + rebuild; then WebRTC SPA / traffic-profile.
 
-**Resume:** Numbers mix into mixed-office; or freephone-trunk CDR; or WebRTC far-end.
+**Resume:** Execute **`BUILD_PLAN_0.0.4.md`**. Ask before terminate old EC2.
+
+---
+
+## Session end 2026-07-31 — dialog timeout + mixed-office queue-rr — historical
+
+**Superseded** — see block above.
+
+**On `main`:** SBC dialog timeout 14400; queue-rr GREEN. Operator wallpaper still valid until rebuild.
+
+**Resume:** see block above.
 
 ---
 
