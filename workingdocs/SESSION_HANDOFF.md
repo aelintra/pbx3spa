@@ -6,17 +6,33 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-07-31 — soak startup, CDR UTC, 0.0.4 build plan
+## Session end 2026-08-01 — Mode 4 golden rebuild (0.0.4-3)
+
+**On `main`:** New golden **`08jzwn`** EIP **`44.196.98.191`** — **pbx3 0.0.4-3** + **pbx3cagi 1.0.0-7**; restore empty CDR; onboard; LE SANs `08jzwn`/`0ggybk`/`dhbm8x`/`vqcwd4`; Magrathea dispatcher → EIP; preflight green. SPA product code unchanged (handoff only).
+
+**Operator impact:** Login/API at **`https://08jzwn.pbx3.com:44300/api`** (new EIP). CDR empty until new calls (UTC). Old instance still up until terminate. `:44300` SG may still be IP-restricted.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`) · SBC `https://sbc.pbx3.com/admin` · Domain SIPp **`tech@192.168.1.51`**.
+
+**Docs / TODO:** **`TODO.md`** #1 = test new golden then terminate old.
+
+**Resume:** Smoke-test Domain calls / CDR / Home; ask before terminate **`i-02ec2b05b5baacb5d`**.
+
+---
+
+## Session end 2026-07-31 — soak startup, CDR UTC, 0.0.4 build plan — historical
+
+**Superseded** — Mode 4 rebuild done (see block above).
 
 **On `main` (pbx3):** Soak cold-start **`TRAFFIC_PROFILE_SIM.md` §0**; CDR HoR **UTC** (`cdr_sqlite3_custom`); policy **`CDR_TIMEZONE_POLICY.md`**; next-session plan **`BUILD_PLAN_0.0.4.md`** (pbx3 **0.0.4-1** + cagi **1.0.0-7** + Mode 4 golden rebuild, empty CDR). SPA product code unchanged this block.
 
-**Operator impact:** Home **Outcomes (today)** works for **new** UTC CDR rows (Laravel UTC midnight). Older local-stamped rows until rebuild. After rebuild: empty CDR then UTC going forward; site-TZ panel display still TODO.
+**Operator impact:** superseded.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` (heavily patched — rebuild next). SBC `https://sbc.pbx3.com/admin`. Domain SIPp: **`tech@192.168.1.51`**. Catcher **`98.82.58.59`**.
+**Dev against golden:** superseded.
 
-**Docs / TODO:** **`TODO.md`** #1 = build + rebuild; then WebRTC SPA / traffic-profile.
+**Docs / TODO:** superseded.
 
-**Resume:** Execute **`BUILD_PLAN_0.0.4.md`**. Ask before terminate old EC2.
+**Resume:** see block above.
 
 ---
 
