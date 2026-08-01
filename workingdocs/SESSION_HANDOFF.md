@@ -6,7 +6,21 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-08-01 — Mode 4 golden rebuild (0.0.4-3)
+## Session end 2026-08-01 — sipplabs extract (operator note)
+
+**On `main` (pbx3 docs):** SIPp recipes moved to **[aelintra/sipplabs](https://github.com/aelintra/sipplabs)**; pbx3 `call-tests/` stub only. SPA product code unchanged.
+
+**Operator impact:** Lab SIPp rsync/run from Mac `~/GiT/sipplab` (remote sipplabs), not pbx3 workingdocs. Golden still **`08jzwn`** / EIP **`44.196.98.191`**.
+
+**Dev against golden:** unchanged API `https://08jzwn.pbx3.com:44300/api`.
+
+**Docs / TODO:** pbx3 **`TODO.md`** #1 = golden smoke + terminate old. SIPp = sipplabs TODO (Domain + L1 pack next).
+
+**Resume:** Operator golden smoke as before; SIPp work in a sipplabs window.
+
+---
+
+## Session end 2026-08-01 — Mode 4 golden rebuild (0.0.4-3) — historical
 
 **On `main`:** New golden **`08jzwn`** EIP **`44.196.98.191`** — **pbx3 0.0.4-3** + **pbx3cagi 1.0.0-7**; restore empty CDR; onboard; LE SANs `08jzwn`/`0ggybk`/`dhbm8x`/`vqcwd4`; Magrathea dispatcher → EIP; preflight green. SPA product code unchanged (handoff only).
 
