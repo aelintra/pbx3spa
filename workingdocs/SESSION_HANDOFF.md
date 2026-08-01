@@ -6,31 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-08-01 — sipplabs extract (operator note)
+## Session end 2026-08-01 — CDR site-TZ + Link setid + golden smoke
 
-**On `main` (pbx3 docs):** SIPp recipes moved to **[aelintra/sipplabs](https://github.com/aelintra/sipplabs)**; pbx3 `call-tests/` stub only. SPA product code unchanged.
+**Merged to `main`:** SPA **`a0d9fed`** (CDR site-TZ display, CDR own nav, **Link setid** when missing); API **`b4433b7`**; cagi **1.0.0-8** CLIP; SBC Filament Home/CDR site-TZ (this push). Golden smoke green; setid **2** linked.
 
-**Operator impact:** Lab SIPp rsync/run from Mac `~/GiT/sipplab` (remote sipplabs), not pbx3 workingdocs. Golden still **`08jzwn`** / EIP **`44.196.98.191`**.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`) · Magrathea `ubuntu@3.93.26.82` (**also** `pbx3test.pem` now) · SBC `https://sbc.pbx3.com/admin`.
 
-**Dev against golden:** unchanged API `https://08jzwn.pbx3.com:44300/api`.
+**Docs / TODO:** **`TODO.md`** #1 = terminate old EC2 **`i-02ec2b05b5baacb5d`**; then WebRTC far-end SPA.
 
-**Docs / TODO:** pbx3 **`TODO.md`** #1 = golden smoke + terminate old. SIPp = sipplabs TODO (Domain + L1 pack next).
+**Resume:** Ask before terminate old golden; next product = WebRTC SPA far-end.
 
-**Resume:** Operator golden smoke as before; SIPp work in a sipplabs window.
+---
+
+## Session end 2026-08-01 — sipplabs extract (operator note) — historical
+
+**Superseded** by CDR site-TZ block above. SIPp recipes → **[aelintra/sipplabs](https://github.com/aelintra/sipplabs)**.
+
+**Resume:** see block above.
 
 ---
 
 ## Session end 2026-08-01 — Mode 4 golden rebuild (0.0.4-3) — historical
 
-**On `main`:** New golden **`08jzwn`** EIP **`44.196.98.191`** — **pbx3 0.0.4-3** + **pbx3cagi 1.0.0-7**; restore empty CDR; onboard; LE SANs `08jzwn`/`0ggybk`/`dhbm8x`/`vqcwd4`; Magrathea dispatcher → EIP; preflight green. SPA product code unchanged (handoff only).
+**Superseded.** Golden **`08jzwn`** EIP **`44.196.98.191`** still current.
 
-**Operator impact:** Login/API at **`https://08jzwn.pbx3.com:44300/api`** (new EIP). CDR empty until new calls (UTC). Old instance still up until terminate. `:44300` SG may still be IP-restricted.
-
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`) · SBC `https://sbc.pbx3.com/admin` · Domain SIPp **`tech@192.168.1.51`**.
-
-**Docs / TODO:** **`TODO.md`** #1 = test new golden then terminate old.
-
-**Resume:** Smoke-test Domain calls / CDR / Home; ask before terminate **`i-02ec2b05b5baacb5d`**.
+**Resume:** see block above.
 
 ---
 
