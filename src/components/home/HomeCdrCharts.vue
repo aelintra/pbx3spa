@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import HomeBarChart from './HomeBarChart.vue'
 import HomeDoughnut from './HomeDoughnut.vue'
+import { timezoneLabel } from '@/utils/timezoneLabels'
 
 const props = defineProps({
   cdr: { type: Object, default: null }
@@ -10,6 +11,10 @@ const props = defineProps({
 
 const volume = computed(() => props.cdr?.volume_24h || null)
 const outcome = computed(() => props.cdr?.outcome_today || null)
+const tzHint = computed(() => {
+  const id = String(props.cdr?.timezone || '').trim()
+  return id ? timezoneLabel(id) || id : ''
+})
 
 const outcomeSegments = computed(() => {
   const o = outcome.value || {}
@@ -35,6 +40,7 @@ const outcomeSegments = computed(() => {
           <h3 class="chart-title">Call volume (24h)</h3>
           <RouterLink class="cdr-link" to="/cdr">Open CDR →</RouterLink>
         </div>
+        <p v-if="tzHint" class="chart-tz">Hours in {{ tzHint }}</p>
         <p class="chart-legend">
           <span class="lg answered" /> Answered
           <span class="lg other" /> Other
@@ -50,6 +56,7 @@ const outcomeSegments = computed(() => {
           <h3 class="chart-title">Outcomes (today)</h3>
           <RouterLink class="cdr-link" to="/cdr">Open CDR →</RouterLink>
         </div>
+        <p v-if="tzHint" class="chart-tz">Since midnight {{ tzHint }}</p>
         <HomeDoughnut :segments="outcomeSegments" />
       </div>
     </template>
@@ -91,6 +98,11 @@ const outcomeSegments = computed(() => {
   font-size: 0.9375rem;
   font-weight: 600;
   color: #334155;
+}
+.chart-tz {
+  margin: -0.15rem 0 0.45rem 0;
+  font-size: 0.72rem;
+  color: #94a3b8;
 }
 .cdr-link {
   font-size: 0.8125rem;

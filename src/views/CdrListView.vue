@@ -3,6 +3,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useStickyFilter } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { formatCdrCalldate } from '@/utils/formatCdrCalldate'
+import { timezoneLabel } from '@/utils/timezoneLabels'
 
 const { filterText: filterSearch } = useStickyFilter('cdr-search')
 const filterFrom = ref('')
@@ -13,12 +15,19 @@ const filterDisposition = ref('')
 const rows = ref([])
 const total = ref(0)
 const available = ref(true)
+const siteTimezone = ref('UTC')
 const loading = ref(true)
 const error = ref('')
 const limit = ref(100)
 const offset = ref(0)
 
 const DISPOSITIONS = ['', 'ANSWERED', 'NO ANSWER', 'BUSY', 'FAILED', 'CONGESTION']
+
+const tzHint = computed(() => timezoneLabel(siteTimezone.value) || siteTimezone.value)
+
+function displayCalldate(row) {
+  return formatCdrCalldate(row?.calldate, siteTimezone.value)
+}
 
 const hasActiveFilter = computed(
   () =>
@@ -64,6 +73,9 @@ async function loadCdr() {
 
     const res = await getApiClient().get('cdr', { params })
     available.value = res.available !== false
+    if (typeof res.timezone === 'string' && res.timezone.trim()) {
+      siteTimezone.value = res.timezone.trim()
+    }
     rows.value = Array.isArray(res.rows) ? res.rows : []
     total.value = Number(res.total) || 0
     if (!available.value) {
@@ -104,7 +116,8 @@ onMounted(loadCdr)
     <h1>CDR</h1>
     <p class="subtitle">
       Searchable call detail from Asterisk SQLite (<code>master.db</code>). Rotated CSV archive
-      remains under System Logs → S3. Times as stored by Asterisk (GMT when configured).
+      remains under System Logs → S3. Times shown in site timezone
+      (<strong>{{ tzHint }}</strong>); stored UTC. Date filters use site-local calendar days.
     </p>
 
     <div class="filters">
@@ -180,7 +193,9 @@ onMounted(loadCdr)
         </thead>
         <tbody>
           <tr v-for="(row, i) in rows" :key="(row.uniqueid || '') + '-' + i">
-            <td class="mono">{{ row.calldate }}</td>
+            <td class="mono" :title="row.calldate ? `${row.calldate} UTC` : ''">
+              {{ displayCalldate(row) }}
+            </td>
             <td>{{ row.src }}</td>
             <td>{{ row.dst }}</td>
             <td>{{ row.disposition }}</td>

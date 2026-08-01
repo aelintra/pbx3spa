@@ -90,11 +90,10 @@ const navGroups = computed(() => {
       { to: '/queues', label: 'Queues / Ring groups', icon: 'list-ordered' },
       { to: '/ivrs', label: 'IVRs', icon: 'git-branch' },
       { to: '/greetings', label: 'Greetings', icon: 'volume2' },
-      { to: '/agents', label: 'Agents', icon: 'headset' },
-      { to: '/cdr', label: 'CDR', icon: 'scroll-text' }
+      { to: '/agents', label: 'Agents', icon: 'headset' }
     ]
     if (canRec) {
-      acdLinks.splice(4, 0, { to: '/recordings', label: 'Recordings', icon: 'mic' })
+      acdLinks.push({ to: '/recordings', label: 'Recordings', icon: 'mic' })
     }
     groups.push({
       id: 'acd',
@@ -111,6 +110,15 @@ const navGroups = computed(() => {
         { to: '/holidaytimers', label: 'Holiday timers', icon: 'calendar' },
         { to: '/cosrules', label: 'Class of Service', icon: 'shield' }
       ]
+    })
+  }
+
+  if (canTenant) {
+    groups.push({
+      id: 'cdr',
+      heading: 'CDR',
+      icon: 'scroll-text',
+      links: [{ to: '/cdr', label: 'Call detail', icon: 'scroll-text' }]
     })
   }
 

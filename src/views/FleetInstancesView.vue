@@ -111,14 +111,15 @@ function cancelEdit() {
   editingId.value = ''
 }
 
+function instanceHasSetid(row) {
+  return Number(row?.sbc_dispatcher_setid) >= 1
+}
+
 function startLink(row) {
   linkingId.value = row.id
   editingId.value = ''
   provisioningId.value = ''
-  linkSetid.value =
-    row.sbc_dispatcher_setid != null && row.sbc_dispatcher_setid !== ''
-      ? String(row.sbc_dispatcher_setid)
-      : ''
+  linkSetid.value = instanceHasSetid(row) ? String(row.sbc_dispatcher_setid) : ''
   actionError.value = ''
 }
 
@@ -146,7 +147,7 @@ async function doProvision() {
   const row = provisioningRow.value
   if (!row) return
   actionError.value = ''
-  const hasSetid = Number(row.sbc_dispatcher_setid) >= 1
+  const hasSetid = instanceHasSetid(row)
   if (hasSetid) {
     const ok = window.confirm(
       `Update SBC edge for "${row.label || row.fqdn || row.id}" (setid ${row.sbc_dispatcher_setid})?\n\n` +
@@ -353,7 +354,9 @@ onMounted(load)
       Org catalog via gatekeeper (S3 home of record). Register upserts the directory row after a live
       <code>/up</code> check. Soft decommission hides from the picker only.
       <strong>Provision edge</strong> creates a dispatcher set + Asterisk Peer on the SBC and writes
-      catalog setid (Rule 13). Applying catalog setid onto tenant domains is
+      catalog setid (Rule 13). If the edge already exists (e.g. after rebuild) but Setid is blank, use
+      <strong>Link setid</strong> on the row — catch-up only, does not create a dispatcher set.
+      Applying catalog setid onto tenant domains is
       <RouterLink to="/fleet/reconcile">Reconcile → Apply catalog → SBC</RouterLink>.
       Health badges use Gatekeeper probe state (manual refresh).
     </p>
@@ -552,11 +555,14 @@ onMounted(load)
           <td class="cell-setid">
             <template v-if="linkingId === i.id">
               <select v-model="linkSetid" class="inline-input setid-input">
-                <option disabled value="">…</option>
+                <option disabled value="">Pick live set…</option>
                 <option v-for="s in dispatcherSets" :key="s.setid" :value="String(s.setid)">
                   {{ s.setid }}
                 </option>
               </select>
+              <p v-if="!dispatcherSets.length" class="setid-warn">
+                No live dispatcher sets loaded — refresh or check SBC API.
+              </p>
               <div class="action-row">
                 <button
                   type="button"
@@ -572,7 +578,23 @@ onMounted(load)
               </div>
             </template>
             <template v-else>
-              {{ i.sbc_dispatcher_setid ?? '—' }}
+              <div class="setid-value" :class="{ 'setid-missing': !instanceHasSetid(i) }">
+                {{ instanceHasSetid(i) ? i.sbc_dispatcher_setid : '—' }}
+              </div>
+              <button
+                v-if="canManage && !instanceHasSetid(i)"
+                type="button"
+                class="linkish setid-link"
+                :disabled="busyId === i.id || !dispatcherSets.length"
+                :title="
+                  dispatcherSets.length
+                    ? 'Attach an already-live Magrathea dispatcher set (catalog catch-up)'
+                    : 'Live dispatcher sets not loaded'
+                "
+                @click="startLink(i)"
+              >
+                Link setid
+              </button>
             </template>
           </td>
           <td>
@@ -599,13 +621,27 @@ onMounted(load)
                 Edit
               </button>
               <button
+                v-if="canManage && !instanceHasSetid(i)"
+                type="button"
+                class="linkish"
+                :disabled="busyId === i.id || !dispatcherSets.length"
+                :title="
+                  dispatcherSets.length
+                    ? 'Catalog catch-up: attach already-live dispatcher set'
+                    : 'Live dispatcher sets not loaded'
+                "
+                @click="startLink(i)"
+              >
+                Link setid
+              </button>
+              <button
                 v-if="canEdge"
                 type="button"
                 class="linkish"
                 :disabled="busyId === i.id"
                 @click="startProvision(i)"
               >
-                {{ Number(i.sbc_dispatcher_setid) >= 1 ? 'Edge' : 'Provision' }}
+                {{ instanceHasSetid(i) ? 'Edge' : 'Provision' }}
               </button>
               <button
                 v-if="canManage && (i.status || 'active') !== 'maintenance'"
@@ -634,11 +670,11 @@ onMounted(load)
               >
                 Decom
               </button>
-              <details v-if="canManage" class="advanced-actions">
+              <details v-if="canManage && instanceHasSetid(i)" class="advanced-actions">
                 <summary>Advanced</summary>
                 <p class="advanced-hint">
-                  Link setid attaches an <strong>already-live</strong> dispatcher set (catch-up). Prefer
-                  Provision for new nodes.
+                  Change setid only when the catalog pointer is wrong. Prefer
+                  <strong>Provision / Edge</strong> when creating or updating the live SBC edge.
                 </p>
                 <button
                   type="button"
@@ -646,7 +682,7 @@ onMounted(load)
                   :disabled="busyId === i.id || !dispatcherSets.length"
                   @click="startLink(i)"
                 >
-                  Link setid
+                  Change setid
                 </button>
               </details>
             </template>
@@ -827,6 +863,22 @@ onMounted(load)
 }
 .actions .linkish {
   margin-right: 0.55rem;
+}
+.cell-setid .setid-value.setid-missing {
+  color: var(--pbx-text-muted);
+}
+.cell-setid .setid-link {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+}
+.cell-setid .setid-warn {
+  margin: 0.25rem 0 0;
+  max-width: 11rem;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  white-space: normal;
+  color: var(--pbx-danger, #b91c1c);
 }
 .advanced-actions {
   display: inline-block;
