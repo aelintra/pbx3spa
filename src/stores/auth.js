@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { defaultInstanceLabelFromBaseUrl } from '@/utils/sessionContext'
+import { tenantContextForShortuid } from '@/utils/tenantAccess'
 
 const STORAGE_KEY_BASE = 'pbx3_baseUrl'
 const STORAGE_KEY_TOKEN = 'pbx3_token'
@@ -139,8 +140,19 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    setUser(user) {
+    /**
+     * @param {Record<string, unknown> | null | undefined} user
+     * @param {{ requireTenantShortuid?: string }} [options]
+     *   When set (tenant-door login), lock context to that shortuid (caller already verified access).
+     */
+    setUser(user, options = {}) {
       this.user = user
+      const required = (options.requireTenantShortuid ?? '').toString().trim()
+      if (required) {
+        const ctx = tenantContextForShortuid(user, required)
+        this.setTenantContext(ctx.pkey, ctx.label)
+        return
+      }
       // Single-cluster tenant users: lock context; multi: keep stored if still allowed
       const a = user?.abilities ?? []
       if (a.includes('admin')) return
@@ -152,7 +164,8 @@ export const useAuthStore = defineStore('auth', {
         const detail = (user?.clusters || user?.allowed_cluster_details || []).find(
           (d) => String(d.shortuid) === id || String(d.pkey) === id
         )
-        this.setTenantContext(detail?.pkey || id, detail?.label || detail?.pkey || id)
+        const label = detail?.shortuid || detail?.label || detail?.pkey || id
+        this.setTenantContext(detail?.pkey || id, label)
       } else if (clusters.length > 1 && this.tenantContext?.pkey) {
         const pk = this.tenantContext.pkey
         const still =

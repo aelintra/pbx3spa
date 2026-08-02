@@ -124,7 +124,7 @@ SPA: normalize input (`abc789` or `abc789.example.com`) → match row → join `
 
 **SPA polymorphism (builder POV):** one codebase; behaviour from **build-time `VITE_*`** (especially `VITE_INSTANCE_DIRECTORY_URL`), **session mode** (tenant vs fleet), and **data** (catalog + whoami). Each system builder (fork/clone) runs **their** SPA wherever they choose, pointed at **their** catalog — n unrelated builders ⇒ n SPA deploys is fine; no need for one universal mega-SPA. Same-builder multi-fleet with one build is optional later (runtime catalog URL), not required for OSS cloners.
 
-**Customer journey (example):** open builder SPA → “Sign in to tenant” → enter `abc789` → GET tenant-home + instance-index → credentials → `POST {api_base_url}/auth/login`. MSP path keeps **Manage instance** / instance picker. Fleet/Gatekeeper remains ops, not the PBX front door.
+**Customer journey (example):** open builder SPA → “Sign in to tenant” → enter tenant shortuid (or FQDN) + email + password → GET tenant-home + instance-index → `POST {api_base_url}/auth/login` → whoami must include that shortuid in `allowed_clusters` (else reject) → lock tenant context to that UID. MSP path keeps **Manage instance** / instance picker. Fleet/Gatekeeper remains ops, not the PBX front door.
 
 **Still open / implement status (2026-07-23 thin slice):** Schema `tenant-home.v0.json`; Gatekeeper rebuild on register/move + `POST /api/v1/catalog/tenant-home/rebuild`; Mac `rebuild-tenant-home.sh`; SPA three-door chooser + tenant resolve. **Lab:** publish rollup once (`rebuild-tenant-home.sh` or Gatekeeper rebuild) so `/dev-catalog/catalog/tenant-home.json` (or S3) exists. Cache-Control / Phase D private catalog later.
 

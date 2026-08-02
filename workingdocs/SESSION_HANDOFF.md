@@ -6,15 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-08-01 — CDR site-TZ + Link setid + golden smoke
+## Session end 2026-08-01 — simplified tenant login + lab catalog guard
 
-**Merged to `main`:** SPA **`a0d9fed`** (CDR site-TZ display, CDR own nav, **Link setid** when missing); API **`b4433b7`**; cagi **1.0.0-8** CLIP; SBC Filament Home/CDR site-TZ (this push). Golden smoke green; setid **2** linked.
+**Merged to `main`:** SPA one-form **Sign in to tenant** (UID + email + password; enforce `allowed_clusters`; catalog `no-store` fetch; Tenant id focus vs autofill). **pbx3** **`LAB_FLEET_TENANTS.md`** + **`reconcile-node-tenants.sh`**; registered **`pb0wsk`** in catalog. Lab: `pb0wsk` / `sipusert.pbx3@pbx3.com` → CDR/Home tenant filter OK. SBC Backup S3-only already on Magrathea earlier today.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`) · Magrathea `ubuntu@3.93.26.82` (**also** `pbx3test.pem` now) · SBC `https://sbc.pbx3.com/admin`.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`) · Magrathea `ubuntu@3.93.26.82` · SBC `https://sbc.pbx3.com/admin`.
 
-**Docs / TODO:** **`TODO.md`** #1 = terminate old EC2 **`i-02ec2b05b5baacb5d`**; then WebRTC far-end SPA.
+**Docs / TODO:** Fleet Delete / dial alias next; WebRTC far-end still blocked on SPA team.
 
-**Resume:** Ask before terminate old golden; next product = WebRTC SPA far-end.
+**Resume:** Wait for task — parked Fleet Delete or dial alias, or WebRTC when unblocked.
+
+---
+
+## Session end 2026-08-01 — CDR site-TZ + Link setid + golden smoke — historical
+
+**Superseded** by tenant login block above.
+
+**Merged to `main`:** SPA **`a0d9fed`**; API **`b4433b7`**; cagi **1.0.0-8**; SBC site-TZ. Old golden later terminated.
+
+**Resume:** see block above.
 
 ---
 

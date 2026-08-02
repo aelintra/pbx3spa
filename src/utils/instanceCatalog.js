@@ -78,7 +78,11 @@ export function normalizeInstanceRecord(row, index) {
 export async function fetchInstanceCatalog(directoryUrl, options = {}) {
   const res = await fetch(directoryUrl, {
     method: 'GET',
-    headers: { Accept: 'application/json' },
+    headers: {
+      Accept: 'application/json',
+      'Cache-Control': 'no-cache'
+    },
+    cache: 'no-store',
     signal: options.signal
   })
   if (!res.ok) {

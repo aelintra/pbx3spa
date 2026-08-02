@@ -61,6 +61,8 @@ export function normalizeTenantHomeRecord(row, index) {
  */
 export function normalizeTenantLookupInput(input) {
   let raw = (input ?? '').trim().toLowerCase()
+  // Strip zero-width / BOM paste junk
+  raw = raw.replace(/[\u200B-\u200D\uFEFF]/g, '')
   if (!raw) return { shortuidHint: '', hostHint: '' }
 
   if (raw.includes('://')) {
@@ -104,7 +106,11 @@ export function findTenantHome(tenants, input) {
 export async function fetchTenantHome(tenantHomeUrl, options = {}) {
   const res = await fetch(tenantHomeUrl, {
     method: 'GET',
-    headers: { Accept: 'application/json' },
+    headers: {
+      Accept: 'application/json',
+      'Cache-Control': 'no-cache'
+    },
+    cache: 'no-store',
     signal: options.signal
   })
   if (!res.ok) {

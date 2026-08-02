@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createApiClient, getApiClient } from '@/api/client'
 import { useAuthStore } from '@/stores/auth'
@@ -13,6 +13,10 @@ import {
 import { useFleetModeStore } from '@/stores/fleetMode'
 import { fetchInstanceCatalog, findInstanceById } from '@/utils/instanceCatalog'
 import { fetchTenantHome, findTenantHome } from '@/utils/tenantHome'
+import {
+  looksLikeEmail,
+  userMayAccessTenantShortuid
+} from '@/utils/tenantAccess'
 import { loadInstanceRecents, pushInstanceRecent } from '@/utils/instanceRecents'
 import { resolveApiBaseUrl, usesDevApiProxy } from '@/config/apiBaseUrl'
 import { loginNetworkErrorMessage } from '@/utils/loginErrors'
@@ -46,7 +50,14 @@ const recents = ref(loadInstanceRecents())
 const selectedInstance = ref(null)
 
 const tenantIdInput = ref('')
+/** @type {import('vue').Ref<HTMLInputElement | null>} */
+const tenantIdEl = ref(null)
+/** Until unlocked, email/password stay readonly so autofill does not steal focus from Tenant id. */
+const tenantCredsLocked = ref(true)
+/** @type {ReturnType<typeof setTimeout>[]} */
+let tenantFocusTimers = []
 const tenantResolveLoading = ref(false)
+/** Set only on Manage-instance path when showing selected instance; tenant door signs in in one step. */
 const resolvedTenantShortuid = ref('')
 
 const showManualApiUrl = ref(!directoryEnabled)
@@ -139,16 +150,62 @@ function chooseManageInstance() {
   void loadCatalog()
 }
 
+function clearTenantFocusTimers() {
+  for (const t of tenantFocusTimers) clearTimeout(t)
+  tenantFocusTimers = []
+}
+
+function unlockTenantCreds() {
+  tenantCredsLocked.value = false
+  clearTenantFocusTimers()
+}
+
+/** Autofill often focuses Email; bounce back while still locked. User click uses pointerdown → unlock. */
+function onLockedCredFocus(e) {
+  if (!tenantCredsLocked.value) return
+  const t = e?.target
+  if (t && typeof t.blur === 'function') t.blur()
+  focusTenantIdField()
+}
+
+function focusTenantIdField() {
+  tenantIdEl.value?.focus({ preventScroll: true })
+}
+
+/** Win the race with browser password-manager autofill focusing Email. */
+function scheduleTenantIdFocus() {
+  clearTenantFocusTimers()
+  const tryFocus = () => {
+    if (step.value !== 'tenant' || !tenantCredsLocked.value) return
+    const active = typeof document !== 'undefined' ? document.activeElement : null
+    if (active === tenantIdEl.value) return
+    const id = active && 'id' in active ? String(active.id || '') : ''
+    // Reclaim only if autofill jumped to creds (or nothing focused yet)
+    if (!id || id === 'tenantEmail' || id === 'tenantPassword' || id === '') {
+      focusTenantIdField()
+    }
+  }
+  void nextTick(() => {
+    focusTenantIdField()
+    requestAnimationFrame(tryFocus)
+  })
+  for (const ms of [0, 50, 100, 200, 400]) {
+    tenantFocusTimers.push(setTimeout(tryFocus, ms))
+  }
+}
+
 function chooseSignInToTenant() {
   error.value = ''
   catalogError.value = ''
   selectedInstance.value = null
   resolvedTenantShortuid.value = ''
   showManualApiUrl.value = false
+  tenantCredsLocked.value = true
   step.value = 'tenant'
   if (catalogInstances.value.length === 0 && directoryUrl) {
     void loadCatalog()
   }
+  scheduleTenantIdFocus()
 }
 
 function chooseFleetConsole() {
@@ -157,12 +214,6 @@ function chooseFleetConsole() {
 }
 
 function backFromCredentials() {
-  if (resolvedTenantShortuid.value) {
-    selectedInstance.value = null
-    resolvedTenantShortuid.value = ''
-    step.value = 'tenant'
-    return
-  }
   backToChooser()
 }
 
@@ -172,7 +223,10 @@ function changeTenantFromCredentials() {
   step.value = 'tenant'
 }
 
-async function resolveTenantAndContinue() {
+/**
+ * Single-step tenant door: resolve UID → node, login, require UID in allowed_clusters.
+ */
+async function signInToTenant() {
   error.value = ''
   if (!tenantHomeUrl) {
     error.value = 'Tenant directory is not configured for this SPA build.'
@@ -180,11 +234,26 @@ async function resolveTenantAndContinue() {
   }
   const q = tenantIdInput.value.trim()
   if (!q) {
-    error.value = 'Enter a tenant id or tenant URL'
+    error.value = 'Enter your tenant id (e.g. pb0wsk or pb0wsk.pbx3.com)'
+    return
+  }
+  if (looksLikeEmail(q)) {
+    error.value =
+      'That looks like an email. Enter the tenant id in the first field, and your email below.'
+    return
+  }
+  const em = email.value.trim()
+  if (!em) {
+    error.value = 'Email is required'
+    return
+  }
+  if (!password.value) {
+    error.value = 'Password is required'
     return
   }
 
   tenantResolveLoading.value = true
+  loading.value = true
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(new Error('Tenant lookup timed out')), 15_000)
   try {
@@ -194,27 +263,63 @@ async function resolveTenantAndContinue() {
     const home = await fetchTenantHome(tenantHomeUrl, { signal: controller.signal })
     const row = findTenantHome(home.tenants, q)
     if (!row) {
-      error.value = 'Could not resolve tenant'
+      error.value = `Unknown tenant id “${q}” — not in catalog (hard-refresh if it was just registered)`
       return
     }
     const instance = findInstanceById(catalogInstances.value, row.instance_id)
     if (!instance?.api_base_url) {
-      error.value = 'Could not resolve tenant'
+      error.value = 'Tenant home instance is missing from the catalog'
       return
     }
     if ((instance.status ?? '').toLowerCase() === 'maintenance') {
-      const ok = window.confirm(
-        `${instance.label} is in maintenance. Sign in anyway?`
-      )
+      const ok = window.confirm(`${instance.label} is in maintenance. Sign in anyway?`)
       if (!ok) return
     }
+
+    const url = resolveApiBaseUrl(instance.api_base_url)
+    const client = createApiClient(url, '')
+    const res = await client.post(
+      'auth/login',
+      { email: em, password: password.value },
+      { timeoutMs: 30_000 }
+    )
+    auth.setCredentials(url, res.accessToken)
+    auth.setSelectedInstance(instance)
+    pushInstanceRecent(instance)
+
+    let user
+    try {
+      user = await getApiClient().get('auth/whoami')
+    } catch {
+      auth.clearCredentials()
+      error.value = 'Signed in but could not load your account (whoami failed)'
+      return
+    }
+
+    if (!userMayAccessTenantShortuid(user, row.shortuid)) {
+      auth.clearCredentials()
+      error.value = `No access to tenant ${row.shortuid} for this account`
+      return
+    }
+
+    auth.setUser(user, { requireTenantShortuid: row.shortuid })
     resolvedTenantShortuid.value = row.shortuid
-    goToCredentials(instance)
+    router.push('/')
   } catch (err) {
-    error.value = err?.message || 'Could not resolve tenant'
+    if (err?.status === 401) {
+      error.value = 'Invalid email or password'
+    } else if (err?.name === 'AbortError' || /timed out/i.test(String(err?.message || ''))) {
+      error.value = err?.message || 'Tenant lookup timed out'
+    } else if (err?.message && !err?.status) {
+      error.value = err.message
+    } else {
+      const url = selectedInstance.value?.api_base_url || ''
+      error.value = loginNetworkErrorMessage(err, url)
+    }
   } finally {
     clearTimeout(timer)
     tenantResolveLoading.value = false
+    loading.value = false
   }
 }
 
@@ -294,6 +399,10 @@ onMounted(() => {
 
 async function onSubmit(e) {
   e.preventDefault()
+  if (step.value === 'tenant') {
+    await signInToTenant()
+    return
+  }
   error.value = ''
   const url = resolvedLoginApiUrl.value
   if (!url) {
@@ -366,9 +475,9 @@ async function onSubmit(e) {
       <!-- S10.8 login chooser + B′ tenant door -->
       <section v-if="step === 'chooser'" class="chooser-section">
         <p class="chooser-hint">
-          <strong>Sign in to tenant</strong> finds the home node from your tenant id (customers).
-          <strong>Manage instance</strong> uses your PBX node login (MSP).
-          <strong>Fleet console</strong> uses the control-plane fleet account (not the same password).
+          <strong>Sign in to tenant</strong> — tenant id + email + password (customers).
+          <strong>Manage instance</strong> — MSP node login.
+          <strong>Fleet console</strong> — control-plane fleet account (not the same password).
         </p>
         <button
           type="button"
@@ -377,7 +486,7 @@ async function onSubmit(e) {
           @click="chooseSignInToTenant"
         >
           <span class="chooser-btn-title">Sign in to tenant</span>
-          <span class="chooser-btn-meta">Tenant id or URL → home node</span>
+          <span class="chooser-btn-meta">Tenant id, email, and password</span>
         </button>
         <button type="button" class="chooser-btn" @click="chooseManageInstance">
           <span class="chooser-btn-title">Manage instance</span>
@@ -389,7 +498,7 @@ async function onSubmit(e) {
         </button>
       </section>
 
-      <!-- B′ tenant id -->
+      <!-- Tenant door: one form — UID + email + password -->
       <section v-if="step === 'tenant'" class="tenant-section">
         <button
           v-if="showEntryChooser"
@@ -399,24 +508,52 @@ async function onSubmit(e) {
         >
           ← Back to choices
         </button>
-        <label for="tenantId">Tenant id or URL</label>
+        <label for="tenantId">Tenant id</label>
         <input
           id="tenantId"
+          ref="tenantIdEl"
           v-model="tenantIdInput"
           type="text"
-          autocomplete="organization"
-          placeholder="e.g. abc789 or abc789.pbx3.com"
+          name="tenant_id"
+          autocomplete="off"
+          placeholder="e.g. pb0wsk or pb0wsk.pbx3.com"
           required
-          @keydown.enter.prevent="resolveTenantAndContinue"
+          @input="unlockTenantCreds"
+          @keydown="unlockTenantCreds"
+        />
+        <label for="tenantEmail">Email</label>
+        <input
+          id="tenantEmail"
+          v-model="email"
+          type="email"
+          name="email"
+          placeholder="you@example.com"
+          required
+          autocomplete="username"
+          :readonly="tenantCredsLocked"
+          @pointerdown="unlockTenantCreds"
+          @focus="onLockedCredFocus"
+        />
+        <label for="tenantPassword">Password</label>
+        <input
+          id="tenantPassword"
+          v-model="password"
+          type="password"
+          name="password"
+          placeholder="Password"
+          required
+          autocomplete="current-password"
+          :readonly="tenantCredsLocked"
+          @pointerdown="unlockTenantCreds"
+          @focus="onLockedCredFocus"
         />
         <p v-if="error && step === 'tenant'" class="error" role="alert">{{ error }}</p>
         <button
-          type="button"
+          type="submit"
           class="btn-primary"
-          :disabled="tenantResolveLoading"
-          @click="resolveTenantAndContinue"
+          :disabled="tenantResolveLoading || loading"
         >
-          {{ tenantResolveLoading ? 'Looking up…' : 'Continue' }}
+          {{ tenantResolveLoading || loading ? 'Signing in…' : 'Sign in' }}
         </button>
       </section>
 
