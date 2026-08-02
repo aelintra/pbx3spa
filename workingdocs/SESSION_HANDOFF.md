@@ -6,15 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-08-01 — simplified tenant login + lab catalog guard
+## Session end 2026-08-01 — LH nav solo groups
 
-**Merged to `main`:** SPA one-form **Sign in to tenant** (UID + email + password; enforce `allowed_clusters`; catalog `no-store` fetch; Tenant id focus vs autofill). **pbx3** **`LAB_FLEET_TENANTS.md`** + **`reconcile-node-tenants.sh`**; registered **`pb0wsk`** in catalog. Lab: `pb0wsk` / `sipusert.pbx3@pbx3.com` → CDR/Home tenant filter OK. SBC Backup S3-only already on Magrathea earlier today.
+**Merged to `main`:** Single-link LH groups (Tenants, CDR, Inbound, …) go straight to the panel — no chevron. Accordion + solo headings share `1rem` / semibold / muted heading color (explicit CSS; no `font: inherit` drift). Label **Tenants**. Earlier today: one-form tenant login + lab catalog reconcile.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`) · Magrathea `ubuntu@3.93.26.82` · SBC `https://sbc.pbx3.com/admin`.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`) · Magrathea `ubuntu@3.93.26.82` · SBC `https://sbc.pbx3.com/admin`. Local vite OK for nav QA.
 
 **Docs / TODO:** Fleet Delete / dial alias next; WebRTC far-end still blocked on SPA team.
 
-**Resume:** Wait for task — parked Fleet Delete or dial alias, or WebRTC when unblocked.
+**Resume:** Wait for task — parked Fleet Delete or dial alias; ask about the second SPA item from earlier if still needed.
+
+---
+
+## Session end 2026-08-01 — simplified tenant login + lab catalog guard — historical
+
+**Superseded** by LH nav solo groups block above.
+
+**Merged to `main`:** SPA one-form tenant login; lab catalog reconcile / `pb0wsk`; SBC Backup S3-only earlier same day.
+
+**Resume:** see block above.
 
 ---
 

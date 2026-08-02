@@ -49,7 +49,7 @@ const navGroups = computed(() => {
   if (isAdmin) {
     groups.push({
       id: 'tenancy',
-      heading: 'Tenancy',
+      heading: 'Tenants',
       icon: 'building2',
       links: [{ to: '/tenants', label: 'Tenants', icon: 'building2' }]
     })
@@ -207,7 +207,8 @@ function ensureCurrentGroupOpen() {
   const id = groupIdForPath(route.path)
   const next = {}
   navGroups.value.forEach((g) => {
-    next[g.id] = g.id === id
+    // Solo (one-link) groups are direct links — never accordion-open
+    next[g.id] = g.links.length > 1 && g.id === id
   })
   expanded.value = next
 }
@@ -312,43 +313,55 @@ useInactivityLogout(logout, computed(() => auth.isLoggedIn))
           </router-link>
 
           <div v-for="group in navGroups" :key="group.id" class="nav-group">
-            <button
-              :id="'nav-heading-' + group.id"
-              type="button"
-              class="nav-heading nav-heading-btn"
-              :aria-expanded="expanded[group.id]"
-              :aria-controls="'nav-group-' + group.id"
-              @click="toggle(group.id)"
+            <!-- One link only: go straight to the panel (no chevron submenu). -->
+            <router-link
+              v-if="group.links.length === 1"
+              :to="group.links[0].to"
+              class="nav-link nav-heading nav-heading-solo"
+              active-class="active"
             >
-              <span class="nav-heading-leading">
-                <NavIcon :name="group.icon" />
-                <span class="nav-heading-text">{{ group.heading }}</span>
-              </span>
-              <span
-                class="nav-heading-chevron"
-                :class="{ open: expanded[group.id] }"
-                aria-hidden="true"
-                >▼</span
+              <NavIcon :name="group.icon" />
+              <span class="nav-link-label">{{ group.heading }}</span>
+            </router-link>
+            <template v-else>
+              <button
+                :id="'nav-heading-' + group.id"
+                type="button"
+                class="nav-heading nav-heading-btn"
+                :aria-expanded="expanded[group.id]"
+                :aria-controls="'nav-group-' + group.id"
+                @click="toggle(group.id)"
               >
-            </button>
-            <div
-              v-show="expanded[group.id]"
-              :id="'nav-group-' + group.id"
-              class="nav-group-links"
-              role="region"
-              :aria-labelledby="'nav-heading-' + group.id"
-            >
-              <router-link
-                v-for="link in group.links"
-                :key="link.to"
-                :to="link.to"
-                class="nav-link"
-                active-class="active"
+                <span class="nav-heading-leading">
+                  <NavIcon :name="group.icon" />
+                  <span class="nav-heading-text">{{ group.heading }}</span>
+                </span>
+                <span
+                  class="nav-heading-chevron"
+                  :class="{ open: expanded[group.id] }"
+                  aria-hidden="true"
+                  >▼</span
+                >
+              </button>
+              <div
+                v-show="expanded[group.id]"
+                :id="'nav-group-' + group.id"
+                class="nav-group-links"
+                role="region"
+                :aria-labelledby="'nav-heading-' + group.id"
               >
-                <NavIcon :name="link.icon" />
-                <span class="nav-link-label">{{ link.label }}</span>
-              </router-link>
-            </div>
+                <router-link
+                  v-for="link in group.links"
+                  :key="link.to"
+                  :to="link.to"
+                  class="nav-link"
+                  active-class="active"
+                >
+                  <NavIcon :name="link.icon" />
+                  <span class="nav-link-label">{{ link.label }}</span>
+                </router-link>
+              </div>
+            </template>
           </div>
         </template>
         <template v-else>
@@ -444,9 +457,10 @@ useInactivityLogout(logout, computed(() => auth.isLoggedIn))
 }
 .nav-heading {
   padding: 0.5rem 0.75rem 0.35rem 0.65rem;
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.01em;
+  line-height: 1.35;
   color: var(--pbx-sidebar-heading);
 }
 .nav-heading-btn {
@@ -459,8 +473,13 @@ useInactivityLogout(logout, computed(() => auth.isLoggedIn))
   border: none;
   border-radius: 0.375rem;
   background: transparent;
-  color: inherit;
-  font: inherit;
+  /* Explicit — do not use font:inherit (that ignored .nav-heading size). */
+  color: var(--pbx-sidebar-heading);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
   cursor: pointer;
   text-align: left;
 }
@@ -509,6 +528,25 @@ useInactivityLogout(logout, computed(() => auth.isLoggedIn))
   text-decoration: none;
   font-size: 0.875rem;
   line-height: 1.35;
+}
+/* Solo group: same type metrics as .nav-heading / .nav-heading-btn. */
+a.nav-link.nav-heading-solo {
+  padding: 0.5rem 0.75rem 0.35rem 0.65rem;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--pbx-sidebar-heading);
+}
+a.nav-link.nav-heading-solo:hover {
+  color: var(--pbx-sidebar-fg);
+}
+a.nav-link.nav-heading-solo.active {
+  color: var(--pbx-sidebar-active-color);
+  font-weight: 600;
+}
+a.nav-link.nav-heading-solo :deep(.nav-icon) {
+  opacity: 0.85;
 }
 .nav-link :deep(.nav-icon) {
   opacity: 0.88;
