@@ -6,15 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-08-01 — LH nav solo groups
+## Session end 2026-08-02 — Users edit + AEL greenfield
 
-**Merged to `main`:** Single-link LH groups (Tenants, CDR, Inbound, …) go straight to the panel — no chevron. Accordion + solo headings share `1rem` / semibold / muted heading color (explicit CSS; no `font: inherit` drift). Label **Tenants**. Earlier today: one-form tenant login + lab catalog reconcile.
+**Merged to `main`:** Instance **Users** panel **Edit** (`UserEditView` + route + list pencil) — name/email/abilities/clusters + force password. Tip **`a10c106`**.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`) · Magrathea `ubuntu@3.93.26.82` · SBC `https://sbc.pbx3.com/admin`. Local vite OK for nav QA.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`). **AEL (new):** SSH `ubuntu@ael.vcloupdbc.com` (`aelsip.pem`), EC2 **`i-08a888f32e1391649`**, join **`08jzwn-pbx3`**.
 
-**Docs / TODO:** Fleet Delete / dial alias next; WebRTC far-end still blocked on SPA team.
+**Docs / TODO:** AEL greenfield in progress (rebuild **0.0.4-3** / **cagi 1.0.0-8** debs on Mac — not on disk). Spec path: **`NEW_INSTANCE_CHECKLIST.md`** § A → onboard script.
 
-**Resume:** Wait for task — parked Fleet Delete or dial alias; ask about the second SPA item from earlier if still needed.
+**Resume:** Operator finishes AEL install+fleet onboard; SPA Users edit is live on **`main`**. Wait for next task.
+
+---
+
+## Session end 2026-08-01 — LH nav solo groups — historical
+
+**Superseded** by Users edit block above.
+
+**Merged to `main`:** LH nav solo groups + Tenants label. Earlier: tenant login + lab catalog.
+
+**Resume:** see block above.
 
 ---
 
