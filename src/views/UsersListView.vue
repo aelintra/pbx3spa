@@ -189,6 +189,7 @@ onMounted(loadUsers)
             >
               Abilities
             </th>
+            <th class="th-actions">Edit</th>
             <th class="th-actions">Revoke</th>
             <th class="th-actions">Delete</th>
           </tr>
@@ -198,6 +199,29 @@ onMounted(loadUsers)
             <td>{{ u.name ?? '—' }}</td>
             <td>{{ u.email ?? '—' }}</td>
             <td>{{ abilitiesDisplay(u.abilities) }}</td>
+            <td>
+              <router-link
+                :to="{ name: 'user-edit', params: { id: u.id } }"
+                class="cell-link cell-link-icon"
+                title="Edit"
+                aria-label="Edit"
+              >
+                <span class="action-icon" aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg
+                ></span>
+              </router-link>
+            </td>
             <td>
               <button
                 type="button"

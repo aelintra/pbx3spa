@@ -77,6 +77,7 @@ import DashboardView from '../views/DashboardView.vue'
 import NoAccessView from '../views/NoAccessView.vue'
 import UsersListView from '../views/UsersListView.vue'
 import UserCreateView from '../views/UserCreateView.vue'
+import UserEditView from '../views/UserEditView.vue'
 import AccountPasswordView from '../views/AccountPasswordView.vue'
 import { getApiClient } from '@/api/client'
 
@@ -176,6 +177,7 @@ const router = createRouter({
         },
         { path: 'users', name: 'users', component: UsersListView },
         { path: 'users/new', name: 'user-create', component: UserCreateView },
+        { path: 'users/:id', name: 'user-edit', component: UserEditView },
         { path: 'sysglobals', name: 'sysglobals', component: SysglobalsEditView },
         { path: 'firewall', name: 'firewall', component: FirewallView },
         { path: 'certificates', name: 'certificates', component: CertificatesView },
