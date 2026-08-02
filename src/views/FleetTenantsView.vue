@@ -367,10 +367,33 @@ onMounted(loadTenants)
   gap: 0.25rem;
   font-size: 0.875rem;
 }
+/* Match text fields: native <select> otherwise grows tall (esp. macOS Safari/Chrome). */
 .create-panel input,
 .create-panel select {
-  font: inherit;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  min-height: 2.25rem;
   padding: 0.35rem 0.5rem;
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: var(--pbx-text, inherit);
+  background-color: var(--pbx-panel, #fff);
+  border: 1px solid var(--pbx-border, #e2e8f0);
+  border-radius: 4px;
+}
+.create-panel select {
+  /* Keep one-line height (avoid multi-line expand look next to inputs) */
+  height: 2.25rem;
+  appearance: auto;
+}
+.create-panel input:focus,
+.create-panel select:focus {
+  outline: none;
+  border-color: var(--pbx-accent-bright, #3b82f6);
+  box-shadow: 0 0 0 3px var(--pbx-focus-ring, rgba(59, 130, 246, 0.1));
 }
 .create-actions {
   display: flex;

@@ -6,21 +6,27 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-08-02 — Users edit + AEL greenfield
+## Session end 2026-08-02 — Kildare greenfield + route create
 
-**Merged to `main`:** Instance **Users** panel **Edit** (`UserEditView` + route + list pencil) — name/email/abilities/clusters + force password. Tip **`a10c106`**.
+**Merged to `main`:** (API) route create **`pkey`** fix **pbx3api `eb8961d`**; (pbx3) install/onboard docs + Egress seed / admin bootstrap / fleet token write; (SPA) Fleet Tenants + `FormSelect` control height polish.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`). **AEL (new):** SSH `ubuntu@ael.vcloupdbc.com` (`aelsip.pem`), EC2 **`i-08a888f32e1391649`**, join **`08jzwn-pbx3`**.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`). **Kildare (live):** SPA/API `https://kildare.pbx3.com:44300` · SSH `ubuntu@3.93.253.1` (`aelsip.pem`) · shortuid **`kildare`** · tenant **`18c8z3`**. Magrathea VIP **`3.93.26.82`**.
 
-**Docs / TODO:** AEL greenfield in progress (rebuild **0.0.4-3** / **cagi 1.0.0-8** debs on Mac — not on disk). Spec path: **`NEW_INSTANCE_CHECKLIST.md`** § A → onboard script.
+**Docs / TODO:** **`INSTALL_NODE_SIMPLE.md`** Act 2 token + edge IP URI; Kildare onboard complete. **`TODO.md`** last updated this session.
 
-**Resume:** Operator finishes AEL install+fleet onboard; SPA Users edit is live on **`main`**. Wait for next task.
+**Resume:** Kildare usable for extensions/routes; next product work from TODO (Fleet Delete / dial alias) or operator lab on Kildare. Wait for task.
+
+---
+
+## Session end 2026-08-02 — Users edit + AEL greenfield — historical
+
+**Superseded** by Kildare block above. Users edit **`a10c106`** still on **`main`**.
 
 ---
 
 ## Session end 2026-08-01 — LH nav solo groups — historical
 
-**Superseded** by Users edit block above.
+**Superseded** by Kildare / Users edit blocks above.
 
 **Merged to `main`:** LH nav solo groups + Tenants label. Earlier: tenant login + lab catalog.
 

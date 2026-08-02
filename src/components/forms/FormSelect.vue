@@ -208,29 +208,37 @@ function optionAttrValue(opt) {
 }
 
 .form-select {
+  display: block;
   width: 100%;
+  box-sizing: border-box;
+  /* Match FormField .form-input height (native select otherwise mis-sizes on macOS). */
+  min-height: 2.5rem;
+  height: 2.5rem;
+  margin: 0;
   padding: 0.5rem 0.75rem;
+  font: inherit;
   font-size: 0.9375rem;
-  line-height: 1.5;
-  color: #0f172a;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  line-height: 1.25;
+  color: var(--pbx-text, #0f172a);
+  background-color: var(--pbx-panel, #ffffff);
+  border: 1px solid var(--pbx-border, #e2e8f0);
   border-radius: 0.375rem;
+  appearance: auto;
+  cursor: pointer;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
-  cursor: pointer;
 }
 
 .form-select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--pbx-accent-bright, #3b82f6);
+  box-shadow: 0 0 0 3px var(--pbx-focus-ring, rgba(59, 130, 246, 0.1));
 }
 
 .form-select:disabled {
-  background-color: #f8fafc;
-  color: #64748b;
+  background-color: var(--pbx-surface-subtle, #f8fafc);
+  color: var(--pbx-text-muted, #64748b);
   cursor: not-allowed;
 }
 
