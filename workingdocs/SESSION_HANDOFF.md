@@ -6,6 +6,20 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-03 — WebRTC WSS golden (inbound + ICE)
+
+**On `main` (pbx3):** Instance-direct WSS WebRTC path fixed on golden and in package source (webrtc tmpl, GenAst `$fqdn`/`$externip`, shorewall public RTP, ice_host via `refresh-pjsip-externip.sh`, apply-active-cert ACLs + Asterisk restart). No SPA code this session.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`). WSS: `wss://08jzwn.pbx3.com:8089/ws` · SIP user **`8af9ee`** · domain **`dhbm8x.pbx3.com`** · dial **`1500`**.
+
+**Operator impact:** Snom↔desk OK after open RTP; inbound to webphone works (isolate JsSIP + Browser-Phone). Browser-Phone post-Accept lag = client. **from_domain / media_address / ice_host** still matter for **singleton-direct** WSS; less so when W1 terminates on SBC. Product SPA: re-test inbound; shortuid sanitize may still block register.
+
+**Docs / TODO:** **`WEBRTC_WSS_LAB.md`**; multi-AZ lab open; package roll for non-golden nodes.
+
+**Resume:** SPA webphone smoke / dev-team handoff; then backlog (number-wire, multi-AZ, package).
+
+---
+
 ## Session end 2026-08-03 — docs garden (handoff/TODO archive)
 
 **Merged / on `main` soon:** docs only. Live handoffs slimmed; history under **`workingdocs/archive/`** (pbx3 + spa). **`TODO.md`** open-only; closed log archived. **SESSION_END_CHECKLIST** updated.
