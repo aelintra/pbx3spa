@@ -9,6 +9,18 @@ export const HEALTHY_MAX_MS = 2 * 60 * 1000
 export const WARNING_MAX_MS = 5 * 60 * 1000
 
 /**
+ * Login picker is looser than Fleet Instances health (2m/5m).
+ * Public S3 `last_seen_at` only updates on successful Gatekeeper /up probes (~60s).
+ * If the probe job lags or flops for a short time, tight thresholds mark every
+ * enrolled node UNAVAILABLE even while the PBX is fine for Sanctum login.
+ *
+ * Available ≤15m, Warning ≤60m, Unavailable beyond that (or explicit reachable=false).
+ * Missing last_seen → Unknown (not Unavailable).
+ */
+export const LOGIN_AVAILABLE_MAX_MS = 15 * 60 * 1000
+export const LOGIN_WARNING_MAX_MS = 60 * 60 * 1000
+
+/**
  * @typedef {Object} InstanceHealthOverlay
  * @property {boolean} [probe_paused]
  * @property {boolean|null} [reachable]
@@ -108,6 +120,8 @@ export function probeRttLabel(row) {
  * Login instance picker: reachability from public catalog last_seen_at (no Gatekeeper health overlay).
  * Does not surface lifecycle ACTIVE (that only means still enrolled, not online).
  *
+ * Uses LOGIN_* thresholds (not Fleet 2m/5m) so a brief probe outage does not paint the whole fleet red.
+ *
  * @param {{
  *   status?: string|null,
  *   last_seen_at?: string|null,
@@ -125,21 +139,27 @@ export function loginAvailabilityBadge(row, nowMs = Date.now()) {
     return { kind: 'paused', label: 'Decommissioned' }
   }
 
-  const health = instanceHealthBadge(row, nowMs)
-  if (health.kind === 'healthy') {
-    return { kind: 'healthy', label: 'Available' }
+  const health = row?.health
+  if (health?.probe_paused) {
+    return { kind: 'paused', label: 'Probe paused' }
   }
-  if (health.kind === 'warning') {
-    return { kind: 'warning', label: 'Warning' }
-  }
-  // Stale last_seen (or explicit probe Down) → not a place to sign in
-  if (health.kind === 'degraded' || health.kind === 'down') {
+  if (health?.reachable === false) {
     return { kind: 'down', label: 'Unavailable' }
   }
-  if (health.kind === 'paused') {
-    return health
+
+  const age =
+    ageMsFromIso(row?.last_seen_at, nowMs) ?? ageMsFromIso(health?.last_ok_at, nowMs)
+
+  if (age == null) {
+    return { kind: 'unknown', label: 'Unknown' }
   }
-  return { kind: 'unknown', label: 'Unknown' }
+  if (age <= LOGIN_AVAILABLE_MAX_MS) {
+    return { kind: 'healthy', label: 'Available' }
+  }
+  if (age <= LOGIN_WARNING_MAX_MS) {
+    return { kind: 'warning', label: 'Warning' }
+  }
+  return { kind: 'down', label: 'Unavailable' }
 }
 
 /**

@@ -7,7 +7,9 @@ import {
   loginAvailabilityBadge,
   probeRttLabel,
   HEALTHY_MAX_MS,
-  WARNING_MAX_MS
+  WARNING_MAX_MS,
+  LOGIN_AVAILABLE_MAX_MS,
+  LOGIN_WARNING_MAX_MS
 } from './fleetInstanceHealth.js'
 
 describe('fleetInstanceHealth', () => {
@@ -112,19 +114,42 @@ describe('fleetInstanceHealth', () => {
     expect(instanceEgressBadge({ status: 'maintenance' })).toBeNull()
   })
 
-  it('login picker: Available vs Unavailable (stale last_seen)', () => {
+  it('login picker: Available vs Unavailable with login thresholds', () => {
     expect(
       loginAvailabilityBadge(
         { status: 'active', last_seen_at: new Date(now - 30_000).toISOString() },
         now
       )
     ).toEqual({ kind: 'healthy', label: 'Available' })
+    // Fleet "degraded" age (just over 5m) still Available on login (15m window)
     expect(
       loginAvailabilityBadge(
         { status: 'active', last_seen_at: new Date(now - WARNING_MAX_MS - 1).toISOString() },
         now
       )
+    ).toEqual({ kind: 'healthy', label: 'Available' })
+    expect(
+      loginAvailabilityBadge(
+        {
+          status: 'active',
+          last_seen_at: new Date(now - LOGIN_AVAILABLE_MAX_MS - 1).toISOString()
+        },
+        now
+      )
+    ).toEqual({ kind: 'warning', label: 'Warning' })
+    expect(
+      loginAvailabilityBadge(
+        {
+          status: 'active',
+          last_seen_at: new Date(now - LOGIN_WARNING_MAX_MS - 1).toISOString()
+        },
+        now
+      )
     ).toEqual({ kind: 'down', label: 'Unavailable' })
+    expect(loginAvailabilityBadge({ status: 'active' }, now)).toEqual({
+      kind: 'unknown',
+      label: 'Unknown'
+    })
     expect(loginAvailabilityBadge({ status: 'maintenance' }, now)).toEqual({
       kind: 'paused',
       label: 'Maintenance'
