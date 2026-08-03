@@ -40,6 +40,7 @@ export function normalizeCatalog(raw) {
  * @property {string} [notes]
  * @property {string} [org_id]
  * @property {string} [region]
+ * @property {string} [last_seen_at] ISO stamp from Gatekeeper probe (S3; frozen while down)
  */
 
 /**
@@ -67,7 +68,8 @@ export function normalizeInstanceRecord(row, index) {
     environment: r.environment != null ? String(r.environment) : undefined,
     notes: r.notes != null ? String(r.notes) : undefined,
     org_id: r.org_id != null ? String(r.org_id) : undefined,
-    region: r.region != null ? String(r.region) : undefined
+    region: r.region != null ? String(r.region) : undefined,
+    last_seen_at: r.last_seen_at != null ? String(r.last_seen_at) : undefined
   }
 }
 

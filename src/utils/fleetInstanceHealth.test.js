@@ -4,6 +4,7 @@ import {
   formatProbeRtt,
   instanceHealthBadge,
   instanceEgressBadge,
+  loginAvailabilityBadge,
   probeRttLabel,
   HEALTHY_MAX_MS,
   WARNING_MAX_MS
@@ -109,5 +110,34 @@ describe('fleetInstanceHealth', () => {
       })
     ).toBeNull()
     expect(instanceEgressBadge({ status: 'maintenance' })).toBeNull()
+  })
+
+  it('login picker: Available vs Unavailable (stale last_seen)', () => {
+    expect(
+      loginAvailabilityBadge(
+        { status: 'active', last_seen_at: new Date(now - 30_000).toISOString() },
+        now
+      )
+    ).toEqual({ kind: 'healthy', label: 'Available' })
+    expect(
+      loginAvailabilityBadge(
+        { status: 'active', last_seen_at: new Date(now - WARNING_MAX_MS - 1).toISOString() },
+        now
+      )
+    ).toEqual({ kind: 'down', label: 'Unavailable' })
+    expect(loginAvailabilityBadge({ status: 'maintenance' }, now)).toEqual({
+      kind: 'paused',
+      label: 'Maintenance'
+    })
+    expect(
+      loginAvailabilityBadge(
+        {
+          status: 'active',
+          last_seen_at: new Date(now - 10_000).toISOString(),
+          health: { reachable: false }
+        },
+        now
+      )
+    ).toEqual({ kind: 'down', label: 'Unavailable' })
   })
 })

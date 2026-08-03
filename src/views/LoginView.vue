@@ -20,6 +20,7 @@ import {
 import { loadInstanceRecents, pushInstanceRecent } from '@/utils/instanceRecents'
 import { resolveApiBaseUrl, usesDevApiProxy } from '@/config/apiBaseUrl'
 import { loginNetworkErrorMessage } from '@/utils/loginErrors'
+import { loginAvailabilityBadge } from '@/utils/fleetInstanceHealth'
 
 const router = useRouter()
 const route = useRoute()
@@ -108,8 +109,30 @@ function pickInstance(instance) {
       `${instance.label} is in maintenance. Open this instance anyway?`
     )
     if (!ok) return
+  } else {
+    const avail = loginAvailabilityBadge(instance)
+    if (avail.kind === 'down') {
+      const ok = window.confirm(
+        `${instance.label} looks unavailable (no recent probe). Open this instance anyway?`
+      )
+      if (!ok) return
+    }
   }
   goToCredentials(instance)
+}
+
+/** @param {import('@/utils/instanceCatalog').InstanceRecord} inst */
+function availabilityBits(inst) {
+  return loginAvailabilityBadge(inst)
+}
+
+/** @param {ReturnType<typeof loginAvailabilityBadge>['kind']} kind */
+function availabilityClass(kind) {
+  if (kind === 'healthy') return 'badge badge--ok'
+  if (kind === 'warning') return 'badge badge--warn'
+  if (kind === 'down') return 'badge badge--down'
+  if (kind === 'paused') return 'badge badge--warn'
+  return 'badge badge--muted'
 }
 
 function pickRecent(instance) {
@@ -274,6 +297,14 @@ async function signInToTenant() {
     if ((instance.status ?? '').toLowerCase() === 'maintenance') {
       const ok = window.confirm(`${instance.label} is in maintenance. Sign in anyway?`)
       if (!ok) return
+    } else {
+      const avail = loginAvailabilityBadge(instance)
+      if (avail.kind === 'down') {
+        const ok = window.confirm(
+          `${instance.label} looks unavailable (no recent probe). Sign in anyway?`
+        )
+        if (!ok) return
+      }
     }
 
     const url = resolveApiBaseUrl(instance.api_base_url)
@@ -575,14 +606,12 @@ async function onSubmit(e) {
             <button type="button" class="instance-row" @click="pickInstance(inst)">
               <span class="instance-row-label">{{ inst.label }}</span>
               <span class="instance-row-meta">{{ inst.fqdn }}</span>
-              <span v-if="inst.environment || inst.status" class="instance-row-badges">
+              <span class="instance-row-badges">
                 <span v-if="inst.environment" class="badge">{{ inst.environment }}</span>
                 <span
-                  v-if="inst.status"
-                  class="badge"
-                  :class="{ 'badge--warn': inst.status === 'maintenance' }"
+                  :class="availabilityClass(availabilityBits(inst).kind)"
                 >
-                  {{ inst.status }}
+                  {{ availabilityBits(inst).label }}
                 </span>
               </span>
             </button>
@@ -889,6 +918,18 @@ async function onSubmit(e) {
 .badge--warn {
   background: #fef3c7;
   color: #92400e;
+}
+.badge--ok {
+  background: #dcfce7;
+  color: #166534;
+}
+.badge--down {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.badge--muted {
+  background: #f1f5f9;
+  color: #64748b;
 }
 .pick-hint {
   font-size: 0.875rem;

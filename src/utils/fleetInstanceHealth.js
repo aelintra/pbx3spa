@@ -105,6 +105,44 @@ export function probeRttLabel(row) {
 }
 
 /**
+ * Login instance picker: reachability from public catalog last_seen_at (no Gatekeeper health overlay).
+ * Does not surface lifecycle ACTIVE (that only means still enrolled, not online).
+ *
+ * @param {{
+ *   status?: string|null,
+ *   last_seen_at?: string|null,
+ *   health?: InstanceHealthOverlay|null
+ * }} row
+ * @param {number} [nowMs]
+ * @returns {FleetHealthBadge}
+ */
+export function loginAvailabilityBadge(row, nowMs = Date.now()) {
+  const status = String(row?.status ?? 'active').toLowerCase()
+  if (status === 'maintenance') {
+    return { kind: 'paused', label: 'Maintenance' }
+  }
+  if (status === 'decommissioned') {
+    return { kind: 'paused', label: 'Decommissioned' }
+  }
+
+  const health = instanceHealthBadge(row, nowMs)
+  if (health.kind === 'healthy') {
+    return { kind: 'healthy', label: 'Available' }
+  }
+  if (health.kind === 'warning') {
+    return { kind: 'warning', label: 'Warning' }
+  }
+  // Stale last_seen (or explicit probe Down) → not a place to sign in
+  if (health.kind === 'degraded' || health.kind === 'down') {
+    return { kind: 'down', label: 'Unavailable' }
+  }
+  if (health.kind === 'paused') {
+    return health
+  }
+  return { kind: 'unknown', label: 'Unknown' }
+}
+
+/**
  * Egress qualify badge from Gatekeeper health overlay (AMI via fleet.token probe).
  * @param {{
  *   status?: string|null,

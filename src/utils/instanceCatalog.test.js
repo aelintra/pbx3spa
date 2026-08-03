@@ -11,12 +11,14 @@ describe('normalizeCatalog', () => {
           fqdn: 'node.example.com',
           api_base_url: 'https://node.example.com:44300/api',
           label: 'Node 1',
-          status: 'active'
+          status: 'active',
+          last_seen_at: '2026-08-02T12:00:00Z'
         }
       ]
     })
     expect(cat.instances).toHaveLength(1)
     expect(cat.instances[0].label).toBe('Node 1')
+    expect(cat.instances[0].last_seen_at).toBe('2026-08-02T12:00:00Z')
   })
 
   it('skips invalid rows', () => {
