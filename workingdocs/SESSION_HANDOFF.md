@@ -6,6 +6,34 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-03 — package roll fleet + bzy SBC fix
+
+**Merged / on `main`:** **pbx3 0.0.4-5** + **pbx3cagi 1.0.0-10** on **08jzwn**, **bzy54n**, **kildare**. Magrathea: bzy IP whitelist + dispatcher setid 3 → `54.158.236.215`. Earlier same day: W1 WSS lab green; SPA **WSS line test** requirements locked.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · edge WSS `wss://sbc.pbx3.com:8089/ws` · **`8af9ee`** / **`dhbm8x`** / **1500**. **bzy54n** public **`54.158.236.215`** (no EIP label).
+
+**Operator impact:** All lab fleet nodes share current packages. New fleet-node public IPs need Fail2Ban whitelist + **dispatcher destination/source_ip** update (lab lesson).
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`**.
+
+**Resume:** Wait for task; product backlog open (number-wire, SPA line test implement, multi-AZ, …).
+
+---
+
+## Session end 2026-08-03 — Magrathea W1 closed; SPA line-test locked
+
+**Merged to `main`:** Magrathea WSS path lab green + docs; PrepDial/webrtc tmpl product bits; **SPA** **`WSS_LINE_TEST_REQUIREMENTS.md`** direction locked (not implemented).
+
+**Dev against golden:** edge `wss://sbc.pbx3.com:8089/ws` · **`8af9ee`** / **`dhbm8x.pbx3.com`** / **1500** · pass `~/webrtc-1500.env`. Instance **8089 closed** (edge-only WSS). API still `https://08jzwn.pbx3.com:44300/api`.
+
+**Operator impact:** Real fleet web users = **WebRTC media on home** + **WSS only on SBC** + SIP/UDP to homes. Line test when built: instance SPA path prover against a real WebRTC extension.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — package residual + open backlog. Operator picks next session work.
+
+**Resume:** Wait for task; do not assume next feature.
+
+---
+
 ## Session end 2026-08-03 — Magrathea W1 WebRTC (lab green)
 
 **Branches:** **pbx3sbc** `w1-magrathea-wss` · **pbx3cagi** `w1-webrtc-prep-fqdn` · **pbx3** `main` webrtc tmpl. Desk↔edge browser path **working both ways** (operator + audio).
