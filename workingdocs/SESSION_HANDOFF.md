@@ -6,6 +6,20 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-03 — Magrathea W1 WebRTC (lab green)
+
+**Branches:** **pbx3sbc** `w1-magrathea-wss` · **pbx3cagi** `w1-webrtc-prep-fqdn` · **pbx3** `main` webrtc tmpl. Desk↔edge browser path **working both ways** (operator + audio).
+
+**Dev / lab client:** WSS `wss://sbc.pbx3.com:8089/ws` · SIP **`8af9ee`** · domain **`dhbm8x.pbx3.com`** · pass golden `~/webrtc-1500.env`. Instance-direct WSS still available for singleton smokes.
+
+**Operator impact:** Fleet WebRTC endpoints should use **UDP + SBC outbound_proxy** (same as desks); Dial RURI tenant FQDN via PrepDial. No SPA product change this session.
+
+**Docs / TODO:** **`WEBRTC_W1_MAGRATHEA.md`** green · residual package merge / SG clamp / multi-AZ / SPA line test.
+
+**Resume:** packaging or other TODO; do not enable edge WSS elsewhere without backup discipline in that checklist.
+
+---
+
 ## Session end 2026-08-03 — WebRTC WSS golden (inbound + ICE)
 
 **On `main` (pbx3):** Instance-direct WSS WebRTC path fixed on golden and in package source (webrtc tmpl, GenAst `$fqdn`/`$externip`, shorewall public RTP, ice_host via `refresh-pjsip-externip.sh`, apply-active-cert ACLs + Asterisk restart). No SPA code this session.
