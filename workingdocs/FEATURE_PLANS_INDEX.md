@@ -19,5 +19,6 @@
 | Data-driven list policy | DATA_DRIVEN_LIST_POLICY_PROJECT.md | deferred |
 | SPA bundle / maintainability (lazy routes, list/detail extraction) | PROJECT_PLAN.md § Current state, PBX3SPA_CODEBASE_ANALYSIS.md § Phase H / H2 | **deferred** (after S8, R1) |
 | SPA shell (nav / chrome) | SPA_SHELL_ROADMAP.md, SESSION_HANDOFF.md § Shell / topbar + Latest session | Stage 1 + Stage 2 on **`main`**: context chips (**viewport-centered** top bar, **`--pbx-shell-sidebar-width`**), **PBX3 Admin** title left, **sidebar top spacer** (no rail logo yet), **detail active header**; collapsible sidebar / ⌘K still optional |
+| **WSS line test (in-admin)** | **pbx3** `WEBRTC_WSS_LAB.md` (instance path **working**; dev SPA OK with shortuid; § domain vs next hop); later W1 SBC WSS | **planned** — thin **line test** in **pbx3spa** (SIP.js/JsSIP): register / dial / answer to prove the extension path. **Not** a desk softphone; **not** Browser-Phone; **not** native. SIP user = shortuid; dialable pkey for UI. Keep **WSS host** and **SIP domain** as separate fields (edge vs tenant — desks already; proxy-less third-party phones may not). Coexists with external WSS team SPA |
 
 **Source of truth:** Schema and code. Verify against repo when implementing; this index may be outdated.

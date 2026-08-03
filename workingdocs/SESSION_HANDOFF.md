@@ -12,11 +12,11 @@
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`). WSS: `wss://08jzwn.pbx3.com:8089/ws` · SIP user **`8af9ee`** · domain **`dhbm8x.pbx3.com`** · dial **`1500`**.
 
-**Operator impact:** Snom↔desk OK after open RTP; inbound to webphone works (isolate JsSIP + Browser-Phone). Browser-Phone post-Accept lag = client. **from_domain / media_address / ice_host** still matter for **singleton-direct** WSS; less so when W1 terminates on SBC. Product SPA: re-test inbound; shortuid sanitize may still block register.
+**Operator impact:** Snom↔desk OK after open RTP; inbound to webphone works (JsSIP + Browser-Phone + **dev-team SPA**). Dev phone accepts SIP **`8af9ee`** (no digit-only sanitizer block). Post-Accept lag similar across clients = not a PBX-template metric. **from_domain / media_address / ice_host** still matter for **singleton-direct** WSS; less so when W1 terminates on SBC.
 
-**Docs / TODO:** **`WEBRTC_WSS_LAB.md`**; multi-AZ lab open; package roll for non-golden nodes.
+**Docs / TODO:** **`WEBRTC_WSS_LAB.md`**; residual SG **8089** clamp; multi-AZ; package roll. **SPA backlog:** **WSS line test** (ops path prover — not a softphone product) in **FEATURE_PLANS_INDEX** / **TODO**.
 
-**Resume:** SPA webphone smoke / dev-team handoff; then backlog (number-wire, multi-AZ, package).
+**Resume:** Clamp **8089** when host tests done; then backlog (number-wire, multi-AZ, package, SPA line test when scheduled).
 
 ---
 
