@@ -6,21 +6,29 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-08-02 — Kildare greenfield + route create
+## Session end 2026-08-02 — Kildare PSTN + Mangle + number wire draft
 
-**Merged to `main`:** (API) route create **`pkey`** fix **pbx3api `eb8961d`**; (pbx3) install/onboard docs + Egress seed / admin bootstrap / fleet token write; (SPA) Fleet Tenants + `FormSelect` control height polish.
+**Merged to `main`:** **pbx3cagi** Mangle **1.0.0-9** (`502596e`); **pbx3** Egress seed `00:+ 0:+44` + wire/research docs; **pbx3-docs** number-dialect seed note. SPA product code unchanged this session.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`). **Kildare (live):** SPA/API `https://kildare.pbx3.com:44300` · SSH `ubuntu@3.93.253.1` (`aelsip.pem`) · shortuid **`kildare`** · tenant **`18c8z3`**. Magrathea VIP **`3.93.26.82`**.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SSH `ubuntu@44.196.98.191` (`pbx3test.pem`). **Kildare:** `https://kildare.pbx3.com:44300` · SSH `ubuntu@3.93.253.1` (`aelsip.pem`) · tenant **`18c8z3`**. Magrathea **`3.93.26.82`**.
 
-**Docs / TODO:** **`INSTALL_NODE_SIMPLE.md`** Act 2 token + edge IP URI; Kildare onboard complete. **`TODO.md`** last updated this session.
+**Operator impact:** Kildare **outbound + inbound** over Brindley working. Inbound Numbers / inroute show **`+441924918076`** (fleet wire). Outbound still node Mangle national→`+E.164` then SBC Brindley strip to `0…`.
 
-**Resume:** Kildare usable for extensions/routes; next product work from TODO (Fleet Delete / dial alias) or operator lab on Kildare. Wait for task.
+**Docs / TODO:** open **number wire Model A/B** draft; **cagi 1.0.0-9** package/golden roll follow-up. **`TODO.md`** updated this session.
+
+**Resume:** SPA-stable; product from TODO or wire-standard decision. Wait for task.
+
+---
+
+## Session end 2026-08-02 — Kildare greenfield + route create — historical
+
+**Superseded** by Kildare PSTN block above. Greenfield + route pkey still **`main`**.
 
 ---
 
 ## Session end 2026-08-02 — Users edit + AEL greenfield — historical
 
-**Superseded** by Kildare block above. Users edit **`a10c106`** still on **`main`**.
+**Superseded**. Users edit **`a10c106`** still on **`main`**.
 
 ---
 
