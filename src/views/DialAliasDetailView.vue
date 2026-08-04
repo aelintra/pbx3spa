@@ -5,7 +5,13 @@ import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
-import { loadTenantOptions } from '@/utils/loadTenantOptions'
+import { validateDialPrefixPkey } from '@/utils/validation'
+import {
+  loadTargetTenantFqdnCatalog,
+  callingTenantPkeys,
+  callingTenantFqdn,
+  targetFqdnSelectOptions
+} from '@/utils/loadTargetTenantFqdnCatalog'
 import { useFleetPosture } from '@/composables/useFleetPosture'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
@@ -26,8 +32,12 @@ function isReadOnly(field) {
 
 const shortuid = computed(() => route.params.shortuid)
 const row = ref(null)
-const tenants = ref([])
-const tenantsLoading = ref(true)
+const localTenants = ref([])
+const targetFqdns = ref([])
+const targetLabels = ref(new Map())
+const catalogAttempted = ref(false)
+const catalogOk = ref(false)
+const catalogLoading = ref(true)
 const fleetBlocked = ref(false)
 
 const loading = ref(true)
@@ -40,23 +50,21 @@ const confirmDeleteOpen = ref(false)
 
 const editPkey = ref('')
 const editCluster = ref('')
-const editTarget = ref('')
+const editTargetFqdn = ref('')
 const editDescription = ref('')
 const editActive = ref('YES')
 
 const tenantOptions = computed(() => {
-  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
+  const list = callingTenantPkeys(localTenants.value)
   const cur = editCluster.value
-  const curT = editTarget.value
-  let opts = [...new Set(list)]
+  let opts = [...list]
   if (cur && !opts.includes(cur)) opts = [cur, ...opts]
-  if (curT && !opts.includes(curT)) opts = [curT, ...opts]
-  return opts.sort((a, b) => String(a).localeCompare(String(b)))
+  return opts
 })
 
 const clusterToTenantPkey = computed(() => {
   const map = new Map()
-  for (const t of tenants.value) {
+  for (const t of localTenants.value) {
     if (t.id != null) map.set(String(t.id), t.pkey ?? t.id)
     if (t.shortuid != null) map.set(String(t.shortuid), t.pkey ?? t.shortuid)
     if (t.pkey != null) map.set(String(t.pkey), t.pkey)
@@ -69,14 +77,51 @@ function resolveTenantPkey(v) {
   return clusterToTenantPkey.value.get(String(v)) ?? String(v)
 }
 
-async function loadTenants() {
-  tenantsLoading.value = true
+const targetOptions = computed(() => {
+  const base = targetFqdnSelectOptions(targetFqdns.value, targetLabels.value, {
+    excludeFqdn: callingTenantFqdn(localTenants.value, editCluster.value)
+  })
+  const cur = String(editTargetFqdn.value || '')
+    .trim()
+    .toLowerCase()
+  if (cur && !base.some((o) => o.value === cur)) {
+    // Stale row (catalog moved/removed) — keep current so edit isn't stuck; pick a known one to fix
+    return [
+      {
+        value: cur,
+        label: `${cur} (saved — not in known list)`
+      },
+      ...base
+    ]
+  }
+  return base
+})
+
+const catalogHint = computed(() => {
+  if (catalogLoading.value) return ''
+  if (catalogAttempted.value && !catalogOk.value) {
+    return 'Fleet catalog unavailable — showing local tenants only (plus current saved FQDN if missing).'
+  }
+  return 'Targets are limited to tenants we know (local + fleet catalog).'
+})
+
+async function loadCatalog() {
+  catalogLoading.value = true
   try {
-    tenants.value = await loadTenantOptions()
+    const cat = await loadTargetTenantFqdnCatalog()
+    localTenants.value = cat.localTenants
+    targetFqdns.value = cat.fqdns
+    targetLabels.value = cat.labels
+    catalogAttempted.value = cat.catalogAttempted
+    catalogOk.value = cat.catalogOk
   } catch {
-    tenants.value = []
+    localTenants.value = []
+    targetFqdns.value = []
+    targetLabels.value = new Map()
+    catalogAttempted.value = false
+    catalogOk.value = false
   } finally {
-    tenantsLoading.value = false
+    catalogLoading.value = false
   }
 }
 
@@ -90,10 +135,9 @@ async function fetchRow() {
     row.value = await getApiClient().get(`dialaliases/${encodeURIComponent(shortuid.value)}`)
     editPkey.value = row.value?.pkey ?? ''
     editCluster.value = resolveTenantPkey(row.value?.cluster ?? '')
-    editTarget.value =
-      row.value?.target_tenant_pkey != null && row.value.target_tenant_pkey !== ''
-        ? String(row.value.target_tenant_pkey)
-        : resolveTenantPkey(row.value?.target_cluster ?? '')
+    editTargetFqdn.value = String(row.value?.target_fqdn ?? '')
+      .trim()
+      .toLowerCase()
     editDescription.value = row.value?.description ?? ''
     editActive.value = row.value?.active ?? 'YES'
   } catch (err) {
@@ -112,11 +156,17 @@ onMounted(async () => {
     return
   }
   await ensureFetched()
-  await loadTenants()
+  await loadCatalog()
   await fetchRow()
 })
 watch(shortuid, () => {
   if (isFleetNode()) fetchRow()
+})
+watch(editCluster, () => {
+  const self = callingTenantFqdn(localTenants.value, editCluster.value)
+  if (self && String(editTargetFqdn.value).toLowerCase() === self) {
+    editTargetFqdn.value = ''
+  }
 })
 
 function goBack() {
@@ -134,12 +184,24 @@ async function saveEdit(e) {
   e.preventDefault()
   if (!shortuid.value) return
   saveError.value = ''
-  if (editCluster.value && editTarget.value && editCluster.value === editTarget.value) {
-    saveError.value = 'Target tenant must differ from calling tenant'
+  if (validateDialPrefixPkey(editPkey.value)) {
+    saveError.value = validateDialPrefixPkey(editPkey.value)
     return
   }
-  if (!/^\d{2,4}$/.test(String(editPkey.value || '').trim())) {
-    saveError.value = 'Prefix must be 2–4 numeric digits'
+  const fqdn = String(editTargetFqdn.value || '')
+    .trim()
+    .toLowerCase()
+  if (!fqdn) {
+    saveError.value = 'Select a target tenant'
+    return
+  }
+  const known = new Set(targetFqdns.value)
+  const wasSaved = String(row.value?.target_fqdn ?? '')
+    .trim()
+    .toLowerCase()
+  // May keep existing saved if not in list; may not switch to other unknowns
+  if (!known.has(fqdn) && fqdn !== wasSaved) {
+    saveError.value = 'Target must be chosen from the known tenant list'
     return
   }
   saving.value = true
@@ -147,7 +209,7 @@ async function saveEdit(e) {
     const body = {
       ...(isReadOnly('pkey') ? {} : { pkey: editPkey.value.trim() }),
       ...(isReadOnly('cluster') ? {} : { cluster: editCluster.value }),
-      ...(isReadOnly('target_cluster') ? {} : { target_cluster: editTarget.value }),
+      ...(isReadOnly('target_fqdn') ? {} : { target_fqdn: fqdn }),
       ...(isReadOnly('description') ? {} : { description: editDescription.value }),
       ...(isReadOnly('active') ? {} : { active: editActive.value })
     }
@@ -224,7 +286,7 @@ const panelTitleTenantSuffix = computed(() => {
       <p v-if="deleteError" class="error" role="alert">{{ deleteError }}</p>
 
       <div class="edit-actions edit-actions-top">
-        <button type="submit" :disabled="saving || tenantsLoading">
+        <button type="submit" :disabled="saving || catalogLoading">
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
@@ -262,12 +324,14 @@ const panelTitleTenantSuffix = computed(() => {
         />
 
         <FormSelect
-          id="edit-target"
-          v-model="editTarget"
+          id="edit-target-fqdn"
+          v-model="editTargetFqdn"
           label="Target tenant"
           help-pkey="dialprefix_target"
-          :options="tenantOptions"
-          :disabled="isReadOnly('target_cluster')"
+          :options="targetOptions"
+          :loading="catalogLoading"
+          :hint="catalogHint"
+          :disabled="isReadOnly('target_fqdn')"
         />
 
         <FormField

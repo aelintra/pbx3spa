@@ -91,6 +91,50 @@ export function validateDialPrefixPkey(value) {
 }
 
 /**
+ * Normalize pasted host/URL → tenant FQDN candidate (lowercase).
+ * @param {string} raw
+ * @returns {string}
+ */
+export function normalizeTenantFqdnInput(raw) {
+  let s = String(raw ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+  if (!s) return ''
+  if (s.includes('://')) {
+    try {
+      s = new URL(s).hostname
+    } catch {
+      s = s.replace(/^[a-z][a-z0-9+.-]*:\/\//, '').split('/')[0] ?? s
+    }
+  } else if (s.includes('/') && !s.includes(' ')) {
+    s = s.split('/')[0] ?? s
+  }
+  if (s.includes('@')) {
+    s = s.split('@').pop() ?? s
+  }
+  s = s.replace(/:\d+$/, '').replace(/\.$/, '')
+  return s
+}
+
+/**
+ * Target tenant FQDN for dial prefixes (Q14) — full multi-label host, not bare shortuid.
+ */
+export function validateTargetTenantFqdn(value) {
+  if (!value || !String(value).trim()) {
+    return 'Target tenant FQDN is required'
+  }
+  const fqdn = normalizeTenantFqdnInput(value)
+  if (!fqdn.includes('.')) {
+    return 'Enter a full tenant FQDN (e.g. sister.pbx3.com), not a shortuid'
+  }
+  if (!/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(fqdn)) {
+    return 'Invalid FQDN'
+  }
+  return null
+}
+
+/**
  * Validate Extension number (pkey) for create
  * Required, non-empty
  */

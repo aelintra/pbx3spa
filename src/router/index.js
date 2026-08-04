@@ -286,6 +286,7 @@ router.beforeEach(async (to, from) => {
     '/tenants',
     '/trunks',
     '/routes',
+    '/dialaliases',
     '/asterisk-files',
     '/backup',
     '/snapshots',

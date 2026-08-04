@@ -6,6 +6,20 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-03 — tenant short dial A′ / admin + SBC B template
+
+**On branches (not `main`):** **`tenant-short-dial-a`** (pbx3, pbx3api, **pbx3spa**) — Dial prefixes admin panel (Outbound), instance admin only, target = restricted list of known tenant FQDNs (`tenant-home` + local). **`tenant-short-dial-b`** (pbx3sbc) — OpenSIPS template miss→dispatcher; **not live on Magrathea**.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SPA `npm run dev` with fleet catalog envs for FQDN picker · panel under **Outbound → Dial prefixes**.
+
+**Operator impact:** Admins can configure prefix → sister tenant FQDN on golden (CRUD only — no live prefix dial until C + Magrathea B). Tenant users do not see the panel.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TENANT_SHORT_DIAL_REQUIREMENTS.md`**.
+
+**Resume:** Deploy Magrathea slice **B**, then GenAst/CAGI **C**. Wait for operator task.
+
+---
+
 ## Session end 2026-08-03 — SPA WSS line test shipped
 
 **Merged to `main` (pbx3spa):** JsSIP **Line test** on WebRTC extension detail — edge WSS path prover + post-call quality report (lab green: register / dial / answer / report). Violet right-aligned button; click feedback; no MAC on WebRTC edit. **pbx3** TODO/handoff: short dial + time-based routing next; parks for SPA bundle diet, lab DB anonymize, exploratory provision server.

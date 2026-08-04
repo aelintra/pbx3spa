@@ -62,8 +62,7 @@ const navGroups = computed(() => {
       icon: 'phone',
       links: [
         { to: '/extensions', label: 'Extensions', icon: 'phone' },
-        { to: '/conferences', label: 'Conferences', icon: 'users' },
-        { to: '/dialaliases', label: 'Dial prefixes', icon: 'route' }
+        { to: '/conferences', label: 'Conferences', icon: 'users' }
       ]
     })
     groups.push({
@@ -81,7 +80,8 @@ const navGroups = computed(() => {
       icon: 'link',
       links: [
         { to: '/trunks', label: 'Trunks', icon: 'link' },
-        { to: '/routes', label: 'Routes', icon: 'route' }
+        { to: '/routes', label: 'Routes', icon: 'route' },
+        { to: '/dialaliases', label: 'Dial prefixes', icon: 'route' }
       ]
     })
   }

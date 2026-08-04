@@ -41,13 +41,18 @@ function tenantPkeyDisplay(row) {
   return clusterToTenantPkey.value.get(String(v)) ?? String(v)
 }
 
-function targetPkeyDisplay(row) {
-  if (row.target_tenant_pkey != null && row.target_tenant_pkey !== '') {
-    return String(row.target_tenant_pkey)
-  }
-  const v = row.target_cluster
-  if (v == null || v === '') return '—'
-  return clusterToTenantPkey.value.get(String(v)) ?? String(v)
+function targetDisplay(row) {
+  const fqdn = row.target_fqdn != null && row.target_fqdn !== '' ? String(row.target_fqdn) : ''
+  const label =
+    row.target_tenant_pkey != null && row.target_tenant_pkey !== ''
+      ? String(row.target_tenant_pkey)
+      : row.target_cluster != null && row.target_cluster !== ''
+        ? clusterToTenantPkey.value.get(String(row.target_cluster)) ?? String(row.target_cluster)
+        : ''
+  if (fqdn && label) return `${label} · ${fqdn}`
+  if (fqdn) return fqdn
+  if (label) return label
+  return '—'
 }
 
 function uidDisplay(row) {
@@ -70,14 +75,15 @@ const filteredRows = computed(() => {
       str(r.description).toLowerCase().includes(q) ||
       str(r.active).toLowerCase().includes(q) ||
       tenantPkeyDisplay(r).toLowerCase().includes(q) ||
-      targetPkeyDisplay(r).toLowerCase().includes(q)
+      targetDisplay(r).toLowerCase().includes(q) ||
+      str(r.target_fqdn).toLowerCase().includes(q)
     )
   })
 })
 
 function sortValue(r, key) {
   if (key === 'cluster') return tenantPkeyDisplay(r)
-  if (key === 'target_cluster') return targetPkeyDisplay(r)
+  if (key === 'target_cluster' || key === 'target_fqdn') return targetDisplay(r)
   const v = r[key]
   return v == null ? '' : String(v)
 }
@@ -223,10 +229,10 @@ onMounted(loadRows)
             <th
               class="th-sortable"
               title="Click to sort"
-              :class="sortClass('target_cluster')"
-              @click="setSort('target_cluster')"
+              :class="sortClass('target_fqdn')"
+              @click="setSort('target_fqdn')"
             >
-              Target tenant
+              Target FQDN
             </th>
             <th
               class="th-sortable"
@@ -296,7 +302,7 @@ onMounted(loadRows)
           <tr v-for="r in sortedRows" :key="r.shortuid || r.id || r.pkey">
             <td class="cell-immutable" title="Prefix digits">{{ r.pkey }}</td>
             <td>{{ tenantPkeyDisplay(r) }}</td>
-            <td>{{ targetPkeyDisplay(r) }}</td>
+            <td :title="r.target_fqdn || ''">{{ targetDisplay(r) }}</td>
             <ListActiveChip :active="r.active" />
             <td>{{ r.description || '—' }}</td>
             <td class="cell-immutable">{{ uidDisplay(r) }}</td>

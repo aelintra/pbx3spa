@@ -92,6 +92,11 @@ const props = defineProps({
   ariaLabel: {
     type: String,
     default: null
+  },
+  /** Optional HTML datalist id for typeahead suggestions (e.g. FQDN picker). */
+  list: {
+    type: String,
+    default: null
   }
 })
 
@@ -147,6 +152,7 @@ function handleBlur() {
         :inputmode="inputmode"
         :pattern="pattern"
         :autocomplete="autocomplete"
+        :list="list || undefined"
         :step="step != null && step !== '' ? step : undefined"
         @blur="handleBlur"
       />

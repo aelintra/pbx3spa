@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
@@ -7,7 +7,12 @@ import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateDialPrefixPkey, validateTenant } from '@/utils/validation'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
-import { loadTenantOptions } from '@/utils/loadTenantOptions'
+import {
+  loadTargetTenantFqdnCatalog,
+  callingTenantPkeys,
+  callingTenantFqdn,
+  targetFqdnSelectOptions
+} from '@/utils/loadTargetTenantFqdnCatalog'
 import { useFleetPosture } from '@/composables/useFleetPosture'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
@@ -21,12 +26,16 @@ const { loadFleetPosture, isFleetNode } = useFleetPosture()
 
 const pkey = ref('')
 const cluster = ref('')
-const targetCluster = ref('')
+const targetFqdn = ref('')
 const description = ref('')
 const active = ref('YES')
 
-const tenants = ref([])
-const tenantsLoading = ref(true)
+const localTenants = ref([])
+const targetFqdns = ref([])
+const targetLabels = ref(new Map())
+const catalogAttempted = ref(false)
+const catalogOk = ref(false)
+const catalogLoading = ref(true)
 const error = ref('')
 const loading = ref(false)
 const fleetBlocked = ref(false)
@@ -35,35 +44,70 @@ const pkeyInput = ref(null)
 
 const pkeyValidation = useFormValidation(pkey, validateDialPrefixPkey)
 const clusterValidation = useFormValidation(cluster, validateTenant)
-const targetValidation = useFormValidation(targetCluster, (v) => {
-  const base = validateTenant(v)
-  if (base) return base
-  if (v && cluster.value && String(v).trim() === String(cluster.value).trim()) {
-    return 'Target must differ from calling tenant'
+const targetValidation = useFormValidation(targetFqdn, (v) => {
+  if (!v || !String(v).trim()) return 'Select a target tenant'
+  const known = new Set(targetFqdns.value)
+  if (!known.has(String(v).trim().toLowerCase())) {
+    return 'Target must be chosen from the known tenant list'
   }
   return null
 })
 
-const tenantOptions = computed(() => {
-  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
-  return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
+const tenantOptions = computed(() => callingTenantPkeys(localTenants.value))
+
+const targetOptions = computed(() =>
+  targetFqdnSelectOptions(targetFqdns.value, targetLabels.value, {
+    excludeFqdn: callingTenantFqdn(localTenants.value, cluster.value)
+  })
+)
+
+const emptyTargetList = computed(() => !catalogLoading.value && targetOptions.value.length === 0)
+
+const catalogHint = computed(() => {
+  if (catalogLoading.value) return ''
+  if (emptyTargetList.value) {
+    if (catalogAttempted.value && !catalogOk.value) {
+      return 'No known tenant FQDNs. Fleet catalog is unreachable; only local tenants with an FQDN can be targets until it returns.'
+    }
+    return 'No known tenant FQDNs yet. Create other tenants locally or wait for fleet catalog.'
+  }
+  if (catalogAttempted.value && !catalogOk.value) {
+    return 'Fleet catalog unavailable — showing local tenants only.'
+  }
+  return 'Targets are limited to tenants we know (local + fleet catalog).'
 })
 
-async function loadTenants() {
-  tenantsLoading.value = true
+async function loadCatalog() {
+  catalogLoading.value = true
   try {
-    tenants.value = await loadTenantOptions()
+    const cat = await loadTargetTenantFqdnCatalog()
+    localTenants.value = cat.localTenants
+    targetFqdns.value = cat.fqdns
+    targetLabels.value = cat.labels
+    catalogAttempted.value = cat.catalogAttempted
+    catalogOk.value = cat.catalogOk
   } catch {
-    tenants.value = []
+    localTenants.value = []
+    targetFqdns.value = []
+    targetLabels.value = new Map()
+    catalogAttempted.value = false
+    catalogOk.value = false
   } finally {
-    tenantsLoading.value = false
+    catalogLoading.value = false
   }
 }
+
+watch(cluster, () => {
+  const self = callingTenantFqdn(localTenants.value, cluster.value)
+  if (self && String(targetFqdn.value).toLowerCase() === self) {
+    targetFqdn.value = ''
+  }
+})
 
 function resetForm() {
   pkey.value = ''
   cluster.value = ''
-  targetCluster.value = ''
+  targetFqdn.value = ''
   description.value = ''
   active.value = 'YES'
   error.value = ''
@@ -79,7 +123,7 @@ async function onSubmit(e) {
   const validations = [
     { ...pkeyValidation, fieldId: 'pkey' },
     { ...clusterValidation, fieldId: 'cluster' },
-    { ...targetValidation, fieldId: 'target_cluster' }
+    { ...targetValidation, fieldId: 'target_fqdn' }
   ]
   if (!validateAll(validations)) {
     await nextTick()
@@ -90,12 +134,13 @@ async function onSubmit(e) {
     return
   }
 
+  const fqdn = String(targetFqdn.value).trim().toLowerCase()
   loading.value = true
   try {
     const body = {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
-      target_cluster: targetCluster.value.trim(),
+      target_fqdn: fqdn,
       active: active.value || 'YES',
       ...(description.value.trim() && { description: description.value.trim() })
     }
@@ -118,11 +163,11 @@ async function onSubmit(e) {
           ? errors.cluster[0]
           : errors.cluster
       }
-      if (errors.target_cluster) {
+      if (errors.target_fqdn) {
         targetValidation.touched.value = true
-        targetValidation.error.value = Array.isArray(errors.target_cluster)
-          ? errors.target_cluster[0]
-          : errors.target_cluster
+        targetValidation.error.value = Array.isArray(errors.target_fqdn)
+          ? errors.target_fqdn[0]
+          : errors.target_fqdn
       }
       error.value = firstErrorMessage(err, 'Failed to create dial prefix')
     } else {
@@ -151,7 +196,7 @@ onMounted(async () => {
     return
   }
   await ensureFetched()
-  await loadTenants()
+  await loadCatalog()
   applySchemaDefaults('dialaliases', {
     active,
     cluster,
@@ -175,7 +220,7 @@ onMounted(async () => {
       <p v-if="error" class="error" role="alert">{{ error }}</p>
 
       <div class="actions actions-top">
-        <button type="submit" :disabled="loading || tenantsLoading">
+        <button type="submit" :disabled="loading || catalogLoading || emptyTargetList">
           {{ loading ? 'Creating…' : 'Create' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
@@ -183,8 +228,9 @@ onMounted(async () => {
 
       <h2 class="detail-heading">Dial prefix</h2>
       <p class="create-hint">
-        Prefix is only for the calling tenant. Dial prefix + extension digits (e.g. 81 then 1000 →
-        811000). No feature codes after the prefix. Live dial path lands in a later release (slice C).
+        Prefix is only for the calling tenant. Target is another tenant from the known list (local
+        and fleet catalog) — full FQDN, not freeform. Dial prefix + extension digits (e.g. 81 then
+        1000 → 811000).
       </p>
       <div class="form-fields">
         <FormField
@@ -209,21 +255,22 @@ onMounted(async () => {
           :options="tenantOptions"
           empty-text="Select tenant"
           required
-          :loading="tenantsLoading"
+          :loading="catalogLoading"
           :error="clusterValidation.error.value"
           :touched="clusterValidation.touched.value"
           @blur="clusterValidation.onBlur"
         />
 
         <FormSelect
-          id="target_cluster"
-          v-model="targetCluster"
+          id="target_fqdn"
+          v-model="targetFqdn"
           label="Target tenant"
           help-pkey="dialprefix_target"
-          :options="tenantOptions"
+          :options="targetOptions"
           empty-text="Select target"
           required
-          :loading="tenantsLoading"
+          :loading="catalogLoading"
+          :hint="catalogHint"
           :error="targetValidation.error.value"
           :touched="targetValidation.touched.value"
           @blur="targetValidation.onBlur"
