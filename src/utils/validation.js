@@ -77,6 +77,20 @@ export function validateTrunkPkey(value) {
 }
 
 /**
+ * Validate dial prefix digits (pkey) — 2–4 numeric digits
+ */
+export function validateDialPrefixPkey(value) {
+  if (!value || !value.trim()) {
+    return 'Prefix is required'
+  }
+  const trimmed = value.trim()
+  if (!/^\d{2,4}$/.test(trimmed)) {
+    return 'Must be 2–4 numeric digits'
+  }
+  return null
+}
+
+/**
  * Validate Extension number (pkey) for create
  * Required, non-empty
  */

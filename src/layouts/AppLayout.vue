@@ -62,7 +62,8 @@ const navGroups = computed(() => {
       icon: 'phone',
       links: [
         { to: '/extensions', label: 'Extensions', icon: 'phone' },
-        { to: '/conferences', label: 'Conferences', icon: 'users' }
+        { to: '/conferences', label: 'Conferences', icon: 'users' },
+        { to: '/dialaliases', label: 'Dial prefixes', icon: 'route' }
       ]
     })
     groups.push({

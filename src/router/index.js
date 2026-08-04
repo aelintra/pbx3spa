@@ -50,6 +50,9 @@ import RouteDetailView from '../views/RouteDetailView.vue'
 import CustomAppsListView from '../views/CustomAppsListView.vue'
 import CustomAppCreateView from '../views/CustomAppCreateView.vue'
 import CustomAppDetailView from '../views/CustomAppDetailView.vue'
+import DialAliasesListView from '../views/DialAliasesListView.vue'
+import DialAliasCreateView from '../views/DialAliasCreateView.vue'
+import DialAliasDetailView from '../views/DialAliasDetailView.vue'
 import DevicesListView from '../views/DevicesListView.vue'
 import DeviceCreateView from '../views/DeviceCreateView.vue'
 import DeviceDetailView from '../views/DeviceDetailView.vue'
@@ -144,6 +147,13 @@ const router = createRouter({
         { path: 'routes', name: 'routes', component: RoutesListView },
         { path: 'routes/new', name: 'route-create', component: RouteCreateView },
         { path: 'routes/:shortuid', name: 'route-detail', component: RouteDetailView },
+        { path: 'dialaliases', name: 'dialaliases', component: DialAliasesListView },
+        { path: 'dialaliases/new', name: 'dialalias-create', component: DialAliasCreateView },
+        {
+          path: 'dialaliases/:shortuid',
+          name: 'dialalias-detail',
+          component: DialAliasDetailView
+        },
         { path: 'customapps', name: 'customapps', component: CustomAppsListView },
         { path: 'customapps/new', name: 'customapp-create', component: CustomAppCreateView },
         { path: 'customapps/:shortuid', name: 'customapp-detail', component: CustomAppDetailView },
