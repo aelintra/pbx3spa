@@ -6,17 +6,17 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
-## Session end 2026-08-03 — tenant short dial A′ / admin + SBC B template
+## Session end 2026-08-04 — tenant short dial A–E lab green + merge
 
-**On branches (not `main`):** **`tenant-short-dial-a`** (pbx3, pbx3api, **pbx3spa**) — Dial prefixes admin panel (Outbound), instance admin only, target = restricted list of known tenant FQDNs (`tenant-home` + local). **`tenant-short-dial-b`** (pbx3sbc) — OpenSIPS template miss→dispatcher; **not live on Magrathea**.
+**Merged to `main`:** Dial prefixes admin (**A/A′**) + GenAst/CAGI PrefixDial (**C**) + SBC miss→home + hairpin CLIP (**B/D partial**) + dual-host SIPp L1 (**E** green). Repos: pbx3, pbx3api, **pbx3spa**, pbx3cagi, pbx3sbc, sipplab.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SPA `npm run dev` with fleet catalog envs for FQDN picker · panel under **Outbound → Dial prefixes**.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SPA `npm run dev` · **Outbound → Dial prefixes**. Lab: prefix `81` → `dhbm8x.pbx3.com`; path via Magrathea VIP **`3.93.26.82`**.
 
-**Operator impact:** Admins can configure prefix → sister tenant FQDN on golden (CRUD only — no live prefix dial until C + Magrathea B). Tenant users do not see the panel.
+**Operator impact:** Instance admins configure sister-site dial by **tenant FQDN**. Handset shows **extension** as CLIP; network return id is PAI/`suid@fqdn`. Live dial needs home GenAst+cagi + Magrathea B (lab green; package roll still open). Tenant users do not see the panel.
 
 **Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TENANT_SHORT_DIAL_REQUIREMENTS.md`**.
 
-**Resume:** Deploy Magrathea slice **B**, then GenAst/CAGI **C**. Wait for operator task.
+**Resume:** Package roll / residual D–F when scheduled; next big product track often **time-based routing**. Wait for operator task.
 
 ---
 
