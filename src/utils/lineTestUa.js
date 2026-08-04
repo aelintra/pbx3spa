@@ -45,6 +45,8 @@ export function createLineTestUa(options) {
   /** @type {object[]} */
   const timeline = []
   let sessionBound = false
+  /** @type {'incoming'|'outgoing'|null} */
+  let sessionDirection = null
 
   function log(msg) {
     onLog?.(msg)
@@ -109,10 +111,17 @@ export function createLineTestUa(options) {
     statsTimer = setInterval(tick, 1000)
   }
 
-  function bindSession(sess) {
+  function clearSession() {
+    session = null
+    sessionBound = false
+    sessionDirection = null
+  }
+
+  function bindSession(sess, direction) {
     if (sessionBound && session === sess) return
     session = sess
     sessionBound = true
+    sessionDirection = direction || sess.direction || null
     attachRemoteTracks(sess)
 
     sess.on('peerconnection', (data) => {
@@ -120,7 +129,20 @@ export function createLineTestUa(options) {
       if (pc) attachRemoteTracks(sess)
     })
 
+    sess.on('getusermediafailed', (error) => {
+      stamp('getusermediafailed', {
+        message: error?.message ? String(error.message) : 'mic/camera denied'
+      })
+      setState('failed')
+    })
+
     sess.on('progress', () => {
+      // JsSIP auto-sends 180 on *incoming* and emits progress — keep Answerable.
+      if (sessionDirection === 'incoming') {
+        stamp('ringing_local')
+        setState('incoming')
+        return
+      }
       stamp('ringing')
       setState('ringing')
     })
@@ -133,22 +155,21 @@ export function createLineTestUa(options) {
       stamp('answered')
       setState('confirmed')
       startStats(sess.connection)
+      attachRemoteTracks(sess)
     })
 
     sess.on('ended', () => {
       stopStats()
       stamp('bye')
       setState('ended')
-      session = null
-      sessionBound = false
+      clearSession()
     })
 
     sess.on('failed', (e) => {
       stopStats()
       stamp('failed', { message: e?.cause ? String(e.cause) : 'failed' })
       setState('failed')
-      session = null
-      sessionBound = false
+      clearSession()
     })
   }
 
@@ -156,7 +177,8 @@ export function createLineTestUa(options) {
     return [{ urls: 'stun:stun.l.google.com:19302' }]
   }
 
-  function mediaOpts() {
+  /** Outbound INVITE options. */
+  function callMediaOpts() {
     return {
       mediaConstraints: { audio: true, video: false },
       pcConfig: { iceServers: iceServers() },
@@ -164,6 +186,17 @@ export function createLineTestUa(options) {
         offerToReceiveAudio: true,
         offerToReceiveVideo: false
       }
+    }
+  }
+
+  /**
+   * Inbound answer — do not pass rtcOfferConstraints (answer path uses
+   * rtcAnswerConstraints; offer constraints confuse media selection).
+   */
+  function answerMediaOpts() {
+    return {
+      mediaConstraints: { audio: true, video: false },
+      pcConfig: { iceServers: iceServers() }
     }
   }
 
@@ -212,11 +245,12 @@ export function createLineTestUa(options) {
       })
       ua.on('newRTCSession', (data) => {
         const sess = data.session
-        if (data.originator === 'remote') {
+        const direction = data.originator === 'remote' ? 'incoming' : 'outgoing'
+        if (direction === 'incoming') {
           stamp('incoming')
           setState('incoming')
         }
-        bindSession(sess)
+        bindSession(sess, direction)
       })
 
       ua.start()
@@ -235,8 +269,7 @@ export function createLineTestUa(options) {
       } catch {
         /* ignore */
       }
-      session = null
-      sessionBound = false
+      clearSession()
       ua = null
       setState('idle')
     },
@@ -255,13 +288,29 @@ export function createLineTestUa(options) {
           : `sip:${raw}@${sipDomain}`
       stamp('invite', { target: dest })
       setState('calling')
-      ua.call(dest, mediaOpts())
+      sessionDirection = 'outgoing'
+      ua.call(dest, callMediaOpts())
     },
 
     answer() {
       if (!session) throw new Error('No session to answer')
+      if (sessionDirection && sessionDirection !== 'incoming') {
+        throw new Error('No incoming session to answer')
+      }
+      const status = session.status
+      // JsSIP STATUS_WAITING_FOR_ANSWER === 4
+      if (typeof status === 'number' && status !== 4) {
+        throw new Error(`Session not waiting for answer (status ${status})`)
+      }
       stamp('answering')
-      session.answer(mediaOpts())
+      setState('answering')
+      try {
+        session.answer(answerMediaOpts())
+      } catch (err) {
+        stamp('answer_error', { message: err?.message ? String(err.message) : 'answer failed' })
+        setState('incoming')
+        throw err
+      }
     },
 
     hangup() {
@@ -290,6 +339,15 @@ export function createLineTestUa(options) {
 
     hasSession() {
       return Boolean(session)
+    },
+
+    /** True while an inbound INVITE is waiting for operator Answer. */
+    canAnswer() {
+      return Boolean(session && sessionDirection === 'incoming' && session.status === 4)
+    },
+
+    isIncomingRinging() {
+      return Boolean(session && sessionDirection === 'incoming')
     }
   }
 }

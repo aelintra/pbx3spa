@@ -43,22 +43,44 @@ const uaRunning = ref(false)
 let ua = null
 
 const isRegistered = computed(() =>
-  ['registered', 'calling', 'ringing', 'confirmed', 'incoming', 'ended', 'failed'].includes(
-    uaState.value
-  )
+  [
+    'registered',
+    'calling',
+    'ringing',
+    'confirmed',
+    'incoming',
+    'answering',
+    'ended',
+    'failed'
+  ].includes(uaState.value)
 )
-const canAnswer = computed(() => uaState.value === 'incoming')
+/** Inbound keep Answer enabled through auto-180 progress (state may say ringing_local log). */
+const canAnswer = computed(
+  () =>
+    uaRunning.value &&
+    (uaState.value === 'incoming' ||
+      uaState.value === 'answering' ||
+      Boolean(ua?.isIncomingRinging?.()))
+)
+// Disable Answer once confirmed/ended so we don't double-answer
+const canAnswerActive = computed(
+  () =>
+    canAnswer.value &&
+    !['confirmed', 'ended', 'failed', 'registered', 'calling', 'ringing', 'answering'].includes(
+      uaState.value
+    )
+)
 const canHangup = computed(
   () =>
     uaRunning.value &&
     (Boolean(ua?.hasSession()) ||
-      ['calling', 'ringing', 'confirmed', 'incoming'].includes(uaState.value))
+      ['calling', 'ringing', 'confirmed', 'incoming', 'answering'].includes(uaState.value))
 )
 const canDial = computed(
   () =>
     uaRunning.value &&
     isRegistered.value &&
-    !['calling', 'ringing', 'confirmed', 'incoming'].includes(uaState.value)
+    !['calling', 'ringing', 'confirmed', 'incoming', 'answering'].includes(uaState.value)
 )
 
 const mediaSummary = computed(() => summarizeSamples(samples.value))
@@ -389,7 +411,7 @@ function metricTone(kind, value) {
               {{ busy && !isRegistered ? 'Registering…' : uaRunning ? 'Re-register' : 'Register' }}
             </button>
             <button type="button" class="lt-btn" :disabled="!canDial" @click="dial">Dial</button>
-            <button type="button" class="lt-btn" :disabled="!canAnswer" @click="answer">
+            <button type="button" class="lt-btn" :disabled="!canAnswerActive" @click="answer">
               Answer
             </button>
             <button type="button" class="lt-btn" :disabled="!canHangup" @click="hangup">
