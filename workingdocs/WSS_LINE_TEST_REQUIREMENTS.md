@@ -137,4 +137,6 @@ Instance 8089 may remain closed for that path.
 
 Cross-repo: mostly **pbx3spa** (UA + sampling + report UI); **pbx3api** only if password-reveal or create helper needs a thin endpoint. No OpenSIPS change for the thin SPA itself.
 
-Suggested build order: shell dialler → REGISTER/call path → getStats samples → post-call report visuals. **Library:** JsSIP.
+Suggested build order: shell dialler → REGISTER/call path → getStats samples → post-call report visuals. **Library:** JsSIP.  
+**Shipped (lab):** 2026-08-03 — register/dial/answer/report OK.  
+**Pre-release residual (TODO):** SPA main-chunk size / lazy-load JsSIP — see **`pbx3/workingdocs/TODO.md`** “Pre-first-release — SPA production bundle diet”.
