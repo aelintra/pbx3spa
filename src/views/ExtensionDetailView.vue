@@ -449,23 +449,25 @@ const panelTitleTenantSuffix = computed(() => {
           </p>
 
           <div class="edit-actions edit-actions-top">
-            <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
-            <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
+            <div class="edit-actions-main">
+              <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+              <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
+              <button
+                type="button"
+                class="action-delete"
+                :disabled="deleting"
+                @click="askConfirmDelete"
+              >
+                {{ deleting ? 'Deleting…' : 'Delete' }}
+              </button>
+            </div>
             <button
               v-if="isWebRtcExtension"
               type="button"
-              class="secondary line-test-open-btn"
+              class="line-test-open-btn"
               @click="openLineTest"
             >
               Line test
-            </button>
-            <button
-              type="button"
-              class="action-delete"
-              :disabled="deleting"
-              @click="askConfirmDelete"
-            >
-              {{ deleting ? 'Deleting…' : 'Delete' }}
             </button>
           </div>
 
@@ -977,6 +979,18 @@ const panelTitleTenantSuffix = computed(() => {
   display: flex;
   gap: 0.5rem;
 }
+.edit-actions-top {
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+.edit-actions-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
 .edit-actions button {
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
@@ -1012,6 +1026,29 @@ const panelTitleTenantSuffix = computed(() => {
 .edit-actions button.action-delete:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+/* Diagnostic tool — violet (pops vs blue Save / red Delete; RG-colorblind friendly). */
+.line-test-open-btn {
+  margin-left: auto;
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: #fff;
+  background: #6d28d9;
+  border: 1px solid #5b21b6;
+  border-radius: 0.4rem;
+  box-shadow: 0 1px 2px rgba(91, 33, 182, 0.35);
+  cursor: pointer;
+}
+.line-test-open-btn:hover {
+  background: #7c3aed;
+  border-color: #6d28d9;
+  box-shadow: 0 2px 8px rgba(109, 40, 217, 0.4);
+}
+.line-test-open-btn:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
 }
 
 /* SIP password row: same grid as FormField / FormReadonly (label | value+button) */
