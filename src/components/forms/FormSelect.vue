@@ -150,7 +150,7 @@ function optionAttrValue(opt) {
         @blur="handleBlur"
       >
         <option v-if="loading" value="">{{ loadingText }}</option>
-        <option v-else-if="!required && emptyText" value="">{{ emptyText }}</option>
+        <option v-else-if="emptyText" value="" :disabled="required">{{ emptyText }}</option>
         <template v-if="!loading">
           <option
             v-for="(opt, optIdx) in options"

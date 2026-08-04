@@ -80,7 +80,8 @@ const navGroups = computed(() => {
       icon: 'link',
       links: [
         { to: '/trunks', label: 'Trunks', icon: 'link' },
-        { to: '/routes', label: 'Routes', icon: 'route' }
+        { to: '/routes', label: 'Routes', icon: 'route' },
+        { to: '/dialaliases', label: 'Dial prefixes', icon: 'route' }
       ]
     })
   }

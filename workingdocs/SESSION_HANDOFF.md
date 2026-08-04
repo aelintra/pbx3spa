@@ -6,6 +6,20 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-04 — tenant short dial A–E lab green + merge
+
+**Merged to `main`:** Dial prefixes admin (**A/A′**) + GenAst/CAGI PrefixDial (**C**) + SBC miss→home + hairpin CLIP (**B/D partial**) + dual-host SIPp L1 (**E** green). Repos: pbx3, pbx3api, **pbx3spa**, pbx3cagi, pbx3sbc, sipplab.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SPA `npm run dev` · **Outbound → Dial prefixes**. Lab: prefix `81` → `dhbm8x.pbx3.com`; path via Magrathea VIP **`3.93.26.82`**.
+
+**Operator impact:** Instance admins configure sister-site dial by **tenant FQDN**. Handset shows **extension** as CLIP; network return id is PAI/`suid@fqdn`. Live dial needs home GenAst+cagi + Magrathea B (lab green; package roll still open). Tenant users do not see the panel.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TENANT_SHORT_DIAL_REQUIREMENTS.md`**.
+
+**Resume:** Package roll / residual D–F when scheduled; next big product track often **time-based routing**. Wait for operator task.
+
+---
+
 ## Session end 2026-08-03 — SPA WSS line test shipped
 
 **Merged to `main` (pbx3spa):** JsSIP **Line test** on WebRTC extension detail — edge WSS path prover + post-call quality report (lab green: register / dial / answer / report). Violet right-aligned button; click feedback; no MAC on WebRTC edit. **pbx3** TODO/handoff: short dial + time-based routing next; parks for SPA bundle diet, lab DB anonymize, exploratory provision server.
