@@ -331,7 +331,7 @@ function onKeydown(e) {
         <FormSelect
           id="openroute"
           v-model="openroute"
-          label="Open route (legacy dual-read)"
+          label="Open (dual-read fallback)"
           :options="openrouteOptions"
           :option-groups="destinationGroups"
           :loading="destinationsLoading"
@@ -339,7 +339,7 @@ function onKeydown(e) {
         <FormSelect
           id="closeroute"
           v-model="closeroute"
-          label="Closed route (legacy dual-read)"
+          label="Closed (dual-read fallback)"
           :options="closerouteOptions"
           :option-groups="destinationGroups"
         />

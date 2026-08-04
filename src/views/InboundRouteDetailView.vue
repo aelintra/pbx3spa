@@ -478,7 +478,7 @@ const panelTitleTenantSuffix = computed(() => {
             <FormSelect
               id="edit-openroute"
               v-model="editOpenroute"
-              label="Open route (legacy dual-read)"
+              label="Open (dual-read fallback)"
               :options="openrouteOptions"
               :option-groups="destinationGroups"
               :loading="destinationsLoading"
@@ -486,7 +486,7 @@ const panelTitleTenantSuffix = computed(() => {
             <FormSelect
               id="edit-closeroute"
               v-model="editCloseroute"
-              label="Closed route (legacy dual-read)"
+              label="Closed (dual-read fallback)"
               :options="closerouteOptions"
               :option-groups="destinationGroups"
             />

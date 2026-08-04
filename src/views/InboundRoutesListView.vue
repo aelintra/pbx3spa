@@ -56,6 +56,7 @@ const filteredRoutes = computed(() => {
     const trunkname = (r.trunkname ?? '').toString().toLowerCase()
     const openroute = (r.openroute ?? '').toString().toLowerCase()
     const closeroute = (r.closeroute ?? '').toString().toLowerCase()
+    const routeProfile = (r.route_profile ?? '').toString().toLowerCase()
     const technology = (r.technology ?? '').toString().toLowerCase()
     const desc = (r.desc ?? r.description ?? '').toString().toLowerCase()
     const active = (r.active ?? '').toString().toLowerCase()
@@ -65,6 +66,7 @@ const filteredRoutes = computed(() => {
       trunkname.includes(q) ||
       openroute.includes(q) ||
       closeroute.includes(q) ||
+      routeProfile.includes(q) ||
       technology.includes(q) ||
       desc.includes(q) ||
       active.includes(q)
@@ -74,8 +76,18 @@ const filteredRoutes = computed(() => {
 
 function sortValue(r, key) {
   if (key === 'cluster') return tenantPkeyDisplay(r)
+  if (key === 'routing') return routingDisplay(r)
   const v = r[key]
   return v == null ? '' : String(v)
+}
+
+/** Profile shortuid or legacy open/closed pair for list display. */
+function routingDisplay(r) {
+  const rp = r.route_profile
+  if (rp != null && String(rp).trim() !== '') return String(rp)
+  const o = r.openroute ?? '—'
+  const c = r.closeroute ?? '—'
+  return `${o} / ${c}`
 }
 
 const inboundActiveInFilter = computed(() => countActiveRows(filteredRoutes.value))
@@ -114,8 +126,7 @@ const inboundRouteExportColumns = computed(() => [
   { key: 'cluster', label: 'Tenant', getValue: (r) => tenantPkeyDisplay(r) },
   { key: 'active', label: 'Active' },
   { key: 'trunkname', label: 'Name' },
-  { key: 'openroute', label: 'Open' },
-  { key: 'closeroute', label: 'Closed' },
+  { key: 'routing', label: 'Routing', getValue: (r) => routingDisplay(r) },
   { key: 'technology', label: 'Type' }
 ])
 
@@ -278,19 +289,11 @@ onMounted(loadInboundRoutes)
             </th>
             <th
               class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('openroute')"
-              @click="setSort('openroute')"
+              title="Route profile (or legacy open/closed)"
+              :class="sortClass('routing')"
+              @click="setSort('routing')"
             >
-              Open
-            </th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('closeroute')"
-              @click="setSort('closeroute')"
-            >
-              Closed
+              Routing
             </th>
             <th
               class="th-sortable"
@@ -347,8 +350,9 @@ onMounted(loadInboundRoutes)
             <td>{{ tenantPkeyDisplay(r) }}</td>
             <ListActiveChip :active="r.active" />
             <td>{{ r.trunkname ?? '—' }}</td>
-            <td>{{ r.openroute ?? '—' }}</td>
-            <td>{{ r.closeroute ?? '—' }}</td>
+            <td :title="r.route_profile ? 'Route profile' : 'Legacy open/closed'">
+              {{ routingDisplay(r) }}
+            </td>
             <td>{{ r.technology ?? '—' }}</td>
             <td>
               <router-link
