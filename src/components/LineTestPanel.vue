@@ -368,7 +368,7 @@ function metricTone(kind, value) {
           <div>
             <h2 id="line-test-title" class="line-test-title">Line test</h2>
             <p class="line-test-sub">
-              Diagnostic dialler — real WebRTC path, post-call quality report. Not a softphone.
+              Diagnostic dialler — real WebRTC path, post-call quality report.
             </p>
           </div>
           <button type="button" class="line-test-close" aria-label="Close line test" @click="onClose">
