@@ -6,9 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-04 — short dial package roll + residual docs
+
+**Fleet packages on `main`:** **pbx3 0.0.4-6** + **pbx3cagi 1.0.0-11** on golden / bzy / kildare (GenAst PrefixDial + cagi packaged). Dialaliases API synced. SPA product code unchanged this session (Dial prefixes already on **main**).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SPA `npm run dev` · **Outbound → Dial prefixes** (instance admin). Magrathea **`3.93.26.82`**.
+
+**Operator impact:** Sister-site short dial no longer requires live-patched golden/cagi — fleet packages match product path. CLIP still presentation **extension** + PAI return AoR; **missed-call redial OEM-open** (see TODO **D**). InterSARK convert: **`DIAL_PREFIX_LEGACY_MIGRATE.md`**.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TENANT_SHORT_DIAL_REQUIREMENTS.md`** · sipplab **`SITE_DIAL_PACK_GATE_PLAN.md`** (E, not executed).
+
+**Resume:** **D** least-ugly guaranteed return lab when scheduled; optional **E** pack-gate; **time-based routing**. Wait for operator task.
+
+---
+
 ## Session end 2026-08-04 — SIPp pack 11/11 + DID lab debug
 
-**Lab only (no SPA product code):** Full SIPp L1 pack green; Magrathea `01924910444` inbound restored; pack `OUT_DIGITS` digit-E.164 for Brindley strip. Site-dial dual-host still green.
+**Lab only (no SPA product code):** Full SIPp L1 pack green; Magrathea `01924910444` inbound restored; pack `OUT_DIGITS` digit-E.164 for Brindley strip. Site-dial dual-host still green. *(Package roll completed later same day — see block above.)*
 
 **Dev against golden:** `https://08jzwn.pbx3.com:44300/api`. SIPp Peer host `98.82.58.59` · UAC `98.93.32.43` · Magrathea **`3.93.26.82`**.
 
@@ -16,7 +30,7 @@
 
 **Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · sipplab **`ENV_CONTRACT.md`** (`OUT_DIGITS`).
 
-**Resume:** Package roll / residual short dial; **time-based routing** when scheduled. Wait for operator task.
+**Resume:** See current session end block above.
 
 ---
 
