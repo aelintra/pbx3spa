@@ -93,20 +93,45 @@ This keeps complexity manageable and avoids a risky merge while still reducing u
 
 ---
 
-## Locked decision (2026-07-30) — friendly instance name
+## Locked decision (2026-07-30; **sync policy tightened 2026-08-03**) — friendly instance name
 
-**Agree:** ops nicknames like “Golden” are invented; they are not node identity.
+**Agree:** ops nicknames like “Golden” / “Kildare” are invented; they are not node identity (`fqdn` / `shortuid`).
 
 | Field | Role |
 |-------|------|
-| `globals.fqdn` / OS hostname | Stable identity — not the Home friendly line |
-| **`sysglobals.sitename`** | On-node friendly name HoR — Home header, session chips, System info Site name, Network edit |
-| Catalog `label` | Fleet picker only (directory). May match sitename by convention; not the node HoR |
+| `globals.fqdn` / OS hostname | Stable identity — TLS, API host, SIP where applicable |
+| `globals.shortuid` | Opaque instance id (SUID) — catalog `id` usually matches |
+| **`sysglobals.sitename`** | On-node friendly name **HoR** — Network **Site Name**, Home header, session chips |
+| Catalog **`label`** | Fleet / instance chooser. **Must match `sitename` when both exist** (not a second independent nickname) |
 
-**Installer (`installer.sh`):** on **first provision**, prompt for Site name (friendly label) and write **`sysglobals.sitename`**. Keep FQDN/subdomain prompts as identity. Env override e.g. `INSTANCE_SITENAME` for non-interactive/rebuild. Empty sitename → SPA falls back to FQDN (current identity display).
+### Display (SPA / fleet chooser) — locked 2026-08-03
 
-**SPA:** `displayInstanceLabel` prefers **sitename → FQDN** (catalog label only when fleet-picked and sitename empty — optional; do not override a set sitename).
+**Friendly string** = non-empty **sitename** (or catalog **label**, once in sync) **else instance SUID** (`shortuid` / catalog `id`).  
+Do **not** prefer full FQDN as the friendly fallback (FQDN remains identity / secondary detail).
 
-**Catalog follow-up (parked):** Fleet `label` can drift from node sitename. Later sync/seed on onboard or Network save — see **`TODO.md`** (*Catalog `label` ↔ node `sitename`*).
+```
+display = sitename || catalog.label || shortuid
+```
+(After sync, first two are equal; order is defensive.)
 
-**Tracked:** `pbx3/workingdocs/TODO.md` (sitename installer + Home header; catalog sync parked).
+### Sync (must not drift)
+
+| Direction | When | Path |
+|-----------|------|------|
+| **sitename → catalog.label** | Installer site name; Network / sysglobals **Site Name** save; onboard that already knows sitename | **Gatekeeper** `PATCH /api/v1/instances/{id}` (or register body). **Rule 9/10:** not browser IAM, not instance Sanctum inventing catalog write |
+| **catalog.label → sitename** | Optional later if Fleet Instances renames label | Fleet path may push node sitename (fleet.token); not v1 critical if operators edit **Site Name** as HoR |
+
+### Edit semantics (locked 2026-08-03)
+
+| Context | Site name save |
+|---------|----------------|
+| **Fleet node + catalog in use** | Change **sitename** → also set catalog **`label`** (same value) via **Gatekeeper**. If Gatekeeper/catalog write fails (control down, S3 issue, missing fleet config), **reject the save** — no partial update that reintroduces drift. |
+| **Solo / no fleet catalog** | Sitename save **allowed** without catalog. |
+
+Primary operator control: edit **sitename** (Network or Globals). Not two independent nicknames.
+
+**SPA today** still uses sitename → FQDN → catalog (pre-sync). Implement dual-write + display fallback when scheduled — **`TODO.md`**.
+
+**Installer:** still write **`sysglobals.sitename`** on first provision. Catalog register/onboard should seed **`label`** from that string (or SUID if empty).
+
+**Tracked:** `pbx3/workingdocs/TODO.md`.
