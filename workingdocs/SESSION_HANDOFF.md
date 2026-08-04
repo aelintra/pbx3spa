@@ -6,6 +6,20 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-04 — SIPp pack 11/11 + DID lab debug
+
+**Lab only (no SPA product code):** Full SIPp L1 pack green; Magrathea `01924910444` inbound restored; pack `OUT_DIGITS` digit-E.164 for Brindley strip. Site-dial dual-host still green.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api`. SIPp Peer host `98.82.58.59` · UAC `98.93.32.43` · Magrathea **`3.93.26.82`**.
+
+**Operator impact:** Office **01924** DIDs aim at **Kildare** (18076 already); **910444** still lab-routing to golden until moved. DID rules must use **post-dialect digit E.164** prefixes; node Ingress must include **wire `+44…`** after genAst. SBC **503 No gateways** can mean remapped home **603**, not missing route.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · sipplab **`ENV_CONTRACT.md`** (`OUT_DIGITS`).
+
+**Resume:** Package roll / residual short dial; **time-based routing** when scheduled. Wait for operator task.
+
+---
+
 ## Session end 2026-08-04 — tenant short dial A–E lab green + merge
 
 **Merged to `main`:** Dial prefixes admin (**A/A′**) + GenAst/CAGI PrefixDial (**C**) + SBC miss→home + hairpin CLIP (**B/D partial**) + dual-host SIPp L1 (**E** green). Repos: pbx3, pbx3api, **pbx3spa**, pbx3cagi, pbx3sbc, sipplab.
