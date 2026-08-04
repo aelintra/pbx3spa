@@ -38,9 +38,26 @@ const errorMsg = ref('')
 const remoteAudioEl = ref(null)
 /** Reactive flag — underlying UA instance is non-reactive. */
 const uaRunning = ref(false)
+/** Brief click feedback (which action, for CSS flash). */
+const pressedAction = ref('')
+/** @type {ReturnType<typeof setTimeout> | null} */
+let pressedTimer = null
 
 /** @type {ReturnType<typeof createLineTestUa> | null} */
 let ua = null
+
+/**
+ * Tactile click confirm — no modal; short flash + status copy.
+ * @param {string} name
+ */
+function markPressed(name) {
+  pressedAction.value = name
+  if (pressedTimer != null) clearTimeout(pressedTimer)
+  pressedTimer = setTimeout(() => {
+    pressedAction.value = ''
+    pressedTimer = null
+  }, 420)
+}
 
 const isRegistered = computed(() =>
   [
@@ -157,10 +174,12 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  if (pressedTimer != null) clearTimeout(pressedTimer)
   stopUa()
 })
 
 async function register() {
+  markPressed('register')
   errorMsg.value = ''
   const domain = String(props.sipDomain || '').trim()
   const user = String(props.sipUser || '').trim()
@@ -227,6 +246,7 @@ async function register() {
 }
 
 function dial() {
+  markPressed('dial')
   errorMsg.value = ''
   try {
     ua?.dial(dialTarget.value)
@@ -236,6 +256,7 @@ function dial() {
 }
 
 function answer() {
+  markPressed('answer')
   errorMsg.value = ''
   try {
     ua?.answer()
@@ -245,6 +266,7 @@ function answer() {
 }
 
 function hangup() {
+  markPressed('hangup')
   errorMsg.value = ''
   try {
     ua?.hangup()
@@ -258,16 +280,19 @@ function hangup() {
 }
 
 function finishWithoutCall() {
+  markPressed('end-report')
   openReport()
 }
 
 function newTest() {
+  markPressed('new-test')
   stopUa()
   resetSessionData()
   phase.value = 'setup'
 }
 
 function copyReport() {
+  markPressed('copy')
   const m = mediaSummary.value
   const v = verdict.value
   const lines = [
@@ -405,27 +430,62 @@ function metricTone(kind, value) {
             <button
               type="button"
               class="lt-btn lt-btn-primary"
+              :class="{ 'lt-btn--flash': pressedAction === 'register' }"
               :disabled="busy && !isRegistered"
               @click="register"
             >
               {{ busy && !isRegistered ? 'Registering…' : uaRunning ? 'Re-register' : 'Register' }}
             </button>
-            <button type="button" class="lt-btn" :disabled="!canDial" @click="dial">Dial</button>
-            <button type="button" class="lt-btn" :disabled="!canAnswerActive" @click="answer">
+            <button
+              type="button"
+              class="lt-btn"
+              :class="{ 'lt-btn--flash': pressedAction === 'dial' }"
+              :disabled="!canDial"
+              @click="dial"
+            >
+              Dial
+            </button>
+            <button
+              type="button"
+              class="lt-btn"
+              :class="{ 'lt-btn--flash': pressedAction === 'answer' }"
+              :disabled="!canAnswerActive"
+              @click="answer"
+            >
               Answer
             </button>
-            <button type="button" class="lt-btn" :disabled="!canHangup" @click="hangup">
+            <button
+              type="button"
+              class="lt-btn"
+              :class="{ 'lt-btn--flash': pressedAction === 'hangup' }"
+              :disabled="!canHangup"
+              @click="hangup"
+            >
               Hangup
             </button>
             <button
               v-if="uaRunning"
               type="button"
               class="lt-btn lt-btn-quiet"
+              :class="{ 'lt-btn--flash': pressedAction === 'end-report' }"
               @click="finishWithoutCall"
             >
               End &amp; report
             </button>
           </div>
+          <p v-if="pressedAction" class="line-test-click-ack" role="status" aria-live="polite">
+            {{
+              {
+                register: 'Register — requested',
+                dial: 'Dial — requested',
+                answer: 'Answer — requested',
+                hangup: 'Hangup — requested',
+                'end-report': 'End & report — requested',
+                'new-test': 'New test',
+                copy: 'Copied to clipboard'
+              }[pressedAction] || 'OK'
+            }}
+          </p>
 
           <p class="line-test-state">
             State: <strong>{{ uaState }}</strong>
@@ -546,10 +606,22 @@ function metricTone(kind, value) {
           </section>
 
           <div class="line-test-actions">
-            <button type="button" class="lt-btn lt-btn-primary" @click="copyReport">
-              Copy summary
+            <button
+              type="button"
+              class="lt-btn lt-btn-primary"
+              :class="{ 'lt-btn--flash': pressedAction === 'copy' }"
+              @click="copyReport"
+            >
+              {{ pressedAction === 'copy' ? 'Copied!' : 'Copy summary' }}
             </button>
-            <button type="button" class="lt-btn" @click="newTest">New test</button>
+            <button
+              type="button"
+              class="lt-btn"
+              :class="{ 'lt-btn--flash': pressedAction === 'new-test' }"
+              @click="newTest"
+            >
+              New test
+            </button>
             <button type="button" class="lt-btn lt-btn-quiet" @click="onClose">Close</button>
           </div>
         </div>
@@ -648,27 +720,79 @@ function metricTone(kind, value) {
   border-radius: 0.35rem;
   padding: 0.4rem 0.7rem;
   font-size: 0.875rem;
+  font-weight: 550;
   cursor: pointer;
+  box-shadow: 0 1px 0 #cbd5e1;
+  transform: translateY(0);
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.08s ease,
+    filter 0.12s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .lt-btn:hover:not(:disabled) {
   background: #f1f5f9;
+  border-color: #64748b;
+}
+.lt-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 3px rgba(15, 23, 42, 0.18);
+  background: #e2e8f0;
+  filter: brightness(0.97);
 }
 .lt-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+  box-shadow: none;
 }
 .lt-btn-primary {
   background: #0f172a;
   border-color: #0f172a;
   color: #fff;
+  box-shadow: 0 1px 0 #020617;
 }
 .lt-btn-primary:hover:not(:disabled) {
   background: #1e293b;
+  border-color: #1e293b;
+}
+.lt-btn-primary:active:not(:disabled) {
+  background: #020617;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+  color: #fff;
 }
 .lt-btn-quiet {
   border-color: transparent;
   background: transparent;
   color: #475569;
+  box-shadow: none;
+}
+.lt-btn-quiet:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: transparent;
+}
+.lt-btn-quiet:active:not(:disabled) {
+  background: #e2e8f0;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+.lt-btn--flash:not(:disabled) {
+  outline: 2px solid #6366f1;
+  outline-offset: 1px;
+  filter: brightness(1.06);
+}
+.lt-btn-primary.lt-btn--flash:not(:disabled) {
+  outline-color: #a5b4fc;
+  filter: brightness(1.12);
+}
+.line-test-click-ack {
+  margin: -0.15rem 0 0;
+  min-height: 1.1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #4338ca;
+  letter-spacing: 0.01em;
 }
 .line-test-state {
   margin: 0;

@@ -285,9 +285,11 @@ async function saveEdit(e) {
       devicerec: editDevicerec.value,
       dvrvmail: editDvrvmail.value.trim() || undefined,
       extalert: editExtalert.value.trim() || undefined,
-      macaddr: editMacaddr.value.trim()
-        ? editMacaddr.value.trim().replace(/[^0-9a-fA-F]/g, '')
-        : null,
+      macaddr: isWebRtcExtension.value
+        ? null
+        : editMacaddr.value.trim()
+          ? editMacaddr.value.trim().replace(/[^0-9a-fA-F]/g, '')
+          : null,
       protocol: editProtocol.value,
       technology: editTechnology.value || undefined,
       vmailfwd: editVmailfwd.value.trim() || undefined
@@ -566,21 +568,23 @@ const panelTitleTenantSuffix = computed(() => {
               class="readonly-identity"
               hide-help
             />
-            <FormReadonly
-              v-if="isReadOnly('macaddr')"
-              id="edit-identity-macaddr"
-              label="MAC address"
-              :value="extension.macaddr?.trim() || '—'"
-              class="readonly-identity"
-            />
-            <FormField
-              v-else
-              id="edit-identity-macaddr"
-              v-model="editMacaddr"
-              label="MAC address"
-              type="text"
-              placeholder="12 hex digits or 00:11:22:33:44:55"
-            />
+            <template v-if="!isWebRtcExtension">
+              <FormReadonly
+                v-if="isReadOnly('macaddr')"
+                id="edit-identity-macaddr"
+                label="MAC address"
+                :value="extension.macaddr?.trim() || '—'"
+                class="readonly-identity"
+              />
+              <FormField
+                v-else
+                id="edit-identity-macaddr"
+                v-model="editMacaddr"
+                label="MAC address"
+                type="text"
+                placeholder="12 hex digits or 00:11:22:33:44:55"
+              />
+            </template>
             <FormReadonly
               v-if="isReadOnly('device')"
               id="edit-identity-device"
