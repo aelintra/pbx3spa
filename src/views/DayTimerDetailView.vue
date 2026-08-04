@@ -14,6 +14,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
+import { COMMON_SCHEDULE_MODES, validateScheduleMode, validateSchedulePriority } from '@/utils/validation'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -31,6 +32,8 @@ const editActive = ref('YES')
 const editCluster = ref('default')
 const editDayofweek = ref('*')
 const editDescription = ref('')
+const editMode = ref('closed')
+const editPriority = ref(0)
 const startTime = ref('09:00')
 const endTime = ref('17:00')
 const saveError = ref('')
@@ -51,6 +54,13 @@ const tenantShortuidToPkey = computed(() => {
 })
 
 const dayOfWeekOptions = ['*', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+
+const modeOptions = computed(() => {
+  const list = [...COMMON_SCHEDULE_MODES]
+  const cur = String(editMode.value || '').toLowerCase()
+  if (cur && !list.includes(cur)) list.unshift(cur)
+  return list
+})
 
 const tenantOptions = computed(() => {
   const list = tenants.value.map((t) => t.pkey).filter(Boolean)
@@ -97,6 +107,8 @@ async function fetchDaytimer() {
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
     editDayofweek.value = d?.dayofweek ?? '*'
     editDescription.value = d?.description ?? ''
+    editMode.value = (d?.mode || 'closed').toLowerCase()
+    editPriority.value = d?.priority != null ? Number(d.priority) : 0
     editActive.value = d?.active === 'NO' ? 'NO' : 'YES'
     const parsed = parseTimespan(d?.timespan)
     allday.value = parsed.allDay ? 'YES' : 'NO'
@@ -161,6 +173,16 @@ async function saveEdit(e) {
     saveError.value = tsErr
     return
   }
+  const modeErr = validateScheduleMode(editMode.value)
+  if (modeErr) {
+    saveError.value = modeErr
+    return
+  }
+  const priErr = validateSchedulePriority(editPriority.value, { allowEmpty: false })
+  if (priErr) {
+    saveError.value = priErr
+    return
+  }
   saving.value = true
   try {
     const body = {
@@ -168,6 +190,8 @@ async function saveEdit(e) {
       dayofweek: editDayofweek.value,
       description: editDescription.value.trim() || null,
       timespan: buildTimespan(),
+      mode: String(editMode.value).trim().toLowerCase(),
+      priority: Number(editPriority.value),
       ...(isReadOnly('active') ? {} : { active: editActive.value })
     }
     await getApiClient().put(`daytimers/${encodeURIComponent(shortuid.value)}`, body)
@@ -302,6 +326,21 @@ const panelTitleTenantSuffix = computed(() => {
               label="Description"
               type="text"
               placeholder="e.g. Office hours"
+            />
+            <FormSelect
+              id="edit-mode"
+              v-model="editMode"
+              label="Mode when matched"
+              help-pkey="mode"
+              :options="modeOptions"
+            />
+            <FormField
+              id="edit-priority"
+              v-model="editPriority"
+              label="Priority (higher wins)"
+              type="number"
+              min="0"
+              max="9999"
             />
             <FormSelect
               id="edit-dayofweek"

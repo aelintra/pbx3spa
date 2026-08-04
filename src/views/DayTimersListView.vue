@@ -52,6 +52,11 @@ function dayOfWeekLabel(dow) {
   return String(dow).charAt(0).toUpperCase() + String(dow).slice(1)
 }
 
+function modeLabel(m) {
+  if (m == null || m === '') return 'closed'
+  return String(m)
+}
+
 const filteredDaytimers = computed(() => {
   const list = daytimers.value
   const q = (filterText.value || '').trim().toLowerCase()
@@ -66,6 +71,7 @@ const filteredDaytimers = computed(() => {
     const dow = (item.dayofweek ?? '').toString().toLowerCase()
     const state = (item.state ?? '').toString().toLowerCase()
     const active = (item.active ?? '').toString().toLowerCase()
+    const mode = (item.mode ?? '').toString().toLowerCase()
     return (
       shortuid.includes(q) ||
       cluster.includes(q) ||
@@ -74,7 +80,8 @@ const filteredDaytimers = computed(() => {
       timespan.includes(q) ||
       dow.includes(q) ||
       state.includes(q) ||
-      active.includes(q)
+      active.includes(q) ||
+      mode.includes(q)
     )
   })
 })
@@ -86,6 +93,8 @@ function sortValue(item, key) {
     return key === 'start' ? p.start : p.end
   }
   if (key === 'dayofweek') return dayOfWeekLabel(item.dayofweek)
+  if (key === 'mode') return modeLabel(item.mode)
+  if (key === 'priority') return String(item.priority ?? 0)
   const v = item[key]
   if (v == null || v === '') return ''
   return String(v)
@@ -245,6 +254,22 @@ onMounted(loadDaytimers)
             <th
               class="th-sortable"
               title="Click to sort"
+              :class="sortClass('mode')"
+              @click="setSort('mode')"
+            >
+              Mode
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('priority')"
+              @click="setSort('priority')"
+            >
+              Pri
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
               :class="sortClass('description')"
               @click="setSort('description')"
             >
@@ -304,6 +329,8 @@ onMounted(loadDaytimers)
             <td>{{ parseTimespan(d.timespan).start }}</td>
             <td>{{ parseTimespan(d.timespan).end }}</td>
             <td>{{ dayOfWeekLabel(d.dayofweek) }}</td>
+            <td>{{ modeLabel(d.mode) }}</td>
+            <td>{{ d.priority ?? 0 }}</td>
             <td>{{ d.description ?? '—' }}</td>
             <td>{{ d.state ?? '—' }}</td>
             <td>

@@ -220,6 +220,43 @@ export function validateInboundCarrier(value) {
   return null
 }
 
+/** Day-parts mode: lowercase letter then alnum/underscore/hyphen, max 32. Empty OK when allowEmpty. */
+export const SCHEDULE_MODE_REGEX = /^[a-z][a-z0-9_-]{0,31}$/
+
+export const COMMON_SCHEDULE_MODES = ['open', 'closed', 'lunch', 'night', 'break']
+
+/**
+ * @param {string|null|undefined} value
+ * @param {{ allowEmpty?: boolean }} [opts]
+ */
+export function validateScheduleMode(value, opts = {}) {
+  const { allowEmpty = false } = opts
+  const m = value == null ? '' : String(value).trim().toLowerCase()
+  if (m === '') {
+    return allowEmpty ? null : 'Mode is required'
+  }
+  if (!SCHEDULE_MODE_REGEX.test(m)) {
+    return 'Mode must be lowercase word (e.g. open, closed, lunch)'
+  }
+  return null
+}
+
+/**
+ * @param {string|number|null|undefined} value
+ * @param {{ allowEmpty?: boolean }} [opts]
+ */
+export function validateSchedulePriority(value, opts = {}) {
+  const { allowEmpty = true } = opts
+  if (value === null || value === undefined || String(value).trim() === '') {
+    return allowEmpty ? null : 'Priority is required'
+  }
+  const n = Number(value)
+  if (!Number.isInteger(n) || n < 0 || n > 9999) {
+    return 'Priority must be an integer 0–9999'
+  }
+  return null
+}
+
 /**
  * Validate Greeting Number
  * Optional, but if provided must be valid integer >= 0

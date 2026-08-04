@@ -34,6 +34,9 @@ const editTechnology = ref('DiD')
 const editActive = ref('YES')
 const editOpenroute = ref('None')
 const editCloseroute = ref('None')
+const editRouteProfile = ref('')
+const editEntryDest = ref('None')
+const routeProfiles = ref([])
 const destinations = ref(null)
 const destinationsLoading = ref(false)
 const editAlertinfo = ref('')
@@ -131,27 +134,51 @@ const destinationGroups = computed(() => {
 
 const openrouteOptions = computed(() => ['None', 'Operator'])
 const closerouteOptions = computed(() => ['None', 'Operator'])
+const entryDestOptions = computed(() => ['None', 'Operator'])
+
+const routeProfileOptions = computed(() => {
+  const opts = ['']
+  const clusterVal = editCluster.value
+  const map = clusterToTenantPkey.value
+  for (const p of routeProfiles.value) {
+    const pTenant = map.get(String(p.cluster)) ?? p.cluster
+    const tenantOk =
+      !clusterVal ||
+      String(p.cluster) === String(clusterVal) ||
+      String(pTenant) === String(clusterVal)
+    if (!tenantOk) continue
+    opts.push(p.shortuid)
+  }
+  const cur = editRouteProfile.value
+  if (cur && !opts.includes(cur)) opts.push(cur)
+  return opts
+})
 
 async function loadDestinations() {
   const c = editCluster.value
   if (!c) {
     destinations.value = null
     routes.value = []
+    routeProfiles.value = []
     return
   }
   destinationsLoading.value = true
   try {
-    const [destResponse, routeResponse] = await Promise.all([
+    const [destResponse, routeResponse, profileResponse] = await Promise.all([
       getApiClient().get('destinations', { params: { cluster: c } }),
-      getApiClient().get('routes')
+      getApiClient().get('routes'),
+      getApiClient().get('routeprofiles')
     ])
     const destBody =
       destResponse && typeof destResponse === 'object' ? (destResponse.data ?? destResponse) : null
     destinations.value = destBody && typeof destBody === 'object' ? destBody : null
     routes.value = normalizeList(routeResponse, 'routes')
+    const allProfiles = normalizeList(profileResponse, 'routeprofiles') || normalizeList(profileResponse)
+    routeProfiles.value = allProfiles
   } catch {
     destinations.value = null
     routes.value = []
+    routeProfiles.value = []
   } finally {
     destinationsLoading.value = false
   }
@@ -177,6 +204,8 @@ function syncEditFromRoute() {
   editActive.value = r.active ?? 'YES'
   editOpenroute.value = r.openroute ?? 'None'
   editCloseroute.value = r.closeroute ?? 'None'
+  editRouteProfile.value = r.route_profile ? String(r.route_profile) : ''
+  editEntryDest.value = r.entry_dest && String(r.entry_dest).trim() !== '' ? String(r.entry_dest) : 'None'
   editAlertinfo.value = r.alertinfo ?? ''
   editCname.value = r.cname ?? ''
   editDevicerec.value = normalizeDevicerec(r.devicerec)
@@ -248,6 +277,9 @@ async function saveEdit(e) {
         editOpenroute.value && editOpenroute.value !== 'None' ? editOpenroute.value : 'None',
       closeroute:
         editCloseroute.value && editCloseroute.value !== 'None' ? editCloseroute.value : 'None',
+      route_profile: editRouteProfile.value || null,
+      entry_dest:
+        editEntryDest.value && editEntryDest.value !== 'None' ? editEntryDest.value : null,
       alertinfo: editAlertinfo.value.trim() || undefined,
       cname: editCname.value.trim() || undefined,
       devicerec: editDevicerec.value || 'None',
@@ -427,9 +459,26 @@ const panelTitleTenantSuffix = computed(() => {
               :required="true"
             />
             <FormSelect
+              id="edit-route-profile"
+              v-model="editRouteProfile"
+              label="Route profile"
+              help-pkey="route_profile"
+              :options="routeProfileOptions"
+              :loading="destinationsLoading"
+            />
+            <FormSelect
+              id="edit-entry-dest"
+              v-model="editEntryDest"
+              label="Always-route destination (skip schedule)"
+              help-pkey="entry_dest"
+              :options="entryDestOptions"
+              :option-groups="destinationGroups"
+              :loading="destinationsLoading"
+            />
+            <FormSelect
               id="edit-openroute"
               v-model="editOpenroute"
-              label="Open route"
+              label="Open route (legacy dual-read)"
               :options="openrouteOptions"
               :option-groups="destinationGroups"
               :loading="destinationsLoading"
@@ -437,7 +486,7 @@ const panelTitleTenantSuffix = computed(() => {
             <FormSelect
               id="edit-closeroute"
               v-model="editCloseroute"
-              label="Closed route"
+              label="Closed route (legacy dual-read)"
               :options="closerouteOptions"
               :option-groups="destinationGroups"
             />

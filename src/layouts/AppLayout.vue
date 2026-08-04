@@ -108,6 +108,7 @@ const navGroups = computed(() => {
       icon: 'clock',
       links: [
         { to: '/daytimers', label: 'Day timers', icon: 'clock' },
+        { to: '/routeprofiles', label: 'Route profiles', icon: 'route' },
         { to: '/holidaytimers', label: 'Holiday timers', icon: 'calendar' },
         { to: '/cosrules', label: 'Class of Service', icon: 'shield' }
       ]

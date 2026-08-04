@@ -26,6 +26,8 @@ const carrier = ref('')
 const pkey = ref('')
 const openroute = ref('None')
 const closeroute = ref('None')
+const routeProfile = ref('')
+const routeProfiles = ref([])
 const tenants = ref([])
 const destinations = ref(null)
 const routes = ref([])
@@ -91,6 +93,25 @@ const destinationGroups = computed(() => {
 const openrouteOptions = computed(() => ['None', 'Operator'])
 const closerouteOptions = computed(() => ['None', 'Operator'])
 
+const routeProfileOptions = computed(() => {
+  const clusterVal = cluster.value
+  const filtered = ['']
+  if (!clusterVal) return filtered
+  const map = new Map()
+  for (const t of tenants.value) {
+    if (t.shortuid != null) map.set(String(t.shortuid), t.pkey)
+    if (t.pkey != null) map.set(String(t.pkey), t.pkey)
+  }
+  for (const p of routeProfiles.value) {
+    const pTenant = map.get(String(p.cluster)) ?? p.cluster
+    if (String(p.cluster) === String(clusterVal) || String(pTenant) === String(clusterVal)) {
+      filtered.push(p.shortuid)
+    }
+  }
+  if (routeProfile.value && !filtered.includes(routeProfile.value)) filtered.push(routeProfile.value)
+  return filtered
+})
+
 async function loadTenants() {
   tenantsLoading.value = true
   try {
@@ -111,21 +132,26 @@ async function loadDestinations() {
   if (!c) {
     destinations.value = null
     routes.value = []
+    routeProfiles.value = []
     return
   }
   destinationsLoading.value = true
   try {
-    const [destResponse, routeResponse] = await Promise.all([
+    const [destResponse, routeResponse, profileResponse] = await Promise.all([
       getApiClient().get('destinations', { params: { cluster: c } }),
-      getApiClient().get('routes')
+      getApiClient().get('routes'),
+      getApiClient().get('routeprofiles')
     ])
     const destBody =
       destResponse && typeof destResponse === 'object' ? (destResponse.data ?? destResponse) : null
     destinations.value = destBody && typeof destBody === 'object' ? destBody : null
     routes.value = normalizeList(routeResponse, 'routes')
+    routeProfiles.value =
+      normalizeList(profileResponse, 'routeprofiles') || normalizeList(profileResponse)
   } catch {
     destinations.value = null
     routes.value = []
+    routeProfiles.value = []
   } finally {
     destinationsLoading.value = false
   }
@@ -137,6 +163,7 @@ function resetForm() {
   pkey.value = ''
   openroute.value = 'None'
   closeroute.value = 'None'
+  routeProfile.value = ''
   pkeyValidation.reset()
   clusterValidation.reset()
   carrierValidation.reset()
@@ -148,6 +175,7 @@ watch(cluster, () => {
   loadDestinations()
   openroute.value = 'None'
   closeroute.value = 'None'
+  routeProfile.value = ''
 })
 
 onMounted(async () => {
@@ -179,7 +207,8 @@ async function onSubmit(e) {
       cluster: cluster.value.trim(),
       technology: carrier.value.trim(),
       openroute: openroute.value && openroute.value !== 'None' ? openroute.value : 'None',
-      closeroute: closeroute.value && closeroute.value !== 'None' ? closeroute.value : 'None'
+      closeroute: closeroute.value && closeroute.value !== 'None' ? closeroute.value : 'None',
+      route_profile: routeProfile.value || null
     }
     await getApiClient().post('inboundroutes', body)
     toast.show(`Inbound route ${pkey.value.trim()} created`)
@@ -293,9 +322,16 @@ function onKeydown(e) {
       <h2 class="detail-heading">Destinations</h2>
       <div class="form-fields">
         <FormSelect
+          id="route-profile"
+          v-model="routeProfile"
+          label="Route profile (optional)"
+          :options="routeProfileOptions"
+          :loading="destinationsLoading"
+        />
+        <FormSelect
           id="openroute"
           v-model="openroute"
-          label="Open route"
+          label="Open route (legacy dual-read)"
           :options="openrouteOptions"
           :option-groups="destinationGroups"
           :loading="destinationsLoading"
@@ -303,7 +339,7 @@ function onKeydown(e) {
         <FormSelect
           id="closeroute"
           v-model="closeroute"
-          label="Closed route"
+          label="Closed route (legacy dual-read)"
           :options="closerouteOptions"
           :option-groups="destinationGroups"
         />
