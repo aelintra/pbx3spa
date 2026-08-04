@@ -6,17 +6,31 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-04 — time-based routing (day-parts) A–E complete
+
+**On branch `time-based-routing` (push/merge open):** SPA route profiles primary; inbound/daytimers/holidays schedule-mode fields; tenants show **Schedule** force + timer `sched_mode`. API + packages on golden **0.0.4-7** / cagi **1.0.0-13**. Open/close demoted labels; help keys applied on golden.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SPA `npm run dev` on **`time-based-routing`**. DID **`01924910444`**. Sideband timer ~1 min → refresh list/detail to see mode change.
+
+**Operator impact:** Configure **route profiles** then attach DIDs; daytimers write named modes (not only closed windows). Master force still AUTO/CLOSED in SPA; multi-mode force via AstDB/BLF path. **Kildare** not updated.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TIME_BASED_ROUTING_REQUIREMENTS.md`**.
+
+**Resume:** Operator play-test; then push four repos / PR when ready. Wait for task.
+
+---
+
 ## Session end 2026-08-04 — short dial package roll + residual docs
 
-**Fleet packages on `main`:** **pbx3 0.0.4-6** + **pbx3cagi 1.0.0-11** on golden / bzy / kildare (GenAst PrefixDial + cagi packaged). Dialaliases API synced. SPA product code unchanged this session (Dial prefixes already on **main**).
+**Superseded** by day-parts block above for “read first.” **Fleet packages on `main`:** **pbx3 0.0.4-6** + **pbx3cagi 1.0.0-11** on golden / bzy / kildare. Day-parts lab packages on golden only supersede those versions.
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SPA `npm run dev` · **Outbound → Dial prefixes** (instance admin). Magrathea **`3.93.26.82`**.
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · **Outbound → Dial prefixes**. Magrathea **`3.93.26.82`**.
 
-**Operator impact:** Sister-site short dial no longer requires live-patched golden/cagi — fleet packages match product path. CLIP still presentation **extension** + PAI return AoR; **missed-call redial OEM-open** (see TODO **D**). InterSARK convert: **`DIAL_PREFIX_LEGACY_MIGRATE.md`**.
+**Operator impact:** Short dial fleet-wide; CLIP redial OEM-open (**TODO D**).
 
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TENANT_SHORT_DIAL_REQUIREMENTS.md`** · sipplab **`SITE_DIAL_PACK_GATE_PLAN.md`** (E, not executed).
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TENANT_SHORT_DIAL_REQUIREMENTS.md`**.
 
-**Resume:** **D** least-ugly guaranteed return lab when scheduled; optional **E** pack-gate; **time-based routing**. Wait for operator task.
+**Resume:** See current session end block above.
 
 ---
 
