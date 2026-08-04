@@ -6,6 +6,20 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-03 — SPA WSS line test shipped
+
+**Merged to `main` (pbx3spa):** JsSIP **Line test** on WebRTC extension detail — edge WSS path prover + post-call quality report (lab green: register / dial / answer / report). Violet right-aligned button; click feedback; no MAC on WebRTC edit. **pbx3** TODO/handoff: short dial + time-based routing next; parks for SPA bundle diet, lab DB anonymize, exploratory provision server.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · WSS `wss://sbc.pbx3.com:8089/ws` · **`8af9ee`** / **`dhbm8x.pbx3.com`** · SIP pass from create/regen/`~/webrtc-1500.env`.
+
+**Operator impact:** Admins can prove Magrathea WebRTC registration and media from the instance SPA and leave a measurable quality report. Not a softphone.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`WSS_LINE_TEST_REQUIREMENTS.md`**.
+
+**Resume:** **Tenant short dial** · **time-based routing** as next big product tracks (when scheduled). Wait for operator task.
+
+---
+
 ## Session end 2026-08-03 — package roll fleet + bzy SBC fix
 
 **Merged / on `main`:** **pbx3 0.0.4-5** + **pbx3cagi 1.0.0-10** on **08jzwn**, **bzy54n**, **kildare**. Magrathea: bzy IP whitelist + dispatcher setid 3 → `54.158.236.215`. Earlier same day: W1 WSS lab green; SPA **WSS line test** requirements locked.
