@@ -19,7 +19,7 @@
 | Data-driven list policy | DATA_DRIVEN_LIST_POLICY_PROJECT.md | deferred |
 | SPA bundle / maintainability (lazy routes, list/detail extraction) | PROJECT_PLAN.md § Current state, PBX3SPA_CODEBASE_ANALYSIS.md § Phase H / H2 | **deferred** (after S8, R1) |
 | SPA shell (nav / chrome) | SPA_SHELL_ROADMAP.md, SESSION_HANDOFF.md § Shell / topbar + Latest session | Stage 1 + Stage 2 on **`main`**: context chips (**viewport-centered** top bar, **`--pbx-shell-sidebar-width`**), **PBX3 Admin** title left, **sidebar top spacer** (no rail logo yet), **detail active header**; collapsible sidebar / ⌘K still optional |
-| **WSS line test (in-admin)** | **`WSS_LINE_TEST_REQUIREMENTS.md`** (direction **locked 2026-08-03**) · **pbx3** `WEBRTC_WSS_LAB.md` § Fleet edge W1 · §6.1 | **planned** — thin **line test** in **instance SPA**: SIP.js/JsSIP in browser; **real WebRTC extension**; WSS host = edge (not instance); home PJSIP is UDP+proxy+`webrtc=yes` (SBC terminates WSS). **Not** desk softphone / Browser-Phone. Fleet mode not v1 host. |
+| **WSS line test (in-admin)** | **`WSS_LINE_TEST_REQUIREMENTS.md`** (**JsSIP** + post-call report; lab green 2026-08-03) · **pbx3** `WEBRTC_WSS_LAB.md` § Fleet edge W1 · §6.1 | **done** — **Line test** on **WebRTC extension detail** (side panel): JsSIP dialler; WSS = edge default; after BYE → loss/jitter/RTT report. **Not** softphone chrome. |
 
 
 **Source of truth:** Schema and code. Verify against repo when implementing; this index may be outdated.

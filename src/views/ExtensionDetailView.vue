@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
-import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
@@ -16,6 +15,7 @@ import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
+import LineTestPanel from '@/components/LineTestPanel.vue'
 import { useAuthStore } from '@/stores/auth'
 const route = useRoute()
 const auth = useAuthStore()
@@ -69,8 +69,15 @@ const openCos = ref({})
 const closedCos = ref({})
 const cosLoaded = ref(false)
 const cosError = ref('')
+const lineTestOpen = ref(false)
 
 const shortuid = computed(() => route.params.shortuid)
+
+/** Line test is WebRTC-only (real ipphone path; SBC terminates WSS). */
+const isWebRtcExtension = computed(() => {
+  const d = extension.value?.device
+  return d != null && String(d).trim().toLowerCase() === 'webrtc'
+})
 
 const clusterToTenantPkey = computed(() => {
   const map = new Map()
@@ -345,6 +352,14 @@ async function confirmAndDelete() {
   }
 }
 
+function openLineTest() {
+  lineTestOpen.value = true
+}
+
+function closeLineTest() {
+  lineTestOpen.value = false
+}
+
 function openRegenerateSipModal() {
   regenerateSipError.value = ''
   confirmRegenerateSipOpen.value = true
@@ -436,6 +451,14 @@ const panelTitleTenantSuffix = computed(() => {
           <div class="edit-actions edit-actions-top">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
             <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
+            <button
+              v-if="isWebRtcExtension"
+              type="button"
+              class="secondary line-test-open-btn"
+              @click="openLineTest"
+            >
+              Line test
+            </button>
             <button
               type="button"
               class="action-delete"
@@ -844,6 +867,15 @@ const panelTitleTenantSuffix = computed(() => {
         </p>
       </template>
     </DeleteConfirmModal>
+
+    <LineTestPanel
+      :show="lineTestOpen"
+      :sip-user="extension?.shortuid ?? ''"
+      :sip-domain="sipRegistrar !== '—' ? sipRegistrar : ''"
+      :dialable-label="extension?.pkey != null ? String(extension.pkey) : ''"
+      :initial-password="extension?.passwd != null ? String(extension.passwd) : ''"
+      @close="closeLineTest"
+    />
   </div>
 </template>
 
