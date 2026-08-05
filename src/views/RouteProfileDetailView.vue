@@ -147,10 +147,7 @@ async function fetchProfile() {
       destination: l.destination || 'None'
     }))
     if (!lines.value.length) {
-      lines.value = [
-        { mode: 'open', destination: 'None' },
-        { mode: 'closed', destination: 'None' }
-      ]
+      lines.value = [{ mode: 'open', destination: '' }]
     }
     await loadDestinations()
   } catch (err) {
@@ -175,6 +172,19 @@ function addLine() {
 }
 
 function removeLine(i) {
+  const line = lines.value[i]
+  const mode = String(line?.mode || '')
+    .trim()
+    .toLowerCase()
+  if (mode === 'open') {
+    const openCount = lines.value.filter(
+      (l) => String(l.mode || '').trim().toLowerCase() === 'open'
+    ).length
+    if (openCount <= 1) {
+      saveError.value = 'Cannot remove the open mode line — inbound needs an open destination'
+      return
+    }
+  }
   lines.value.splice(i, 1)
 }
 
@@ -216,6 +226,14 @@ async function saveEdit(e) {
   }
   if (!bodyLines.length) {
     saveError.value = 'At least one mode line is required'
+    return
+  }
+  if (!bodyLines.some((l) => l.mode === 'open')) {
+    saveError.value = 'Profile must include an open mode destination'
+    return
+  }
+  if (bodyLines.some((l) => !l.destination || l.destination.toLowerCase() === 'none')) {
+    saveError.value = 'Each mode line needs a real destination (not None)'
     return
   }
   saving.value = true

@@ -24,8 +24,8 @@ const { ensureFetched, applySchemaDefaults } = useSchema()
 const cluster = ref('')
 const carrier = ref('')
 const pkey = ref('')
-const openroute = ref('None')
-const closeroute = ref('None')
+const openroute = ref('')
+const closeroute = ref('')
 const routeProfile = ref('')
 const routeProfiles = ref([])
 const tenants = ref([])
@@ -36,6 +36,8 @@ const error = ref('')
 const loading = ref(false)
 const tenantsLoading = ref(true)
 const pkeyInput = ref(null)
+const openrouteError = ref('')
+const openrouteTouched = ref(false)
 
 const pkeyValidation = useFormValidation(pkey, validateInboundRoutePkey)
 const clusterValidation = useFormValidation(cluster, validateTenant)
@@ -90,8 +92,23 @@ const destinationGroups = computed(() => {
   }
 })
 
-const openrouteOptions = computed(() => ['None', 'Operator'])
-const closerouteOptions = computed(() => ['None', 'Operator'])
+/** Empty placeholder + Operator; real dests come from option-groups. */
+const destPickOptions = computed(() => ['', 'Operator'])
+
+function isNoneDest(v) {
+  const t = String(v ?? '').trim()
+  return !t || t.toLowerCase() === 'none'
+}
+
+function validateOpenroute() {
+  openrouteTouched.value = true
+  if (isNoneDest(openroute.value)) {
+    openrouteError.value = 'Open destination is required'
+    return false
+  }
+  openrouteError.value = ''
+  return true
+}
 
 function routeProfileOptionLabel(p) {
   const su = String(p?.shortuid ?? '').trim()
@@ -102,7 +119,7 @@ function routeProfileOptionLabel(p) {
 
 const routeProfileOptions = computed(() => {
   const clusterVal = cluster.value
-  const filtered = [{ value: '', label: '' }]
+  const filtered = [{ value: '', label: 'Create new from open/closed' }]
   if (!clusterVal) return filtered
   const map = new Map()
   for (const t of tenants.value) {
@@ -178,9 +195,11 @@ function resetForm() {
   cluster.value = ''
   carrier.value = ''
   pkey.value = ''
-  openroute.value = 'None'
-  closeroute.value = 'None'
+  openroute.value = ''
+  closeroute.value = ''
   routeProfile.value = ''
+  openrouteError.value = ''
+  openrouteTouched.value = false
   pkeyValidation.reset()
   clusterValidation.reset()
   carrierValidation.reset()
@@ -190,9 +209,18 @@ function resetForm() {
 
 watch(cluster, () => {
   loadDestinations()
-  openroute.value = 'None'
-  closeroute.value = 'None'
+  openroute.value = ''
+  closeroute.value = ''
   routeProfile.value = ''
+  openrouteError.value = ''
+  openrouteTouched.value = false
+})
+
+watch(openroute, (v) => {
+  if (!isNoneDest(v) && isNoneDest(closeroute.value)) {
+    closeroute.value = v
+  }
+  if (openrouteTouched.value) validateOpenroute()
 })
 
 onMounted(async () => {
@@ -209,8 +237,13 @@ async function onSubmit(e) {
     { ...carrierValidation, fieldId: 'carrier' },
     { ...pkeyValidation, fieldId: 'pkey' }
   ]
-  if (!validateAll(validations)) {
+  const openOk = validateOpenroute()
+  if (!validateAll(validations) || !openOk) {
     await nextTick()
+    if (!openOk) {
+      document.getElementById('openroute')?.focus()
+      return
+    }
     focusFirstError(validations, (id) => {
       if (id === 'pkey' && pkeyInput.value) return pkeyInput.value
       return document.getElementById(id)
@@ -219,12 +252,14 @@ async function onSubmit(e) {
   }
   loading.value = true
   try {
+    const open = openroute.value.trim()
+    const closed = isNoneDest(closeroute.value) ? open : closeroute.value.trim()
     const body = {
       pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
       technology: carrier.value.trim(),
-      openroute: openroute.value && openroute.value !== 'None' ? openroute.value : 'None',
-      closeroute: closeroute.value && closeroute.value !== 'None' ? closeroute.value : 'None',
+      openroute: open,
+      closeroute: closed,
       route_profile: routeProfile.value || null
     }
     await getApiClient().post('inboundroutes', body)
@@ -252,12 +287,23 @@ async function onSubmit(e) {
           : errors.technology ||
             (Array.isArray(errors.carrier) ? errors.carrier[0] : errors.carrier)
       }
+      if (errors.openroute) {
+        openrouteTouched.value = true
+        openrouteError.value = Array.isArray(errors.openroute)
+          ? errors.openroute[0]
+          : errors.openroute
+      }
       await nextTick()
       focusFirstError(
         [
           { ...clusterValidation, fieldId: 'cluster' },
           { ...carrierValidation, fieldId: 'carrier' },
-          { ...pkeyValidation, fieldId: 'pkey' }
+          { ...pkeyValidation, fieldId: 'pkey' },
+          {
+            error: openrouteError,
+            touched: openrouteTouched,
+            fieldId: 'openroute'
+          }
         ],
         (id) => (id === 'pkey' && pkeyInput.value ? pkeyInput.value : document.getElementById(id))
       )
@@ -336,29 +382,39 @@ function onKeydown(e) {
         />
       </div>
 
-      <h2 class="detail-heading">Destinations</h2>
+      <h2 class="detail-heading">Routing</h2>
+      <p class="hint">
+        Open destination is required (calendar / BLF baseline). Closed defaults to the same
+        destination — change it for after-hours or leave matching for toggle-only sites. Leave
+        profile empty to auto-create one with open and closed lines.
+      </p>
       <div class="form-fields">
-        <FormSelect
-          id="route-profile"
-          v-model="routeProfile"
-          label="Route profile (optional)"
-          :options="routeProfileOptions"
-          :loading="destinationsLoading"
-        />
         <FormSelect
           id="openroute"
           v-model="openroute"
-          label="Legacy open"
-          :options="openrouteOptions"
+          label="Open destination"
+          :options="destPickOptions"
           :option-groups="destinationGroups"
           :loading="destinationsLoading"
+          :required="true"
+          :error="openrouteError"
+          :touched="openrouteTouched"
+          @blur="validateOpenroute"
         />
         <FormSelect
           id="closeroute"
           v-model="closeroute"
-          label="Legacy closed"
-          :options="closerouteOptions"
+          label="Closed destination"
+          :options="destPickOptions"
           :option-groups="destinationGroups"
+          :loading="destinationsLoading"
+        />
+        <FormSelect
+          id="route-profile"
+          v-model="routeProfile"
+          label="Route profile"
+          :options="routeProfileOptions"
+          :loading="destinationsLoading"
         />
       </div>
 
@@ -390,6 +446,12 @@ function onKeydown(e) {
 }
 .detail-heading:first-of-type {
   margin-top: 0;
+}
+.hint {
+  margin: 0 0 0.25rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.4;
 }
 .form-fields {
   display: flex;

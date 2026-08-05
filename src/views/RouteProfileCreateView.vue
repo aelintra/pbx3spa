@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation } from '@/composables/useFormValidation'
 import { validateTenant } from '@/utils/validation'
+import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
@@ -16,10 +17,17 @@ const toast = useToastStore()
 const name = ref('')
 const cluster = ref('default')
 const description = ref('')
+const openDest = ref('')
+const closedDest = ref('')
 const tenants = ref([])
+const destinations = ref(null)
+const routes = ref([])
+const destinationsLoading = ref(false)
 const tenantsLoading = ref(true)
 const error = ref('')
 const loading = ref(false)
+const openError = ref('')
+const openTouched = ref(false)
 
 const clusterValidation = useFormValidation(cluster, validateTenant)
 
@@ -36,6 +44,58 @@ const tenantOptionsForSelect = computed(() => {
   return list
 })
 
+function toDestArrays(d) {
+  if (!d || typeof d !== 'object') return {}
+  return {
+    Queues: Array.isArray(d.Queues) ? d.Queues : Array.isArray(d.queues) ? d.queues : [],
+    Extensions: Array.isArray(d.Extensions)
+      ? d.Extensions
+      : Array.isArray(d.extensions)
+        ? d.extensions
+        : [],
+    IVRs: Array.isArray(d.IVRs) ? d.IVRs : Array.isArray(d.ivrs) ? d.ivrs : [],
+    CustomApps: Array.isArray(d.CustomApps)
+      ? d.CustomApps
+      : Array.isArray(d.customApps)
+        ? d.customApps
+        : []
+  }
+}
+
+const destinationGroups = computed(() => {
+  const d = destinations.value
+  const clusterVal = cluster.value
+  const routeList = routes.value || []
+  const routesForCluster = clusterVal
+    ? routeList
+        .filter((r) => (r.cluster ?? r.tenant_pkey ?? '') === clusterVal)
+        .map((r) => r.pkey)
+        .filter(Boolean)
+    : []
+  const base = toDestArrays(d)
+  return {
+    ...base,
+    Routes: [...new Set(routesForCluster)].sort((a, b) => String(a).localeCompare(String(b)))
+  }
+})
+
+const destPickOptions = computed(() => ['', 'Operator'])
+
+function isNoneDest(v) {
+  const t = String(v ?? '').trim()
+  return !t || t.toLowerCase() === 'none'
+}
+
+function validateOpen() {
+  openTouched.value = true
+  if (isNoneDest(openDest.value)) {
+    openError.value = 'Open destination is required'
+    return false
+  }
+  openError.value = ''
+  return true
+}
+
 async function loadTenants() {
   tenantsLoading.value = true
   try {
@@ -51,7 +111,48 @@ async function loadTenants() {
   }
 }
 
-onMounted(loadTenants)
+async function loadDestinations() {
+  const c = cluster.value
+  if (!c) {
+    destinations.value = null
+    routes.value = []
+    return
+  }
+  destinationsLoading.value = true
+  try {
+    const [destResponse, routeResponse] = await Promise.all([
+      getApiClient().get('destinations', { params: { cluster: c } }),
+      getApiClient().get('routes')
+    ])
+    const destBody =
+      destResponse && typeof destResponse === 'object' ? (destResponse.data ?? destResponse) : null
+    destinations.value = destBody && typeof destBody === 'object' ? destBody : null
+    routes.value = normalizeList(routeResponse, 'routes')
+  } catch {
+    destinations.value = null
+    routes.value = []
+  } finally {
+    destinationsLoading.value = false
+  }
+}
+
+watch(cluster, () => {
+  openDest.value = ''
+  closedDest.value = ''
+  loadDestinations()
+})
+
+watch(openDest, (v) => {
+  if (!isNoneDest(v) && isNoneDest(closedDest.value)) {
+    closedDest.value = v
+  }
+  if (openTouched.value) validateOpen()
+})
+
+onMounted(async () => {
+  await loadTenants()
+  await loadDestinations()
+})
 
 function goBack() {
   router.push({ name: 'routeprofiles' })
@@ -72,17 +173,19 @@ async function onSubmit(e) {
     error.value = 'Name is required'
     return
   }
+  if (!validateOpen()) return
   loading.value = true
   try {
+    const open = openDest.value.trim()
+    const closed = isNoneDest(closedDest.value) ? open : closedDest.value.trim()
     const body = {
       name: name.value.trim(),
       cluster: cluster.value.trim(),
-      // Hidden in SPA: axiomatic open on profile miss (revisit later if needed).
       default_mode: 'open',
       description: description.value.trim() || null,
       lines: [
-        { mode: 'open', destination: 'None' },
-        { mode: 'closed', destination: 'None' }
+        { mode: 'open', destination: open },
+        { mode: 'closed', destination: closed }
       ]
     }
     const created = await getApiClient().post('routeprofiles', body)
@@ -101,6 +204,10 @@ async function onSubmit(e) {
       clusterValidation.error.value = Array.isArray(errors.cluster)
         ? errors.cluster[0]
         : errors.cluster
+    }
+    if (errors?.lines || errors?.['lines.0.destination']) {
+      openTouched.value = true
+      openError.value = Array.isArray(errors.lines) ? errors.lines[0] : errors.lines || openError.value
     }
     await nextTick()
   } finally {
@@ -123,9 +230,8 @@ async function onSubmit(e) {
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
       </div>
-      <h2 class="detail-heading">Profile</h2>
+
       <div class="form-fields">
-        <FormField id="name" v-model="name" label="Name" type="text" required placeholder="e.g. Standard day" />
         <FormSelect
           id="cluster"
           v-model="cluster"
@@ -137,9 +243,42 @@ async function onSubmit(e) {
           :loading="tenantsLoading"
           @blur="clusterValidation.onBlur"
         />
-        <FormField id="description" v-model="description" label="Description" type="text" />
+        <FormField
+          id="name"
+          v-model="name"
+          label="Name"
+          type="text"
+          :required="true"
+          placeholder="e.g. Main DID"
+        />
+        <FormField
+          id="description"
+          v-model="description"
+          label="Description (optional)"
+          type="text"
+        />
+        <FormSelect
+          id="open-dest"
+          v-model="openDest"
+          label="Open destination"
+          :options="destPickOptions"
+          :option-groups="destinationGroups"
+          :loading="destinationsLoading"
+          :required="true"
+          :error="openError"
+          :touched="openTouched"
+          @blur="validateOpen"
+        />
+        <FormSelect
+          id="closed-dest"
+          v-model="closedDest"
+          label="Closed destination"
+          :options="destPickOptions"
+          :option-groups="destinationGroups"
+          :loading="destinationsLoading"
+        />
       </div>
-      <p class="hint">Open and closed lines are created with destination None — edit them after create.</p>
+
       <div class="actions">
         <button type="submit" :disabled="loading || tenantsLoading">
           {{ loading ? 'Creating…' : 'Create' }}
@@ -152,7 +291,7 @@ async function onSubmit(e) {
 
 <style scoped>
 .create-view {
-  max-width: 52rem;
+  max-width: 40rem;
 }
 .form {
   margin-top: 1rem;
@@ -161,41 +300,45 @@ async function onSubmit(e) {
   gap: 0.75rem;
 }
 .form-fields {
-  display: grid;
-  gap: 0.75rem;
-  max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
-.detail-heading {
-  margin: 0.5rem 0 0;
-  font-size: 1rem;
+.error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin: 0;
 }
 .actions {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
 }
-.actions button,
-.secondary {
-  padding: 0.4rem 0.85rem;
-  border-radius: 0.35rem;
-  border: 1px solid var(--color-border, #ccc);
+.actions button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
   cursor: pointer;
-  font: inherit;
 }
 .actions button[type='submit'] {
-  background: var(--color-accent, #2563eb);
   color: #fff;
-  border-color: transparent;
+  background: #2563eb;
+  border: none;
 }
-.secondary {
+.actions button[type='submit']:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+.actions button[type='submit']:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.actions button.secondary {
+  color: #64748b;
   background: transparent;
+  border: 1px solid #e2e8f0;
 }
-.error {
-  color: var(--color-danger, #b91c1c);
-}
-.hint {
-  font-size: 0.85rem;
-  opacity: 0.8;
-  margin: 0;
+.actions button.secondary:hover {
+  background: #f1f5f9;
 }
 </style>
