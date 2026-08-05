@@ -225,6 +225,65 @@ export const SCHEDULE_MODE_REGEX = /^[a-z][a-z0-9_-]{0,31}$/
 
 export const COMMON_SCHEDULE_MODES = ['open', 'closed', 'lunch', 'night', 'break']
 
+/** Day-of-week order Mon→Sun (matches Asterisk / pbx3-schedule). */
+export const DOW_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+
+/**
+ * Normalize dayofweek: trim + lowercase; empty → '*'.
+ * @param {string|null|undefined} value
+ */
+export function normalizeDayOfWeek(value) {
+  const s = value == null ? '' : String(value).trim().toLowerCase()
+  return s === '' ? '*' : s
+}
+
+/**
+ * *, single dow, or forward range start-end (no wrap).
+ * @param {string|null|undefined} value
+ * @param {{ allowEmpty?: boolean }} [opts]
+ * @returns {string|null} error message or null
+ */
+export function validateDayOfWeek(value, opts = {}) {
+  const { allowEmpty = false } = opts
+  const raw = value == null ? '' : String(value).trim()
+  if (raw === '') {
+    return allowEmpty ? null : 'Day of week is required'
+  }
+  const s = normalizeDayOfWeek(raw)
+  if (s === '*') return null
+  const idx = Object.fromEntries(DOW_ORDER.map((d, i) => [d, i]))
+  if (Object.prototype.hasOwnProperty.call(idx, s)) return null
+  const m = /^([a-z]{3})-([a-z]{3})$/.exec(s)
+  if (!m) {
+    return 'Use *, a day (mon…sun), or a forward range (e.g. mon-fri)'
+  }
+  const a = m[1]
+  const b = m[2]
+  if (!Object.prototype.hasOwnProperty.call(idx, a) || !Object.prototype.hasOwnProperty.call(idx, b)) {
+    return 'Day range must use mon…sun'
+  }
+  if (idx[a] >= idx[b]) {
+    return 'Day range must run forward Mon→Sun (e.g. mon-thu); wrap-around (tue-mon) is not allowed'
+  }
+  return null
+}
+
+/**
+ * Friendly label for list/select.
+ * @param {string|null|undefined} dow
+ */
+export function dayOfWeekLabel(dow) {
+  const s = normalizeDayOfWeek(dow)
+  if (s === '*') return 'Every day'
+  const m = /^([a-z]{3})-([a-z]{3})$/.exec(s)
+  if (m) {
+    const a = m[1].charAt(0).toUpperCase() + m[1].slice(1)
+    const b = m[2].charAt(0).toUpperCase() + m[2].slice(1)
+    return `${a}–${b}`
+  }
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
 /**
  * @param {string|null|undefined} value
  * @param {{ allowEmpty?: boolean }} [opts]

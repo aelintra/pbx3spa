@@ -6,6 +6,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { dayOfWeekLabel } from '@/utils/validation'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListActiveChip from '@/components/ListActiveChip.vue'
@@ -45,11 +46,6 @@ function parseTimespan(ts) {
   const dash = s.indexOf('-')
   if (dash === -1) return { start: s || '*', end: '*' }
   return { start: s.slice(0, dash).trim() || '*', end: s.slice(dash + 1).trim() || '*' }
-}
-
-function dayOfWeekLabel(dow) {
-  if (dow == null || dow === '' || dow === '*') return 'Every day'
-  return String(dow).charAt(0).toUpperCase() + String(dow).slice(1)
 }
 
 function modeLabel(m) {

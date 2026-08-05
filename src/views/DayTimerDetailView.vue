@@ -14,7 +14,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
-import { COMMON_SCHEDULE_MODES, validateScheduleMode, validateSchedulePriority } from '@/utils/validation'
+import { COMMON_SCHEDULE_MODES, validateScheduleMode, validateSchedulePriority, validateDayOfWeek, normalizeDayOfWeek, dayOfWeekLabel } from '@/utils/validation'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -69,6 +69,10 @@ const tenantPkeyToShortuid = computed(() => {
 
 const dayOfWeekOptions = [
   { value: '*', label: 'Every day' },
+  { value: 'mon-fri', label: 'Mon–Fri' },
+  { value: 'mon-thu', label: 'Mon–Thu' },
+  { value: 'tue-fri', label: 'Tue–Fri' },
+  { value: 'sat-sun', label: 'Sat–Sun' },
   { value: 'mon', label: 'mon' },
   { value: 'tue', label: 'tue' },
   { value: 'wed', label: 'wed' },
@@ -77,6 +81,15 @@ const dayOfWeekOptions = [
   { value: 'sat', label: 'sat' },
   { value: 'sun', label: 'sun' }
 ]
+
+const dayOfWeekOptionsForSelect = computed(() => {
+  const cur = normalizeDayOfWeek(editDayofweek.value)
+  const opts = [...dayOfWeekOptions]
+  if (cur && !opts.some((o) => o.value === cur)) {
+    opts.push({ value: cur, label: dayOfWeekLabel(cur) })
+  }
+  return opts
+})
 
 /** Presets + modes already used on this tenant (profiles + day timers). Type a new string anytime. */
 const modeSuggestions = computed(() => {
@@ -185,7 +198,7 @@ async function fetchDaytimer() {
     const d = daytimer.value
     const clusterRaw = d?.cluster ?? 'default'
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
-    editDayofweek.value = d?.dayofweek ?? '*'
+    editDayofweek.value = normalizeDayOfWeek(d?.dayofweek ?? '*')
     editDescription.value = d?.description ?? ''
     editMode.value = (d?.mode || 'closed').toLowerCase()
     editPriority.value = d?.priority != null ? Number(d.priority) : 0
@@ -255,6 +268,12 @@ async function saveEdit(e) {
     return
   }
   normalizeEditMode()
+  editDayofweek.value = normalizeDayOfWeek(editDayofweek.value)
+  const dowErr = validateDayOfWeek(editDayofweek.value)
+  if (dowErr) {
+    saveError.value = dowErr
+    return
+  }
   const modeErr = validateScheduleMode(editMode.value)
   if (modeErr) {
     saveError.value = modeErr
@@ -269,7 +288,7 @@ async function saveEdit(e) {
   try {
     const body = {
       cluster: editCluster.value.trim(),
-      dayofweek: editDayofweek.value,
+      dayofweek: normalizeDayOfWeek(editDayofweek.value),
       description: editDescription.value.trim() || null,
       timespan: buildTimespan(),
       mode: editMode.value,
@@ -436,7 +455,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-dayofweek"
               v-model="editDayofweek"
               label="Day of week"
-              :options="dayOfWeekOptions"
+              :options="dayOfWeekOptionsForSelect"
             />
             <FormToggle
               id="edit-allday"
