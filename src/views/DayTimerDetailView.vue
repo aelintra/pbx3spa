@@ -53,7 +53,16 @@ const tenantShortuidToPkey = computed(() => {
   return map
 })
 
-const dayOfWeekOptions = ['*', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+const dayOfWeekOptions = [
+  { value: '*', label: 'Every day' },
+  { value: 'mon', label: 'mon' },
+  { value: 'tue', label: 'tue' },
+  { value: 'wed', label: 'wed' },
+  { value: 'thu', label: 'thu' },
+  { value: 'fri', label: 'fri' },
+  { value: 'sat', label: 'sat' },
+  { value: 'sun', label: 'sun' }
+]
 
 const modeOptions = computed(() => {
   const list = [...COMMON_SCHEDULE_MODES]

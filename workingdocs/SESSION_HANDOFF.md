@@ -6,7 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-04 — day-parts play-test + timer TZ/half-open + UX locks
+
+**On branch `time-based-routing`:** Timer uses Network site TZ; timespans half-open `[start,end)`; Day timer edit shows **Every day** for `*`. Spec: **default open** locked (BLF-only shops); **`mon-fri` ranges** = next UX must-have. Aelintra lab has full office day-parts (many weekday clones until ranges).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SPA `npm run dev` on **`time-based-routing`**. Tenant **Aelintra**. DID **`01924910444`**.
+
+**Operator impact:** Enter local office hours (not UTC). Abutting windows use exact times (e.g. `20:00` / `08:30`). Prefer **Every day** overnight closed + sat/sun (SARK-style) where binary; day-parts modes still need ranges for clean Mon–Fri open/lunch/evening.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TIME_BASED_ROUTING_REQUIREMENTS.md`** §5.8–5.9.
+
+**Resume:** Flip → implement day-of-week ranges; then push/PR merge four repos when ready.
+
+---
+
 ## Session end 2026-08-04 — time-based routing (day-parts) A–E complete
+
+**Superseded** by play-test / timer harden block above.
 
 **On branch `time-based-routing` (push/merge open):** SPA route profiles primary; inbound/daytimers/holidays schedule-mode fields; tenants show **Schedule** force + timer `sched_mode`. API + packages on golden **0.0.4-7** / cagi **1.0.0-13**. Open/close demoted labels; help keys applied on golden.
 
@@ -16,7 +32,7 @@
 
 **Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TIME_BASED_ROUTING_REQUIREMENTS.md`**.
 
-**Resume:** Operator play-test; then push four repos / PR when ready. Wait for task.
+**Resume:** See current session end block above.
 
 ---
 
