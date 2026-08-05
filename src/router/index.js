@@ -23,6 +23,9 @@ import ClassOfServiceDetailView from '../views/ClassOfServiceDetailView.vue'
 import DayTimersListView from '../views/DayTimersListView.vue'
 import DayTimerCreateView from '../views/DayTimerCreateView.vue'
 import DayTimerDetailView from '../views/DayTimerDetailView.vue'
+import RouteProfilesListView from '../views/RouteProfilesListView.vue'
+import RouteProfileCreateView from '../views/RouteProfileCreateView.vue'
+import RouteProfileDetailView from '../views/RouteProfileDetailView.vue'
 import HolidayTimersListView from '../views/HolidayTimersListView.vue'
 import HolidayTimerCreateView from '../views/HolidayTimerCreateView.vue'
 import HolidayTimerDetailView from '../views/HolidayTimerDetailView.vue'
@@ -127,6 +130,13 @@ const router = createRouter({
         { path: 'daytimers', name: 'daytimers', component: DayTimersListView },
         { path: 'daytimers/new', name: 'daytimer-create', component: DayTimerCreateView },
         { path: 'daytimers/:shortuid', name: 'daytimer-detail', component: DayTimerDetailView },
+        { path: 'routeprofiles', name: 'routeprofiles', component: RouteProfilesListView },
+        { path: 'routeprofiles/new', name: 'routeprofile-create', component: RouteProfileCreateView },
+        {
+          path: 'routeprofiles/:shortuid',
+          name: 'routeprofile-detail',
+          component: RouteProfileDetailView
+        },
         { path: 'holidaytimers', name: 'holidaytimers', component: HolidayTimersListView },
         {
           path: 'holidaytimers/new',

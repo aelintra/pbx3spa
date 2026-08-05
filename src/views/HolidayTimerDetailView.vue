@@ -12,6 +12,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { COMMON_SCHEDULE_MODES, validateScheduleMode } from '@/utils/validation'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -26,6 +27,7 @@ const error = ref('')
 const editCluster = ref('default')
 const editDescription = ref('')
 const editRoute = ref('')
+const editForceMode = ref('')
 const startLocal = ref('')
 const endLocal = ref('')
 const saveError = ref('')
@@ -146,7 +148,12 @@ async function fetchHolidaytimer() {
     const clusterRaw = h?.cluster ?? 'default'
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
     editDescription.value = h?.description ?? ''
-    editRoute.value = h?.route && String(h.route).trim() !== '' ? String(h.route).trim() : ''
+    const dest =
+      (h?.force_dest && String(h.force_dest).trim()) ||
+      (h?.route && String(h.route).trim()) ||
+      ''
+    editRoute.value = dest
+    editForceMode.value = h?.force_mode ? String(h.force_mode).toLowerCase() : ''
     startLocal.value = epochToDatetimeLocal(h?.stime)
     endLocal.value = epochToDatetimeLocal(h?.etime)
   } catch (err) {
@@ -200,14 +207,24 @@ async function saveEdit(e) {
     saveError.value = err
     return
   }
+  if (editForceMode.value) {
+    const modeErr = validateScheduleMode(editForceMode.value)
+    if (modeErr) {
+      saveError.value = modeErr
+      return
+    }
+  }
   saving.value = true
   try {
     const stime = datetimeLocalToEpoch(startLocal.value)
     const etime = datetimeLocalToEpoch(endLocal.value)
+    const dest = editRoute.value && editRoute.value.trim() !== '' ? editRoute.value.trim() : null
     const body = {
       cluster: editCluster.value.trim(),
       description: editDescription.value.trim() || null,
-      route: editRoute.value && editRoute.value.trim() !== '' ? editRoute.value.trim() : null,
+      force_mode: editForceMode.value ? String(editForceMode.value).trim().toLowerCase() : null,
+      force_dest: dest,
+      route: dest,
       stime: stime ?? undefined,
       etime: etime ?? undefined
     }
@@ -330,10 +347,21 @@ const panelTitleTenantSuffix = computed(() => {
               type="text"
               placeholder="e.g. Christmas"
             />
+            <FormField
+              id="edit-force-mode"
+              v-model="editForceMode"
+              label="Force mode (optional)"
+              type="text"
+              placeholder="e.g. closed"
+              list="holiday-mode-suggestions"
+            />
+            <datalist id="holiday-mode-suggestions">
+              <option v-for="m in COMMON_SCHEDULE_MODES" :key="m" :value="m" />
+            </datalist>
             <FormSelect
               id="edit-route"
               v-model="editRoute"
-              label="Route"
+              label="Force destination (optional)"
               :options="['Operator']"
               :option-groups="destinationGroups"
               :loading="destinationsLoading"

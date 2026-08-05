@@ -35,9 +35,13 @@ function localUidDisplay(t) {
   return v == null || v === '' ? '—' : String(v)
 }
 
-/** Timer status: masteroclo or effective default AUTO */
+/** Master force: masteroclo; schedule mode from timer when present. */
 function timerStatusDisplay(t) {
-  return t.masteroclo != null && t.masteroclo !== '' ? t.masteroclo : 'AUTO'
+  const force = t.masteroclo != null && t.masteroclo !== '' ? t.masteroclo : 'AUTO'
+  const mode = t.sched_mode != null && String(t.sched_mode).trim() !== '' ? String(t.sched_mode) : ''
+  if (mode && force === 'AUTO') return mode
+  if (mode) return `${force}/${mode}`
+  return force
 }
 
 // --- Filter ---
@@ -113,7 +117,7 @@ const tenantExportColumns = computed(() => [
   { key: 'clusterclid', label: 'CLID' },
   { key: 'abstimeout', label: 'Abstimeout' },
   { key: 'chanmax', label: 'Chanmax' },
-  { key: 'masteroclo', label: 'Timer', getValue: (t) => timerStatusDisplay(t) }
+  { key: 'masteroclo', label: 'Schedule', getValue: (t) => timerStatusDisplay(t) }
 ])
 
 function doExportCsv() {
@@ -311,7 +315,7 @@ onMounted(async () => {
               :class="sortClass('masteroclo')"
               @click="setSort('masteroclo')"
             >
-              Timer status
+              Schedule
             </th>
             <th class="th-actions" title="Edit">
               <span class="action-icon" aria-hidden="true"

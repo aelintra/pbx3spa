@@ -72,9 +72,9 @@ export const TIMERS_FIELDS = [
   { key: 'ringdelay', label: 'Ring delay', type: 'number' },
   { key: 'ivr_key_wait', label: 'IVR key wait', type: 'number' },
   { key: 'ivr_digit_wait', label: 'IVR digit wait', type: 'number' },
-  {
+    {
     key: 'masteroclo',
-    label: 'Timer status',
+    label: 'Master force',
     type: 'segmented',
     options: ['AUTO', 'CLOSED'],
     helpPkey: 'masterclose'

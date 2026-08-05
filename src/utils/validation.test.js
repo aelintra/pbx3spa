@@ -9,6 +9,8 @@ import {
   validateInboundRoutePkey,
   validateIvrPkey,
   validateQueuePkey,
+  validateScheduleMode,
+  validateSchedulePriority,
   validateTenant
 } from './validation.js'
 
@@ -103,5 +105,25 @@ describe('validateCosPkey', () => {
   it('requires allowed characters', () => {
     expect(validateCosPkey('a b')).toContain('letters')
     expect(validateCosPkey('cos1')).toBeNull()
+  })
+})
+
+describe('validateScheduleMode', () => {
+  it('accepts common modes and rejects bad strings', () => {
+    expect(validateScheduleMode('open')).toBeNull()
+    expect(validateScheduleMode('Lunch')).toBeNull()
+    expect(validateScheduleMode('evening-1')).toBeNull()
+    expect(validateScheduleMode('', { allowEmpty: true })).toBeNull()
+    expect(validateScheduleMode('')).toBe('Mode is required')
+    expect(validateScheduleMode('Bad Mode')).toContain('lowercase')
+  })
+})
+
+describe('validateSchedulePriority', () => {
+  it('accepts integers in range', () => {
+    expect(validateSchedulePriority('')).toBeNull()
+    expect(validateSchedulePriority(10)).toBeNull()
+    expect(validateSchedulePriority(-1)).toContain('0–9999')
+    expect(validateSchedulePriority(1.5)).toContain('0–9999')
   })
 })

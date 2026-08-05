@@ -449,6 +449,12 @@ async function confirmAndDelete() {
                 :placeholder="f.placeholder || ''"
               />
             </template>
+            <FormReadonly
+              id="edit-timers-sched-mode"
+              label="Schedule mode (timer)"
+              help-pkey="sched_mode"
+              :value="tenant?.sched_mode || tenant?.oclo || '—'"
+            />
           </div>
 
           <h2 class="detail-heading">Advanced</h2>

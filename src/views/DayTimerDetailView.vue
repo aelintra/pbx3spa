@@ -14,6 +14,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
+import { COMMON_SCHEDULE_MODES, validateScheduleMode, validateSchedulePriority, validateDayOfWeek, normalizeDayOfWeek, dayOfWeekLabel } from '@/utils/validation'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -24,6 +25,8 @@ function isReadOnly(field) {
 
 const daytimer = ref(null)
 const tenants = ref([])
+const routeProfiles = ref([])
+const daytimersForSuggest = ref([])
 const loading = ref(true)
 const error = ref('')
 const allday = ref('YES')
@@ -31,6 +34,8 @@ const editActive = ref('YES')
 const editCluster = ref('default')
 const editDayofweek = ref('*')
 const editDescription = ref('')
+const editMode = ref('closed')
+const editPriority = ref(0)
 const startTime = ref('09:00')
 const endTime = ref('17:00')
 const saveError = ref('')
@@ -50,7 +55,83 @@ const tenantShortuidToPkey = computed(() => {
   return map
 })
 
-const dayOfWeekOptions = ['*', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+/** pkey or shortuid → shortuid (profiles/daytimers store cluster as shortuid). */
+const tenantPkeyToShortuid = computed(() => {
+  const map = {}
+  for (const t of tenants.value) {
+    if (t.shortuid == null) continue
+    const su = String(t.shortuid)
+    map[su] = su
+    if (t.pkey != null) map[String(t.pkey)] = su
+  }
+  return map
+})
+
+const dayOfWeekOptions = [
+  { value: '*', label: 'Every day' },
+  { value: 'mon-fri', label: 'Mon–Fri' },
+  { value: 'mon-thu', label: 'Mon–Thu' },
+  { value: 'tue-fri', label: 'Tue–Fri' },
+  { value: 'sat-sun', label: 'Sat–Sun' },
+  { value: 'mon', label: 'mon' },
+  { value: 'tue', label: 'tue' },
+  { value: 'wed', label: 'wed' },
+  { value: 'thu', label: 'thu' },
+  { value: 'fri', label: 'fri' },
+  { value: 'sat', label: 'sat' },
+  { value: 'sun', label: 'sun' }
+]
+
+const dayOfWeekOptionsForSelect = computed(() => {
+  const cur = normalizeDayOfWeek(editDayofweek.value)
+  const opts = [...dayOfWeekOptions]
+  if (cur && !opts.some((o) => o.value === cur)) {
+    opts.push({ value: cur, label: dayOfWeekLabel(cur) })
+  }
+  return opts
+})
+
+/** Presets + modes already used on this tenant (profiles + day timers). Type a new string anytime. */
+const modeSuggestions = computed(() => {
+  const seen = new Set(COMMON_SCHEDULE_MODES)
+  const clusterVal = editCluster.value
+  const clusterSu = tenantPkeyToShortuid.value[String(clusterVal)] ?? String(clusterVal)
+  for (const p of routeProfiles.value) {
+    const pTenant = tenantShortuidToPkey.value[String(p.cluster)] ?? p.cluster
+    if (
+      String(p.cluster) !== String(clusterVal) &&
+      String(p.cluster) !== String(clusterSu) &&
+      String(pTenant) !== String(clusterVal)
+    ) {
+      continue
+    }
+    for (const l of Array.isArray(p.lines) ? p.lines : []) {
+      const m = String(l?.mode ?? '')
+        .trim()
+        .toLowerCase()
+      if (m) seen.add(m)
+    }
+  }
+  for (const d of daytimersForSuggest.value) {
+    const dTenant = tenantShortuidToPkey.value[String(d.cluster)] ?? d.cluster
+    if (
+      String(d.cluster) !== String(clusterVal) &&
+      String(d.cluster) !== String(clusterSu) &&
+      String(dTenant) !== String(clusterVal)
+    ) {
+      continue
+    }
+    const m = String(d?.mode ?? '')
+      .trim()
+      .toLowerCase()
+    if (m) seen.add(m)
+  }
+  const cur = String(editMode.value || '')
+    .trim()
+    .toLowerCase()
+  if (cur) seen.add(cur)
+  return [...seen].sort((a, b) => a.localeCompare(b))
+})
 
 const tenantOptions = computed(() => {
   const list = tenants.value.map((t) => t.pkey).filter(Boolean)
@@ -64,6 +145,12 @@ const tenantOptionsForSelect = computed(() => {
     return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
+
+function normalizeEditMode() {
+  editMode.value = String(editMode.value || '')
+    .trim()
+    .toLowerCase()
+}
 
 function parseTimespan(ts) {
   if (ts == null || ts === '') return { start: '', end: '', allDay: true }
@@ -86,6 +173,22 @@ async function fetchTenants() {
   }
 }
 
+async function fetchModeSuggestionSources() {
+  try {
+    const [profileResponse, daytimerResponse] = await Promise.all([
+      getApiClient().get('routeprofiles'),
+      getApiClient().get('daytimers')
+    ])
+    routeProfiles.value =
+      normalizeList(profileResponse, 'routeprofiles') || normalizeList(profileResponse) || []
+    daytimersForSuggest.value =
+      normalizeList(daytimerResponse, 'daytimers') || normalizeList(daytimerResponse) || []
+  } catch {
+    routeProfiles.value = []
+    daytimersForSuggest.value = []
+  }
+}
+
 async function fetchDaytimer() {
   if (!shortuid.value) return
   loading.value = true
@@ -95,8 +198,10 @@ async function fetchDaytimer() {
     const d = daytimer.value
     const clusterRaw = d?.cluster ?? 'default'
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
-    editDayofweek.value = d?.dayofweek ?? '*'
+    editDayofweek.value = normalizeDayOfWeek(d?.dayofweek ?? '*')
     editDescription.value = d?.description ?? ''
+    editMode.value = (d?.mode || 'closed').toLowerCase()
+    editPriority.value = d?.priority != null ? Number(d.priority) : 0
     editActive.value = d?.active === 'NO' ? 'NO' : 'YES'
     const parsed = parseTimespan(d?.timespan)
     allday.value = parsed.allDay ? 'YES' : 'NO'
@@ -113,6 +218,7 @@ async function fetchDaytimer() {
 onMounted(async () => {
   await ensureFetched()
   await fetchTenants()
+  await fetchModeSuggestionSources()
   await fetchDaytimer()
 })
 watch(shortuid, fetchDaytimer)
@@ -161,17 +267,37 @@ async function saveEdit(e) {
     saveError.value = tsErr
     return
   }
+  normalizeEditMode()
+  editDayofweek.value = normalizeDayOfWeek(editDayofweek.value)
+  const dowErr = validateDayOfWeek(editDayofweek.value)
+  if (dowErr) {
+    saveError.value = dowErr
+    return
+  }
+  const modeErr = validateScheduleMode(editMode.value)
+  if (modeErr) {
+    saveError.value = modeErr
+    return
+  }
+  const priErr = validateSchedulePriority(editPriority.value, { allowEmpty: false })
+  if (priErr) {
+    saveError.value = priErr
+    return
+  }
   saving.value = true
   try {
     const body = {
       cluster: editCluster.value.trim(),
-      dayofweek: editDayofweek.value,
+      dayofweek: normalizeDayOfWeek(editDayofweek.value),
       description: editDescription.value.trim() || null,
       timespan: buildTimespan(),
+      mode: editMode.value,
+      priority: Number(editPriority.value),
       ...(isReadOnly('active') ? {} : { active: editActive.value })
     }
     await getApiClient().put(`daytimers/${encodeURIComponent(shortuid.value)}`, body)
     await fetchDaytimer()
+    await fetchModeSuggestionSources()
     toast.show('Day timer saved')
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update Day timer')
@@ -303,11 +429,33 @@ const panelTitleTenantSuffix = computed(() => {
               type="text"
               placeholder="e.g. Office hours"
             />
+            <FormField
+              id="edit-mode"
+              v-model="editMode"
+              label="Mode when matched"
+              help-pkey="mode"
+              type="text"
+              placeholder="e.g. lunch or evening"
+              list="daytimer-mode-suggestions"
+              hint="Presets and modes already used on this tenant. Type a new mode anytime (same string on the route profile)."
+              @blur="normalizeEditMode"
+            />
+            <datalist id="daytimer-mode-suggestions">
+              <option v-for="m in modeSuggestions" :key="m" :value="m" />
+            </datalist>
+            <FormField
+              id="edit-priority"
+              v-model="editPriority"
+              label="Priority (higher wins)"
+              type="number"
+              min="0"
+              max="9999"
+            />
             <FormSelect
               id="edit-dayofweek"
               v-model="editDayofweek"
               label="Day of week"
-              :options="dayOfWeekOptions"
+              :options="dayOfWeekOptionsForSelect"
             />
             <FormToggle
               id="edit-allday"

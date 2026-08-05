@@ -205,7 +205,8 @@ function handleBlur() {
   font-weight: 500;
   color: var(--pbx-text-label);
   padding-top: 0.375rem;
-  white-space: nowrap;
+  min-width: 0;
+  white-space: normal;
 }
 
 .form-field-input-wrapper {

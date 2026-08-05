@@ -17,6 +17,7 @@ const { filterText } = useStickyFilter('inbound-routes')
 const toast = useToastStore()
 const inboundRoutes = ref([])
 const tenants = ref([])
+const routeProfiles = ref([])
 const loading = ref(true)
 const error = ref('')
 const deleteError = ref('')
@@ -56,6 +57,7 @@ const filteredRoutes = computed(() => {
     const trunkname = (r.trunkname ?? '').toString().toLowerCase()
     const openroute = (r.openroute ?? '').toString().toLowerCase()
     const closeroute = (r.closeroute ?? '').toString().toLowerCase()
+    const routeProfile = routeProfileLabel(r.route_profile).toLowerCase()
     const technology = (r.technology ?? '').toString().toLowerCase()
     const desc = (r.desc ?? r.description ?? '').toString().toLowerCase()
     const active = (r.active ?? '').toString().toLowerCase()
@@ -65,6 +67,10 @@ const filteredRoutes = computed(() => {
       trunkname.includes(q) ||
       openroute.includes(q) ||
       closeroute.includes(q) ||
+      routeProfile.includes(q) ||
+      String(r.route_profile ?? '')
+        .toLowerCase()
+        .includes(q) ||
       technology.includes(q) ||
       desc.includes(q) ||
       active.includes(q)
@@ -74,8 +80,36 @@ const filteredRoutes = computed(() => {
 
 function sortValue(r, key) {
   if (key === 'cluster') return tenantPkeyDisplay(r)
+  if (key === 'routing') return routingDisplay(r)
   const v = r[key]
   return v == null ? '' : String(v)
+}
+
+/** Profile shortuid → row for list/filter labels. */
+const profileByShortuid = computed(() => {
+  const map = new Map()
+  for (const p of routeProfiles.value) {
+    if (p?.shortuid != null) map.set(String(p.shortuid), p)
+  }
+  return map
+})
+
+function routeProfileLabel(shortuid) {
+  const su = String(shortuid ?? '').trim()
+  if (!su) return ''
+  const p = profileByShortuid.value.get(su)
+  const name = String(p?.name ?? '').trim()
+  if (name) return `${name} (${su})`
+  return su
+}
+
+/** Profile label or legacy open/closed pair for list display. */
+function routingDisplay(r) {
+  const rp = r.route_profile
+  if (rp != null && String(rp).trim() !== '') return routeProfileLabel(rp)
+  const o = r.openroute ?? '—'
+  const c = r.closeroute ?? '—'
+  return `${o} / ${c}`
 }
 
 const inboundActiveInFilter = computed(() => countActiveRows(filteredRoutes.value))
@@ -114,8 +148,7 @@ const inboundRouteExportColumns = computed(() => [
   { key: 'cluster', label: 'Tenant', getValue: (r) => tenantPkeyDisplay(r) },
   { key: 'active', label: 'Active' },
   { key: 'trunkname', label: 'Name' },
-  { key: 'openroute', label: 'Open' },
-  { key: 'closeroute', label: 'Closed' },
+  { key: 'routing', label: 'Routing', getValue: (r) => routingDisplay(r) },
   { key: 'technology', label: 'Type' }
 ])
 
@@ -146,12 +179,15 @@ async function loadInboundRoutes() {
   loading.value = true
   error.value = ''
   try {
-    const [routeResponse, tenantResponse] = await Promise.all([
+    const [routeResponse, tenantResponse, profileResponse] = await Promise.all([
       getApiClient().get('inboundroutes'),
-      loadTenantOptions()
+      loadTenantOptions(),
+      getApiClient().get('routeprofiles')
     ])
     inboundRoutes.value = normalizeList(routeResponse, 'inboundroutes')
     tenants.value = tenantResponse
+    routeProfiles.value =
+      normalizeList(profileResponse, 'routeprofiles') || normalizeList(profileResponse) || []
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load inbound routes')
   } finally {
@@ -278,19 +314,11 @@ onMounted(loadInboundRoutes)
             </th>
             <th
               class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('openroute')"
-              @click="setSort('openroute')"
+              title="Route profile (or legacy open/closed)"
+              :class="sortClass('routing')"
+              @click="setSort('routing')"
             >
-              Open
-            </th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('closeroute')"
-              @click="setSort('closeroute')"
-            >
-              Closed
+              Routing
             </th>
             <th
               class="th-sortable"
@@ -347,8 +375,9 @@ onMounted(loadInboundRoutes)
             <td>{{ tenantPkeyDisplay(r) }}</td>
             <ListActiveChip :active="r.active" />
             <td>{{ r.trunkname ?? '—' }}</td>
-            <td>{{ r.openroute ?? '—' }}</td>
-            <td>{{ r.closeroute ?? '—' }}</td>
+            <td :title="r.route_profile ? 'Route profile' : 'Legacy open/closed'">
+              {{ routingDisplay(r) }}
+            </td>
             <td>{{ r.technology ?? '—' }}</td>
             <td>
               <router-link
