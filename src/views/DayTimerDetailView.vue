@@ -25,6 +25,8 @@ function isReadOnly(field) {
 
 const daytimer = ref(null)
 const tenants = ref([])
+const routeProfiles = ref([])
+const daytimersForSuggest = ref([])
 const loading = ref(true)
 const error = ref('')
 const allday = ref('YES')
@@ -53,6 +55,18 @@ const tenantShortuidToPkey = computed(() => {
   return map
 })
 
+/** pkey or shortuid → shortuid (profiles/daytimers store cluster as shortuid). */
+const tenantPkeyToShortuid = computed(() => {
+  const map = {}
+  for (const t of tenants.value) {
+    if (t.shortuid == null) continue
+    const su = String(t.shortuid)
+    map[su] = su
+    if (t.pkey != null) map[String(t.pkey)] = su
+  }
+  return map
+})
+
 const dayOfWeekOptions = [
   { value: '*', label: 'Every day' },
   { value: 'mon', label: 'mon' },
@@ -64,11 +78,46 @@ const dayOfWeekOptions = [
   { value: 'sun', label: 'sun' }
 ]
 
-const modeOptions = computed(() => {
-  const list = [...COMMON_SCHEDULE_MODES]
-  const cur = String(editMode.value || '').toLowerCase()
-  if (cur && !list.includes(cur)) list.unshift(cur)
-  return list
+/** Presets + modes already used on this tenant (profiles + day timers). Type a new string anytime. */
+const modeSuggestions = computed(() => {
+  const seen = new Set(COMMON_SCHEDULE_MODES)
+  const clusterVal = editCluster.value
+  const clusterSu = tenantPkeyToShortuid.value[String(clusterVal)] ?? String(clusterVal)
+  for (const p of routeProfiles.value) {
+    const pTenant = tenantShortuidToPkey.value[String(p.cluster)] ?? p.cluster
+    if (
+      String(p.cluster) !== String(clusterVal) &&
+      String(p.cluster) !== String(clusterSu) &&
+      String(pTenant) !== String(clusterVal)
+    ) {
+      continue
+    }
+    for (const l of Array.isArray(p.lines) ? p.lines : []) {
+      const m = String(l?.mode ?? '')
+        .trim()
+        .toLowerCase()
+      if (m) seen.add(m)
+    }
+  }
+  for (const d of daytimersForSuggest.value) {
+    const dTenant = tenantShortuidToPkey.value[String(d.cluster)] ?? d.cluster
+    if (
+      String(d.cluster) !== String(clusterVal) &&
+      String(d.cluster) !== String(clusterSu) &&
+      String(dTenant) !== String(clusterVal)
+    ) {
+      continue
+    }
+    const m = String(d?.mode ?? '')
+      .trim()
+      .toLowerCase()
+    if (m) seen.add(m)
+  }
+  const cur = String(editMode.value || '')
+    .trim()
+    .toLowerCase()
+  if (cur) seen.add(cur)
+  return [...seen].sort((a, b) => a.localeCompare(b))
 })
 
 const tenantOptions = computed(() => {
@@ -83,6 +132,12 @@ const tenantOptionsForSelect = computed(() => {
     return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
 })
+
+function normalizeEditMode() {
+  editMode.value = String(editMode.value || '')
+    .trim()
+    .toLowerCase()
+}
 
 function parseTimespan(ts) {
   if (ts == null || ts === '') return { start: '', end: '', allDay: true }
@@ -102,6 +157,22 @@ async function fetchTenants() {
     tenants.value = await loadTenantOptions()
   } catch {
     tenants.value = []
+  }
+}
+
+async function fetchModeSuggestionSources() {
+  try {
+    const [profileResponse, daytimerResponse] = await Promise.all([
+      getApiClient().get('routeprofiles'),
+      getApiClient().get('daytimers')
+    ])
+    routeProfiles.value =
+      normalizeList(profileResponse, 'routeprofiles') || normalizeList(profileResponse) || []
+    daytimersForSuggest.value =
+      normalizeList(daytimerResponse, 'daytimers') || normalizeList(daytimerResponse) || []
+  } catch {
+    routeProfiles.value = []
+    daytimersForSuggest.value = []
   }
 }
 
@@ -134,6 +205,7 @@ async function fetchDaytimer() {
 onMounted(async () => {
   await ensureFetched()
   await fetchTenants()
+  await fetchModeSuggestionSources()
   await fetchDaytimer()
 })
 watch(shortuid, fetchDaytimer)
@@ -182,6 +254,7 @@ async function saveEdit(e) {
     saveError.value = tsErr
     return
   }
+  normalizeEditMode()
   const modeErr = validateScheduleMode(editMode.value)
   if (modeErr) {
     saveError.value = modeErr
@@ -199,12 +272,13 @@ async function saveEdit(e) {
       dayofweek: editDayofweek.value,
       description: editDescription.value.trim() || null,
       timespan: buildTimespan(),
-      mode: String(editMode.value).trim().toLowerCase(),
+      mode: editMode.value,
       priority: Number(editPriority.value),
       ...(isReadOnly('active') ? {} : { active: editActive.value })
     }
     await getApiClient().put(`daytimers/${encodeURIComponent(shortuid.value)}`, body)
     await fetchDaytimer()
+    await fetchModeSuggestionSources()
     toast.show('Day timer saved')
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update Day timer')
@@ -336,13 +410,20 @@ const panelTitleTenantSuffix = computed(() => {
               type="text"
               placeholder="e.g. Office hours"
             />
-            <FormSelect
+            <FormField
               id="edit-mode"
               v-model="editMode"
               label="Mode when matched"
               help-pkey="mode"
-              :options="modeOptions"
+              type="text"
+              placeholder="e.g. lunch or evening"
+              list="daytimer-mode-suggestions"
+              hint="Presets and modes already used on this tenant. Type a new mode anytime (same string on the route profile)."
+              @blur="normalizeEditMode"
             />
+            <datalist id="daytimer-mode-suggestions">
+              <option v-for="m in modeSuggestions" :key="m" :value="m" />
+            </datalist>
             <FormField
               id="edit-priority"
               v-model="editPriority"

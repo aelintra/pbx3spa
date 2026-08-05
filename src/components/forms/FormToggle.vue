@@ -92,7 +92,6 @@ function handleChange(event) {
   color: #475569;
   padding-top: 0.375rem;
   min-width: 0;
-  overflow-wrap: anywhere;
   white-space: normal;
 }
 

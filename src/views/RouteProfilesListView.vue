@@ -49,8 +49,7 @@ const filtered = computed(() => {
     const shortuid = (item.shortuid ?? '').toString().toLowerCase()
     const name = (item.name ?? '').toString().toLowerCase()
     const tenant = (map.get(String(item.cluster)) ?? item.cluster ?? '').toString().toLowerCase()
-    const dm = (item.default_mode ?? '').toString().toLowerCase()
-    return shortuid.includes(q) || name.includes(q) || tenant.includes(q) || dm.includes(q)
+    return shortuid.includes(q) || name.includes(q) || tenant.includes(q)
   })
 })
 
@@ -195,14 +194,6 @@ onMounted(load)
               <th
                 class="th-sortable"
                 title="Click to sort"
-                :class="sortClass('default_mode')"
-                @click="setSort('default_mode')"
-              >
-                Default mode
-              </th>
-              <th
-                class="th-sortable"
-                title="Click to sort"
                 :class="sortClass('lines')"
                 @click="setSort('lines')"
               >
@@ -217,7 +208,6 @@ onMounted(load)
               <td class="cell-immutable">{{ p.shortuid ?? '—' }}</td>
               <td>{{ tenantPkeyDisplay(p) }}</td>
               <td>{{ p.name ?? '—' }}</td>
-              <td>{{ p.default_mode ?? 'open' }}</td>
               <td>{{ lineCount(p) }}</td>
               <td>
                 <router-link

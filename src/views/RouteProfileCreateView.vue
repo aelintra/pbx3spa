@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation } from '@/composables/useFormValidation'
-import { validateTenant, COMMON_SCHEDULE_MODES, validateScheduleMode } from '@/utils/validation'
+import { validateTenant } from '@/utils/validation'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
@@ -15,7 +15,6 @@ const router = useRouter()
 const toast = useToastStore()
 const name = ref('')
 const cluster = ref('default')
-const defaultMode = ref('open')
 const description = ref('')
 const tenants = ref([])
 const tenantsLoading = ref(true)
@@ -34,12 +33,6 @@ const tenantOptionsForSelect = computed(() => {
   const cur = cluster.value
   if (cur && !list.includes(cur))
     return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
-  return list
-})
-
-const modeOptions = computed(() => {
-  const list = [...COMMON_SCHEDULE_MODES]
-  if (defaultMode.value && !list.includes(defaultMode.value)) list.unshift(defaultMode.value)
   return list
 })
 
@@ -79,17 +72,13 @@ async function onSubmit(e) {
     error.value = 'Name is required'
     return
   }
-  const modeErr = validateScheduleMode(defaultMode.value)
-  if (modeErr) {
-    error.value = modeErr
-    return
-  }
   loading.value = true
   try {
     const body = {
       name: name.value.trim(),
       cluster: cluster.value.trim(),
-      default_mode: String(defaultMode.value).trim().toLowerCase(),
+      // Hidden in SPA: axiomatic open on profile miss (revisit later if needed).
+      default_mode: 'open',
       description: description.value.trim() || null,
       lines: [
         { mode: 'open', destination: 'None' },
@@ -148,7 +137,6 @@ async function onSubmit(e) {
           :loading="tenantsLoading"
           @blur="clusterValidation.onBlur"
         />
-        <FormSelect id="default-mode" v-model="defaultMode" label="Default mode" :options="modeOptions" />
         <FormField id="description" v-model="description" label="Description" type="text" />
       </div>
       <p class="hint">Open and closed lines are created with destination None — edit them after create.</p>

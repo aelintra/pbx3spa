@@ -29,7 +29,6 @@ const loading = ref(true)
 const error = ref('')
 const editName = ref('')
 const editCluster = ref('default')
-const editDefaultMode = ref('open')
 const editDescription = ref('')
 const lines = ref([])
 const saveError = ref('')
@@ -99,19 +98,6 @@ const destinationGroups = computed(() => {
 
 const destBaseOptions = computed(() => ['None', 'Operator'])
 
-const defaultModeOptions = computed(() => {
-  const list = [...COMMON_SCHEDULE_MODES]
-  const extra = new Set()
-  for (const l of lines.value) {
-    if (l.mode) extra.add(String(l.mode).toLowerCase())
-  }
-  if (editDefaultMode.value) extra.add(String(editDefaultMode.value).toLowerCase())
-  for (const m of extra) {
-    if (!list.includes(m)) list.push(m)
-  }
-  return list
-})
-
 async function loadDestinations() {
   const c = editCluster.value
   if (!c) {
@@ -155,7 +141,6 @@ async function fetchProfile() {
     const clusterRaw = p?.cluster ?? 'default'
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
     editName.value = p?.name ?? ''
-    editDefaultMode.value = (p?.default_mode || 'open').toLowerCase()
     editDescription.value = p?.description ?? ''
     lines.value = (Array.isArray(p?.lines) ? p.lines : []).map((l) => ({
       mode: (l.mode || '').toLowerCase(),
@@ -211,11 +196,6 @@ async function saveEdit(e) {
     saveError.value = 'Name is required'
     return
   }
-  const dmErr = validateScheduleMode(editDefaultMode.value)
-  if (dmErr) {
-    saveError.value = dmErr
-    return
-  }
   const bodyLines = []
   const seen = new Set()
   for (const l of lines.value) {
@@ -243,7 +223,6 @@ async function saveEdit(e) {
     await getApiClient().put(`routeprofiles/${encodeURIComponent(shortuid.value)}`, {
       name: editName.value.trim(),
       cluster: editCluster.value.trim(),
-      default_mode: String(editDefaultMode.value).trim().toLowerCase(),
       description: editDescription.value.trim() || null,
       lines: bodyLines
     })
@@ -307,12 +286,6 @@ async function confirmAndDelete() {
             label="Tenant"
             :options="tenantOptionsForSelect"
             :required="true"
-          />
-          <FormSelect
-            id="default-mode"
-            v-model="editDefaultMode"
-            label="Default mode"
-            :options="defaultModeOptions"
           />
           <FormField id="description" v-model="editDescription" label="Description" type="text" />
         </div>

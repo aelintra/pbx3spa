@@ -136,10 +136,18 @@ const openrouteOptions = computed(() => ['None', 'Operator'])
 const closerouteOptions = computed(() => ['None', 'Operator'])
 const entryDestOptions = computed(() => ['None', 'Operator'])
 
+function routeProfileOptionLabel(p) {
+  const su = String(p?.shortuid ?? '').trim()
+  const name = String(p?.name ?? '').trim()
+  if (name && su) return `${name} (${su})`
+  return name || su || ''
+}
+
 const routeProfileOptions = computed(() => {
-  const opts = ['']
+  const opts = [{ value: '', label: '' }]
   const clusterVal = editCluster.value
   const map = clusterToTenantPkey.value
+  const seen = new Set([''])
   for (const p of routeProfiles.value) {
     const pTenant = map.get(String(p.cluster)) ?? p.cluster
     const tenantOk =
@@ -147,10 +155,19 @@ const routeProfileOptions = computed(() => {
       String(p.cluster) === String(clusterVal) ||
       String(pTenant) === String(clusterVal)
     if (!tenantOk) continue
-    opts.push(p.shortuid)
+    const su = String(p.shortuid ?? '')
+    if (!su || seen.has(su)) continue
+    seen.add(su)
+    opts.push({ value: su, label: routeProfileOptionLabel(p) })
   }
   const cur = editRouteProfile.value
-  if (cur && !opts.includes(cur)) opts.push(cur)
+  if (cur && !seen.has(cur)) {
+    const orphan = routeProfiles.value.find((p) => String(p.shortuid) === cur)
+    opts.push({
+      value: cur,
+      label: orphan ? routeProfileOptionLabel(orphan) : cur
+    })
+  }
   return opts
 })
 
@@ -469,7 +486,7 @@ const panelTitleTenantSuffix = computed(() => {
             <FormSelect
               id="edit-entry-dest"
               v-model="editEntryDest"
-              label="Always-route destination (skip schedule)"
+              label="Always route"
               help-pkey="entry_dest"
               :options="entryDestOptions"
               :option-groups="destinationGroups"
@@ -478,7 +495,7 @@ const panelTitleTenantSuffix = computed(() => {
             <FormSelect
               id="edit-openroute"
               v-model="editOpenroute"
-              label="Open (dual-read fallback)"
+              label="Legacy open"
               :options="openrouteOptions"
               :option-groups="destinationGroups"
               :loading="destinationsLoading"
@@ -486,7 +503,7 @@ const panelTitleTenantSuffix = computed(() => {
             <FormSelect
               id="edit-closeroute"
               v-model="editCloseroute"
-              label="Closed (dual-read fallback)"
+              label="Legacy closed"
               :options="closerouteOptions"
               :option-groups="destinationGroups"
             />

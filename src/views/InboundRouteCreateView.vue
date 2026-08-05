@@ -93,22 +93,39 @@ const destinationGroups = computed(() => {
 const openrouteOptions = computed(() => ['None', 'Operator'])
 const closerouteOptions = computed(() => ['None', 'Operator'])
 
+function routeProfileOptionLabel(p) {
+  const su = String(p?.shortuid ?? '').trim()
+  const name = String(p?.name ?? '').trim()
+  if (name && su) return `${name} (${su})`
+  return name || su || ''
+}
+
 const routeProfileOptions = computed(() => {
   const clusterVal = cluster.value
-  const filtered = ['']
+  const filtered = [{ value: '', label: '' }]
   if (!clusterVal) return filtered
   const map = new Map()
   for (const t of tenants.value) {
     if (t.shortuid != null) map.set(String(t.shortuid), t.pkey)
     if (t.pkey != null) map.set(String(t.pkey), t.pkey)
   }
+  const seen = new Set([''])
   for (const p of routeProfiles.value) {
     const pTenant = map.get(String(p.cluster)) ?? p.cluster
     if (String(p.cluster) === String(clusterVal) || String(pTenant) === String(clusterVal)) {
-      filtered.push(p.shortuid)
+      const su = String(p.shortuid ?? '')
+      if (!su || seen.has(su)) continue
+      seen.add(su)
+      filtered.push({ value: su, label: routeProfileOptionLabel(p) })
     }
   }
-  if (routeProfile.value && !filtered.includes(routeProfile.value)) filtered.push(routeProfile.value)
+  if (routeProfile.value && !seen.has(routeProfile.value)) {
+    const orphan = routeProfiles.value.find((p) => String(p.shortuid) === routeProfile.value)
+    filtered.push({
+      value: routeProfile.value,
+      label: orphan ? routeProfileOptionLabel(orphan) : routeProfile.value
+    })
+  }
   return filtered
 })
 
@@ -331,7 +348,7 @@ function onKeydown(e) {
         <FormSelect
           id="openroute"
           v-model="openroute"
-          label="Open (dual-read fallback)"
+          label="Legacy open"
           :options="openrouteOptions"
           :option-groups="destinationGroups"
           :loading="destinationsLoading"
@@ -339,7 +356,7 @@ function onKeydown(e) {
         <FormSelect
           id="closeroute"
           v-model="closeroute"
-          label="Closed (dual-read fallback)"
+          label="Legacy closed"
           :options="closerouteOptions"
           :option-groups="destinationGroups"
         />
