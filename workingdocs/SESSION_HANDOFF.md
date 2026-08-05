@@ -6,7 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-05 — day-parts on main + DID open-seed
+
+**Merged to `main`:** Day-parts (ranges, profiles, packages **0.0.4-8** / cagi **1.0.0-13** on golden). DID/profile create requires **open destination**; empty profile auto-seeds open/closed (closed defaults to open).
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SPA `npm run dev` on **`main`**. DID **`01924910444`** → profile **`c59b6m`** (duns). Day timers: Aelintra `mon-fri` lunch / overnight / weekend closed.
+
+**Operator impact:** Create inbound → pick open (and optional closed); leave profile blank to auto-build. Route profiles must keep an `open` line. BLF/toggle shops: open+closed same dest is fine.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — next **short dial D**; parked **tenant outbound seed** (locale vs iron-PBX shunt).
+
+**Resume:** Short dial return CLIP (**D**), or optional day-parts pack roll / smokes.
+
+---
+
 ## Session end 2026-08-04 — day-parts play-test + timer TZ/half-open + UX locks
+
+**Superseded** by **2026-08-05** block above.
 
 **On branch `time-based-routing`:** Timer uses Network site TZ; timespans half-open `[start,end)`; Day timer edit shows **Every day** for `*`. Spec: **default open** locked (BLF-only shops); **`mon-fri` ranges** = next UX must-have. Aelintra lab has full office day-parts (many weekday clones until ranges).
 
