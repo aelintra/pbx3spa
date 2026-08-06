@@ -158,9 +158,9 @@ async function submitCreate() {
     }
     const su = result?.tenant?.shortuid || result?.node_tenant?.shortuid || ''
     if (result.partial && result.stages?.sbc === 'failed') {
-      createOk.value = `Tenant ${su} created on node + catalog; SBC domain failed — use Register on SBC.`
+      createOk.value = `Tenant ${su} created on node + catalog; SBC domain failed — use Register on SBC. MainOut seeded when globals dialplan is set.`
     } else {
-      createOk.value = `Tenant ${su} provisioned (node + catalog + SBC).`
+      createOk.value = `Tenant ${su} provisioned (node + catalog + SBC). MainOut seeded when globals dialplan is set.`
     }
     showCreate.value = false
     await loadTenants()

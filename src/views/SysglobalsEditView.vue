@@ -25,6 +25,7 @@ const saveError = ref('')
 // Editable and display-only (read-only) fields
 const editAbstimeout = ref('')
 const editEmergency = ref('')
+const editDefaultOutboundDialplan = ref('')
 const editLanguage = ref('')
 const editLoglevel = ref('')
 const editLogsipdispsize = ref('')
@@ -65,6 +66,7 @@ function syncEditFromSysglobal() {
   // API returns lowercase keys (schema standardised on lowercase)
   editAbstimeout.value = g.abstimeout != null ? String(g.abstimeout) : ''
   editEmergency.value = g.emergency ?? ''
+  editDefaultOutboundDialplan.value = g.default_outbound_dialplan ?? ''
   editLanguage.value = g.language ?? ''
   editLoglevel.value = g.loglevel != null ? String(g.loglevel) : ''
   editLogsipdispsize.value = g.logsipdispsize != null ? String(g.logsipdispsize) : ''
@@ -151,6 +153,10 @@ async function saveEdit(e) {
         : null
     body.emergency =
       editEmergency.value && editEmergency.value.trim() !== '' ? editEmergency.value.trim() : null
+    body.default_outbound_dialplan =
+      editDefaultOutboundDialplan.value && editDefaultOutboundDialplan.value.trim() !== ''
+        ? editDefaultOutboundDialplan.value.trim()
+        : null
     body.language =
       editLanguage.value && editLanguage.value.trim() !== '' ? editLanguage.value.trim() : null
     body.loglevel =
@@ -422,6 +428,21 @@ onMounted(fetchSysglobal)
           id="edit-recqsearchlim"
           v-model="editRecqsearchlim"
           label="Recording Q Search Limit"
+        />
+      </div>
+
+      <h2 class="detail-heading">Outbound</h2>
+      <p class="scope-note">
+        Default dialplan string is copied once onto each <strong>new</strong> tenant’s MainOut route
+        (fleet path = Egress). Change per-tenant Outbound routes afterward if needed. UK seed uses
+        <code>_0. _00.</code>; US sites should set NANP / <code>011</code> patterns here.
+      </p>
+      <div class="form-fields">
+        <FormField
+          id="edit-default-outbound-dialplan"
+          v-model="editDefaultOutboundDialplan"
+          label="Default outbound dialplan"
+          help-pkey="default_outbound_dialplan"
         />
       </div>
 

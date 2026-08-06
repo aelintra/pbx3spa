@@ -135,7 +135,7 @@ async function onSubmit(e) {
     )
     const createdPkey = pkey.value.trim()
     await getApiClient().post('tenants', cleaned)
-    toast.show(`Tenant ${createdPkey} created`)
+    toast.show(`Tenant ${createdPkey} created (MainOut seeded from instance default dialplan when set)`)
     resetForm()
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'smooth' })
