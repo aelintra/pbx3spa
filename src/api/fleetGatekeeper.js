@@ -129,15 +129,17 @@ export function getFleetMe() {
 
 export function listFleetTenants() {
   return gkFetch('/api/v1/tenants').then((d) =>
-    (d.tenants || []).map((t) => {
-      const shortuid = t.shortuid || t.tenant_shortuid
-      const name = t.label || t.pkey || t.cname || shortuid
-      return {
-        ...t,
-        shortuid,
-        name
-      }
-    })
+    (d.tenants || [])
+      .map((t) => {
+        const shortuid = t.shortuid || t.tenant_shortuid
+        const name = t.label || t.pkey || t.cname || shortuid
+        return {
+          ...t,
+          shortuid,
+          name
+        }
+      })
+      .filter((t) => String(t.status || '').toLowerCase() !== 'decommissioned')
   )
 }
 
@@ -341,6 +343,53 @@ export function retryTenantMove(jobId, tenantShortuid) {
 
 export function rollbackTenantMove(jobId, tenantShortuid) {
   return gkFetch(`/api/v1/tenant-moves/${encodeURIComponent(jobId)}/rollback`, {
+    method: 'POST',
+    body: JSON.stringify(tenantShortuid ? { tenant_shortuid: tenantShortuid } : {})
+  })
+}
+
+/** Fleet Delete — create job (runs to awaiting_confirm). Body: { tenant_shortuid } */
+export function createTenantDelete(body) {
+  return gkFetch('/api/v1/tenant-deletes', {
+    method: 'POST',
+    body: JSON.stringify(body || {})
+  })
+}
+
+export function listTenantDeletes(limit = 50) {
+  const q = new URLSearchParams({ limit: String(limit) })
+  return gkFetch(`/api/v1/tenant-deletes?${q}`).then((d) => d.jobs || [])
+}
+
+export function getTenantDelete(jobId, tenantShortuid) {
+  const q = tenantShortuid ? `?tenant=${encodeURIComponent(tenantShortuid)}` : ''
+  return gkFetch(`/api/v1/tenant-deletes/${encodeURIComponent(jobId)}${q}`)
+}
+
+export function runTenantDelete(jobId, tenantShortuid) {
+  return gkFetch(`/api/v1/tenant-deletes/${encodeURIComponent(jobId)}/run`, {
+    method: 'POST',
+    body: JSON.stringify(tenantShortuid ? { tenant_shortuid: tenantShortuid } : {})
+  })
+}
+
+/** Confirm gate: { confirm: true, typed_shortuid } */
+export function confirmTenantDelete(jobId, body) {
+  return gkFetch(`/api/v1/tenant-deletes/${encodeURIComponent(jobId)}/confirm`, {
+    method: 'POST',
+    body: JSON.stringify(body || {})
+  })
+}
+
+export function abortTenantDelete(jobId, tenantShortuid) {
+  return gkFetch(`/api/v1/tenant-deletes/${encodeURIComponent(jobId)}/abort`, {
+    method: 'POST',
+    body: JSON.stringify(tenantShortuid ? { tenant_shortuid: tenantShortuid } : {})
+  })
+}
+
+export function retryTenantDelete(jobId, tenantShortuid) {
+  return gkFetch(`/api/v1/tenant-deletes/${encodeURIComponent(jobId)}/retry`, {
     method: 'POST',
     body: JSON.stringify(tenantShortuid ? { tenant_shortuid: tenantShortuid } : {})
   })

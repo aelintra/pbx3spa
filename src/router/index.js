@@ -46,6 +46,7 @@ import FleetUsersView from '../views/FleetUsersView.vue'
 import FleetEdgeView from '../views/FleetEdgeView.vue'
 import FleetTenantMoveWizardView from '../views/FleetTenantMoveWizardView.vue'
 import FleetTenantMoveJobView from '../views/FleetTenantMoveJobView.vue'
+import FleetTenantDeleteJobView from '../views/FleetTenantDeleteJobView.vue'
 import { useFleetModeStore } from '@/stores/fleetMode'
 import { isFleetGatekeeperEnabled } from '@/config/fleetGatekeeper'
 import RouteCreateView from '../views/RouteCreateView.vue'
@@ -237,6 +238,11 @@ const router = createRouter({
           path: 'tenants/move/:jobId',
           name: 'fleet-tenant-move-job',
           component: FleetTenantMoveJobView
+        },
+        {
+          path: 'tenants/delete/:jobId',
+          name: 'fleet-tenant-delete-job',
+          component: FleetTenantDeleteJobView
         }
       ]
     }

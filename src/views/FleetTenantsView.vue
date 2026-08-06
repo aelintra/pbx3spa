@@ -1,11 +1,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   listFleetTenants,
   getFleetCatalog,
   refreshFleetSession,
   registerFleetTenantDomain,
-  provisionFleetTenant
+  provisionFleetTenant,
+  createTenantDelete
 } from '@/api/fleetGatekeeper'
 import {
   hasFleetGatekeeperToken,
@@ -16,6 +18,7 @@ import {
 import { validateTenantPkey } from '@/utils/validation'
 import { buildProvisionBody } from '@/utils/fleetTenantProvision'
 
+const router = useRouter()
 const tenants = ref([])
 const instancesById = ref({})
 const instanceOptions = ref([])
@@ -183,7 +186,30 @@ async function doRegisterDomain(t) {
     await registerFleetTenantDomain(t.shortuid)
     await loadTenants()
   } catch (e) {
-    actionError.value = e?.message || 'Register domain failed'
+    actionError.value = e?.message || 'Register on SBC failed'
+  } finally {
+    busyId.value = ''
+  }
+}
+
+async function doDelete(t) {
+  actionError.value = ''
+  const ok = window.confirm(
+    `Start Fleet Delete for ${t.name || t.shortuid}?\n\n` +
+      `You will confirm by typing shortuid ${t.shortuid} on the job page.\n` +
+      'This removes the SBC domain, wipes the tenant on the node, and soft-decommissions catalog.'
+  )
+  if (!ok) return
+  busyId.value = t.shortuid
+  try {
+    const job = await createTenantDelete({ tenant_shortuid: t.shortuid })
+    await router.push({
+      name: 'fleet-tenant-delete-job',
+      params: { jobId: job.job_id },
+      query: { tenant: job.tenant_shortuid || t.shortuid }
+    })
+  } catch (e) {
+    actionError.value = e?.message || 'Failed to start delete job'
   } finally {
     busyId.value = ''
   }
@@ -196,8 +222,8 @@ onMounted(loadTenants)
   <div class="fleet-tenants-view">
     <h1>Fleet tenants</h1>
     <p class="hint">
-      Create provisions home node + catalog + SBC domain. Register on SBC repairs a missing domain.
-      Move relocates a tenant between instances.
+      Create provisions home node + catalog + SBC domain. Delete is a durable job (confirm shortuid).
+      Register on SBC repairs a missing domain. Move relocates a tenant between instances.
     </p>
 
     <p v-if="canCreate" class="toolbar">
@@ -289,11 +315,21 @@ onMounted(loadTenants)
             </button>
             <RouterLink
               v-if="canMove"
+              class="linkish"
               :to="{ name: 'fleet-tenant-move', query: { tenant: t.shortuid } }"
             >
               Move
             </RouterLink>
-            <span v-if="!canMove && !canEdge" class="muted">—</span>
+            <button
+              v-if="canCreate"
+              type="button"
+              class="linkish danger"
+              :disabled="busyId === t.shortuid"
+              @click="doDelete(t)"
+            >
+              Delete
+            </button>
+            <span v-if="!canMove && !canEdge && !canCreate" class="muted">—</span>
           </td>
         </tr>
       </tbody>
@@ -400,6 +436,9 @@ onMounted(loadTenants)
   gap: 0.5rem;
   margin-top: 0.25rem;
 }
+.actions {
+  white-space: nowrap;
+}
 .actions .linkish {
   margin-right: 0.65rem;
   background: none;
@@ -410,9 +449,15 @@ onMounted(loadTenants)
   cursor: pointer;
   text-decoration: underline;
 }
+.actions a.linkish {
+  display: inline;
+}
 .actions .linkish:disabled {
   opacity: 0.5;
   cursor: wait;
+}
+.actions .linkish.danger {
+  color: var(--pbx-danger, #b91c1c);
 }
 .data-table {
   width: 100%;

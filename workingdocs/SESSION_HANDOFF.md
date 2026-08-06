@@ -6,23 +6,29 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-06 — Fleet Delete lab green
+
+**Merged to `main`:** Fleet Delete (Rule 14 durable job) — SBC domain DELETE, catalog soft-decom, Gatekeeper `/tenant-deletes*`, SPA Tenants **Delete** + Jobs confirm, MkDocs `fleet/tenant-delete`. Lab throwaway delete OK. Spec **`FLEET_TENANT_DELETE_REQUIREMENTS.md`**. Earlier same day: number wire D1=C + seed MainOut (still on `main`).
+
+**Dev against golden:** Gatekeeper **`control.pbx3.com`** · SPA `npm run dev` · instance API `https://08jzwn.pbx3.com:44300/api`. Fleet → Tenants → Delete; Fleet → Jobs for confirm. SBC VIP **`3.93.26.82`**.
+
+**Operator impact:** Can decommission a fleet tenant end-to-end (preflight → confirm → edge remove → node wipe → catalog). Decommissioned rows filtered from Tenants list. **FQDN rename (D6)** still not built.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`FLEET_TENANT_DELETE_REQUIREMENTS.md`**.
+
+**Resume:** FQDN rename (D6) optional; else product crumbs / number wire Phase 2.
+
+---
+
 ## Session end 2026-08-06 — number wire D1=C + seed MainOut
 
-**Merged to `main`:** Number wire **D1 = Model C** (policy **`NUMBER_WIRE_POLICY.md`**). Tenant create seeds **MainOut** from Instance Globals default dialplan (`_0. _00.` UK). Fleet create lab green after restoring node `PBX3_FLEET_SERVICE_TOKEN`.
-
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SPA `npm run dev`. Instance Globals → **Outbound**. Fleet → Tenants for create (fleet nodes). SBC VIP **`3.93.26.82`**. Say **the SBC** (not Magrathea) for the edge; Magrathea = UK ITSP Peer.
-
-**Operator impact:** New tenants get a usable outbound route without hand-building patterns; edit MainOut or globals default as needed. Commit after create. Fleet Delete still missing — **release blocker**.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`SEED_OUTBOUND_ON_TENANT_CREATE.md`** · **`NUMBER_WIRE_POLICY.md`**.
-
-**Resume:** Fleet Delete + FQDN rename (Rule 14 durable job).
+**Superseded** by Fleet Delete block above for “read first.” Number wire + MainOut seed shipped earlier same day.
 
 ---
 
 ## Session end 2026-08-05 — short dial D + E closed
 
-**Superseded** by 2026-08-06 block above for “read first.”
+**Superseded** by 2026-08-06 Fleet Delete block above for “read first.”
 
 ---
 
