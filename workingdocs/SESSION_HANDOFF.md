@@ -6,19 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-06 — Site Groups C0–C6 lab green
+
+**Merged to `main`:** Site Groups (dial cohort) — Fleet UI, Gatekeeper materialise, managed dialaliases, prefix+ext CLIP callback, MkDocs. Commits: spa `8cb3a71`, api `3ce29ce`, pbx3 `10e0ed0`, cagi `a2005e3`, docs `5ce247a`.
+
+**Dev against golden:** Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`** · SPA **`npm run dev`** (Site Groups not on Pages). Fleet → **Site Groups**; managed dial prefixes read-only on instance.
+
+**Operator impact:** Sister-site short dial via **Fleet → Site Groups** (routing prefix + membership). Do not invent production meshes on Outbound → Dial prefixes. Callback shows `{prefix}{ext}` on desks.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`DIAL_COHORT_REQUIREMENTS.md`** · MkDocs **`fleet/site-groups`**.
+
+**Resume:** Optional package roll; otherwise next from TODO product crumbs / parked items.
+
+---
+
 ## Session end 2026-08-06 — naming lock + Site Group stopper
 
-**On `main` (commit/push this session):** Fleet naming — Name = sitename≡label / tenant pkey; Fleet-only Name edit; Network Site Name read-only when fleet. Spec **`FLEET_NAMING_LOCK.md`**. Lab Names: Golden / AEL Nodes / Labtest-B.
-
-**Dial cohort / Site Group:** Spec **`DIAL_COHORT_REQUIREMENTS.md`** locked (§11); **release stopper** until C1–C5. UI **Site Groups**; hand dial prefixes stay lab-only.
-
-**Dev against golden:** Gatekeeper **`control.pbx3.com`** · SPA `npm run dev` · Fleet → Instances for Name · Network shows Site Name read-only on fleet nodes.
-
-**Operator impact:** Change friendly instance Name only in Fleet → Instances. Do not invent production short-dial meshes by hand — wait for Site Groups.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** (#1 = dial cohort stopper) · **`DIAL_COHORT_REQUIREMENTS.md`** · **`FLEET_NAMING_LOCK.md`**.
-
-**Resume:** Dial cohort **C1** (Gatekeeper catalog CRUD).
+**Superseded** by Site Groups C0–C6 block above for “read first.” Naming lock still on `main`.
 
 ---
 
