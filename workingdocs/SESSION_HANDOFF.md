@@ -16,7 +16,7 @@
 
 **Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TENANT_SHORT_DIAL_REQUIREMENTS.md`** §3.9.1.
 
-**Resume:** Lock A → OpenSIPS shortuid lookup; re-smoke Snom redial.
+**Resume:** Lock A → Magrathea per **`pbx3sbc/workingdocs/SLICE_D_SHORTUID_USRLOC_REPAIR.md`**; re-smoke Snom redial.
 
 ---
 
