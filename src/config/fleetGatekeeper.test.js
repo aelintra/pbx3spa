@@ -75,6 +75,15 @@ describe('fleetGatekeeper config helpers', () => {
     expect(canFleet(FLEET_ABILITY.MOVES)).toBe(false)
   })
 
+  it('FLEET_ABILITY_ALL includes dial cohorts so login abilities are not stripped', async () => {
+    const { FLEET_ABILITY, FLEET_ABILITY_ALL, setFleetAbilities, getFleetAbilities, canFleet } =
+      await import('@/config/fleetGatekeeper.js')
+    expect(FLEET_ABILITY_ALL).toContain(FLEET_ABILITY.DIAL_COHORTS)
+    setFleetAbilities(['fleet_dial_cohorts'])
+    expect(getFleetAbilities()).toEqual(['fleet_dial_cohorts'])
+    expect(canFleet(FLEET_ABILITY.DIAL_COHORTS)).toBe(true)
+  })
+
   it('sessionStorage wins over DEV env token', async () => {
     vi.stubEnv('DEV', true)
     vi.stubEnv('VITE_FLEET_GATEKEEPER_TOKEN', 'env-token')

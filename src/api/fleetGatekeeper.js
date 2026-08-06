@@ -546,3 +546,94 @@ export function patchEdgeSettings(body) {
     body: JSON.stringify(body)
   })
 }
+
+// ── Dial cohorts / Site Groups (C1–C4) ───────────────────────────────
+
+/** Index rollup for Fleet → Site Groups list. */
+export function listFleetDialCohorts() {
+  return gkFetch('/api/v1/dial-cohorts')
+}
+
+export function getFleetDialCohort(id) {
+  return gkFetch(`/api/v1/dial-cohorts/${encodeURIComponent(id)}`)
+}
+
+/**
+ * @param {{ name: string, prefix_width?: number }} body
+ */
+export function createFleetDialCohort(body) {
+  return gkFetch('/api/v1/dial-cohorts', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+/**
+ * @param {string} id
+ * @param {{ name?: string, prefix_width?: number }} body
+ */
+export function patchFleetDialCohort(id, body) {
+  return gkFetch(`/api/v1/dial-cohorts/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body)
+  })
+}
+
+/**
+ * @param {string} id
+ * @param {{ tenant_shortuid: string, routing_prefix: string, materialise?: boolean, prune_unmanaged?: boolean }} body
+ */
+export function addFleetDialCohortMember(id, body) {
+  return gkFetch(`/api/v1/dial-cohorts/${encodeURIComponent(id)}/members`, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+/**
+ * @param {string} id
+ * @param {string} shortuid
+ * @param {{ materialise?: boolean }} [opts]
+ */
+export function removeFleetDialCohortMember(id, shortuid, opts = {}) {
+  const q =
+    opts.materialise === false ? '?materialise=false' : opts.materialise === true ? '?materialise=true' : ''
+  return gkFetch(
+    `/api/v1/dial-cohorts/${encodeURIComponent(id)}/members/${encodeURIComponent(shortuid)}${q}`,
+    { method: 'DELETE' }
+  )
+}
+
+/**
+ * Sync now — materialise mesh + optional prune.
+ * @param {string} id
+ * @param {{ reason?: string, prune_unmanaged?: boolean }} [body]
+ */
+export function syncFleetDialCohort(id, body = {}) {
+  return gkFetch(`/api/v1/dial-cohorts/${encodeURIComponent(id)}/sync`, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+/**
+ * @param {string} id
+ * @param {{ confirm: boolean, materialise?: boolean }} body
+ */
+export function decommissionFleetDialCohort(id, body) {
+  return gkFetch(`/api/v1/dial-cohorts/${encodeURIComponent(id)}/decommission`, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+/**
+ * @param {string} shortuid
+ * @param {{ routing_prefix: string, routing_prefix_width?: number, materialise?: boolean }} body
+ */
+export function patchTenantRoutingPrefix(shortuid, body) {
+  return gkFetch(`/api/v1/tenants/${encodeURIComponent(shortuid)}/routing-prefix`, {
+    method: 'PATCH',
+    body: JSON.stringify(body)
+  })
+}

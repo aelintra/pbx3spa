@@ -13,7 +13,7 @@ import ListLoadingState from '@/components/ListLoadingState.vue'
 
 const { filterText } = useStickyFilter('dialaliases')
 const toast = useToastStore()
-const { loadFleetPosture, isFleetNode } = useFleetPosture()
+const { loadFleetPosture, isFleetNode, dialCohortFeatureOn } = useFleetPosture()
 const rows = ref([])
 const tenants = ref([])
 const loading = ref(true)
@@ -119,6 +119,15 @@ function sortClass(key) {
   return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
 }
 
+function isManaged(row) {
+  return String(row?.source || '').toLowerCase() === 'cohort'
+}
+
+function sourceLabel(row) {
+  if (isManaged(row)) return 'Site group'
+  return 'Manual'
+}
+
 async function loadRows() {
   loading.value = true
   error.value = ''
@@ -178,7 +187,16 @@ onMounted(loadRows)
         tenant.
       </p>
       <p v-if="fleetReady && isFleetNode()" class="toolbar">
-        <router-link :to="{ name: 'dialalias-create' }" class="add-btn">Create</router-link>
+        <router-link
+          v-if="!dialCohortFeatureOn()"
+          :to="{ name: 'dialalias-create' }"
+          class="add-btn"
+        >
+          Create
+        </router-link>
+        <span v-else class="list-legend">
+          Cross-tenant prefixes are managed in Fleet → Site Groups.
+        </span>
         <input
           v-model="filterText"
           type="search"
@@ -250,6 +268,7 @@ onMounted(loadRows)
             >
               Description
             </th>
+            <th>Source</th>
             <th
               class="th-sortable"
               title="Click to sort"
@@ -305,14 +324,15 @@ onMounted(loadRows)
             <td :title="r.target_fqdn || ''">{{ targetDisplay(r) }}</td>
             <ListActiveChip :active="r.active" />
             <td>{{ r.description || '—' }}</td>
+            <td>{{ sourceLabel(r) }}</td>
             <td class="cell-immutable">{{ uidDisplay(r) }}</td>
             <td>
               <router-link
                 v-if="r.shortuid"
                 :to="{ name: 'dialalias-detail', params: { shortuid: r.shortuid } }"
                 class="cell-link cell-link-icon"
-                title="Edit"
-                aria-label="Edit"
+                :title="isManaged(r) ? 'View (Site Group managed)' : 'Edit'"
+                :aria-label="isManaged(r) ? 'View' : 'Edit'"
               >
                 <span class="action-icon" aria-hidden="true">
                   <svg
@@ -340,7 +360,7 @@ onMounted(loadRows)
             </td>
             <td>
               <button
-                v-if="r.shortuid"
+                v-if="r.shortuid && !isManaged(r)"
                 type="button"
                 class="cell-link cell-link-delete cell-link-icon"
                 :title="deletingShortuid === r.shortuid ? 'Deleting…' : 'Delete'"
@@ -390,6 +410,7 @@ onMounted(loadRows)
                   </svg>
                 </span>
               </button>
+              <span v-else-if="isManaged(r)" class="cell-muted" title="Managed by Site Group">—</span>
             </td>
           </tr>
         </tbody>
@@ -456,6 +477,9 @@ onMounted(loadRows)
 .cell-immutable {
   color: var(--pbx-text-muted);
   background: transparent;
+}
+.cell-muted {
+  color: var(--pbx-text-muted, #94a3b8);
 }
 .th-sortable {
   cursor: pointer;

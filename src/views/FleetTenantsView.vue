@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   listFleetTenants,
+  listFleetDialCohorts,
   getFleetCatalog,
   refreshFleetSession,
   registerFleetTenantDomain,
@@ -29,6 +30,7 @@ const busyId = ref('')
 const canMove = ref(false)
 const canEdge = ref(false)
 const canCreate = ref(false)
+const cohortNameById = ref({})
 
 const showCreate = ref(false)
 const createBusy = ref(false)
@@ -50,6 +52,7 @@ async function loadTenants() {
     canMove.value = false
     canEdge.value = false
     canCreate.value = false
+    cohortNameById.value = {}
     return
   }
   loading.value = true
@@ -62,7 +65,16 @@ async function loadTenants() {
     canMove.value = canFleet(FLEET_ABILITY.MOVES)
     canEdge.value = canFleet(FLEET_ABILITY.EDGE)
     canCreate.value = canFleet(FLEET_ABILITY.INSTANCES)
-    const [tList, catalog] = await Promise.all([listFleetTenants(), getFleetCatalog()])
+    const [tList, catalog, cohortsIdx] = await Promise.all([
+      listFleetTenants(),
+      getFleetCatalog(),
+      listFleetDialCohorts().catch(() => ({ cohorts: [] }))
+    ])
+    const cmap = {}
+    for (const c of cohortsIdx?.cohorts || []) {
+      if (c?.id) cmap[c.id] = c.name || c.id
+    }
+    cohortNameById.value = cmap
     const map = {}
     const opts = []
     for (const i of catalog.instances || []) {
@@ -82,6 +94,12 @@ async function loadTenants() {
   } finally {
     loading.value = false
   }
+}
+
+function siteGroupLabel(t) {
+  const id = (t.dial_cohort_id || '').trim()
+  if (!id) return '—'
+  return cohortNameById.value[id] || id
 }
 
 function instanceLabel(instanceId) {
@@ -293,6 +311,8 @@ onMounted(loadTenants)
           <th>Hosted on</th>
           <th>FQDN</th>
           <th>Short UID</th>
+          <th>Routing prefix</th>
+          <th>Site group</th>
           <th>Status</th>
           <th></th>
         </tr>
@@ -303,6 +323,17 @@ onMounted(loadTenants)
           <td>{{ instanceLabel(t.instance_id) }}</td>
           <td>{{ t.fqdn || '—' }}</td>
           <td><code>{{ t.shortuid }}</code></td>
+          <td>{{ t.routing_prefix || '—' }}</td>
+          <td>
+            <RouterLink
+              v-if="t.dial_cohort_id"
+              class="linkish"
+              :to="{ name: 'fleet-site-group-detail', params: { id: t.dial_cohort_id } }"
+            >
+              {{ siteGroupLabel(t) }}
+            </RouterLink>
+            <span v-else>—</span>
+          </td>
           <td>{{ t.status }}</td>
           <td class="actions">
             <button

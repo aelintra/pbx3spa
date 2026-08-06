@@ -17,6 +17,7 @@ export const FLEET_ABILITY = Object.freeze({
   INSTANCES: 'fleet_instances',
   MOVES: 'fleet_moves',
   EDGE: 'fleet_edge',
+  DIAL_COHORTS: 'fleet_dial_cohorts',
   ADMIN: 'fleet_admin'
 })
 
@@ -26,6 +27,7 @@ export const FLEET_ABILITY_ALL = Object.freeze([
   FLEET_ABILITY.INSTANCES,
   FLEET_ABILITY.MOVES,
   FLEET_ABILITY.EDGE,
+  FLEET_ABILITY.DIAL_COHORTS,
   FLEET_ABILITY.ADMIN
 ])
 

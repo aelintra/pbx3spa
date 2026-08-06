@@ -22,7 +22,7 @@ import PanelBackLink from '@/components/PanelBackLink.vue'
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
-const { loadFleetPosture, isFleetNode } = useFleetPosture()
+const { loadFleetPosture, isFleetNode, dialCohortFeatureOn } = useFleetPosture()
 
 const pkey = ref('')
 const cluster = ref('')
@@ -39,6 +39,7 @@ const catalogLoading = ref(true)
 const error = ref('')
 const loading = ref(false)
 const fleetBlocked = ref(false)
+const cohortFeatureBlocksCreate = ref(false)
 
 const pkeyInput = ref(null)
 
@@ -195,6 +196,10 @@ onMounted(async () => {
     fleetBlocked.value = true
     return
   }
+  if (dialCohortFeatureOn()) {
+    cohortFeatureBlocksCreate.value = true
+    return
+  }
   await ensureFetched()
   await loadCatalog()
   applySchemaDefaults('dialaliases', {
@@ -215,6 +220,17 @@ onMounted(async () => {
     <p v-if="fleetBlocked" class="error" role="alert">
       Dial prefixes are fleet-only in v1. This node is not in fleet mode.
     </p>
+
+    <section v-else-if="cohortFeatureBlocksCreate" class="create-blocked">
+      <p role="status">
+        Cross-tenant dial prefixes are managed by Site Groups. Create or edit membership in Fleet →
+        Site Groups instead of inventing prefixes here.
+      </p>
+      <p class="create-blocked-actions">
+        <router-link :to="{ name: 'fleet-site-groups' }" class="add-btn">Site Groups</router-link>
+        <button type="button" class="secondary" @click="goBack">Back</button>
+      </p>
+    </section>
 
     <form v-else class="form create-form" @submit="onSubmit" @keydown="onKeydown">
       <p v-if="error" class="error" role="alert">{{ error }}</p>
@@ -326,6 +342,39 @@ onMounted(async () => {
   color: #dc2626;
   font-size: 0.875rem;
   margin: 0;
+}
+.create-blocked {
+  margin-top: 1rem;
+  max-width: 40rem;
+  color: var(--color-muted, #64748b);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+.create-blocked-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+.create-blocked-actions .add-btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #fff;
+  background: #2563eb;
+  border-radius: 0.375rem;
+  text-decoration: none;
+}
+.create-blocked-actions .secondary {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
 }
 .actions {
   display: flex;

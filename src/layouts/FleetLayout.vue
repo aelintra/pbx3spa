@@ -52,6 +52,7 @@ function onNavClick(e) {
 const navLinks = [
   { to: '/fleet/instances', label: 'Instances', icon: 'layers' },
   { to: '/fleet/tenants', label: 'Tenants', icon: 'building2' },
+  { to: '/fleet/site-groups', label: 'Site Groups', icon: 'link' },
   { to: '/fleet/dids', label: 'DIDs', icon: 'phone' },
   { to: '/fleet/jobs', label: 'Jobs', icon: 'list-ordered' },
   { to: '/fleet/reconcile', label: 'Reconcile', icon: 'git-branch' },

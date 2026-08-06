@@ -30,6 +30,12 @@ function isReadOnly(field) {
   return getSchema('dialaliases')?.read_only?.includes(field) ?? false
 }
 
+const isManaged = computed(() => String(row.value?.source || '').toLowerCase() === 'cohort')
+
+function fieldLocked(field) {
+  return isManaged.value || isReadOnly(field)
+}
+
 const shortuid = computed(() => route.params.shortuid)
 const row = ref(null)
 const localTenants = ref([])
@@ -182,7 +188,7 @@ function onKeydown(e) {
 
 async function saveEdit(e) {
   e.preventDefault()
-  if (!shortuid.value) return
+  if (!shortuid.value || isManaged.value) return
   saveError.value = ''
   if (validateDialPrefixPkey(editPkey.value)) {
     saveError.value = validateDialPrefixPkey(editPkey.value)
@@ -207,11 +213,11 @@ async function saveEdit(e) {
   saving.value = true
   try {
     const body = {
-      ...(isReadOnly('pkey') ? {} : { pkey: editPkey.value.trim() }),
-      ...(isReadOnly('cluster') ? {} : { cluster: editCluster.value }),
-      ...(isReadOnly('target_fqdn') ? {} : { target_fqdn: fqdn }),
-      ...(isReadOnly('description') ? {} : { description: editDescription.value }),
-      ...(isReadOnly('active') ? {} : { active: editActive.value })
+      ...(fieldLocked('pkey') ? {} : { pkey: editPkey.value.trim() }),
+      ...(fieldLocked('cluster') ? {} : { cluster: editCluster.value }),
+      ...(fieldLocked('target_fqdn') ? {} : { target_fqdn: fqdn }),
+      ...(fieldLocked('description') ? {} : { description: editDescription.value }),
+      ...(fieldLocked('active') ? {} : { active: editActive.value })
     }
     await getApiClient().put(`dialaliases/${encodeURIComponent(shortuid.value)}`, body)
     toast.show('Dial prefix saved')
@@ -224,6 +230,7 @@ async function saveEdit(e) {
 }
 
 function askDelete() {
+  if (isManaged.value) return
   confirmDeleteOpen.value = true
 }
 
@@ -257,16 +264,20 @@ const panelTitleTenantSuffix = computed(() => {
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
           <h1 class="detail-panel-title">
-            Edit dial prefix {{ row?.pkey ?? shortuid }}{{ panelTitleTenantSuffix }}
+            {{ isManaged ? 'View' : 'Edit' }} dial prefix
+            {{ row?.pkey ?? shortuid }}{{ panelTitleTenantSuffix }}
           </h1>
           <DetailActiveStatusBar
             v-if="row && !fleetBlocked"
             v-model="editActive"
-            :readonly="isReadOnly('active')"
+            :readonly="fieldLocked('active')"
             toggle-id="edit-dialalias-active"
           />
         </div>
-        <p v-if="row && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
+        <p v-if="row && isManaged" class="detail-active-inactive-hint" role="status">
+          Managed by a Site Group — edit membership or routing prefixes in Fleet → Site Groups.
+        </p>
+        <p v-else-if="row && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
           Inactive prefixes are ignored once GenAst emits dialplan (slice C).
         </p>
       </div>
@@ -286,11 +297,19 @@ const panelTitleTenantSuffix = computed(() => {
       <p v-if="deleteError" class="error" role="alert">{{ deleteError }}</p>
 
       <div class="edit-actions edit-actions-top">
-        <button type="submit" :disabled="saving || catalogLoading">
+        <button v-if="!isManaged" type="submit" :disabled="saving || catalogLoading">
           {{ saving ? 'Saving…' : 'Save' }}
         </button>
-        <button type="button" class="secondary" @click="goBack">Cancel</button>
-        <button type="button" class="action-delete" :disabled="deleting" @click="askDelete">
+        <button type="button" class="secondary" @click="goBack">
+          {{ isManaged ? 'Back' : 'Cancel' }}
+        </button>
+        <button
+          v-if="!isManaged"
+          type="button"
+          class="action-delete"
+          :disabled="deleting"
+          @click="askDelete"
+        >
           {{ deleting ? 'Deleting…' : 'Delete' }}
         </button>
       </div>
@@ -306,13 +325,20 @@ const panelTitleTenantSuffix = computed(() => {
           />
         </template>
 
+        <FormReadonly
+          v-if="isManaged"
+          id="edit-source"
+          label="Source"
+          :value="row?.cohort_id ? `Site group (${row.cohort_id})` : 'Site group'"
+        />
+
         <FormField
           id="edit-pkey"
           v-model="editPkey"
           label="Prefix"
           help-pkey="dialprefix"
           inputmode="numeric"
-          :disabled="isReadOnly('pkey')"
+          :disabled="fieldLocked('pkey')"
         />
 
         <FormSelect
@@ -320,7 +346,7 @@ const panelTitleTenantSuffix = computed(() => {
           v-model="editCluster"
           label="Calling tenant"
           :options="tenantOptions"
-          :disabled="isReadOnly('cluster')"
+          :disabled="fieldLocked('cluster')"
         />
 
         <FormSelect
@@ -331,7 +357,7 @@ const panelTitleTenantSuffix = computed(() => {
           :options="targetOptions"
           :loading="catalogLoading"
           :hint="catalogHint"
-          :disabled="isReadOnly('target_fqdn')"
+          :disabled="fieldLocked('target_fqdn')"
         />
 
         <FormField
@@ -339,7 +365,7 @@ const panelTitleTenantSuffix = computed(() => {
           v-model="editDescription"
           label="Description"
           help-pkey="description"
-          :disabled="isReadOnly('description')"
+          :disabled="fieldLocked('description')"
         />
       </div>
     </form>

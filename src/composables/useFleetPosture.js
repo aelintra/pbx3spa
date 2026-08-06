@@ -38,12 +38,18 @@ export function useFleetPosture() {
     return Boolean(posture.value?.hide_route_paths)
   }
 
+  /** When true, Sanctum must not invent cross-tenant dial prefixes (Site Groups). */
+  function dialCohortFeatureOn() {
+    return Boolean(posture.value?.dial_cohort)
+  }
+
   return {
     posture,
     loading,
     error,
     loadFleetPosture,
     isFleetNode,
-    hideRoutePaths
+    hideRoutePaths,
+    dialCohortFeatureOn
   }
 }

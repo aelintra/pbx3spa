@@ -39,6 +39,8 @@ import RoutesListView from '../views/RoutesListView.vue'
 import FleetLayout from '../layouts/FleetLayout.vue'
 import FleetTenantsView from '../views/FleetTenantsView.vue'
 import FleetInstancesView from '../views/FleetInstancesView.vue'
+import FleetSiteGroupsView from '../views/FleetSiteGroupsView.vue'
+import FleetSiteGroupDetailView from '../views/FleetSiteGroupDetailView.vue'
 import FleetJobsView from '../views/FleetJobsView.vue'
 import FleetReconcileView from '../views/FleetReconcileView.vue'
 import FleetDidsView from '../views/FleetDidsView.vue'
@@ -224,6 +226,12 @@ const router = createRouter({
         { path: '', redirect: { name: 'fleet-tenants' } },
         { path: 'instances', name: 'fleet-instances', component: FleetInstancesView },
         { path: 'tenants', name: 'fleet-tenants', component: FleetTenantsView },
+        { path: 'site-groups', name: 'fleet-site-groups', component: FleetSiteGroupsView },
+        {
+          path: 'site-groups/:id',
+          name: 'fleet-site-group-detail',
+          component: FleetSiteGroupDetailView
+        },
         { path: 'dids', name: 'fleet-dids', component: FleetDidsView },
         { path: 'jobs', name: 'fleet-jobs', component: FleetJobsView },
         { path: 'reconcile', name: 'fleet-reconcile', component: FleetReconcileView },
