@@ -93,7 +93,9 @@ This keeps complexity manageable and avoids a risky merge while still reducing u
 
 ---
 
-## Locked decision (2026-07-30; **sync policy tightened 2026-08-03**) — friendly instance name
+## Locked decision (2026-07-30; **sync policy tightened 2026-08-03**; **naming model 2026-08-06**) — friendly instance name
+
+**Fleet-wide naming lock:** [`pbx3/workingdocs/FLEET_NAMING_LOCK.md`](../../pbx3/workingdocs/FLEET_NAMING_LOCK.md) — shortuid + one **Name** + FQDN. Instance Name = **`sitename` ≡ catalog `label`** (not an instance `pkey`; that word is tenant-only).
 
 **Agree:** ops nicknames like “Golden” / “Kildare” are invented; they are not node identity (`fqdn` / `shortuid`).
 
@@ -101,8 +103,9 @@ This keeps complexity manageable and avoids a risky merge while still reducing u
 |-------|------|
 | `globals.fqdn` / OS hostname | Stable identity — TLS, API host, SIP where applicable |
 | `globals.shortuid` | Opaque instance id (SUID) — catalog `id` usually matches |
-| **`sysglobals.sitename`** | On-node friendly name **HoR** — Network **Site Name**, Home header, session chips |
+| **`sysglobals.sitename`** | On-node **Name** (HoR) — Network **Site Name**, Home header, session chips. Short recogniser (e.g. `golden`). |
 | Catalog **`label`** | Fleet / instance chooser. **Must match `sitename` when both exist** (not a second independent nickname) |
+| Catalog **`notes`** | Free-form **Description** (what / where / function, e.g. `test`). Not Name — see **`FLEET_NAMING_LOCK.md`** |
 
 ### Display (SPA / fleet chooser) — locked 2026-08-03
 
@@ -118,20 +121,16 @@ display = sitename || catalog.label || shortuid
 
 | Direction | When | Path |
 |-----------|------|------|
-| **sitename → catalog.label** | Installer site name; Network / sysglobals **Site Name** save; onboard that already knows sitename | **Gatekeeper** `PATCH /api/v1/instances/{id}` (or register body). **Rule 9/10:** not browser IAM, not instance Sanctum inventing catalog write |
-| **catalog.label → sitename** | Optional later if Fleet Instances renames label | Fleet path may push node sitename (fleet.token); not v1 critical if operators edit **Site Name** as HoR |
+| **Fleet label → sitename** | Fleet → Instances Name save / register | Gatekeeper **`PUT {api}/fleet/sitename`** then catalog `label` (Rule **9/10**) |
+| **sitename → catalog.label** | Installer / onboard seed | Register/onboard body `label` from sitename |
 
-### Edit semantics (locked 2026-08-03)
+### Edit semantics (locked 2026-08-03; **Fleet-only edit 2026-08-06**)
 
-| Context | Site name save |
+| Context | Site name / Name |
 |---------|----------------|
-| **Fleet node + catalog in use** | Change **sitename** → also set catalog **`label`** (same value) via **Gatekeeper**. If Gatekeeper/catalog write fails (control down, S3 issue, missing fleet config), **reject the save** — no partial update that reintroduces drift. |
-| **Solo / no fleet catalog** | Sitename save **allowed** without catalog. |
+| **Fleet node** | Edit **only** in **Fleet → Instances**. Gatekeeper pushes node `sitename` then catalog `label`. Network Site Name **read-only**. Sanctum sitename change → **403**. |
+| **Solo / no fleet** | Edit **sitename** on Network. |
 
-Primary operator control: edit **sitename** (Network or Globals). Not two independent nicknames.
+**Installer:** write **`sysglobals.sitename`** on first provision; reject vanity `INSTANCE_FQDN` unless `PBX3_ALLOW_VANITY_FQDN=1`. Catalog register seeds **`label`** from Name.
 
-**SPA today** still uses sitename → FQDN → catalog (pre-sync). Implement dual-write + display fallback when scheduled — **`TODO.md`**.
-
-**Installer:** still write **`sysglobals.sitename`** on first provision. Catalog register/onboard should seed **`label`** from that string (or SUID if empty).
-
-**Tracked:** `pbx3/workingdocs/TODO.md`.
+**Tracked:** `pbx3/workingdocs/TODO.md` · **`FLEET_NAMING_LOCK.md`**.

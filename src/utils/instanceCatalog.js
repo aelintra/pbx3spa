@@ -54,7 +54,8 @@ export function normalizeInstanceRecord(row, index) {
   const id = String(r.id ?? '').trim()
   const fqdn = String(r.fqdn ?? '').trim()
   const api_base_url = String(r.api_base_url ?? '').trim()
-  const label = String(r.label ?? '').trim() || fqdn || id
+  // Name = catalog label (sitename mirror). Do not fall back to FQDN as the title (FLEET_NAMING_LOCK).
+  const label = String(r.label ?? '').trim() || id
   if (!id || !api_base_url) {
     console.warn(`Catalog row ${index} skipped: missing id or api_base_url`)
     return null

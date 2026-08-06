@@ -186,7 +186,7 @@ async function saveEdit(id) {
       environment: editDraft.value.environment.trim() || undefined
     }
     if (!body.label) {
-      throw new Error('Label required')
+      throw new Error('Name required')
     }
     if (!body.environment) {
       delete body.environment
@@ -195,7 +195,7 @@ async function saveEdit(id) {
     editingId.value = ''
     await load()
   } catch (e) {
-    actionError.value = e?.message || 'Update failed'
+    actionError.value = e?.message || 'Update failed (Name syncs to the node — check fleet token / node /up)'
   } finally {
     busyId.value = ''
   }
@@ -258,7 +258,7 @@ async function doRegister() {
       id: reg.value.id.trim(),
       fqdn: reg.value.fqdn.trim(),
       api_base_url: reg.value.api_base_url.trim().replace(/\/$/, ''),
-      label: (reg.value.label.trim() || reg.value.fqdn.trim()),
+      label: reg.value.label.trim(),
       status: reg.value.status || 'active',
       verify_up: !reg.value.skip_verify
     }
@@ -277,6 +277,9 @@ async function doRegister() {
     }
     if (!body.id || !body.fqdn || !body.api_base_url) {
       throw new Error('id, fqdn, and api_base_url are required')
+    }
+    if (!body.label) {
+      throw new Error('label (friendly Name) is required — not the FQDN/shortuid')
     }
     await registerFleetInstance(body)
     showRegister.value = false
@@ -406,7 +409,7 @@ onMounted(load)
       </label>
       <label>
         Label
-        <input v-model="reg.label" placeholder="defaults to FQDN" autocomplete="off" />
+        <input v-model="reg.label" placeholder="friendly Name (required for picker)" autocomplete="off" />
       </label>
       <label>
         Environment
@@ -504,7 +507,12 @@ onMounted(load)
         >
           <td>
             <template v-if="editingId === i.id">
-              <input v-model="editDraft.label" class="inline-input" />
+              <input
+                v-model="editDraft.label"
+                class="inline-input"
+                placeholder="Friendly Name"
+                aria-label="Friendly Name"
+              />
               <label class="notes-edit">
                 Notes
                 <input v-model="editDraft.notes" class="inline-input" />

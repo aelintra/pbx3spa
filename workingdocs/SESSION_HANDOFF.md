@@ -6,17 +6,25 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-06 — naming lock + Site Group stopper
+
+**On `main` (commit/push this session):** Fleet naming — Name = sitename≡label / tenant pkey; Fleet-only Name edit; Network Site Name read-only when fleet. Spec **`FLEET_NAMING_LOCK.md`**. Lab Names: Golden / AEL Nodes / Labtest-B.
+
+**Dial cohort / Site Group:** Spec **`DIAL_COHORT_REQUIREMENTS.md`** locked (§11); **release stopper** until C1–C5. UI **Site Groups**; hand dial prefixes stay lab-only.
+
+**Dev against golden:** Gatekeeper **`control.pbx3.com`** · SPA `npm run dev` · Fleet → Instances for Name · Network shows Site Name read-only on fleet nodes.
+
+**Operator impact:** Change friendly instance Name only in Fleet → Instances. Do not invent production short-dial meshes by hand — wait for Site Groups.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** (#1 = dial cohort stopper) · **`DIAL_COHORT_REQUIREMENTS.md`** · **`FLEET_NAMING_LOCK.md`**.
+
+**Resume:** Dial cohort **C1** (Gatekeeper catalog CRUD).
+
+---
+
 ## Session end 2026-08-06 — Fleet Delete lab green
 
-**Merged to `main`:** Fleet Delete (Rule 14 durable job) — SBC domain DELETE, catalog soft-decom, Gatekeeper `/tenant-deletes*`, SPA Tenants **Delete** + Jobs confirm, MkDocs `fleet/tenant-delete`. Lab throwaway delete OK. Spec **`FLEET_TENANT_DELETE_REQUIREMENTS.md`**. Earlier same day: number wire D1=C + seed MainOut (still on `main`).
-
-**Dev against golden:** Gatekeeper **`control.pbx3.com`** · SPA `npm run dev` · instance API `https://08jzwn.pbx3.com:44300/api`. Fleet → Tenants → Delete; Fleet → Jobs for confirm. SBC VIP **`3.93.26.82`**.
-
-**Operator impact:** Can decommission a fleet tenant end-to-end (preflight → confirm → edge remove → node wipe → catalog). Decommissioned rows filtered from Tenants list. **FQDN rename (D6)** still not built.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`FLEET_TENANT_DELETE_REQUIREMENTS.md`**.
-
-**Resume:** FQDN rename (D6) optional; else product crumbs / number wire Phase 2.
+**Superseded** by naming + Site Group block above for “read first.” Fleet Delete still on `main`.
 
 ---
 

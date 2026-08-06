@@ -132,7 +132,8 @@ export function listFleetTenants() {
     (d.tenants || [])
       .map((t) => {
         const shortuid = t.shortuid || t.tenant_shortuid
-        const name = t.label || t.pkey || t.cname || shortuid
+        // Name = pkey (FLEET_NAMING_LOCK). label is optional mirror; description must not win.
+        const name = t.pkey || t.label || t.cname || shortuid
         return {
           ...t,
           shortuid,

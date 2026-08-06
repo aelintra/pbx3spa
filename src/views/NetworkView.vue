@@ -4,6 +4,7 @@ import { getApiClient } from '@/api/client'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { useFleetPosture } from '@/composables/useFleetPosture'
 import FormField from '@/components/forms/FormField.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
@@ -16,6 +17,7 @@ const ICMP_OPTIONS = ['YES', 'NO'] // YES = allow ping
 
 const toast = useToastStore()
 const auth = useAuthStore()
+const { loadFleetPosture, isFleetNode } = useFleetPosture()
 const sysglobal = ref(null)
 const sysnotes = ref(null)
 const loading = ref(true)
@@ -23,6 +25,7 @@ const error = ref('')
 const saving = ref(false)
 const discarding = ref(false)
 const saveError = ref('')
+const fleetReady = ref(false)
 
 const editDns = ref('')
 const editBindport = ref('')
@@ -166,8 +169,10 @@ async function saveEdit(e) {
       tlsport:
         editTlsport.value !== '' && editTlsport.value != null
           ? parseInt(editTlsport.value, 10)
-          : null,
-      sitename: editSitename.value?.trim() || null
+          : null
+    }
+    if (!isFleetNode()) {
+      body.sitename = editSitename.value?.trim() || null
     }
     await getApiClient().put('sysglobals', body)
     toast.show('Network saved')
@@ -181,7 +186,11 @@ async function saveEdit(e) {
 
 const network = computed(() => sysnotes.value?.network ?? null)
 
-onMounted(fetchData)
+onMounted(async () => {
+  await loadFleetPosture()
+  fleetReady.value = true
+  await fetchData()
+})
 </script>
 
 <template>
@@ -218,7 +227,23 @@ onMounted(fetchData)
 
       <h2 class="detail-heading">System</h2>
       <div class="form-fields">
-        <FormField id="ip-sitename" v-model="editSitename" label="Site Name" />
+        <template v-if="fleetReady && isFleetNode()">
+          <FormReadonly
+            id="ip-sitename"
+            label="Site Name"
+            :value="editSitename || '—'"
+          />
+          <p class="field-hint">
+            Fleet mode: change friendly Name in Fleet → Instances (syncs here automatically).
+          </p>
+        </template>
+        <FormField
+          v-else
+          id="ip-sitename"
+          v-model="editSitename"
+          label="Site Name"
+          hint="Friendly Name for Home (solo). Not the hostname."
+        />
         <FormReadonly id="ip-hostname" label="Hostname" :value="network?.hostname ?? '—'" />
         <FormReadonly id="ip-localip" label="Local IP" :value="network?.local_ip ?? '—'" />
         <FormField id="ip-staticipv4" v-model="editStaticipv4" label="Static IPv4" />
@@ -376,6 +401,12 @@ onMounted(fetchData)
   padding-bottom: 1.5rem;
   border-top: none;
   border-bottom: 1px solid #e2e8f0;
+}
+
+.field-hint {
+  margin: -0.25rem 0 0.75rem;
+  font-size: 0.85rem;
+  color: #64748b;
 }
 
 .btn {

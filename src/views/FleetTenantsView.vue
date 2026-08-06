@@ -264,8 +264,9 @@ onMounted(loadTenants)
       </label>
       <label>
         Description
-        <input v-model="createForm.description" type="text" required />
+        <input v-model="createForm.description" type="text" required placeholder="Notes (not the Name)" />
       </label>
+      <p class="hint">Name (pkey) is how Fleet lists this tenant. Description is free-form notes only.</p>
       <label>
         Cluster CLID
         <input v-model="createForm.clusterclid" type="text" inputmode="numeric" placeholder="digits" />
