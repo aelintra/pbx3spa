@@ -6,17 +6,27 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-05 — short dial D desk findings (lean A)
+
+**On `main`:** Site-dial return CLIP lab. Snom keeps shortuid on redial but **forces local registrar domain** → 404. Spec **§3.9.1**; lean **our-SBC username usrloc repair (A)**. Golden receive CLID = `suid@fqdn`; reverse prefix duns→affcot `81` for capture.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · Dial prefixes **81** both ways (affcot↔duns). Test exts **1101** / **1002**.
+
+**Operator impact:** History callback across tenants **not guaranteed** until Magrathea A ships. Forward `81xxxx` still works. LDAP display ≠ dial string for cross-tenant.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TENANT_SHORT_DIAL_REQUIREMENTS.md`** §3.9.1.
+
+**Resume:** Lock A → OpenSIPS shortuid lookup; re-smoke Snom redial.
+
+---
+
 ## Session end 2026-08-05 — day-parts on main + DID open-seed
 
-**Merged to `main`:** Day-parts (ranges, profiles, packages **0.0.4-8** / cagi **1.0.0-13** on golden). DID/profile create requires **open destination**; empty profile auto-seeds open/closed (closed defaults to open).
+**Superseded** by **short dial D** block above for “read first.”
 
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SPA `npm run dev` on **`main`**. DID **`01924910444`** → profile **`c59b6m`** (duns). Day timers: Aelintra `mon-fri` lunch / overnight / weekend closed.
+**Merged to `main`:** Day-parts + DID open-seed; golden **0.0.4-8** / cagi **1.0.0-13**.
 
-**Operator impact:** Create inbound → pick open (and optional closed); leave profile blank to auto-build. Route profiles must keep an `open` line. BLF/toggle shops: open+closed same dest is fine.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — next **short dial D**; parked **tenant outbound seed** (locale vs iron-PBX shunt).
-
-**Resume:** Short dial return CLIP (**D**), or optional day-parts pack roll / smokes.
+**Resume:** See current session end block above.
 
 ---
 
