@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-06 — number wire D1=C + seed MainOut
+
+**Merged to `main`:** Number wire **D1 = Model C** (policy **`NUMBER_WIRE_POLICY.md`**). Tenant create seeds **MainOut** from Instance Globals default dialplan (`_0. _00.` UK). Fleet create lab green after restoring node `PBX3_FLEET_SERVICE_TOKEN`.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · SPA `npm run dev`. Instance Globals → **Outbound**. Fleet → Tenants for create (fleet nodes). SBC VIP **`3.93.26.82`**. Say **the SBC** (not Magrathea) for the edge; Magrathea = UK ITSP Peer.
+
+**Operator impact:** New tenants get a usable outbound route without hand-building patterns; edit MainOut or globals default as needed. Commit after create. Fleet Delete still missing — **release blocker**.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`SEED_OUTBOUND_ON_TENANT_CREATE.md`** · **`NUMBER_WIRE_POLICY.md`**.
+
+**Resume:** Fleet Delete + FQDN rename (Rule 14 durable job).
+
+---
+
 ## Session end 2026-08-05 — short dial D + E closed
 
-**Merged to `main`:** Inter-tenant short dial product path done — **D** Magrathea Path 1 (desk history redial) + **E** SIPp pack-gate **12/12** ×2. All-digit shortuid reject on `main`. Local co-locate shortcut **rejected**.
-
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · Magrathea **`3.93.26.82`**. Desk: affcot **1101** / duns **1002** via **`81`**. Pack targets (leave as-is): `15200b`@`9wvvnb` → `811003` → `8pmfxd`@`dhbm8x`.
-
-**Operator impact:** Forward site dial + missed-call / history dialback work on our-SBC edge. Do not treat pack catcher phones as free for unrelated edits without retargeting `lab.env`. Hairpin BYE: watch if it returns.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TENANT_SHORT_DIAL_REQUIREMENTS.md`**.
-
-**Resume:** Number wire Model A vs B next (or dedicated SIPp instance when provisioned).
+**Superseded** by 2026-08-06 block above for “read first.”
 
 ---
 
