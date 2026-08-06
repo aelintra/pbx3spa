@@ -6,29 +6,32 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-05 — short dial D + E closed
+
+**Merged to `main`:** Inter-tenant short dial product path done — **D** Magrathea Path 1 (desk history redial) + **E** SIPp pack-gate **12/12** ×2. All-digit shortuid reject on `main`. Local co-locate shortcut **rejected**.
+
+**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · Magrathea **`3.93.26.82`**. Desk: affcot **1101** / duns **1002** via **`81`**. Pack targets (leave as-is): `15200b`@`9wvvnb` → `811003` → `8pmfxd`@`dhbm8x`.
+
+**Operator impact:** Forward site dial + missed-call / history dialback work on our-SBC edge. Do not treat pack catcher phones as free for unrelated edits without retargeting `lab.env`. Hairpin BYE: watch if it returns.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TENANT_SHORT_DIAL_REQUIREMENTS.md`**.
+
+**Resume:** Number wire Model A vs B next (or dedicated SIPp instance when provisioned).
+
+---
+
 ## Session end 2026-08-05 — short dial D desk findings (lean A)
 
-**On `main`:** Site-dial return CLIP lab. Snom keeps shortuid on redial but **forces local registrar domain** → 404. Spec **§3.9.1**; lean **our-SBC username usrloc repair (A)**. Golden receive CLID = `suid@fqdn`; reverse prefix duns→affcot `81` for capture.
-
-**Dev against golden:** `https://08jzwn.pbx3.com:44300/api` · Dial prefixes **81** both ways (affcot↔duns). Test exts **1101** / **1002**.
-
-**Operator impact:** History callback across tenants **not guaranteed** until Magrathea A ships. Forward `81xxxx` still works. LDAP display ≠ dial string for cross-tenant.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TENANT_SHORT_DIAL_REQUIREMENTS.md`** §3.9.1.
-
-**Resume:** Lock A → Magrathea per **`pbx3sbc/workingdocs/SLICE_D_SHORTUID_USRLOC_REPAIR.md`**; re-smoke Snom redial.
+**Superseded** by D+E closed block above. Path 1 shipped Magrathea; desk matrix green.
 
 ---
 
 ## Session end 2026-08-05 — day-parts on main + DID open-seed
 
-**Superseded** by **short dial D** block above for “read first.”
-
-**Merged to `main`:** Day-parts + DID open-seed; golden **0.0.4-8** / cagi **1.0.0-13**.
-
-**Resume:** See current session end block above.
+**Superseded.** Day-parts + DID open-seed on `main`; golden **0.0.4-8** / cagi **1.0.0-13**.
 
 ---
+
 
 ## Session end 2026-08-04 — day-parts play-test + timer TZ/half-open + UX locks
 
