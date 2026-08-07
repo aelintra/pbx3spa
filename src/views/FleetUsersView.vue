@@ -10,6 +10,7 @@ import {
   disableFleetUser,
   enableFleetUser,
   revokeFleetUserSessions,
+  clearFleetUserTwoFactor,
   refreshFleetSession
 } from '@/api/fleetGatekeeper'
 import {
@@ -225,6 +226,26 @@ async function doRevoke(row) {
   }
 }
 
+async function doClear2fa(row) {
+  if (!canAdmin.value) return
+  const ok = window.confirm(
+    `Clear 2FA for ${row.email}? This revokes their sessions so they can sign in with password only and re-enroll.`
+  )
+  if (!ok) return
+  busyId.value = String(row.id)
+  error.value = ''
+  actionMsg.value = ''
+  try {
+    const result = await clearFleetUserTwoFactor(row.id)
+    actionMsg.value = `Cleared 2FA for ${row.email} (revoked ${result.revoked ?? 0} session(s))`
+    await load()
+  } catch (e) {
+    error.value = e?.message || 'Clear 2FA failed'
+  } finally {
+    busyId.value = ''
+  }
+}
+
 onMounted(load)
 
 onBeforeUnmount(() => {
@@ -337,6 +358,7 @@ onBeforeUnmount(() => {
           <th>Name</th>
           <th>Abilities</th>
           <th>Notify</th>
+          <th>2FA</th>
           <th>Sessions</th>
           <th>Status</th>
           <th />
@@ -351,6 +373,7 @@ onBeforeUnmount(() => {
               <code v-for="a in row.abilities" :key="a" class="chip">{{ a }}</code>
             </td>
             <td>{{ row.notify_failures ? 'yes' : '—' }}</td>
+            <td>{{ row.two_factor_enabled ? 'on' : '—' }}</td>
             <td>{{ row.session_count }}</td>
             <td>
               <span v-if="row.disabled_at" class="badge badge--muted">disabled</span>
@@ -376,6 +399,15 @@ onBeforeUnmount(() => {
                 Revoke sessions
               </button>
               <button
+                v-if="canAdmin && row.two_factor_enabled"
+                type="button"
+                class="linkish danger"
+                :disabled="!!busyId"
+                @click="doClear2fa(row)"
+              >
+                Clear 2FA
+              </button>
+              <button
                 v-if="canAdmin && !row.disabled_at"
                 type="button"
                 class="linkish danger"
@@ -396,7 +428,7 @@ onBeforeUnmount(() => {
             </td>
           </tr>
           <tr v-if="editingId === row.id" class="edit-row">
-            <td colspan="7">
+            <td colspan="8">
               <form
                 class="edit-form"
                 autocomplete="off"

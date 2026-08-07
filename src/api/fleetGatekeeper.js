@@ -68,8 +68,9 @@ export async function fleetAuthStatus() {
 }
 
 /**
- * Login with fleet operator email/password; stores returned Bearer in sessionStorage.
- * @returns {{ token: string, user: object, abilities: string[], expires_at?: string }}
+ * Login with fleet operator email/password.
+ * Either stores Bearer, or returns { requires_2fa, challenge_id } (no token stored).
+ * @returns {Promise<object>}
  */
 export async function loginFleet(email, password) {
   const headers = {
@@ -82,6 +83,37 @@ export async function loginFleet(email, password) {
     body: JSON.stringify({ email, password })
   })
   const data = await parseJsonResponse(res)
+  if (data?.requires_2fa && data?.challenge_id) {
+    return {
+      requires_2fa: true,
+      challenge_id: String(data.challenge_id)
+    }
+  }
+  return finishFleetLogin(data)
+}
+
+/**
+ * Complete TOTP challenge; stores Bearer on success.
+ * @returns {Promise<object>}
+ */
+export async function verifyFleetTwoFactor(challengeId, code) {
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json'
+  }
+  const res = await fetch(`${base()}/api/v1/auth/2fa/verify`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      challenge_id: challengeId,
+      code
+    })
+  })
+  const data = await parseJsonResponse(res)
+  return finishFleetLogin(data)
+}
+
+function finishFleetLogin(data) {
   if (!data?.token) {
     throw new Error('Login response missing token')
   }
@@ -125,6 +157,41 @@ export async function logoutFleet() {
 
 export function getFleetMe() {
   return gkFetch('/api/v1/auth/me')
+}
+
+export function setupFleetTwoFactor(password) {
+  return gkFetch('/api/v1/auth/2fa/setup', {
+    method: 'POST',
+    body: JSON.stringify({ password })
+  })
+}
+
+export function confirmFleetTwoFactor(code) {
+  return gkFetch('/api/v1/auth/2fa/confirm', {
+    method: 'POST',
+    body: JSON.stringify({ code })
+  })
+}
+
+export function disableFleetTwoFactor(password, code) {
+  return gkFetch('/api/v1/auth/2fa/disable', {
+    method: 'POST',
+    body: JSON.stringify({ password, code })
+  })
+}
+
+export function regenerateFleetRecoveryCodes(password, code) {
+  return gkFetch('/api/v1/auth/2fa/recovery', {
+    method: 'POST',
+    body: JSON.stringify({ password, code })
+  })
+}
+
+export function clearFleetUserTwoFactor(id) {
+  return gkFetch(`/api/v1/fleet-users/${encodeURIComponent(id)}/clear-2fa`, {
+    method: 'POST',
+    body: '{}'
+  })
 }
 
 export function listFleetTenants() {

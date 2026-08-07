@@ -1,7 +1,7 @@
 <script setup>
 /**
  * Fleet gatekeeper auth for Fleet mode panels.
- * Prefer email/password login; break-glass paste stays collapsed (ops/emergency only).
+ * Prefer email/password login (+ TOTP challenge when enabled); break-glass paste stays collapsed.
  * S10.1: session must include fleet_read (enforced after login /me).
  * S10.8: form kinship with LoginView credentials.
  */
@@ -11,12 +11,19 @@ import {
   setFleetGatekeeperToken,
   canEnterFleet
 } from '@/config/fleetGatekeeper'
-import { loginFleet, logoutFleet, refreshFleetSession } from '@/api/fleetGatekeeper'
+import {
+  loginFleet,
+  verifyFleetTwoFactor,
+  logoutFleet,
+  refreshFleetSession
+} from '@/api/fleetGatekeeper'
 
 const emit = defineEmits(['saved', 'cleared'])
 
 const email = ref('')
 const password = ref('')
+const totpCode = ref('')
+const challengeId = ref('')
 const tokenDraft = ref('')
 const error = ref('')
 const busy = ref(false)
@@ -25,13 +32,20 @@ const hasToken = ref(hasFleetGatekeeperToken())
 const labDevHint = computed(
   () => import.meta.env.DEV && Boolean((import.meta.env.VITE_FLEET_GATEKEEPER_TOKEN || '').trim())
 )
+const needsChallenge = computed(() => Boolean(challengeId.value))
 
 async function doLogin() {
   error.value = ''
   busy.value = true
   try {
-    await loginFleet(email.value.trim(), password.value)
+    const data = await loginFleet(email.value.trim(), password.value)
     password.value = ''
+    if (data?.requires_2fa && data?.challenge_id) {
+      challengeId.value = String(data.challenge_id)
+      totpCode.value = ''
+      return
+    }
+    challengeId.value = ''
     hasToken.value = hasFleetGatekeeperToken()
     emit('saved')
   } catch (e) {
@@ -40,6 +54,29 @@ async function doLogin() {
   } finally {
     busy.value = false
   }
+}
+
+async function doVerify() {
+  error.value = ''
+  busy.value = true
+  try {
+    await verifyFleetTwoFactor(challengeId.value, totpCode.value.trim())
+    challengeId.value = ''
+    totpCode.value = ''
+    hasToken.value = hasFleetGatekeeperToken()
+    emit('saved')
+  } catch (e) {
+    error.value = e?.message || 'Invalid authentication code'
+    hasToken.value = hasFleetGatekeeperToken()
+  } finally {
+    busy.value = false
+  }
+}
+
+function cancelChallenge() {
+  challengeId.value = ''
+  totpCode.value = ''
+  error.value = ''
 }
 
 async function saveToken() {
@@ -70,6 +107,7 @@ async function clearToken() {
   } finally {
     busy.value = false
     hasToken.value = false
+    challengeId.value = ''
     emit('cleared')
   }
 }
@@ -93,7 +131,11 @@ defineExpose({
     </p>
 
     <div v-if="!hasToken" class="token-box">
-      <form class="token-form login" @submit.prevent="doLogin">
+      <form
+        v-if="!needsChallenge"
+        class="token-form login"
+        @submit.prevent="doLogin"
+      >
         <label for="fleet-gate-email">Email</label>
         <input
           id="fleet-gate-email"
@@ -116,13 +158,42 @@ defineExpose({
           {{ busy ? 'Signing in…' : 'Sign in' }}
         </button>
       </form>
+
+      <form v-else class="token-form login" @submit.prevent="doVerify">
+        <p class="hint">
+          Enter the code from your authenticator app, or a recovery code.
+        </p>
+        <label for="fleet-gate-totp">Authentication code</label>
+        <input
+          id="fleet-gate-totp"
+          v-model="totpCode"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="123456"
+          required
+        />
+        <button type="submit" class="btn-primary" :disabled="busy">
+          {{ busy ? 'Verifying…' : 'Verify' }}
+        </button>
+        <button type="button" class="btn-secondary" :disabled="busy" @click="cancelChallenge">
+          Back
+        </button>
+      </form>
+
       <p v-if="error" class="error">{{ error }}</p>
 
-      <details class="break-glass" :open="showAdvanced" @toggle="showAdvanced = $event.target.open">
+      <details
+        v-if="!needsChallenge"
+        class="break-glass"
+        :open="showAdvanced"
+        @toggle="showAdvanced = $event.target.open"
+      >
         <summary>Break-glass (ops only)</summary>
         <p class="hint break-glass-hint">
           Emergency access with the control-plane <code>GATEKEEPER_API_TOKEN</code>
           (treated as <code>fleet_admin</code>). Day-to-day operators should use Sign in above.
+          Break-glass is not subject to TOTP.
         </p>
         <form class="token-form break-glass-form" @submit.prevent="saveToken">
           <label for="fleet-gate-token">Break-glass token</label>

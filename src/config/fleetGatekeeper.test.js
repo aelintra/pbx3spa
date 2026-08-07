@@ -144,6 +144,52 @@ describe('fleetGatekeeper API login/logout', () => {
     )
   })
 
+  it('loginFleet returns challenge without storing token when requires_2fa', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({
+          requires_2fa: true,
+          challenge_id: 'chal-abc'
+        })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { loginFleet } = await import('@/api/fleetGatekeeper.js')
+    const { getFleetGatekeeperToken } = await import('@/config/fleetGatekeeper.js')
+
+    const data = await loginFleet('fleet@example.com', 'GimmeTheFleet')
+    expect(data.requires_2fa).toBe(true)
+    expect(data.challenge_id).toBe('chal-abc')
+    expect(getFleetGatekeeperToken()).toBe('')
+  })
+
+  it('verifyFleetTwoFactor stores token after challenge', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify({
+          token: 'after-2fa',
+          user: { email: 'fleet@example.com', abilities: ['fleet_admin'] },
+          abilities: ['fleet_read', 'fleet_admin']
+        })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { verifyFleetTwoFactor } = await import('@/api/fleetGatekeeper.js')
+    const { getFleetGatekeeperToken } = await import('@/config/fleetGatekeeper.js')
+
+    const data = await verifyFleetTwoFactor('chal-abc', '123456')
+    expect(data.token).toBe('after-2fa')
+    expect(getFleetGatekeeperToken()).toBe('after-2fa')
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://control.test/api/v1/auth/2fa/verify',
+      expect.objectContaining({ method: 'POST' })
+    )
+  })
+
   it('loginFleet rejects accounts without fleet_read', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

@@ -45,6 +45,7 @@ import FleetJobsView from '../views/FleetJobsView.vue'
 import FleetReconcileView from '../views/FleetReconcileView.vue'
 import FleetDidsView from '../views/FleetDidsView.vue'
 import FleetUsersView from '../views/FleetUsersView.vue'
+import FleetAccountSecurityView from '../views/FleetAccountSecurityView.vue'
 import FleetEdgeView from '../views/FleetEdgeView.vue'
 import FleetTenantMoveWizardView from '../views/FleetTenantMoveWizardView.vue'
 import FleetTenantMoveJobView from '../views/FleetTenantMoveJobView.vue'
@@ -239,6 +240,7 @@ const router = createRouter({
         { path: 'reconcile', name: 'fleet-reconcile', component: FleetReconcileView },
         { path: 'edge', name: 'fleet-edge', component: FleetEdgeView },
         { path: 'users', name: 'fleet-users', component: FleetUsersView },
+        { path: 'security', name: 'fleet-security', component: FleetAccountSecurityView },
         {
           path: 'tenants/move',
           name: 'fleet-tenant-move',
