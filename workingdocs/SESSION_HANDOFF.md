@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-06 — first-out triage + Device lean + provisioning park
+
+**Merged to `main`:** Provisioning server parked (lean don’t build). **`FIRST_OUT_CHECKLIST.md`** for cleanup triage. Device seed **11** keepers; **Devices** off System nav. SARK migration extract = prerequisite before OSS org move.
+
+**Dev against golden:** Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`** · SPA **`npm run dev`**. Devices panel no longer in nav (break-glass `/devices` may still route).
+
+**Operator impact:** No in-house phone provisioner planned; use vendor/reseller RPS. Existing lab DBs: optional **`sqlite_device_lean_prune.sql`**. First-out focus = package install + API/SPA tip + demo smoke — not new features.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`FIRST_OUT_CHECKLIST.md`** · **`PROVISIONING_SERVER_REQUIREMENTS.md`**.
+
+**Resume:** **`FIRST_OUT_CHECKLIST.md`** F1–F4; F6 prune when touching DB; do not reopen provisioning unless asked.
+
+---
+
 ## Session end 2026-08-06 — fleet DNS/LE lock + tenant-A warn
 
-**Merged to `main`:** Fleet nodes LE = instance FQDN only; no tenant public A records; Certificates **Sync certificate** + big fleet warning. Spec lock **`TLS_AND_CERTIFICATES.md` §0**.
-
-**Dev against golden:** Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`** · SPA **`npm run dev`**. Certificates panel shows red **DO NOT create DNS A records for tenant domains** on fleet posture.
-
-**Operator impact:** Publish A records for **instance / SBC / control** only — never tenant shortuids. Phones → SBC; SPA → instance API URL. Sync does **not** put tenants on the node cert.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · MkDocs **`tls/overview`** / **`tls/sync-tenants`**.
-
-**Resume:** Deploy API + SPA tip; install **0.0.5-1** / **1.0.0-14** when scheduling a new instance. Product crumbs otherwise.
+**Superseded** by first-out / Device lean block above for “read first.” Fleet DNS/LE lock still on `main`.
 
 ---
 
