@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-07 — Fleet Gatekeeper TOTP lab green
+
+**On `main`:** Gatekeeper + SPA opt-in Fleet console 2FA (challenge before Bearer; **Fleet → Fleet 2FA**; issuer **Aelintra Fleet**). Control Gatekeeper deployed; lab enroll/challenge green. Tips pbx3 **`7f1e369`**, pbx3spa **`1ec28fd`**. Instance Sanctum TOTP also on **`main`**. Break-glass still TOTP-exempt. G5 optional.
+
+**Dev against golden:** Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`** · SPA **`npm run dev`**.
+
+**Operator impact:** Fleet sign-in challenges when 2FA on; enroll under Fleet 2FA; Users **Clear 2FA** for lockout. Distinct issuer from PBX / SBC.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`FLEET_GATEKEEPER_TOTP_REQUIREMENTS.md`**.
+
+**Resume:** First-out F1–F4; roll instance API tip to other nodes if needed; G5 only if wanted.
+
+---
+
 ## Session end 2026-08-07 — SPA Sanctum TOTP lab green
 
-**On branch `spa-totp-2fa`:** pbx3api + pbx3spa opt-in authenticator 2FA (challenge before Bearer; Account Security + Home **Enable 2FA**; issuer **Aelintra PBX**). Golden API tip deployed (rsync + migrate); enroll lab green. Not merged to **`main`** yet. SBC Filament TOTP remains on **`main`**.
-
-**Dev against golden:** Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`** · SPA **`npm run dev`** (branch tip).
-
-**Operator impact:** Home strip / topbar **2FA** → enroll; recovery codes after Confirm; admin Clear 2FA on user edit. Distinct issuer from SBC. Fleet console MFA not in this track.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TOTP_2FA_REQUIREMENTS.md`** · **`AUTH_PATTERNS.md`**.
-
-**Resume:** Merge `spa-totp-2fa` when scheduled; first-out F1–F4; Fleet Gatekeeper TOTP = phase 3 only.
+**Superseded** by Fleet Gatekeeper TOTP block above for “read first.” Instance Sanctum TOTP on **`main`**.
 
 ---
 
