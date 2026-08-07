@@ -88,6 +88,7 @@ import UsersListView from '../views/UsersListView.vue'
 import UserCreateView from '../views/UserCreateView.vue'
 import UserEditView from '../views/UserEditView.vue'
 import AccountPasswordView from '../views/AccountPasswordView.vue'
+import AccountSecurityView from '../views/AccountSecurityView.vue'
 import { getApiClient } from '@/api/client'
 
 /** Routes that require neither login nor admin. Add e.g. '/register' here when adding self-service sign-up. */
@@ -108,6 +109,7 @@ const router = createRouter({
         { path: '', name: 'dashboard', component: DashboardView },
         { path: 'no-access', name: 'no-access', component: NoAccessView },
         { path: 'account/password', name: 'account-password', component: AccountPasswordView },
+        { path: 'account/security', name: 'account-security', component: AccountSecurityView },
         { path: 'tenants', name: 'tenants', component: TenantsListView },
         { path: 'tenants/new', name: 'tenant-create', component: TenantCreateView },
         { path: 'tenants/:pkey', name: 'tenant-detail', component: TenantDetailView },

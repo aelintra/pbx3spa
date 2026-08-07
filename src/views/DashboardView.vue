@@ -140,6 +140,23 @@ function reboot() {
       </template>
     </h1>
 
+    <section v-if="auth.canAccessPanels" class="account-strip" aria-label="Account">
+      <p class="account-strip-text">
+        <template v-if="auth.user?.two_factor_enabled">
+          Authenticator 2FA is <strong>on</strong> for this account.
+        </template>
+        <template v-else>
+          Protect this login with an authenticator app (2FAS, Authy, Google Authenticator, …).
+        </template>
+      </p>
+      <router-link :to="{ name: 'account-security' }" class="account-strip-link">
+        {{ auth.user?.two_factor_enabled ? 'Manage 2FA' : 'Enable 2FA' }}
+      </router-link>
+      <router-link :to="{ name: 'account-password' }" class="account-strip-link account-strip-link--muted">
+        Change password
+      </router-link>
+    </section>
+
     <div v-if="auth.isAdmin" class="action-buttons">
       <p v-if="actionMessage" class="message">{{ actionMessage }}</p>
       <p v-if="actionError" class="error">{{ actionError }}</p>
@@ -214,6 +231,36 @@ function reboot() {
   font-weight: 600;
   font-size: 0.92em;
   word-break: break-word;
+}
+.account-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin: 0 0 1.25rem 0;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
+.account-strip-text {
+  margin: 0;
+  flex: 1 1 14rem;
+  font-size: 0.9375rem;
+  color: #334155;
+}
+.account-strip-link {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+}
+.account-strip-link:hover {
+  text-decoration: underline;
+}
+.account-strip-link--muted {
+  font-weight: 500;
+  color: #64748b;
 }
 .action-buttons {
   display: flex;

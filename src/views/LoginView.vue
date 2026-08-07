@@ -21,6 +21,7 @@ import { loadInstanceRecents, pushInstanceRecent } from '@/utils/instanceRecents
 import { resolveApiBaseUrl, usesDevApiProxy } from '@/config/apiBaseUrl'
 import { loginNetworkErrorMessage } from '@/utils/loginErrors'
 import { loginAvailabilityBadge } from '@/utils/fleetInstanceHealth'
+import { parseLoginResponse } from '@/utils/parseLoginResponse'
 
 const router = useRouter()
 const route = useRoute()
@@ -36,7 +37,7 @@ const tenantHomeEnabled = isTenantHomeEnabled()
 const tenantHomeUrl = getTenantHomeUrl()
 const showEntryChooser = computed(() => fleetUi.fleetAvailable)
 
-/** @type {import('vue').Ref<'chooser'|'loading'|'pick'|'tenant'|'credentials'>} */
+/** @type {import('vue').Ref<'chooser'|'loading'|'pick'|'tenant'|'credentials'|'totp'>} */
 const step = ref(
   showEntryChooser.value ? 'chooser' : directoryEnabled ? 'loading' : 'credentials'
 )
@@ -65,6 +66,14 @@ const showManualApiUrl = ref(!directoryEnabled)
 const baseUrl = ref(getDefaultApiBaseUrl() ?? '')
 const email = ref('')
 const password = ref('')
+const totpCode = ref('')
+const challengeId = ref('')
+/** @type {import('vue').Ref<'instance'|'tenant'|null>} */
+const pendingLoginMode = ref(null)
+/** @type {import('vue').Ref<string|null>} */
+const pendingApiUrl = ref(null)
+/** @type {import('vue').Ref<string|null>} */
+const pendingTenantShortuid = ref(null)
 const error = ref('')
 const loading = ref(false)
 
@@ -92,6 +101,117 @@ const selectedSummary = computed(() => {
   }
   return parts.join(' · ')
 })
+
+function beginTotpChallenge(challenge, { mode, apiUrl, tenantShortuid = null }) {
+  challengeId.value = challenge
+  pendingLoginMode.value = mode
+  pendingApiUrl.value = apiUrl
+  pendingTenantShortuid.value = tenantShortuid
+  totpCode.value = ''
+  error.value = ''
+  step.value = 'totp'
+}
+
+async function finishWithToken(url, accessToken, { tenantShortuid = null } = {}) {
+  auth.setCredentials(url, accessToken)
+  if (selectedInstance.value) {
+    auth.setSelectedInstance(selectedInstance.value)
+    pushInstanceRecent(selectedInstance.value)
+  } else {
+    auth.setSelectedInstance(null)
+    pushInstanceRecent({
+      id: url,
+      label: url,
+      fqdn: '',
+      api_base_url: url
+    })
+  }
+
+  let user
+  try {
+    user = await getApiClient().get('auth/whoami')
+  } catch {
+    auth.clearCredentials()
+    error.value = 'Signed in but could not load your account (whoami failed)'
+    return false
+  }
+
+  if (tenantShortuid) {
+    if (!userMayAccessTenantShortuid(user, tenantShortuid)) {
+      auth.clearCredentials()
+      error.value = `No access to tenant ${tenantShortuid} for this account`
+      return false
+    }
+    auth.setUser(user, { requireTenantShortuid: tenantShortuid })
+    resolvedTenantShortuid.value = tenantShortuid
+  } else {
+    auth.setUser(user)
+  }
+
+  challengeId.value = ''
+  pendingLoginMode.value = null
+  pendingApiUrl.value = null
+  pendingTenantShortuid.value = null
+  totpCode.value = ''
+  router.push('/')
+  return true
+}
+
+async function submitTotp() {
+  error.value = ''
+  const url = pendingApiUrl.value
+  const id = challengeId.value
+  const code = totpCode.value.trim()
+  if (!url || !id) {
+    error.value = 'Challenge expired — sign in again'
+    step.value = pendingLoginMode.value === 'tenant' ? 'tenant' : 'credentials'
+    return
+  }
+  if (!code) {
+    error.value = 'Enter the authenticator code'
+    return
+  }
+  loading.value = true
+  try {
+    const client = createApiClient(url, '')
+    const res = await client.post(
+      'auth/2fa/verify',
+      { challenge_id: id, code },
+      { timeoutMs: 30_000 }
+    )
+    const parsed = parseLoginResponse(res)
+    if (parsed.kind !== 'token') {
+      error.value = parsed.message || 'Verification failed'
+      return
+    }
+    await finishWithToken(url, parsed.accessToken, {
+      tenantShortuid: pendingTenantShortuid.value
+    })
+  } catch (err) {
+    if (err?.status === 401) {
+      error.value = 'Invalid authentication code'
+    } else if (err?.status === 429) {
+      error.value = 'Too many attempts — sign in again'
+      step.value = pendingLoginMode.value === 'tenant' ? 'tenant' : 'credentials'
+      challengeId.value = ''
+    } else {
+      error.value = loginNetworkErrorMessage(err, url)
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+function cancelTotp() {
+  challengeId.value = ''
+  totpCode.value = ''
+  error.value = ''
+  const mode = pendingLoginMode.value
+  pendingLoginMode.value = null
+  pendingApiUrl.value = null
+  pendingTenantShortuid.value = null
+  step.value = mode === 'tenant' ? 'tenant' : 'credentials'
+}
 
 function goToCredentials(instance) {
   selectedInstance.value = instance
@@ -314,28 +434,21 @@ async function signInToTenant() {
       { email: em, password: password.value },
       { timeoutMs: 30_000 }
     )
-    auth.setCredentials(url, res.accessToken)
-    auth.setSelectedInstance(instance)
-    pushInstanceRecent(instance)
-
-    let user
-    try {
-      user = await getApiClient().get('auth/whoami')
-    } catch {
-      auth.clearCredentials()
-      error.value = 'Signed in but could not load your account (whoami failed)'
+    const parsed = parseLoginResponse(res)
+    if (parsed.kind === '2fa') {
+      auth.setSelectedInstance(instance)
+      beginTotpChallenge(parsed.challengeId, {
+        mode: 'tenant',
+        apiUrl: url,
+        tenantShortuid: row.shortuid
+      })
       return
     }
-
-    if (!userMayAccessTenantShortuid(user, row.shortuid)) {
-      auth.clearCredentials()
-      error.value = `No access to tenant ${row.shortuid} for this account`
+    if (parsed.kind !== 'token') {
+      error.value = parsed.message || 'Sign-in failed'
       return
     }
-
-    auth.setUser(user, { requireTenantShortuid: row.shortuid })
-    resolvedTenantShortuid.value = row.shortuid
-    router.push('/')
+    await finishWithToken(url, parsed.accessToken, { tenantShortuid: row.shortuid })
   } catch (err) {
     if (err?.status === 401) {
       error.value = 'Invalid email or password'
@@ -430,6 +543,10 @@ onMounted(() => {
 
 async function onSubmit(e) {
   e.preventDefault()
+  if (step.value === 'totp') {
+    await submitTotp()
+    return
+  }
   if (step.value === 'tenant') {
     await signInToTenant()
     return
@@ -451,26 +568,16 @@ async function onSubmit(e) {
       },
       { timeoutMs: 30_000 }
     )
-    auth.setCredentials(url, res.accessToken)
-    if (selectedInstance.value) {
-      auth.setSelectedInstance(selectedInstance.value)
-      pushInstanceRecent(selectedInstance.value)
-    } else {
-      auth.setSelectedInstance(null)
-      pushInstanceRecent({
-        id: url,
-        label: url,
-        fqdn: '',
-        api_base_url: url
-      })
+    const parsed = parseLoginResponse(res)
+    if (parsed.kind === '2fa') {
+      beginTotpChallenge(parsed.challengeId, { mode: 'instance', apiUrl: url })
+      return
     }
-    try {
-      const user = await getApiClient().get('auth/whoami')
-      auth.setUser(user)
-    } catch {
-      // whoami optional
+    if (parsed.kind !== 'token') {
+      error.value = parsed.message || 'Sign-in failed'
+      return
     }
-    router.push('/')
+    await finishWithToken(url, parsed.accessToken)
   } catch (err) {
     if (err.status === 401) {
       error.value = 'Invalid email or password'
@@ -494,6 +601,7 @@ async function onSubmit(e) {
         {{ catalogInstances.length === 1 ? 'Select your PBX instance' : 'Choose a PBX instance' }}
       </p>
       <p v-else-if="step === 'tenant'" class="subtitle">Sign in with your tenant</p>
+      <p v-else-if="step === 'totp'" class="subtitle">Authenticator code</p>
       <p v-else-if="selectedInstance" class="subtitle">
         Sign in to {{ selectedInstance.label }}
       </p>
@@ -502,6 +610,30 @@ async function onSubmit(e) {
       <p v-if="catalogError && step !== 'chooser'" class="catalog-warning" role="status">
         {{ catalogError }}
       </p>
+
+      <!-- TOTP challenge (after password when 2FA enabled) -->
+      <section v-if="step === 'totp'" class="totp-section">
+        <p class="chooser-hint">
+          Enter the code from your authenticator app, or a one-time recovery code.
+        </p>
+        <label for="totpCode">Authentication code</label>
+        <input
+          id="totpCode"
+          v-model="totpCode"
+          type="text"
+          name="otp"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="6-digit code"
+          required
+          autofocus
+        />
+        <p v-if="error" class="error" role="alert">{{ error }}</p>
+        <button type="submit" class="btn-primary" :disabled="loading">
+          {{ loading ? 'Verifying…' : 'Verify' }}
+        </button>
+        <button type="button" class="btn-link" @click="cancelTotp">← Back</button>
+      </section>
 
       <!-- S10.8 login chooser + B′ tenant door -->
       <section v-if="step === 'chooser'" class="chooser-section">

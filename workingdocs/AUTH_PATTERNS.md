@@ -15,13 +15,14 @@
 
 ---
 
-## 2. 2FA / login modernization (later)
+## 2. 2FA / login modernization
 
 **Plan:** **`pbx3/workingdocs/TOTP_2FA_REQUIREMENTS.md`** — TOTP only (SPA Sanctum + SBC Filament); SMS out; separate enrollments per surface.
 
-- **Do not assume** login is a single round-trip. The API may later return a different shape (e.g. `requires_2fa`, challenge id); the SPA will need an extra step (e.g. 2FA code screen) before the final token is issued.
-- Keep **login logic in one place** (e.g. LoginView or a small auth helper) so 2FA can be added there without touching the rest of the app.
-- **Do not** cache or assume “user never needs 2FA” or that abilities exist only in the login response. We use whoami as the source of truth; the token is created only after full auth (including 2FA when enabled).
+- Login may return `{ requires_2fa, challenge_id }` instead of `accessToken`. SPA shows a challenge step, then `POST /auth/2fa/verify`.
+- Keep **login logic in one place** (`LoginView` + `parseLoginResponse`) so both Manage-instance and tenant-door paths share the challenge flow.
+- **Do not** use the login response as the source of truth for user or abilities. Whoami after the final token is issued.
+- Enroll UI: **Account → Security** (`/account/security`). Admin lockout clear on user edit.
 
 ---
 

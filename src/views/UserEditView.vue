@@ -32,6 +32,9 @@ const newPassword = ref('')
 const newPasswordConfirm = ref('')
 const passwordError = ref('')
 const resettingPassword = ref(false)
+const twoFactorEnabled = ref(false)
+const clearing2fa = ref(false)
+const clear2faError = ref('')
 
 const showClusterPicker = computed(() => !abilityAdmin.value)
 
@@ -58,6 +61,7 @@ function applyUser(user) {
   abilityRecordings.value = ab.includes('recordings')
   const clusters = user.allowed_clusters
   selectedClusters.value = Array.isArray(clusters) ? clusters.map(String) : []
+  twoFactorEnabled.value = Boolean(user.two_factor_enabled)
 }
 
 function buildAbilities() {
@@ -184,6 +188,27 @@ async function onForcePassword(e) {
     }
   } finally {
     resettingPassword.value = false
+  }
+}
+
+async function onClearTwoFactor() {
+  clear2faError.value = ''
+  if (
+    !window.confirm(
+      'Clear two-factor authentication for this user? They can sign in with password only until they re-enroll. All sessions will be revoked.'
+    )
+  ) {
+    return
+  }
+  clearing2fa.value = true
+  try {
+    await getApiClient().delete(`auth/users/${encodeURIComponent(userId.value)}/2fa`)
+    toast.show('2FA cleared — sessions revoked')
+    twoFactorEnabled.value = false
+  } catch (err) {
+    clear2faError.value = firstErrorMessage(err, 'Failed to clear 2FA')
+  } finally {
+    clearing2fa.value = false
   }
 }
 
@@ -315,6 +340,25 @@ onMounted(async () => {
           </button>
         </div>
       </form>
+
+      <section v-if="twoFactorEnabled" class="edit-form password-form">
+        <h2 class="section-title">Two-factor authentication</h2>
+        <p class="hint">
+          This user has authenticator 2FA enabled. Clear it if they are locked out (recovery codes
+          lost).
+        </p>
+        <p v-if="clear2faError" class="form-error">{{ clear2faError }}</p>
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-danger"
+            :disabled="clearing2fa"
+            @click="onClearTwoFactor"
+          >
+            {{ clearing2fa ? 'Clearing…' : 'Clear 2FA' }}
+          </button>
+        </div>
+      </section>
     </template>
   </div>
 </template>
@@ -401,6 +445,19 @@ onMounted(async () => {
   color: #fff;
 }
 .btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-danger {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  border: none;
+  background: #dc2626;
+  color: #fff;
+}
+.btn-danger:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

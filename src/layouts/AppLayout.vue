@@ -399,6 +399,13 @@ useInactivityLogout(logout, computed(() => auth.isLoggedIn))
           >
             Password
           </router-link>
+          <router-link
+            v-if="auth.canAccessPanels"
+            :to="{ name: 'account-security' }"
+            class="account-link"
+          >
+            2FA
+          </router-link>
           <span v-if="auth.user" class="user"
             >Logged in as {{ auth.user.name || auth.user.email }}</span
           >
