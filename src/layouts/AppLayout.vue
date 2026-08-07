@@ -135,7 +135,6 @@ const navGroups = computed(() => {
         { to: '/snapshots', label: 'Snapshots', icon: 'layers' },
         { to: '/certificates', label: 'Certificates', icon: 'lock' },
         { to: '/customapps', label: 'Custom Apps', icon: 'package' },
-        { to: '/devices', label: 'Devices', icon: 'smartphone' },
         { to: '/firewall', label: 'Firewall', icon: 'shield-alert' },
         { to: '/help-messages', label: 'Help messages', icon: 'help-circle' },
         { to: '/sysglobals', label: 'Instance Globals', icon: 'sliders' },
