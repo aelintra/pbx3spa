@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-07 — SBC TOTP 2FA lab green
+
+**Merged to `main`:** `pbx3sbc-admin` **`ecd6b77`** — opt-in Filament TOTP (Breezy); Magrathea on **`main`**. MkDocs install-SBC §4 documents enroll + `PBX3_TOTP_ISSUER`. SPA Sanctum 2FA still parked.
+
+**Dev against golden:** Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`** · SPA **`npm run dev`**. SBC admin **`https://sbc.pbx3.com/admin`** (2FA enrolled in lab).
+
+**Operator impact:** After password login, topbar **Profile** → enable authenticator MFA; set distinct issuer per edge host in `.env` **before** enroll if running multiple SBCs. Fleet API token path unchanged.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TOTP_2FA_REQUIREMENTS.md`** · MkDocs **fleet/install-sbc**.
+
+**Resume:** First-out F1–F4 when scheduled; SPA TOTP only if asked.
+
+---
+
 ## Session end 2026-08-06 — first-out triage + Device lean + provisioning park
 
-**Merged to `main`:** Provisioning server parked (lean don’t build). **`FIRST_OUT_CHECKLIST.md`** for cleanup triage. Device seed **11** keepers; **Devices** off System nav. SARK migration extract = prerequisite before OSS org move.
-
-**Dev against golden:** Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`** · SPA **`npm run dev`**. Devices panel no longer in nav (break-glass `/devices` may still route).
-
-**Operator impact:** No in-house phone provisioner planned; use vendor/reseller RPS. Existing lab DBs: optional **`sqlite_device_lean_prune.sql`**. First-out focus = package install + API/SPA tip + demo smoke — not new features.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`FIRST_OUT_CHECKLIST.md`** · **`PROVISIONING_SERVER_REQUIREMENTS.md`**.
-
-**Resume:** **`FIRST_OUT_CHECKLIST.md`** F1–F4; F6 prune when touching DB; do not reopen provisioning unless asked.
+**Superseded** by SBC TOTP block above for “read first.” First-out / Device lean still on `main`.
 
 ---
 
