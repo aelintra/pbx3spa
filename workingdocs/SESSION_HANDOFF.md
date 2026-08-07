@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-06 — fleet DNS/LE lock + tenant-A warn
+
+**Merged to `main`:** Fleet nodes LE = instance FQDN only; no tenant public A records; Certificates **Sync certificate** + big fleet warning. Spec lock **`TLS_AND_CERTIFICATES.md` §0**.
+
+**Dev against golden:** Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`** · SPA **`npm run dev`**. Certificates panel shows red **DO NOT create DNS A records for tenant domains** on fleet posture.
+
+**Operator impact:** Publish A records for **instance / SBC / control** only — never tenant shortuids. Phones → SBC; SPA → instance API URL. Sync does **not** put tenants on the node cert.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · MkDocs **`tls/overview`** / **`tls/sync-tenants`**.
+
+**Resume:** Deploy API + SPA tip; install **0.0.5-1** / **1.0.0-14** when scheduling a new instance. Product crumbs otherwise.
+
+---
+
 ## Session end 2026-08-06 — Site Groups C0–C6 lab green
 
-**Merged to `main`:** Site Groups (dial cohort) — Fleet UI, Gatekeeper materialise, managed dialaliases, prefix+ext CLIP callback, MkDocs. Commits: spa `8cb3a71`, api `3ce29ce`, pbx3 `10e0ed0`, cagi `a2005e3`, docs `5ce247a`.
-
-**Dev against golden:** Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`** · SPA **`npm run dev`** (Site Groups not on Pages). Fleet → **Site Groups**; managed dial prefixes read-only on instance.
-
-**Operator impact:** Sister-site short dial via **Fleet → Site Groups** (routing prefix + membership). Do not invent production meshes on Outbound → Dial prefixes. Callback shows `{prefix}{ext}` on desks.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`DIAL_COHORT_REQUIREMENTS.md`** · MkDocs **`fleet/site-groups`**.
-
-**Resume:** Optional package roll; otherwise next from TODO product crumbs / parked items.
+**Superseded** by fleet DNS/LE lock block above for “read first.” Site Groups still on `main`.
 
 ---
 

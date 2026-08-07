@@ -12,16 +12,29 @@
       <div class="section-header">
         <h2>Let's Encrypt</h2>
       </div>
+      <p v-if="isFleetNode()" class="le-fleet-warn" role="alert">
+        <strong>DO NOT create DNS A records for tenant domains.</strong>
+        Tenant names (e.g. <code>dhbm8x.pbx3.com</code>) are SIP domains only — not public DNS.
+        Publish an A record for <strong>this instance hostname only</strong>. Phones use the SBC; the
+        SPA uses this instance API URL.
+      </p>
       <p class="section-explanation">
-        A certificate for this host's hostname (e.g. <code>myhost.mydomain.com</code>) is issued and
-        renewed automatically via HTTP-01. Port 80 must be reachable from the internet only during
-        issuance or renewal (a few minutes); you can leave it closed the rest of the time. No DNS
-        API — just an A record for this host's FQDN.
+        A certificate for <strong>this instance hostname</strong> (e.g.
+        <code>08jzwn.pbx3.com</code>) is issued and renewed via HTTP-01. Port 80 must be reachable
+        from the internet only during issuance or renewal. No DNS API — just an A record for the
+        <strong>instance</strong> FQDN.
+        <template v-if="isFleetNode()">
+          On a fleet node, tenant FQDNs are SIP domains only (no public A / not on this cert). See
+          TLS docs §0.
+        </template>
+        <template v-else>
+          On solo/direct nodes, Sync may also include tenant FQDNs that resolve here (Option A).
+        </template>
       </p>
       <p class="section-help">
-        <strong>Before getting a certificate:</strong> Create an A record (and optionally AAAA) for
-        this host's hostname pointing to this server's IP. Ensure port 80 can reach this server from
-        the internet (we open it only during issuance and renewal).
+        <strong>Before getting a certificate:</strong> Create an A record for this host's hostname
+        pointing to this server's IP. Ensure port 80 can reach this server from the internet (we open
+        it only during issuance and renewal).
         <a
           href="https://letsencrypt.org/docs/challenge-types/#http-01-challenge"
           target="_blank"
@@ -47,12 +60,19 @@
           <dd>{{ leStatus.issuer ?? '—' }}</dd>
         </dl>
         <p v-if="certOutOfSync" class="cert-mismatch-warn" role="status">
-          The certificate names do not match the current tenant list in the database. Use
-          <strong>Sync with tenant list</strong> below (not Renew now).
+          The certificate names do not match the intended list for this node. Use
+          <strong>Sync certificate</strong> below (not Renew now).
         </p>
         <p class="section-help cert-actions-help">
-          After adding or removing tenants, or restoring a backup, use
-          <strong>Sync with tenant list</strong> so the certificate matches current tenant FQDNs.
+          <template v-if="isFleetNode()">
+            <strong>Sync certificate</strong> re-issues Let's Encrypt for
+            <strong>this instance FQDN only</strong> (tenant names are not SANs on fleet nodes).
+          </template>
+          <template v-else>
+            After adding or removing tenants (or restoring a backup), use
+            <strong>Sync certificate</strong> so the certificate matches intended FQDNs (may include
+            tenant names that resolve here).
+          </template>
           <strong>Renew now</strong> only extends expiry for the names already on the certificate.
         </p>
         <div class="section-actions">
@@ -62,7 +82,7 @@
             :disabled="syncing || !leSyncEmail"
             @click="syncLetsEncrypt"
           >
-            {{ syncing ? 'Syncing…' : 'Sync with tenant list' }}
+            {{ syncing ? 'Syncing…' : 'Sync certificate' }}
           </button>
           <button
             type="button"
@@ -221,11 +241,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useFleetPosture } from '@/composables/useFleetPosture'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { sanitizeLeSyscmdDetail } from '@/utils/leErrorDetail'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 
 const toast = useToastStore()
+const { loadFleetPosture, isFleetNode } = useFleetPosture()
 
 const activeSource = ref(null)
 const loadError = ref('')
@@ -477,6 +499,7 @@ async function doRemoveCustom() {
 }
 
 onMounted(() => {
+  loadFleetPosture()
   fetchActive()
   fetchLetsEncrypt()
   fetchCustom()
@@ -530,6 +553,22 @@ onMounted(() => {
 }
 .cert-dl dd {
   margin: 0;
+}
+.le-fleet-warn {
+  margin: 0 0 0.75rem;
+  padding: 0.85rem 1rem;
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: #7f1d1d;
+  background: #fef2f2;
+  border: 2px solid #dc2626;
+  border-radius: 6px;
+}
+.le-fleet-warn strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 1.125rem;
+  letter-spacing: 0.01em;
 }
 .cert-mismatch-warn {
   margin: 0.75rem 0 0.5rem;
