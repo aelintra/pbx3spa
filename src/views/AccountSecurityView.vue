@@ -168,15 +168,20 @@ onMounted(() => {
     </p>
 
     <div v-if="phase === 'recovery' && recoveryCodes.length" class="recovery-box" role="status">
-      <h2>Save these recovery codes</h2>
-      <p class="muted">Each code works once. Store them offline — they will not be shown again.</p>
+      <h2>Save these recovery codes now</h2>
+      <p class="warn">
+        This is the only time they are shown. Each code works once if you lose your authenticator.
+        Copy or write them down before clicking Done.
+      </p>
       <ul class="recovery-list">
         <li v-for="c in recoveryCodes" :key="c"><code>{{ c }}</code></li>
       </ul>
-      <button type="button" class="btn-secondary" @click="copyRecovery">Copy codes</button>
-      <button type="button" class="btn-cancel" @click="phase = 'idle'; recoveryCodes = []">
-        Done
-      </button>
+      <div class="form-actions">
+        <button type="button" class="btn-submit" @click="copyRecovery">Copy all codes</button>
+        <button type="button" class="btn-cancel" @click="phase = 'idle'; recoveryCodes = []">
+          Done — I saved them
+        </button>
+      </div>
     </div>
 
     <template v-else-if="!enabled && phase !== 'setup'">
@@ -203,12 +208,16 @@ onMounted(() => {
     <template v-else-if="phase === 'setup'">
       <h2>Scan QR code</h2>
       <p class="muted">Issuer: {{ issuer }}. Or enter the secret manually.</p>
+      <p class="next-step">
+        After you enter a live code and click <strong>Confirm and enable</strong>, recovery codes
+        appear on the next screen — save them then.
+      </p>
       <img v-if="qrSvg" class="qr-img" :src="qrSvg" alt="TOTP QR code" width="220" height="220" />
       <p class="secret"><code>{{ secret }}</code></p>
       <FormField
         id="confirmCode"
         v-model="code"
-        label="Authentication code"
+        label="Authentication code from your app"
         autocomplete="one-time-code"
       />
       <p v-if="error" class="form-error">{{ error }}</p>
@@ -286,6 +295,21 @@ onMounted(() => {
   margin: 0;
   color: #64748b;
   font-size: 0.9375rem;
+}
+.next-step {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.375rem;
+  font-size: 0.9375rem;
+  color: #1e3a8a;
+}
+.warn {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #92400e;
+  font-weight: 500;
 }
 .status {
   margin: 0;
