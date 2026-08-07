@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-07 — SPA Sanctum TOTP lab green
+
+**On branch `spa-totp-2fa`:** pbx3api + pbx3spa opt-in authenticator 2FA (challenge before Bearer; Account Security + Home **Enable 2FA**; issuer **Aelintra PBX**). Golden API tip deployed (rsync + migrate); enroll lab green. Not merged to **`main`** yet. SBC Filament TOTP remains on **`main`**.
+
+**Dev against golden:** Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`** · SPA **`npm run dev`** (branch tip).
+
+**Operator impact:** Home strip / topbar **2FA** → enroll; recovery codes after Confirm; admin Clear 2FA on user edit. Distinct issuer from SBC. Fleet console MFA not in this track.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TOTP_2FA_REQUIREMENTS.md`** · **`AUTH_PATTERNS.md`**.
+
+**Resume:** Merge `spa-totp-2fa` when scheduled; first-out F1–F4; Fleet Gatekeeper TOTP = phase 3 only.
+
+---
+
 ## Session end 2026-08-07 — SBC TOTP 2FA lab green
 
-**Merged to `main`:** `pbx3sbc-admin` **`ecd6b77`** — opt-in Filament TOTP (Breezy); Magrathea on **`main`**. MkDocs install-SBC §4 documents enroll + `PBX3_TOTP_ISSUER`. SPA Sanctum 2FA still parked.
-
-**Dev against golden:** Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`** · SPA **`npm run dev`**. SBC admin **`https://sbc.pbx3.com/admin`** (2FA enrolled in lab).
-
-**Operator impact:** After password login, topbar **Profile** → enable authenticator MFA; set distinct issuer per edge host in `.env` **before** enroll if running multiple SBCs. Fleet API token path unchanged.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`TOTP_2FA_REQUIREMENTS.md`** · MkDocs **fleet/install-sbc**.
-
-**Resume:** First-out F1–F4 when scheduled; SPA TOTP only if asked.
+**Superseded** by SPA Sanctum TOTP block above for “read first.” SBC TOTP still on `pbx3sbc-admin` **`main`**.
 
 ---
 
