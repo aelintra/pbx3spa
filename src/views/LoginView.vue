@@ -943,6 +943,14 @@ async function onSubmit(e) {
   flex-direction: column;
   gap: 0.65rem;
 }
+.totp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.totp-section label {
+  display: block;
+}
 .chooser-hint {
   margin: 0;
   font-size: 0.85rem;

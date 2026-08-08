@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-07 — Fleet SPA catalog UX polish
+
+**On `main`:** Fleet Instances/Tenants/Users Actions menus + compact status; Site Groups / Edge button chrome; probe age vs RTT clarity; login TOTP label stacks above input. Tips: pbx3spa after this push; earlier catalog polish **`93ab664`**.
+
+**Dev against golden:** SPA **`npm run dev`** · Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`**.
+
+**Operator impact:** Fleet catalog tables cleaner to scan; status popup for probe detail; cannot click Disable on own Fleet user row.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`**.
+
+**Resume:** First-out F1–F4; roll instance API tip to other nodes if needed.
+
+---
+
 ## Session end 2026-08-07 — Fleet Gatekeeper TOTP lab green
 
-**On `main`:** Gatekeeper + SPA opt-in Fleet console 2FA (challenge before Bearer; **Fleet → Fleet 2FA**; issuer **Aelintra Fleet**). Control Gatekeeper deployed; lab enroll/challenge green. Tips pbx3 **`7f1e369`**, pbx3spa **`1ec28fd`**. Instance Sanctum TOTP also on **`main`**. Break-glass still TOTP-exempt. G5 optional.
-
-**Dev against golden:** Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`** · SPA **`npm run dev`**.
-
-**Operator impact:** Fleet sign-in challenges when 2FA on; enroll under Fleet 2FA; Users **Clear 2FA** for lockout. Distinct issuer from PBX / SBC.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`FLEET_GATEKEEPER_TOTP_REQUIREMENTS.md`**.
-
-**Resume:** First-out F1–F4; roll instance API tip to other nodes if needed; G5 only if wanted.
+**Superseded** by Fleet SPA catalog UX polish block above for “read first.” Gatekeeper TOTP still on `main`.
 
 ---
 
