@@ -616,15 +616,20 @@ async function onSubmit(e) {
         <p class="chooser-hint">
           Enter the code from your authenticator app, or a one-time recovery code.
         </p>
-        <label for="totpCode">Authentication code</label>
+        <label for="totpCode">From your authenticator</label>
         <input
           id="totpCode"
           v-model="totpCode"
           type="text"
-          name="otp"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          placeholder="6-digit code"
+          name="instance_mfa_token"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-form-type="other"
+          placeholder="Paste from authenticator"
           required
           autofocus
         />

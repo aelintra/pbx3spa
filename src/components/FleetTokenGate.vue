@@ -24,6 +24,8 @@ const email = ref('')
 const password = ref('')
 const totpCode = ref('')
 const challengeId = ref('')
+const totpInputEl = ref(null)
+const totpFieldLocked = ref(true)
 const tokenDraft = ref('')
 const error = ref('')
 const busy = ref(false)
@@ -34,6 +36,14 @@ const labDevHint = computed(
 )
 const needsChallenge = computed(() => Boolean(challengeId.value))
 
+function unlockTotpField(e) {
+  totpFieldLocked.value = false
+  const el = e?.target || totpInputEl.value
+  if (el) {
+    el.removeAttribute('readonly')
+  }
+}
+
 async function doLogin() {
   error.value = ''
   busy.value = true
@@ -43,6 +53,7 @@ async function doLogin() {
     if (data?.requires_2fa && data?.challenge_id) {
       challengeId.value = String(data.challenge_id)
       totpCode.value = ''
+      totpFieldLocked.value = true
       return
     }
     challengeId.value = ''
@@ -76,6 +87,7 @@ async function doVerify() {
 function cancelChallenge() {
   challengeId.value = ''
   totpCode.value = ''
+  totpFieldLocked.value = true
   error.value = ''
 }
 
@@ -159,19 +171,62 @@ defineExpose({
         </button>
       </form>
 
-      <form v-else class="token-form login" @submit.prevent="doVerify">
+      <form
+        v-else
+        class="token-form login"
+        autocomplete="off"
+        @submit.prevent="doVerify"
+      >
         <p class="hint">
-          Enter the code from your authenticator app, or a recovery code.
+          Enter the digits from your authenticator app, or a recovery string.
         </p>
-        <label for="fleet-gate-totp">Authentication code</label>
+        <!-- Safari AutoFill often ignores autocomplete=off and maps short
+             text fields to postal/address. Soak that into decoys first. -->
+        <div class="autofill-decoy" aria-hidden="true">
+          <input
+            type="text"
+            tabindex="-1"
+            autocomplete="street-address"
+            name="address-line1"
+          />
+          <input
+            type="text"
+            tabindex="-1"
+            autocomplete="address-level2"
+            name="city"
+          />
+          <input
+            type="text"
+            tabindex="-1"
+            autocomplete="postal-code"
+            name="postal-code"
+          />
+          <input
+            type="text"
+            tabindex="-1"
+            autocomplete="country-name"
+            name="country"
+          />
+        </div>
+        <label for="fleet-gate-mfa">From your authenticator</label>
         <input
-          id="fleet-gate-totp"
+          id="fleet-gate-mfa"
+          ref="totpInputEl"
           v-model="totpCode"
           type="text"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          placeholder="123456"
+          name="fleet_mfa_token"
+          autocomplete="new-password"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          :readonly="totpFieldLocked"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          placeholder="Paste from authenticator"
           required
+          @focus="unlockTotpField"
         />
         <button type="submit" class="btn-primary" :disabled="busy">
           {{ busy ? 'Verifying…' : 'Verify' }}
@@ -219,6 +274,16 @@ defineExpose({
 .fleet-token-gate {
   margin-bottom: 1rem;
 }
+.autofill-decoy {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
 .hint {
   color: var(--pbx-text-muted, #64748b);
   font-size: 0.875rem;
@@ -233,6 +298,7 @@ defineExpose({
   margin: 0.5rem 0 0;
 }
 .token-box {
+  position: relative;
   margin: 0.75rem 0;
   padding: 1rem;
   border: 1px solid var(--pbx-border, #e2e8f0);
