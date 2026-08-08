@@ -8,7 +8,7 @@
 
 ## Session end 2026-08-07 — Fleet SPA catalog UX polish
 
-**On `main`:** Fleet Instances/Tenants/Users Actions menus + compact status; Site Groups / Edge button chrome; probe age vs RTT clarity; login TOTP label stacks above input. Tips: pbx3spa after this push; earlier catalog polish **`93ab664`**.
+**On `main`:** Fleet Instances/Tenants/Users Actions menus + compact status; Site Groups / Edge button chrome; probe age vs RTT clarity; login TOTP label stacks above input. Tip: pbx3spa **`e9ac778`** (includes catalog polish **`93ab664`**).
 
 **Dev against golden:** SPA **`npm run dev`** · Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`**.
 
