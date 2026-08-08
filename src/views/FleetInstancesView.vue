@@ -2,7 +2,7 @@
 /**
  * Fleet instances catalog (S10.2) — register, edit metadata, maintenance, soft decommission.
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   getFleetCatalog,
   listFleetDispatcherSets,
@@ -302,27 +302,8 @@ async function doRegister() {
   }
 }
 
-function statusClass(status) {
-  const s = (status || 'active').toLowerCase()
-  if (s === 'maintenance') return 'badge badge--warn'
-  if (s === 'decommissioned') return 'badge badge--muted'
-  return 'badge'
-}
-
-function healthClass(kind) {
-  if (kind === 'healthy') return 'badge badge--ok'
-  if (kind === 'warning') return 'badge badge--warn'
-  if (kind === 'degraded') return 'badge badge--degraded'
-  if (kind === 'down') return 'badge badge--down'
-  if (kind === 'paused') return 'badge badge--muted'
-  return 'badge badge--muted'
-}
-
-function egressClass(kind) {
-  if (kind === 'avail') return 'badge badge--ok'
-  if (kind === 'unavail') return 'badge badge--down'
-  return 'badge badge--muted'
-}
+const openStatusId = ref('')
+const openMenuId = ref('')
 
 /** @returns {{ health: ReturnType<typeof instanceHealthBadge>, rtt: string|null, egress: ReturnType<typeof instanceEgressBadge> }} */
 function statusBits(row) {
@@ -331,6 +312,74 @@ function statusBits(row) {
     rtt: probeRttLabel(row),
     egress: instanceEgressBadge(row)
   }
+}
+
+/**
+ * One colored word for the Status column; detail lines for the popup.
+ * Tone: green / red / yellow / muted (worst of probe + egress; decom → muted).
+ * @returns {{ word: string, tone: 'green'|'red'|'yellow'|'muted', lines: string[] }}
+ */
+function statusSummary(row) {
+  const bits = statusBits(row)
+  const lifecycle = String(row?.status || 'active').toLowerCase()
+  const lines = [`Lifecycle: ${lifecycle}`]
+  const probeLine = bits.rtt
+    ? `Probe: ${bits.health.label} · ${bits.rtt}`
+    : `Probe: ${bits.health.label}`
+  lines.push(probeLine)
+  if (bits.egress) {
+    lines.push(`Egress: ${bits.egress.label.replace(/^Egress\s+/i, '')}`)
+  } else if (lifecycle === 'active') {
+    lines.push('Egress: —')
+  }
+
+  if (lifecycle === 'decommissioned') {
+    return { word: 'Decom', tone: 'muted', lines }
+  }
+  if (lifecycle === 'maintenance') {
+    return { word: 'Maint', tone: 'yellow', lines }
+  }
+  if (bits.health.kind === 'down') {
+    return { word: 'Down', tone: 'red', lines }
+  }
+  if (bits.egress?.kind === 'unavail') {
+    return { word: 'Egress', tone: 'yellow', lines }
+  }
+  if (bits.health.kind === 'degraded') {
+    return { word: 'Degraded', tone: 'yellow', lines }
+  }
+  if (bits.health.kind === 'warning') {
+    return { word: 'Warning', tone: 'yellow', lines }
+  }
+  if (bits.health.kind === 'healthy') {
+    return { word: 'Healthy', tone: 'green', lines }
+  }
+  if (bits.health.kind === 'paused') {
+    return { word: 'Paused', tone: 'muted', lines }
+  }
+  return { word: 'Unknown', tone: 'muted', lines }
+}
+
+function toggleStatus(id) {
+  openMenuId.value = ''
+  openStatusId.value = openStatusId.value === id ? '' : id
+}
+
+function toggleMenu(id) {
+  openStatusId.value = ''
+  openMenuId.value = openMenuId.value === id ? '' : id
+}
+
+function closeRowPopups() {
+  openStatusId.value = ''
+  openMenuId.value = ''
+}
+
+function onDocClick(e) {
+  const t = e.target
+  if (!(t instanceof Element)) return
+  if (t.closest('.status-cell, .actions-cell')) return
+  closeRowPopups()
 }
 
 async function copyId(id) {
@@ -347,7 +396,14 @@ async function copyId(id) {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  document.addEventListener('click', onDocClick)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', onDocClick)
+  window.clearTimeout(copiedTimer)
+})
 </script>
 
 <template>
@@ -361,7 +417,7 @@ onMounted(load)
       <strong>Link setid</strong> on the row — catch-up only, does not create a dispatcher set.
       Applying catalog setid onto tenant domains is
       <RouterLink to="/fleet/reconcile">Reconcile → Apply catalog → SBC</RouterLink>.
-      Health badges use Gatekeeper probe state (manual refresh).
+      Status word uses Gatekeeper probe state (click for detail; manual refresh).
     </p>
 
     <p v-if="actionError" class="error">{{ actionError }}</p>
@@ -605,94 +661,118 @@ onMounted(load)
               </button>
             </template>
           </td>
-          <td>
-            <div v-for="bits in [statusBits(i)]" :key="i.id + '-status'" class="status-stack">
-              <span :class="statusClass(i.status)">{{ i.status || 'active' }}</span>
-              <span :class="healthClass(bits.health.kind)">{{ bits.health.label }}</span>
-              <span v-if="bits.rtt" class="rtt" title="Last /up probe round-trip">{{ bits.rtt }}</span>
-              <span
-                v-if="bits.egress"
-                :class="egressClass(bits.egress.kind)"
-                :title="bits.egress.label"
-              >{{ bits.egress.label }}</span>
+          <td class="cell-status">
+            <div v-for="sum in [statusSummary(i)]" :key="i.id + '-status'" class="status-cell">
+              <button
+                type="button"
+                class="status-word"
+                :class="'status-word--' + sum.tone"
+                :aria-expanded="openStatusId === i.id"
+                @click.stop="toggleStatus(i.id)"
+              >
+                {{ sum.word }}
+              </button>
+              <div
+                v-if="openStatusId === i.id"
+                class="status-panel"
+                role="dialog"
+                :aria-label="'Status detail for ' + (i.label || i.fqdn || i.id)"
+              >
+                <div v-for="line in sum.lines" :key="line" class="status-panel-line">{{ line }}</div>
+              </div>
             </div>
           </td>
-          <td v-if="canManage || canEdge" class="actions">
+          <td v-if="canManage || canEdge" class="actions actions-cell">
             <template v-if="editingId !== i.id && linkingId !== i.id">
-              <button
-                v-if="canManage"
-                type="button"
-                class="linkish"
-                :disabled="busyId === i.id"
-                @click="startEdit(i)"
-              >
-                Edit
-              </button>
-              <button
-                v-if="canManage && !instanceHasSetid(i)"
-                type="button"
-                class="linkish"
-                :disabled="busyId === i.id || !dispatcherSets.length"
-                :title="
-                  dispatcherSets.length
-                    ? 'Catalog catch-up: attach already-live dispatcher set'
-                    : 'Live dispatcher sets not loaded'
-                "
-                @click="startLink(i)"
-              >
-                Link setid
-              </button>
-              <button
-                v-if="canEdge"
-                type="button"
-                class="linkish"
-                :disabled="busyId === i.id"
-                @click="startProvision(i)"
-              >
-                {{ instanceHasSetid(i) ? 'Edge' : 'Provision' }}
-              </button>
-              <button
-                v-if="canManage && (i.status || 'active') !== 'maintenance'"
-                type="button"
-                class="linkish"
-                :disabled="busyId === i.id"
-                @click="setStatus(i.id, 'maintenance')"
-              >
-                Maint
-              </button>
-              <button
-                v-if="canManage && (i.status || 'active') !== 'active'"
-                type="button"
-                class="linkish"
-                :disabled="busyId === i.id"
-                @click="setStatus(i.id, 'active')"
-              >
-                Activate
-              </button>
-              <button
-                v-if="canManage && (i.status || 'active') !== 'decommissioned'"
-                type="button"
-                class="linkish danger"
-                :disabled="busyId === i.id"
-                @click="doDecommission(i)"
-              >
-                Decom
-              </button>
-              <details v-if="canManage && instanceHasSetid(i)" class="advanced-actions">
-                <summary>Advanced</summary>
-                <p class="advanced-hint">
-                  Change setid only when the catalog pointer is wrong. Prefer
-                  <strong>Provision / Edge</strong> when creating or updating the live SBC edge.
-                </p>
+              <div class="row-menu">
                 <button
                   type="button"
-                  class="linkish muted-action"
-                  :disabled="busyId === i.id || !dispatcherSets.length"
-                  @click="startLink(i)"
+                  class="row-menu-trigger"
+                  :aria-expanded="openMenuId === i.id"
+                  :disabled="busyId === i.id"
+                  @click.stop="toggleMenu(i.id)"
                 >
-                  Change setid
+                  Actions ▾
                 </button>
-              </details>
+                <div v-if="openMenuId === i.id" class="row-menu-panel" role="menu">
+                  <button
+                    v-if="canManage"
+                    type="button"
+                    role="menuitem"
+                    class="row-menu-item"
+                    :disabled="busyId === i.id"
+                    @click="closeRowPopups(); startEdit(i)"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    v-if="canManage && !instanceHasSetid(i)"
+                    type="button"
+                    role="menuitem"
+                    class="row-menu-item"
+                    :disabled="busyId === i.id || !dispatcherSets.length"
+                    :title="
+                      dispatcherSets.length
+                        ? 'Catalog catch-up: attach already-live dispatcher set'
+                        : 'Live dispatcher sets not loaded'
+                    "
+                    @click="closeRowPopups(); startLink(i)"
+                  >
+                    Link setid
+                  </button>
+                  <button
+                    v-if="canEdge"
+                    type="button"
+                    role="menuitem"
+                    class="row-menu-item"
+                    :disabled="busyId === i.id"
+                    @click="closeRowPopups(); startProvision(i)"
+                  >
+                    {{ instanceHasSetid(i) ? 'Edge' : 'Provision' }}
+                  </button>
+                  <button
+                    v-if="canManage && (i.status || 'active') !== 'maintenance'"
+                    type="button"
+                    role="menuitem"
+                    class="row-menu-item"
+                    :disabled="busyId === i.id"
+                    @click="closeRowPopups(); setStatus(i.id, 'maintenance')"
+                  >
+                    Maint
+                  </button>
+                  <button
+                    v-if="canManage && (i.status || 'active') !== 'active'"
+                    type="button"
+                    role="menuitem"
+                    class="row-menu-item"
+                    :disabled="busyId === i.id"
+                    @click="closeRowPopups(); setStatus(i.id, 'active')"
+                  >
+                    Activate
+                  </button>
+                  <button
+                    v-if="canManage && (i.status || 'active') !== 'decommissioned'"
+                    type="button"
+                    role="menuitem"
+                    class="row-menu-item row-menu-item--danger"
+                    :disabled="busyId === i.id"
+                    @click="closeRowPopups(); doDecommission(i)"
+                  >
+                    Decom
+                  </button>
+                  <button
+                    v-if="canManage && instanceHasSetid(i)"
+                    type="button"
+                    role="menuitem"
+                    class="row-menu-item row-menu-item--muted"
+                    :disabled="busyId === i.id || !dispatcherSets.length"
+                    title="Change setid only when the catalog pointer is wrong"
+                    @click="closeRowPopups(); startLink(i)"
+                  >
+                    Change setid
+                  </button>
+                </div>
+              </div>
             </template>
             <span v-else class="muted">…</span>
           </td>
@@ -831,16 +911,50 @@ onMounted(load)
   font-size: 0.7rem;
   text-decoration: underline;
 }
-.status-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.25rem;
+.status-cell {
+  position: relative;
+  display: inline-block;
 }
-.rtt {
+.status-word {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+.status-word--green {
+  color: #15803d;
+}
+.status-word--red {
+  color: #b91c1c;
+}
+.status-word--yellow {
+  color: #ca8a04;
+}
+.status-word--muted {
+  color: #64748b;
+}
+.status-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  min-width: 11rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--pbx-border, #cbd5e1);
+  border-radius: 0.35rem;
+  background: var(--pbx-surface, #fff);
+  box-shadow: 0 4px 14px rgb(15 23 42 / 0.1);
+  white-space: nowrap;
+}
+.status-panel-line {
   font-size: 0.75rem;
-  color: var(--pbx-text-muted);
-  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+  color: var(--pbx-text, inherit);
 }
 .cell-fqdn {
   max-width: 12rem;
@@ -869,8 +983,64 @@ onMounted(load)
 .actions {
   white-space: nowrap;
 }
-.actions .linkish {
-  margin-right: 0.55rem;
+.actions-cell {
+  position: relative;
+}
+.row-menu {
+  position: relative;
+  display: inline-block;
+}
+.row-menu-trigger {
+  border: 1px solid var(--pbx-border, #cbd5e1);
+  border-radius: 0.3rem;
+  background: var(--pbx-surface, #fff);
+  padding: 0.2rem 0.5rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--pbx-text, inherit);
+  cursor: pointer;
+}
+.row-menu-trigger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.row-menu-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  min-width: 8.5rem;
+  padding: 0.25rem 0;
+  border: 1px solid var(--pbx-border, #cbd5e1);
+  border-radius: 0.35rem;
+  background: var(--pbx-surface, #fff);
+  box-shadow: 0 4px 14px rgb(15 23 42 / 0.1);
+}
+.row-menu-item {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0.35rem 0.75rem;
+  text-align: left;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--pbx-accent, #1d4ed8);
+  cursor: pointer;
+}
+.row-menu-item:hover:not(:disabled) {
+  background: var(--pbx-surface-subtle, #f8fafc);
+}
+.row-menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.row-menu-item--danger {
+  color: var(--pbx-danger, #b91c1c);
+}
+.row-menu-item--muted {
+  color: var(--pbx-text-muted);
+  font-size: 0.8rem;
 }
 .cell-setid .setid-value.setid-missing {
   color: var(--pbx-text-muted);
@@ -888,36 +1058,6 @@ onMounted(load)
   white-space: normal;
   color: var(--pbx-danger, #b91c1c);
 }
-.advanced-actions {
-  display: inline-block;
-  margin-top: 0.35rem;
-  font-size: 0.8rem;
-  color: var(--pbx-text-muted);
-}
-.advanced-actions summary {
-  cursor: pointer;
-  list-style: none;
-}
-.advanced-actions summary::-webkit-details-marker {
-  display: none;
-}
-.advanced-actions summary::before {
-  content: '▸ ';
-}
-.advanced-actions[open] summary::before {
-  content: '▾ ';
-}
-.advanced-hint {
-  margin: 0.35rem 0 0.45rem;
-  max-width: 16rem;
-  white-space: normal;
-  font-size: 0.75rem;
-  line-height: 1.35;
-  color: var(--pbx-text-muted);
-}
-.muted-action {
-  opacity: 0.85;
-}
 .action-row {
   display: flex;
   gap: 0.55rem;
@@ -928,34 +1068,6 @@ onMounted(load)
   margin: 0.35rem 0;
   font-size: 0.8rem;
   color: var(--pbx-text-muted);
-}
-.badge {
-  display: inline-block;
-  padding: 0.1rem 0.45rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  background: #e0f2fe;
-  color: #075985;
-}
-.badge--ok {
-  background: #dcfce7;
-  color: #166534;
-}
-.badge--warn {
-  background: #fef3c7;
-  color: #92400e;
-}
-.badge--degraded {
-  background: #ffedd5;
-  color: #9a3412;
-}
-.badge--down {
-  background: #fee2e2;
-  color: #991b1b;
-}
-.badge--muted {
-  background: #f1f5f9;
-  color: #64748b;
 }
 .linkish {
   border: none;
