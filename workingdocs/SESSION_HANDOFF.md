@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-08 — Fleet try-it deployment requirements
+
+**On `main` (pbx3):** Locked **`FLEET_TRYIT_DEPLOYMENT_REQUIREMENTS.md`** — ease/cost of first deploy (1-box PBX / 2-box fleet with GK on Magrathea); portable core + optional AMI skin; rtpengine parked. No SPA code this slice.
+
+**Dev against golden:** unchanged — SPA **`npm run dev`** · control · golden API.
+
+**Operator impact:** None until D1 (tailor script) ships. Direction: fewer VMs and a documented try-it path.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`FLEET_TRYIT_DEPLOYMENT_REQUIREMENTS.md`**.
+
+**Resume:** Implement try-it D1 when scheduled; first-out F1–F4; do not start rtpengine without LAN-edge trigger.
+
+---
+
 ## Session end 2026-08-07 — Fleet SPA catalog UX polish
 
-**On `main`:** Fleet Instances/Tenants/Users Actions menus + compact status; Site Groups / Edge button chrome; probe age vs RTT clarity; login TOTP label stacks above input. Tip: pbx3spa **`e9ac778`** (includes catalog polish **`93ab664`**).
-
-**Dev against golden:** SPA **`npm run dev`** · Gatekeeper **`control.pbx3.com`** · API **`https://08jzwn.pbx3.com:44300/api`**.
-
-**Operator impact:** Fleet catalog tables cleaner to scan; status popup for probe detail; cannot click Disable on own Fleet user row.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`**.
-
-**Resume:** First-out F1–F4; roll instance API tip to other nodes if needed.
+**Superseded** by Fleet try-it deployment requirements block above for “read first.” Catalog UX still on `main`.
 
 ---
 
