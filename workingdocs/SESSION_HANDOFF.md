@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-08 — Lab bound + OSS prep + fleet API TOTP tip
+
+**On `main` (pbx3 docs):** Lab deployment is the primary try-it bound (T4 + Garage; any-OS SPA; Apache-2.0 chosen). OSS prep order: workingdocs hygiene → LICENSE files → SARK extract/strip.
+
+**Dev against golden:** SPA **`npm run dev`** · instance APIs **08jzwn** / **bzy54n** / **kildare** all on **pbx3api `321a12e`** (Sanctum TOTP).
+
+**Operator impact:** Instance TOTP enroll/login available on all three lab nodes (opt-in). Lab path still docs-only until D1.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** (#0–#3) · **`FLEET_TRYIT_DEPLOYMENT_REQUIREMENTS.md`**.
+
+**Resume:** Workingdocs hygiene next; then Apache LICENSE; SARK ETL/strip before public. Lab D1 after hygiene.
+
+---
+
 ## Session end 2026-08-08 — Fleet try-it deployment requirements
 
-**On `main` (pbx3):** Locked **`FLEET_TRYIT_DEPLOYMENT_REQUIREMENTS.md`** — ease/cost of first deploy (1-box PBX / 2-box fleet with GK on Magrathea); portable core + optional AMI skin; rtpengine parked. No SPA code this slice.
-
-**Dev against golden:** unchanged — SPA **`npm run dev`** · control · golden API.
-
-**Operator impact:** None until D1 (tailor script) ships. Direction: fewer VMs and a documented try-it path.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** · **`FLEET_TRYIT_DEPLOYMENT_REQUIREMENTS.md`**.
-
-**Resume:** Implement try-it D1 when scheduled; first-out F1–F4; do not start rtpengine without LAN-edge trigger.
+**Superseded** by Lab bound + OSS prep block above for “read first.” Try-it/Lab requirements still on `main` (expanded same day).
 
 ---
 
