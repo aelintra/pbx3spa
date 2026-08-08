@@ -293,7 +293,7 @@ onMounted(load)
               <th>Shortuid</th>
               <th>Routing prefix</th>
               <th>FQDN</th>
-              <th v-if="canManage"></th>
+              <th v-if="canManage" class="col-actions">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -301,15 +301,35 @@ onMounted(load)
               <td>{{ m.name }}</td>
               <td><code>{{ m.shortuid }}</code></td>
               <td>{{ m.routing_prefix }}</td>
-              <td>{{ m.fqdn || '—' }}</td>
-              <td v-if="canManage && cohort.status === 'active'">
+              <td class="cell-fqdn">{{ m.fqdn || '—' }}</td>
+              <td v-if="canManage && cohort.status === 'active'" class="col-actions">
                 <button
                   type="button"
-                  class="linkish danger"
+                  class="cell-link cell-link-delete cell-link-icon"
+                  title="Remove from site group"
+                  aria-label="Remove from site group"
                   :disabled="busy"
                   @click="doRemove(m.shortuid)"
                 >
-                  Remove
+                  <span class="action-icon" aria-hidden="true">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                      <line x1="10" x2="10" y1="11" y2="17" />
+                      <line x1="14" x2="14" y1="11" y2="17" />
+                    </svg>
+                  </span>
                 </button>
               </td>
             </tr>
@@ -321,7 +341,7 @@ onMounted(load)
       <section v-if="canManage && cohort.status === 'active'" class="panel danger-zone">
         <h2>Decommission</h2>
         <p class="hint">Soft-decommissions the group and prunes managed dial prefixes on members.</p>
-        <button type="button" class="danger" :disabled="busy" @click="doDecommission">
+        <button type="button" class="primary" :disabled="busy" @click="doDecommission">
           Decommission site group
         </button>
       </section>
@@ -331,7 +351,7 @@ onMounted(load)
 
 <style scoped>
 .fleet-site-group-detail {
-  max-width: 56rem;
+  max-width: 64rem;
 }
 .back {
   margin-bottom: 0.75rem;
@@ -422,6 +442,43 @@ onMounted(load)
   padding: 0.45rem 0.55rem;
   border-bottom: 1px solid var(--pbx-border, #eee);
 }
+.cell-fqdn {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.col-actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: center;
+}
+.action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cell-link-icon {
+  padding: 0.25rem;
+}
+.cell-link-icon .action-icon {
+  color: inherit;
+}
+.cell-link-delete {
+  color: #dc2626;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.cell-link-delete:hover:not(:disabled) {
+  opacity: 0.85;
+}
+.cell-link-delete:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
 .linkish {
   background: none;
   border: none;
@@ -437,9 +494,10 @@ button.danger {
 button.primary {
   background: var(--pbx-accent, #2563eb);
   color: #fff;
-  border: none;
+  border: 1px solid var(--pbx-accent, #2563eb);
   padding: 0.4rem 0.8rem;
   border-radius: 4px;
+  font: inherit;
   cursor: pointer;
 }
 button.secondary {
@@ -447,6 +505,7 @@ button.secondary {
   border: 1px solid var(--pbx-border, #ccc);
   padding: 0.4rem 0.8rem;
   border-radius: 4px;
+  font: inherit;
   cursor: pointer;
 }
 button.danger {
@@ -454,6 +513,7 @@ button.danger {
   border: 1px solid var(--pbx-danger, #b00020);
   padding: 0.4rem 0.8rem;
   border-radius: 4px;
+  font: inherit;
   cursor: pointer;
 }
 .danger-zone {

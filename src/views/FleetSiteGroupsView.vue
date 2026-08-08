@@ -150,31 +150,34 @@ onMounted(load)
     <table v-if="!loading && !error && activeCohorts.length" class="data-table">
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Members</th>
-          <th>Prefixes ready</th>
-          <th>Updated</th>
+          <th class="col-name">Name</th>
+          <th class="col-num">Members</th>
+          <th class="col-num">Prefixes ready</th>
+          <th class="col-updated">Updated</th>
+          <th class="col-actions">Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr
-          v-for="c in activeCohorts"
-          :key="c.id"
-          class="clickable"
-          @click="router.push({ name: 'fleet-site-group-detail', params: { id: c.id } })"
-        >
-          <td>
+        <tr v-for="c in activeCohorts" :key="c.id">
+          <td class="col-name">
             <RouterLink
               class="linkish"
               :to="{ name: 'fleet-site-group-detail', params: { id: c.id } }"
-              @click.stop
             >
               {{ c.name }}
             </RouterLink>
           </td>
-          <td>{{ c.member_count ?? 0 }}</td>
-          <td>{{ c.prefixes_ready ?? 0 }}/{{ c.member_count ?? 0 }}</td>
-          <td>{{ fmtUpdated(c.updated_at) }}</td>
+          <td class="col-num">{{ c.member_count ?? 0 }}</td>
+          <td class="col-num">{{ c.prefixes_ready ?? 0 }}/{{ c.member_count ?? 0 }}</td>
+          <td class="col-updated">{{ fmtUpdated(c.updated_at) }}</td>
+          <td class="col-actions">
+            <RouterLink
+              class="row-menu-trigger link-as-btn"
+              :to="{ name: 'fleet-site-group-detail', params: { id: c.id } }"
+            >
+              Open
+            </RouterLink>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -186,7 +189,8 @@ onMounted(load)
 
 <style scoped>
 .fleet-site-groups-view {
-  max-width: 56rem;
+  max-width: 64rem;
+  padding-bottom: 4rem;
 }
 .hint {
   color: var(--pbx-text-muted);
@@ -253,29 +257,56 @@ onMounted(load)
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 .data-table th,
 .data-table td {
   text-align: left;
-  padding: 0.5rem 0.6rem;
+  padding: 0.5rem 0.65rem;
   border-bottom: 1px solid var(--pbx-border, #eee);
+  vertical-align: middle;
+  font-size: 0.875rem;
 }
-.clickable {
-  cursor: pointer;
+.col-name {
+  width: 42%;
 }
-.clickable:hover {
-  background: var(--pbx-row-hover, #f7f7f7);
+.col-num {
+  width: 12%;
+  white-space: nowrap;
+}
+.col-updated {
+  width: 22%;
+  white-space: nowrap;
+}
+.col-actions {
+  width: 12%;
+  white-space: nowrap;
 }
 .linkish {
   color: inherit;
   text-decoration: underline;
 }
+.row-menu-trigger.link-as-btn {
+  display: inline-block;
+  border: 1px solid var(--pbx-border, #cbd5e1);
+  border-radius: 0.3rem;
+  background: var(--pbx-surface, #fff);
+  padding: 0.2rem 0.5rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--pbx-text, inherit);
+  text-decoration: none;
+}
+.row-menu-trigger.link-as-btn:hover {
+  background: var(--pbx-surface-subtle, #f8fafc);
+}
 button.primary {
   background: var(--pbx-accent, #2563eb);
   color: #fff;
-  border: none;
+  border: 1px solid var(--pbx-accent, #2563eb);
   padding: 0.4rem 0.8rem;
   border-radius: 4px;
+  font: inherit;
   cursor: pointer;
 }
 button.secondary {
@@ -283,6 +314,7 @@ button.secondary {
   border: 1px solid var(--pbx-border, #ccc);
   padding: 0.4rem 0.8rem;
   border-radius: 4px;
+  font: inherit;
   cursor: pointer;
 }
 </style>

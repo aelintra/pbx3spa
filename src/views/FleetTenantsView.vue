@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   listFleetTenants,
@@ -233,7 +233,35 @@ async function doDelete(t) {
   }
 }
 
-onMounted(loadTenants)
+const openMenuId = ref('')
+
+function toggleMenu(id) {
+  openMenuId.value = openMenuId.value === id ? '' : id
+}
+
+function closeRowMenu() {
+  openMenuId.value = ''
+}
+
+function onDocClick(e) {
+  const t = e.target
+  if (!(t instanceof Element)) return
+  if (t.closest('.actions-cell')) return
+  closeRowMenu()
+}
+
+function goMove(t) {
+  closeRowMenu()
+  router.push({ name: 'fleet-tenant-move', query: { tenant: t.shortuid } })
+}
+
+onMounted(() => {
+  loadTenants()
+  document.addEventListener('click', onDocClick)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', onDocClick)
+})
 </script>
 
 <template>
@@ -314,17 +342,17 @@ onMounted(loadTenants)
           <th>Routing prefix</th>
           <th>Site group</th>
           <th>Status</th>
-          <th></th>
+          <th v-if="canMove || canEdge || canCreate">Actions</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="t in tenants" :key="t.shortuid">
           <td>{{ t.name }}</td>
           <td>{{ instanceLabel(t.instance_id) }}</td>
-          <td>{{ t.fqdn || '—' }}</td>
+          <td class="cell-fqdn">{{ t.fqdn || '—' }}</td>
           <td><code>{{ t.shortuid }}</code></td>
           <td>{{ t.routing_prefix || '—' }}</td>
-          <td>
+          <td class="cell-site-group">
             <RouterLink
               v-if="t.dial_cohort_id"
               class="linkish"
@@ -335,33 +363,49 @@ onMounted(loadTenants)
             <span v-else>—</span>
           </td>
           <td>{{ t.status }}</td>
-          <td class="actions">
-            <button
-              v-if="canEdge"
-              type="button"
-              class="linkish"
-              :disabled="busyId === t.shortuid"
-              @click="doRegisterDomain(t)"
-            >
-              Register on SBC
-            </button>
-            <RouterLink
-              v-if="canMove"
-              class="linkish"
-              :to="{ name: 'fleet-tenant-move', query: { tenant: t.shortuid } }"
-            >
-              Move
-            </RouterLink>
-            <button
-              v-if="canCreate"
-              type="button"
-              class="linkish danger"
-              :disabled="busyId === t.shortuid"
-              @click="doDelete(t)"
-            >
-              Delete
-            </button>
-            <span v-if="!canMove && !canEdge && !canCreate" class="muted">—</span>
+          <td v-if="canMove || canEdge || canCreate" class="actions actions-cell">
+            <div class="row-menu">
+              <button
+                type="button"
+                class="row-menu-trigger"
+                :aria-expanded="openMenuId === t.shortuid"
+                :disabled="busyId === t.shortuid"
+                @click.stop="toggleMenu(t.shortuid)"
+              >
+                Actions ▾
+              </button>
+              <div v-if="openMenuId === t.shortuid" class="row-menu-panel" role="menu">
+                <button
+                  v-if="canEdge"
+                  type="button"
+                  role="menuitem"
+                  class="row-menu-item"
+                  :disabled="busyId === t.shortuid"
+                  @click="closeRowMenu(); doRegisterDomain(t)"
+                >
+                  Register on SBC
+                </button>
+                <button
+                  v-if="canMove"
+                  type="button"
+                  role="menuitem"
+                  class="row-menu-item"
+                  @click="goMove(t)"
+                >
+                  Move
+                </button>
+                <button
+                  v-if="canCreate"
+                  type="button"
+                  role="menuitem"
+                  class="row-menu-item row-menu-item--danger"
+                  :disabled="busyId === t.shortuid"
+                  @click="closeRowMenu(); doDelete(t)"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -374,7 +418,8 @@ onMounted(loadTenants)
 
 <style scoped>
 .fleet-tenants-view {
-  max-width: 56rem;
+  max-width: 64rem;
+  padding-bottom: 6rem;
 }
 .hint {
   color: var(--pbx-text-muted);
@@ -468,33 +513,85 @@ onMounted(loadTenants)
   gap: 0.5rem;
   margin-top: 0.25rem;
 }
-.actions {
-  white-space: nowrap;
-}
-.actions .linkish {
-  margin-right: 0.65rem;
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
+.linkish {
   color: var(--pbx-link, #2563eb);
-  cursor: pointer;
   text-decoration: underline;
 }
-.actions a.linkish {
-  display: inline;
+.cell-fqdn {
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.actions .linkish:disabled {
+.cell-site-group {
+  min-width: 7rem;
+  white-space: nowrap;
+}
+.actions {
+  white-space: nowrap;
+  width: 1%;
+}
+.actions-cell {
+  position: relative;
+}
+.row-menu {
+  position: relative;
+  display: inline-block;
+}
+.row-menu-trigger {
+  border: 1px solid var(--pbx-border, #cbd5e1);
+  border-radius: 0.3rem;
+  background: var(--pbx-surface, #fff);
+  padding: 0.2rem 0.5rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--pbx-text, inherit);
+  cursor: pointer;
+}
+.row-menu-trigger:disabled {
   opacity: 0.5;
-  cursor: wait;
+  cursor: default;
 }
-.actions .linkish.danger {
+.row-menu-panel {
+  position: absolute;
+  z-index: 20;
+  top: auto;
+  bottom: calc(100% + 0.25rem);
+  right: 0;
+  min-width: 9.5rem;
+  padding: 0.25rem 0;
+  border: 1px solid var(--pbx-border, #cbd5e1);
+  border-radius: 0.35rem;
+  background: var(--pbx-surface, #fff);
+  box-shadow: 0 4px 14px rgb(15 23 42 / 0.1);
+}
+.row-menu-item {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0.35rem 0.75rem;
+  text-align: left;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--pbx-accent, #1d4ed8);
+  cursor: pointer;
+}
+.row-menu-item:hover:not(:disabled) {
+  background: var(--pbx-surface-subtle, #f8fafc);
+}
+.row-menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.row-menu-item--danger {
   color: var(--pbx-danger, #b91c1c);
 }
 .data-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
+  table-layout: auto;
 }
 .data-table th,
 .data-table td {

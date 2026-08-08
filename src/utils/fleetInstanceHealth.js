@@ -1,7 +1,9 @@
 /**
  * Fleet Instances health badge from catalog last_seen_at + Gatekeeper health overlay.
  *
- * Thresholds (agreed): Healthy ≤2m, Warning ≤5m, Degraded >5m, Down when unreachable.
+ * Thresholds (agreed): Healthy ≤2m, Warning ≤5m, Degraded >5m, Down when unreachable —
+ * based on how long since the last successful /up (not probe RTT).
+ * Uses the freshest of S3 last_seen_at and health.last_ok_at.
  * Maintenance / decommissioned → Probe paused (no RTT).
  */
 
@@ -52,6 +54,43 @@ export function ageMsFromIso(iso, nowMs = Date.now()) {
 }
 
 /**
+ * Freshest successful-probe age from catalog last_seen_at and/or health.last_ok_at.
+ * Prefer min so a lagged S3 stamp does not paint Warning while Gatekeeper SQLite is fresh
+ * (RTT comes from the overlay — matching that clock avoids "Warning · 60 ms" confusion).
+ * @param {{
+ *   last_seen_at?: string|null,
+ *   health?: InstanceHealthOverlay|null
+ * }} row
+ * @param {number} [nowMs]
+ * @returns {number|null}
+ */
+export function freshestProbeAgeMs(row, nowMs = Date.now()) {
+  const ages = [
+    ageMsFromIso(row?.last_seen_at, nowMs),
+    ageMsFromIso(row?.health?.last_ok_at, nowMs)
+  ].filter((a) => a != null)
+  if (!ages.length) return null
+  return Math.min(...ages)
+}
+
+/**
+ * Compact age for status detail (e.g. 45s, 2m 10s).
+ * @param {number|null|undefined} ageMs
+ * @returns {string|null}
+ */
+export function formatProbeAge(ageMs) {
+  if (ageMs == null || !Number.isFinite(Number(ageMs))) return null
+  const s = Math.max(0, Math.round(Number(ageMs) / 1000))
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  const rem = s % 60
+  if (m < 60) return rem ? `${m}m ${rem}s` : `${m}m`
+  const h = Math.floor(m / 60)
+  const mRem = m % 60
+  return mRem ? `${h}h ${mRem}m` : `${h}h`
+}
+
+/**
  * @param {{
  *   status?: string|null,
  *   last_seen_at?: string|null,
@@ -74,9 +113,7 @@ export function instanceHealthBadge(row, nowMs = Date.now()) {
     return { kind: 'down', label: 'Down' }
   }
 
-  const age =
-    ageMsFromIso(row?.last_seen_at, nowMs) ??
-    ageMsFromIso(health?.last_ok_at, nowMs)
+  const age = freshestProbeAgeMs(row, nowMs)
 
   if (age == null) {
     return { kind: 'unknown', label: 'Unknown' }

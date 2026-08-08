@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   ageMsFromIso,
   formatProbeRtt,
+  formatProbeAge,
   instanceHealthBadge,
   instanceEgressBadge,
   loginAvailabilityBadge,
@@ -75,6 +76,29 @@ describe('fleetInstanceHealth', () => {
         now
       )
     ).toEqual({ kind: 'healthy', label: 'Healthy' })
+  })
+
+  it('uses freshest of last_seen_at and last_ok_at (stale S3 does not force Warning)', () => {
+    expect(
+      instanceHealthBadge(
+        {
+          status: 'active',
+          last_seen_at: new Date(now - HEALTHY_MAX_MS - 30_000).toISOString(),
+          health: {
+            reachable: true,
+            last_ok_at: new Date(now - 20_000).toISOString(),
+            last_rtt_ms: 60
+          }
+        },
+        now
+      )
+    ).toEqual({ kind: 'healthy', label: 'Healthy' })
+  })
+
+  it('formats probe age', () => {
+    expect(formatProbeAge(45_000)).toBe('45s')
+    expect(formatProbeAge(130_000)).toBe('2m 10s')
+    expect(formatProbeAge(null)).toBeNull()
   })
 
   it('formats RTT; hides for paused/down', () => {

@@ -11,7 +11,8 @@ import {
   enableFleetUser,
   revokeFleetUserSessions,
   clearFleetUserTwoFactor,
-  refreshFleetSession
+  refreshFleetSession,
+  getFleetMe
 } from '@/api/fleetGatekeeper'
 import {
   hasFleetGatekeeperToken,
@@ -27,7 +28,13 @@ const loading = ref(false)
 const error = ref('')
 const actionMsg = ref('')
 const busyId = ref('')
+/** Current session user id (null for break-glass / unknown). */
+const selfUserId = ref(null)
 const canAdmin = computed(() => canFleet(FLEET_ABILITY.ADMIN))
+
+function isSelf(row) {
+  return selfUserId.value != null && Number(row?.id) === Number(selfUserId.value)
+}
 
 const showCreate = ref(false)
 const createForm = ref({
@@ -46,9 +53,27 @@ const editForm = ref({
   notify_failures: false
 })
 
+const openMenuId = ref(null)
+
+function toggleMenu(id) {
+  openMenuId.value = openMenuId.value === id ? null : id
+}
+
+function closeRowMenu() {
+  openMenuId.value = null
+}
+
+function onDocClick(e) {
+  const t = e.target
+  if (!(t instanceof Element)) return
+  if (t.closest('.actions-cell')) return
+  closeRowMenu()
+}
+
 async function load() {
   if (!hasFleetGatekeeperToken()) {
     users.value = []
+    selfUserId.value = null
     error.value = ''
     loading.value = false
     return
@@ -61,16 +86,20 @@ async function load() {
     }
     if (!canFleet(FLEET_ABILITY.ADMIN)) {
       users.value = []
+      selfUserId.value = null
       error.value = 'This session lacks fleet_admin — cannot manage fleet users.'
       return
     }
-    const data = await listFleetUsers()
+    const [data, me] = await Promise.all([listFleetUsers(), getFleetMe().catch(() => null)])
     users.value = data.users || []
+    const uid = me?.user?.id
+    selfUserId.value = uid != null && Number.isFinite(Number(uid)) ? Number(uid) : null
     if (Array.isArray(data.ability_vocab) && data.ability_vocab.length) {
       abilityVocab.value = data.ability_vocab
     }
   } catch (e) {
     users.value = []
+    selfUserId.value = null
     error.value = e?.message || 'Failed to load fleet users'
   } finally {
     loading.value = false
@@ -92,6 +121,7 @@ function toggleCreate() {
 }
 
 function startEdit(row) {
+  closeRowMenu()
   showCreate.value = false
   editingId.value = row.id
   editForm.value = {
@@ -106,6 +136,7 @@ function startEdit(row) {
 
 function cancelEdit() {
   editingId.value = null
+  closeRowMenu()
 }
 
 async function submitCreate() {
@@ -246,9 +277,13 @@ async function doClear2fa(row) {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  document.addEventListener('click', onDocClick)
+})
 
 onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick)
   // Avoid browser "save password" when leaving with form values still mounted.
   createForm.value.password = ''
   editForm.value.password = ''
@@ -361,7 +396,7 @@ onBeforeUnmount(() => {
           <th>2FA</th>
           <th>Sessions</th>
           <th>Status</th>
-          <th />
+          <th v-if="canAdmin">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -379,51 +414,79 @@ onBeforeUnmount(() => {
               <span v-if="row.disabled_at" class="badge badge--muted">disabled</span>
               <span v-else class="badge">active</span>
             </td>
-            <td class="actions">
+            <td v-if="canAdmin" class="actions actions-cell">
+              <template v-if="editingId !== row.id">
+                <div class="row-menu">
+                  <button
+                    type="button"
+                    class="row-menu-trigger"
+                    :aria-expanded="openMenuId === row.id"
+                    :disabled="!!busyId"
+                    @click.stop="toggleMenu(row.id)"
+                  >
+                    Actions ▾
+                  </button>
+                  <div v-if="openMenuId === row.id" class="row-menu-panel" role="menu">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      class="row-menu-item"
+                      :disabled="!!busyId"
+                      @click="startEdit(row)"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      v-if="!row.disabled_at"
+                      type="button"
+                      role="menuitem"
+                      class="row-menu-item"
+                      :disabled="!!busyId"
+                      @click="closeRowMenu(); doRevoke(row)"
+                    >
+                      Revoke sessions
+                    </button>
+                    <button
+                      v-if="row.two_factor_enabled"
+                      type="button"
+                      role="menuitem"
+                      class="row-menu-item row-menu-item--danger"
+                      :disabled="!!busyId"
+                      @click="closeRowMenu(); doClear2fa(row)"
+                    >
+                      Clear 2FA
+                    </button>
+                    <button
+                      v-if="!row.disabled_at && !isSelf(row)"
+                      type="button"
+                      role="menuitem"
+                      class="row-menu-item row-menu-item--danger"
+                      :disabled="!!busyId"
+                      @click="closeRowMenu(); doDisable(row)"
+                    >
+                      Disable
+                    </button>
+                    <button
+                      v-if="row.disabled_at"
+                      type="button"
+                      role="menuitem"
+                      class="row-menu-item"
+                      :disabled="!!busyId"
+                      @click="closeRowMenu(); doEnable(row)"
+                    >
+                      Enable
+                    </button>
+                  </div>
+                </div>
+              </template>
               <button
-                v-if="canAdmin"
+                v-else
                 type="button"
                 class="linkish"
                 :disabled="!!busyId"
-                @click="editingId === row.id ? cancelEdit() : startEdit(row)"
+                @click="cancelEdit"
               >
-                {{ editingId === row.id ? 'Cancel' : 'Edit' }}
-              </button>
-              <button
-                v-if="canAdmin && !row.disabled_at"
-                type="button"
-                class="linkish"
-                :disabled="!!busyId"
-                @click="doRevoke(row)"
-              >
-                Revoke sessions
-              </button>
-              <button
-                v-if="canAdmin && row.two_factor_enabled"
-                type="button"
-                class="linkish danger"
-                :disabled="!!busyId"
-                @click="doClear2fa(row)"
-              >
-                Clear 2FA
-              </button>
-              <button
-                v-if="canAdmin && !row.disabled_at"
-                type="button"
-                class="linkish danger"
-                :disabled="!!busyId"
-                @click="doDisable(row)"
-              >
-                Disable
-              </button>
-              <button
-                v-if="canAdmin && row.disabled_at"
-                type="button"
-                class="linkish"
-                :disabled="!!busyId"
-                @click="doEnable(row)"
-              >
-                Enable
+                Cancel
               </button>
             </td>
           </tr>
@@ -496,6 +559,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .fleet-users-view {
   max-width: 64rem;
+  padding-bottom: 6rem;
 }
 .hint {
   color: var(--pbx-text-muted);
@@ -510,8 +574,8 @@ onBeforeUnmount(() => {
 .primary {
   padding: 0.4rem 0.85rem;
   border-radius: 4px;
-  border: 1px solid var(--pbx-border);
-  background: var(--pbx-primary, #2563eb);
+  border: 1px solid var(--pbx-accent, #2563eb);
+  background: var(--pbx-accent, #2563eb);
   color: #fff;
   cursor: pointer;
   font: inherit;
@@ -613,10 +677,64 @@ input:not([type]) {
   color: var(--pbx-text-muted);
 }
 .actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
   white-space: nowrap;
+  width: 1%;
+}
+.actions-cell {
+  position: relative;
+}
+.row-menu {
+  position: relative;
+  display: inline-block;
+}
+.row-menu-trigger {
+  border: 1px solid var(--pbx-border, #cbd5e1);
+  border-radius: 0.3rem;
+  background: var(--pbx-surface, #fff);
+  padding: 0.2rem 0.5rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--pbx-text, inherit);
+  cursor: pointer;
+}
+.row-menu-trigger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.row-menu-panel {
+  position: absolute;
+  z-index: 20;
+  top: auto;
+  bottom: calc(100% + 0.25rem);
+  right: 0;
+  min-width: 9.5rem;
+  padding: 0.25rem 0;
+  border: 1px solid var(--pbx-border, #cbd5e1);
+  border-radius: 0.35rem;
+  background: var(--pbx-surface, #fff);
+  box-shadow: 0 4px 14px rgb(15 23 42 / 0.1);
+}
+.row-menu-item {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0.35rem 0.75rem;
+  text-align: left;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--pbx-accent, #1d4ed8);
+  cursor: pointer;
+}
+.row-menu-item:hover:not(:disabled) {
+  background: var(--pbx-surface-subtle, #f8fafc);
+}
+.row-menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.row-menu-item--danger {
+  color: var(--pbx-danger, #b91c1c);
 }
 .linkish {
   background: none;
@@ -626,9 +744,7 @@ input:not([type]) {
   cursor: pointer;
   font: inherit;
   font-size: 0.8rem;
-}
-.linkish.danger {
-  color: var(--pbx-danger, #b91c1c);
+  text-decoration: underline;
 }
 .linkish:disabled {
   opacity: 0.5;

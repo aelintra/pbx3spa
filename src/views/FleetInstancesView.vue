@@ -18,7 +18,7 @@ import {
   canFleet,
   FLEET_ABILITY
 } from '@/config/fleetGatekeeper'
-import { instanceHealthBadge, probeRttLabel, instanceEgressBadge } from '@/utils/fleetInstanceHealth'
+import { instanceHealthBadge, probeRttLabel, instanceEgressBadge, freshestProbeAgeMs, formatProbeAge } from '@/utils/fleetInstanceHealth'
 
 const instances = ref([])
 const dispatcherSets = ref([])
@@ -323,10 +323,11 @@ function statusSummary(row) {
   const bits = statusBits(row)
   const lifecycle = String(row?.status || 'active').toLowerCase()
   const lines = [`Lifecycle: ${lifecycle}`]
-  const probeLine = bits.rtt
-    ? `Probe: ${bits.health.label} · ${bits.rtt}`
-    : `Probe: ${bits.health.label}`
-  lines.push(probeLine)
+  const ageLabel = formatProbeAge(freshestProbeAgeMs(row))
+  const probeParts = [bits.health.label]
+  if (ageLabel) probeParts.push(`last ok ${ageLabel} ago`)
+  if (bits.rtt) probeParts.push(bits.rtt)
+  lines.push(`Probe: ${probeParts.join(' · ')}`)
   if (bits.egress) {
     lines.push(`Egress: ${bits.egress.label.replace(/^Egress\s+/i, '')}`)
   } else if (lifecycle === 'active') {
@@ -584,24 +585,10 @@ onUnmounted(() => {
             </template>
             <template v-else>
               <div class="inst-label">{{ i.label || i.fqdn || i.id }}</div>
-              <div class="inst-id-row">
-                <code class="inst-id">{{ i.id }}</code>
-                <button
-                  type="button"
-                  class="copy-id"
-                  :title="copiedId === i.id ? 'Copied' : 'Copy instance id'"
-                  @click="copyId(i.id)"
-                >
-                  {{ copiedId === i.id ? 'Copied' : 'Copy' }}
-                </button>
-              </div>
             </template>
           </td>
           <td class="cell-fqdn">
             {{ i.fqdn || '—' }}
-            <div v-if="i.sbc_backend_uri" class="muted tiny" :title="i.sbc_backend_uri">
-              {{ i.sbc_backend_uri }}
-            </div>
           </td>
           <td>
             <template v-if="editingId === i.id">
@@ -696,6 +683,14 @@ onUnmounted(() => {
                 </button>
                 <div v-if="openMenuId === i.id" class="row-menu-panel" role="menu">
                   <button
+                    type="button"
+                    role="menuitem"
+                    class="row-menu-item"
+                    @click="copyId(i.id)"
+                  >
+                    {{ copiedId === i.id ? 'Copied id' : 'Copy instance id' }}
+                  </button>
+                  <button
                     v-if="canManage"
                     type="button"
                     role="menuitem"
@@ -786,6 +781,8 @@ onUnmounted(() => {
 <style scoped>
 .fleet-instances-view {
   max-width: 64rem;
+  /* Room below the table so last-row popovers are not flush with the scroll clip edge. */
+  padding-bottom: 6rem;
 }
 .hint {
   color: var(--pbx-text-muted);
@@ -888,29 +885,6 @@ onUnmounted(() => {
 .inst-label {
   font-weight: 500;
 }
-.inst-id-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.45rem;
-  margin-top: 0.15rem;
-}
-.inst-id {
-  font-size: 0.7rem;
-  color: var(--pbx-text-muted);
-  word-break: break-all;
-  white-space: normal;
-}
-.copy-id {
-  border: none;
-  background: none;
-  padding: 0;
-  color: var(--pbx-accent, #1d4ed8);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.7rem;
-  text-decoration: underline;
-}
 .status-cell {
   position: relative;
   display: inline-block;
@@ -941,7 +915,8 @@ onUnmounted(() => {
 .status-panel {
   position: absolute;
   z-index: 20;
-  top: calc(100% + 0.25rem);
+  top: auto;
+  bottom: calc(100% + 0.25rem);
   left: 0;
   min-width: 11rem;
   padding: 0.5rem 0.65rem;
@@ -959,12 +934,6 @@ onUnmounted(() => {
 .cell-fqdn {
   max-width: 12rem;
 }
-.cell-fqdn .tiny {
-  max-width: 12rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .cell-setid {
   width: 4.5rem;
   white-space: nowrap;
@@ -975,10 +944,6 @@ onUnmounted(() => {
 }
 .muted {
   color: var(--pbx-text-muted);
-}
-.muted.tiny {
-  font-size: 0.75rem;
-  margin-top: 0.15rem;
 }
 .actions {
   white-space: nowrap;
@@ -1007,7 +972,8 @@ onUnmounted(() => {
 .row-menu-panel {
   position: absolute;
   z-index: 20;
-  top: calc(100% + 0.25rem);
+  top: auto;
+  bottom: calc(100% + 0.25rem);
   right: 0;
   min-width: 8.5rem;
   padding: 0.25rem 0;

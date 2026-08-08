@@ -407,7 +407,11 @@ onMounted(load)
     </section>
 
     <div v-if="canAdmin && !pairs.length" class="toolbar">
-      <button type="button" class="btn btn-primary" @click="showAddPair = !showAddPair">
+      <button
+        type="button"
+        :class="showAddPair ? 'btn' : 'btn btn-primary'"
+        @click="showAddPair = !showAddPair"
+      >
         {{ showAddPair ? 'Cancel' : 'Add HA pair' }}
       </button>
     </div>
@@ -769,11 +773,12 @@ h1 {
   gap: 0.5rem;
 }
 .btn {
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
+  border: 1px solid var(--pbx-border, #cbd5e1);
+  background: var(--pbx-surface-subtle, #f8fafc);
+  color: var(--pbx-text, inherit);
   border-radius: 0.375rem;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  font: inherit;
   cursor: pointer;
 }
 .btn:disabled {
@@ -781,14 +786,14 @@ h1 {
   cursor: not-allowed;
 }
 .btn-primary {
-  background: var(--pbx-primary, #2563eb);
+  background: var(--pbx-accent, #2563eb);
   color: #fff;
-  border-color: var(--pbx-primary, #2563eb);
+  border: 1px solid var(--pbx-accent, #2563eb);
 }
 .btn-danger {
   background: #fff;
   color: #b91c1c;
-  border-color: #fca5a5;
+  border: 1px solid #fca5a5;
 }
 .badge {
   font-size: 0.75rem;
