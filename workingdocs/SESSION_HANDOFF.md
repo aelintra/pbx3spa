@@ -6,17 +6,23 @@
 
 **New session:** Read **`AGENT_HANDOFF.md`** § Next agent session notes → **`TODO.md`** → this file (top **Session end** block only). Wait for user task before coding.
 
+## Session end 2026-08-08 — SARK ETL v2 + bzy restore
+
+**On `main`:** **pbx3api `42b7865`** (Home pulse AMI fix — hot on **bzy54n**; golden/kildare next sync). Private ETL **`aelintra/sark-to-pbx3`** v2 + MkDocs + CDR→sipplabs requirements.
+
+**Dev against:** SPA **`npm run dev`** · **bzy54n** restored to pre-SARK lab DB (admin **`pbx3-lab-reset`**). No 2FA enrolled on bzy.
+
+**Operator impact:** Home on bzy should feel snappy again after AMI fix. Do not expect mastersuk/duncan data on bzy anymore.
+
+**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** — next: more ETL v2 tests; then OSS hygiene / LICENSE / SARK strip.
+
+**Resume:** Continue **sark-to-pbx3** v2 fixture tests next session.
+
+---
+
 ## Session end 2026-08-08 — Lab bound + OSS prep + fleet API TOTP tip
 
-**On `main` (pbx3 docs):** Lab deployment is the primary try-it bound (T4 + Garage; any-OS SPA; Apache-2.0 chosen). OSS prep order: workingdocs hygiene → LICENSE files → SARK extract/strip.
-
-**Dev against golden:** SPA **`npm run dev`** · instance APIs **08jzwn** / **bzy54n** / **kildare** all on **pbx3api `321a12e`** (Sanctum TOTP).
-
-**Operator impact:** Instance TOTP enroll/login available on all three lab nodes (opt-in). Lab path still docs-only until D1.
-
-**Docs / TODO:** **`pbx3/workingdocs/TODO.md`** (#0–#3) · **`FLEET_TRYIT_DEPLOYMENT_REQUIREMENTS.md`**.
-
-**Resume:** Workingdocs hygiene next; then Apache LICENSE; SARK ETL/strip before public. Lab D1 after hygiene.
+**Superseded** by SARK ETL v2 + bzy restore block above for “read first.” Lab/OSS prep still on `main`.
 
 ---
 
