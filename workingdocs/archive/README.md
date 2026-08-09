@@ -1,7 +1,7 @@
 # workingdocs/archive
 
-Historical only (technical debt audits, etc.).
+Historical only. Live SPA session state: **`~/GiT/pbx3-ops/SESSION_HANDOFF.md`**.
 
-**Session handoff history** moved to private **`~/GiT/pbx3-ops/archive/SESSION_HANDOFF_HISTORY.md`**.
+Technical-debt / field-parity audits moved to **`~/GiT/pbx3-ops/devdocs/pbx3spa/workingdocs/archive/`**.
 
-Live session state: **`~/GiT/pbx3-ops/SESSION_HANDOFF.md`**. Product stub: **`../SESSION_HANDOFF.md`**.
+Product stub: **`../SESSION_HANDOFF.md`**.
