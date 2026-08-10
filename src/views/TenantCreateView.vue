@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
-import { validateTenantPkey } from '@/utils/validation'
+import { validateTenantPkey, validateExtLen } from '@/utils/validation'
 import {
   ADVANCED_FIELDS,
   LDAP_FIELDS,
@@ -49,6 +49,7 @@ const description = ref('')
 const clusterclid = ref('')
 const localarea = ref(CLUSTER_CREATE_DEFAULTS.localarea ?? '')
 const localdplan = ref(CLUSTER_CREATE_DEFAULTS.localdplan ?? '')
+const extLen = ref(String(CLUSTER_CREATE_DEFAULTS.ext_len ?? '3'))
 const chanmax = ref('3')
 const maxin = ref(String(CLUSTER_CREATE_DEFAULTS.maxin ?? '30'))
 const voipMax = ref(String(CLUSTER_CREATE_DEFAULTS.voip_max ?? '30'))
@@ -68,6 +69,7 @@ const autoDomainFqdnPattern = computed(() => {
 
 // Field-level validation (refs declared before composable)
 const pkeyValidation = useFormValidation(pkey, validateTenantPkey)
+const extLenValidation = useFormValidation(extLen, validateExtLen)
 
 const formAdvanced = reactive(buildInitialFormAdvanced())
 const formTimers = reactive(buildInitialFormTimers())
@@ -82,6 +84,7 @@ function resetForm() {
   clusterclid.value = ''
   localarea.value = CLUSTER_CREATE_DEFAULTS.localarea ?? ''
   localdplan.value = CLUSTER_CREATE_DEFAULTS.localdplan ?? ''
+  extLen.value = String(CLUSTER_CREATE_DEFAULTS.ext_len ?? '3')
   chanmax.value = '3'
   maxin.value = String(CLUSTER_CREATE_DEFAULTS.maxin ?? '30')
   voipMax.value = String(CLUSTER_CREATE_DEFAULTS.voip_max ?? '30')
@@ -92,6 +95,7 @@ function resetForm() {
   Object.assign(formLdap, buildInitialFormLdap())
   Object.assign(formMonitoring, buildInitialFormMonitoring())
   pkeyValidation.reset()
+  extLenValidation.reset()
   error.value = ''
 }
 
@@ -99,7 +103,10 @@ async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
 
-  const validations = [{ ...pkeyValidation, fieldId: 'pkey' }]
+  const validations = [
+    { ...pkeyValidation, fieldId: 'pkey' },
+    { ...extLenValidation, fieldId: 'ext_len' }
+  ]
   if (!validateAll(validations)) {
     await nextTick()
     focusFirstError(validations, (id) => {
@@ -120,6 +127,7 @@ async function onSubmit(e) {
       }),
       ...(localarea.value.trim() !== '' && { localarea: localarea.value.trim() }),
       ...(localdplan.value.trim() !== '' && { localdplan: localdplan.value.trim() }),
+      ...(parseNum(extLen.value) !== undefined && { ext_len: parseNum(extLen.value) }),
       ...(parseNum(chanmax.value) !== undefined && { chanmax: parseNum(chanmax.value) }),
       ...(parseNum(maxin.value) !== undefined && { maxin: parseNum(maxin.value) }),
       ...(parseNum(voipMax.value) !== undefined && { voip_max: parseNum(voipMax.value) }),
@@ -269,6 +277,19 @@ onMounted(async () => {
           label="Local dialplan"
           type="text"
           placeholder="e.g. _X."
+        />
+        <FormField
+          id="ext_len"
+          v-model="extLen"
+          label="Extension length"
+          type="number"
+          min="2"
+          max="5"
+          placeholder="3"
+          hint="Digits per extension (2–5). All extensions in this tenant must match."
+          :error="extLenValidation.error.value"
+          :touched="extLenValidation.touched.value"
+          @blur="extLenValidation.onBlur"
         />
         <FormReadonly
           v-if="globalsFetchDone && globalsDomain"

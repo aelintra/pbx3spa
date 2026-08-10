@@ -62,7 +62,13 @@ const pkeyInput = ref(null)
 
 const pkeyValidation = useFormValidation(pkey, validateRoutePkey)
 const clusterValidation = useFormValidation(cluster, validateTenant)
-const dialplanValidation = useFormValidation(dialplan, validateDialplan)
+const dialplanValidation = useFormValidation(dialplan, (v) => {
+  const t = tenants.value.find(
+    (row) => row.pkey === cluster.value || row.shortuid === cluster.value || row.id === cluster.value
+  )
+  const extLen = t?.ext_len != null ? Number(t.ext_len) : 3
+  return validateDialplan(v, extLen)
+})
 
 const tenantOptions = computed(() => {
   const list = tenants.value.map((t) => t.pkey).filter(Boolean)

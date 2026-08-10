@@ -30,6 +30,7 @@ export const CLUSTER_CREATE_DEFAULTS = {
   leasedhdtime: '43200',
   localarea: '',
   localdplan: '',
+  ext_len: '3',
   lterm: false,
   maxin: '30',
   mixmonitor: '',

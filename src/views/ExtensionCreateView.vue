@@ -41,7 +41,13 @@ const error = ref('')
 const loading = ref(false)
 const pkeyInput = ref(null)
 
-const pkeyValidation = useFormValidation(pkey, validateExtensionPkey)
+const pkeyValidation = useFormValidation(pkey, (v) => {
+  const t = tenants.value.find(
+    (row) => row.pkey === cluster.value || row.shortuid === cluster.value || row.id === cluster.value
+  )
+  const extLen = t?.ext_len != null ? Number(t.ext_len) : 3
+  return validateExtensionPkey(v, extLen)
+})
 const clusterValidation = useFormValidation(cluster, validateTenant)
 
 const tenantOptions = computed(() => {

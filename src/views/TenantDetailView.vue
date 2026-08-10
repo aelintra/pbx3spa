@@ -56,6 +56,7 @@ const editDescription = ref('')
 const editClusterclid = ref('')
 const editLocalarea = ref('')
 const editLocaldplan = ref('')
+const editExtLen = ref('3')
 const editParkOverlay = ref('')
 const editChanmax = ref('')
 const editMaxin = ref('')
@@ -108,6 +109,7 @@ function syncEditFromTenant() {
   editClusterclid.value = t.clusterclid != null && t.clusterclid !== '' ? String(t.clusterclid) : ''
   editLocalarea.value = t.localarea != null && t.localarea !== '' ? String(t.localarea) : ''
   editLocaldplan.value = t.localdplan != null && t.localdplan !== '' ? String(t.localdplan) : ''
+  editExtLen.value = t.ext_len != null && t.ext_len !== '' ? String(t.ext_len) : '3'
   editChanmax.value = t.chanmax != null && t.chanmax !== '' ? String(t.chanmax) : ''
   editMaxin.value = t.maxin != null && t.maxin !== '' ? String(t.maxin) : ''
   editVoipMax.value = t.voip_max != null && t.voip_max !== '' ? String(t.voip_max) : ''
@@ -179,6 +181,7 @@ async function saveEdit(e) {
         ? { localarea: editLocalarea.value.trim() }
         : { localarea: null }),
       ...(editLocaldplan.value.trim() !== '' && { localdplan: editLocaldplan.value.trim() }),
+      ...(parseNum(editExtLen.value) !== undefined && { ext_len: parseNum(editExtLen.value) }),
       chanmax: editChanmax.value.trim() ? editChanmax.value.trim() : undefined,
       ...(parseNum(editMaxin.value) !== undefined && { maxin: parseNum(editMaxin.value) }),
       ...(parseNum(editVoipMax.value) !== undefined && { voip_max: parseNum(editVoipMax.value) }),
@@ -349,6 +352,16 @@ async function confirmAndDelete() {
               label="Local dialplan"
               type="text"
               placeholder="e.g. _X."
+            />
+            <FormField
+              id="edit-identity-ext-len"
+              v-model="editExtLen"
+              label="Extension length"
+              type="number"
+              min="2"
+              max="5"
+              placeholder="3"
+              hint="All extension numbers in this tenant must be exactly this many digits (2–5)."
             />
           </div>
 

@@ -136,11 +136,31 @@ export function validateTargetTenantFqdn(value) {
 
 /**
  * Validate Extension number (pkey) for create
- * Required, non-empty
+ * Required; exactly tenant ext_len digits when known (default 3).
+ * @param {string} value
+ * @param {number} [extLen=3]
  */
-export function validateExtensionPkey(value) {
+export function validateExtensionPkey(value, extLen = 3) {
   if (!value || !value.trim()) {
     return 'Extension number is required'
+  }
+  const n = Number(extLen)
+  const len = Number.isInteger(n) && n >= 2 && n <= 5 ? n : 3
+  const trimmed = value.trim()
+  if (!new RegExp(`^\\d{${len}}$`).test(trimmed)) {
+    return `Must be exactly ${len} digits (tenant extension length)`
+  }
+  return null
+}
+
+/**
+ * Tenant extension length (cluster.ext_len): 2–5, default 3.
+ */
+export function validateExtLen(value) {
+  if (value === '' || value == null) return null
+  const n = Number(value)
+  if (!Number.isInteger(n) || n < 2 || n > 5) {
+    return 'Extension length must be 2–5'
   }
   return null
 }
@@ -178,13 +198,58 @@ export function validateAgentName(value) {
 
 /**
  * Validate Route dialplan
- * Required; route will not work without it (e.g. _XXXXXX)
+ * Required; route will not work without it (e.g. _0XXX.)
+ * Optional extLen: each pattern min match must be > extLen (#4c).
+ * @param {string} value
+ * @param {number} [extLen]
  */
-export function validateDialplan(value) {
+export function validateDialplan(value, extLen) {
   if (!value || !value.trim()) {
-    return 'Dialplan is required (e.g. _XXXXXX)'
+    return 'Dialplan is required (e.g. _0XXX. _00XX.)'
+  }
+  if (extLen == null || extLen === '') return null
+  const n = Number(extLen)
+  const len = Number.isInteger(n) && n >= 2 && n <= 5 ? n : null
+  if (len == null) return null
+  const tokens = value.trim().split(/\s+/).filter(Boolean)
+  for (const token of tokens) {
+    const min = minDialplanMatchLength(token)
+    if (min == null) continue
+    if (min <= len) {
+      return `Pattern ${token} is too short for extension length ${len} (min match must be greater than ${len})`
+    }
   }
   return null
+}
+
+/** Asterisk pattern minimum match length (mirrors ExtLenPolicy). */
+function minDialplanMatchLength(token) {
+  let p = String(token).trim()
+  if (!p) return null
+  if (p.startsWith('_')) p = p.slice(1)
+  if (!p) return null
+  let min = 0
+  for (let i = 0; i < p.length; i++) {
+    const c = p[i]
+    if (c === 'X' || c === 'Z' || c === 'N' || /\d/.test(c)) {
+      min++
+      continue
+    }
+    if (c === '.') {
+      min++
+      continue
+    }
+    if (c === '!') continue
+    if (c === '[') {
+      const end = p.indexOf(']', i)
+      if (end < 0) return null
+      min++
+      i = end
+      continue
+    }
+    min++
+  }
+  return min
 }
 
 /**
