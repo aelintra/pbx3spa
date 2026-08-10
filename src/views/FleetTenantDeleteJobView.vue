@@ -32,6 +32,15 @@ const phases = computed(() => {
 })
 
 const awaitingConfirm = computed(() => job.value?.state === 'awaiting_confirm')
+const wipeTables = computed(() => {
+  const tables = job.value?.wipe_counts?.tables
+  if (!tables || typeof tables !== 'object') return []
+  return Object.entries(tables)
+    .filter(([, n]) => Number(n) > 0)
+    .map(([name, count]) => ({ name, count: Number(count) }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+})
+const wipeTotal = computed(() => Number(job.value?.wipe_counts?.total_rows ?? 0))
 const canAbort = computed(() => {
   if (!job.value || !canManage.value) return false
   const s = job.value.state
@@ -113,8 +122,9 @@ onUnmounted(() => {
     <PanelBackLink :to="{ name: 'fleet-jobs' }" label="Jobs" />
     <h1>Delete job</h1>
     <p class="hint">
-      Durable Fleet Delete (Rule 14). Confirm by typing the shortuid, then SBC domain remove → node wipe →
-      catalog soft-decommission. Reopen anytime from Jobs.
+      Durable Fleet Delete (Rule 14). Confirm by typing the shortuid, then Site Group mesh prune →
+      SBC domain remove → node wipe → catalog soft-decommission. Reopen anytime from Jobs.
+      Unreachable peer homes warn — retry this job or Site Group Sync now when they are back.
     </p>
 
     <p v-if="error" class="error">{{ error }}</p>
@@ -161,6 +171,19 @@ onUnmounted(() => {
           Irreversible on the node. Type shortuid
           <code>{{ job.tenant_shortuid }}</code> to continue.
         </p>
+        <div v-if="job.wipe_counts" class="wipe-counts">
+          <p>
+            Node wipe will remove
+            <strong>{{ wipeTotal }}</strong> child row(s) plus the cluster row.
+          </p>
+          <ul v-if="wipeTables.length" class="wipe-list">
+            <li v-for="row in wipeTables" :key="row.name">
+              <code>{{ row.name }}</code>: {{ row.count }}
+            </li>
+          </ul>
+          <p v-else class="hint">No cluster-scoped child rows found (cluster row only).</p>
+        </div>
+        <p v-else class="hint">Wipe row counts unavailable — see warnings if any.</p>
         <label>
           Shortuid
           <input v-model="typedShortuid" type="text" autocomplete="off" />
@@ -246,6 +269,19 @@ onUnmounted(() => {
   padding: 1rem;
   border-radius: 0.35rem;
   margin: 1rem 0;
+}
+.wipe-counts {
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+}
+.wipe-list {
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+  columns: 2;
+  column-gap: 1.5rem;
+}
+.wipe-list li {
+  break-inside: avoid;
 }
 .gate label {
   display: flex;
