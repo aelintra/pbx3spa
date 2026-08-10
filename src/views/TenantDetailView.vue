@@ -502,7 +502,7 @@ async function confirmAndDelete() {
                 v-model="formAdvanced[f.key]"
                 :label="f.label"
                 :help-pkey="f.helpPkey ?? f.key"
-                type="text"
+                :type="f.type === 'password' ? 'password' : 'text'"
                 :placeholder="f.placeholder || ''"
               />
             </template>

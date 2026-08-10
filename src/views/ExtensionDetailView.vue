@@ -6,6 +6,7 @@ import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { maskSipPassword } from '@/utils/maskSipPassword'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
@@ -64,6 +65,8 @@ const editRingdelay = ref('')
 const confirmRegenerateSipOpen = ref(false)
 const regeneratingSip = ref(false)
 const regenerateSipError = ref('')
+/** Cleared on every (re)load; only set after a successful regenerate this session. */
+const sipPasswordRevealed = ref(false)
 const cosRules = ref([])
 const openCos = ref({})
 const closedCos = ref({})
@@ -78,6 +81,11 @@ const isWebRtcExtension = computed(() => {
   const d = extension.value?.device
   return d != null && String(d).trim().toLowerCase() === 'webrtc'
 })
+
+/** Masked by default; revealed only right after a regenerate (PRE_RELEASE_SAFETY_DEBT #15). */
+const sipPasswordField = computed(() =>
+  maskSipPassword(extension.value?.passwd, sipPasswordRevealed.value)
+)
 
 const clusterToTenantPkey = computed(() => {
   const map = new Map()
@@ -143,6 +151,7 @@ async function fetchExtension() {
   error.value = ''
   runtime.value = null
   runtimeError.value = ''
+  sipPasswordRevealed.value = false
   try {
     extension.value = await getApiClient().get(`extensions/${encodeURIComponent(shortuid.value)}`)
     const ext = extension.value
@@ -383,6 +392,7 @@ async function confirmRegenerateSip() {
     if (extension.value && data && typeof data === 'object') {
       Object.assign(extension.value, data)
     }
+    sipPasswordRevealed.value = true
     confirmRegenerateSipOpen.value = false
     toast.show(
       'SIP password regenerated. Copy the new value into the phone before it can register again.'
@@ -543,13 +553,15 @@ const panelTitleTenantSuffix = computed(() => {
               <label for="edit-identity-passwd" class="form-field-label">SIP Password</label>
               <div class="form-field-input-wrapper">
                 <div class="sip-passwd-inline">
-                  <p
+                  <input
                     id="edit-identity-passwd"
                     class="sip-passwd-value value-immutable"
+                    :type="sipPasswordField.type"
+                    :value="sipPasswordField.value"
+                    :placeholder="sipPasswordField.placeholder"
+                    readonly
                     title="Immutable"
-                  >
-                    {{ extension.passwd ?? '—' }}
-                  </p>
+                  />
                   <button
                     type="button"
                     class="sip-regenerate-btn"
@@ -1088,9 +1100,15 @@ const panelTitleTenantSuffix = computed(() => {
   margin: 0;
   padding: 0.5rem 0.75rem;
   font-size: 0.9375rem;
+  font-family: inherit;
   line-height: 1.5;
   border-radius: 0.375rem;
   word-break: break-all;
+  box-sizing: border-box;
+  width: 100%;
+}
+.sip-passwd-value:focus {
+  outline: none;
 }
 .readonly-identity.sip-passwd-field .form-field-label,
 .readonly-identity.sip-passwd-field .sip-passwd-value {

@@ -396,6 +396,42 @@ describe('fleetGatekeeper API login/logout', () => {
     expect(body.reassign).toBe(true)
   })
 
+  it('401 from gkFetch clears stale token and abilities (PRE_RELEASE_SAFETY_DEBT #16)', async () => {
+    session.setItem(TOKEN_KEY, 'stale-token')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => JSON.stringify({ error: 'Unauthenticated' })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { getFleetMe } = await import('@/api/fleetGatekeeper.js')
+    const { getFleetGatekeeperToken, setFleetAbilities, getFleetAbilities } = await import(
+      '@/config/fleetGatekeeper.js'
+    )
+    setFleetAbilities(['fleet_admin'])
+
+    await expect(getFleetMe()).rejects.toThrow(/Unauthenticated/)
+    expect(getFleetGatekeeperToken()).toBe('')
+    expect(getFleetAbilities()).toEqual([])
+  })
+
+  it('401 from a non-auth gkFetch call also clears the stale token', async () => {
+    session.setItem(TOKEN_KEY, 'stale-token')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => JSON.stringify({ error: 'Token expired' })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { listFleetTenants } = await import('@/api/fleetGatekeeper.js')
+    const { getFleetGatekeeperToken } = await import('@/config/fleetGatekeeper.js')
+
+    await expect(listFleetTenants()).rejects.toThrow(/Token expired/)
+    expect(getFleetGatekeeperToken()).toBe('')
+  })
+
   it('projectFleetDids POSTs /dids/project', async () => {
     session.setItem(TOKEN_KEY, 't')
     const fetchMock = vi.fn().mockResolvedValue({

@@ -33,6 +33,11 @@ async function parseJsonResponse(res) {
   } catch {
     data = { raw: text }
   }
+  if (res.status === 401) {
+    // Stale/expired Bearer — mirrors instance api/client.js 401 handling.
+    // clearFleetGatekeeperToken() also clears cached abilities.
+    clearFleetGatekeeperToken()
+  }
   if (!res.ok) {
     const msg = data?.error || data?.message || `Gatekeeper ${res.status}`
     throw new Error(msg)
