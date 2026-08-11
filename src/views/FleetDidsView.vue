@@ -1,6 +1,7 @@
 <script setup>
 /**
  * S10.5 — catalog DID ownership (HoR) + project to SBC inbound dr_rules.
+ * Hop-1: singleton or block → tenant (FLEET_DID_HOP1_LOCK).
  */
 import { ref, computed, onMounted } from 'vue'
 import {
@@ -9,6 +10,7 @@ import {
   assignFleetDid,
   releaseFleetDid,
   projectFleetDids,
+  reconcileFleetDids,
   refreshFleetSession
 } from '@/api/fleetGatekeeper'
 import {
@@ -29,6 +31,7 @@ const canEdge = computed(() => canFleet(FLEET_ABILITY.EDGE))
 const showAssign = ref(false)
 const form = ref({
   e164: '',
+  delivery: 'singleton',
   sip_prefix: '',
   tenant_shortuid: '',
   status: 'active',
@@ -36,6 +39,9 @@ const form = ref({
   notes: '',
   reassign: false
 })
+
+const didReport = ref(null)
+const checkingDrift = ref(false)
 
 async function load() {
   if (!hasFleetGatekeeperToken()) {
@@ -74,8 +80,25 @@ function formatSbc(sbc) {
   return ` SBC: ${up} upserted, ${rm} removed` + (errs ? ` — ${errs}` : '')
 }
 
+function blankForm() {
+  return {
+    e164: '',
+    delivery: 'singleton',
+    sip_prefix: '',
+    tenant_shortuid: '',
+    status: 'active',
+    carrier: '',
+    notes: '',
+    reassign: false
+  }
+}
+
 async function submitAssign() {
   if (!canEdge.value) return
+  if (form.value.delivery === 'block' && !form.value.sip_prefix.trim()) {
+    error.value = 'Block delivery requires a SIP prefix (OpenSIPS match digits shorter than the E.164).'
+    return
+  }
   busy.value = true
   actionMsg.value = ''
   error.value = ''
@@ -84,6 +107,7 @@ async function submitAssign() {
       e164: form.value.e164.trim(),
       tenant_shortuid: form.value.tenant_shortuid,
       status: form.value.status,
+      delivery: form.value.delivery,
       reassign: form.value.reassign
     }
     if (form.value.sip_prefix.trim()) body.sip_prefix = form.value.sip_prefix.trim()
@@ -91,8 +115,10 @@ async function submitAssign() {
     if (form.value.notes.trim()) body.notes = form.value.notes.trim()
     const result = await assignFleetDid(body)
     const prev = result.previous_tenant_shortuid
+    const kind = result.did?.delivery || form.value.delivery
     actionMsg.value =
       `Catalog: ${result.did?.e164} → ${result.tenant_shortuid}` +
+      (kind === 'block' ? ` (block ${result.did?.sip_prefix || form.value.sip_prefix})` : '') +
       (prev ? ` (was ${prev})` : '') +
       '.' +
       formatSbc(result.sbc)
@@ -100,15 +126,8 @@ async function submitAssign() {
       error.value = (result.sbc.errors || [result.sbc.error || 'SBC project failed']).join(' · ')
     }
     showAssign.value = false
-    form.value = {
-      e164: '',
-      sip_prefix: '',
-      tenant_shortuid: '',
-      status: 'active',
-      carrier: '',
-      notes: '',
-      reassign: false
-    }
+    form.value = blankForm()
+    didReport.value = null
     await load()
   } catch (e) {
     error.value = e?.message || 'Assign failed'
@@ -130,6 +149,7 @@ async function doRelease(row) {
   try {
     const result = await releaseFleetDid({ e164: row.e164, confirm: true })
     actionMsg.value = `Released ${row.e164}.` + formatSbc(result.sbc)
+    didReport.value = null
     await load()
   } catch (e) {
     error.value = e?.message || 'Release failed'
@@ -153,9 +173,54 @@ async function doProjectAll() {
     actionMsg.value = 'Projected catalog → SBC.' + formatSbc(result)
     if (result.ok === false) {
       error.value = (result.errors || [result.error || 'Project failed']).join(' · ')
+    } else {
+      didReport.value = null
     }
   } catch (e) {
     error.value = e?.message || 'Project failed'
+  } finally {
+    busy.value = false
+  }
+}
+
+async function checkDidDrift() {
+  if (!canEdge.value) return
+  checkingDrift.value = true
+  error.value = ''
+  actionMsg.value = ''
+  try {
+    didReport.value = await reconcileFleetDids()
+    if (didReport.value?.ok) {
+      actionMsg.value = 'DID delivery in sync (catalog ↔ fleet=did rules).'
+    }
+  } catch (e) {
+    didReport.value = null
+    error.value = e?.message || 'DID reconcile failed'
+  } finally {
+    checkingDrift.value = false
+  }
+}
+
+async function applyDidDrift() {
+  if (!canEdge.value || !didReport.value || didReport.value.ok) return
+  const ok = window.confirm(
+    'Apply catalog → SBC for DID delivery?\n\n' +
+      'Projects active/porting catalog rows onto fleet-owned dr_rules and removes orphans the projector owns.\n' +
+      'Does not change the catalog. Magrathea must not be treated as HoR for fleet=did.'
+  )
+  if (!ok) return
+  busy.value = true
+  error.value = ''
+  actionMsg.value = ''
+  try {
+    const result = await projectFleetDids({})
+    actionMsg.value = 'Applied catalog → SBC (DID delivery).' + formatSbc(result)
+    if (result.ok === false) {
+      error.value = (result.errors || [result.error || 'Project failed']).join(' · ')
+    }
+    didReport.value = await reconcileFleetDids()
+  } catch (e) {
+    error.value = e?.message || 'Apply failed'
   } finally {
     busy.value = false
   }
@@ -168,10 +233,13 @@ onMounted(load)
   <div class="fleet-dids-view">
     <h1>DID ownership</h1>
     <p class="hint">
-      <strong>Catalog is home of record</strong> (<code>tenants/*/dids.json</code>).
-      Allocate writes the catalog, then projects inbound <code>dr_rules</code> on the SBC
-      (fleet-owned rows). Optional <strong>SIP prefix</strong> is the digit string OpenSIPS matches
-      (e.g. Magrathea <code>01924918076</code> vs E.164 <code>+441924918076</code>).
+      <strong>Catalog is home of record</strong> (<code>tenants/*/dids.json</code>) — this list is
+      <strong>catalog intent</strong>, not a live Magrathea scrape.
+      Allocate / reassign writes the catalog, then projects inbound <code>dr_rules</code>
+      (fleet-owned rows). Retarget hop-1 delivery here only — Magrathea must not edit
+      <code>fleet=did</code> routes. Choose <strong>singleton</strong> or <strong>block</strong>:
+      SIP prefix is the digit string OpenSIPS matches (e.g. block <code>019249264</code> vs
+      E.164 <code>+441924918076</code>). Soft <em>released</em> rows stay visible until hard-removed.
     </p>
 
     <div v-if="hasFleetGatekeeperToken()" class="toolbar">
@@ -191,6 +259,15 @@ onMounted(load)
         v-if="canEdge"
         type="button"
         class="secondary"
+        :disabled="busy || loading || checkingDrift"
+        @click="checkDidDrift"
+      >
+        {{ checkingDrift ? 'Checking…' : 'Check DID drift' }}
+      </button>
+      <button
+        v-if="canEdge"
+        type="button"
+        class="secondary"
         :disabled="busy || loading"
         @click="doProjectAll"
       >
@@ -205,11 +282,23 @@ onMounted(load)
         <input v-model="form.e164" type="text" required placeholder="+442071234567" autocomplete="off" />
       </label>
       <label>
+        Delivery
+        <select v-model="form.delivery">
+          <option value="singleton">singleton (one number)</option>
+          <option value="block">block (prefix → tenant)</option>
+        </select>
+      </label>
+      <label>
         SIP prefix
         <input
           v-model="form.sip_prefix"
           type="text"
-          placeholder="optional digits (as carrier sends)"
+          :required="form.delivery === 'block'"
+          :placeholder="
+            form.delivery === 'block'
+              ? 'required block digits (e.g. 019249264)'
+              : 'optional digits (as carrier sends)'
+          "
           autocomplete="off"
         />
       </label>
@@ -240,7 +329,7 @@ onMounted(load)
       </label>
       <label class="check">
         <input v-model="form.reassign" type="checkbox" />
-        Reassign if already owned by another tenant
+        Reassign if already owned by another tenant (or same match prefix)
       </label>
       <button type="submit" class="primary" :disabled="busy || !form.tenant_shortuid">
         {{ busy ? 'Saving…' : 'Save + project' }}
@@ -250,11 +339,59 @@ onMounted(load)
     <p v-if="actionMsg" class="ok-msg">{{ actionMsg }}</p>
     <p v-if="error" class="error">{{ error }}</p>
 
+    <template v-if="didReport">
+      <div class="summary" :class="didReport.ok ? 'ok' : 'drift'">
+        <strong>{{ didReport.ok ? 'DID delivery in sync' : 'DID drift detected' }}</strong>
+        <span>
+          catalog {{ didReport.summary?.catalog_deliverable ?? 0 }} ·
+          SBC rules {{ didReport.summary?.sbc_fleet_rules ?? 0 }} ·
+          {{ didReport.summary?.errors ?? 0 }} errors ·
+          {{ didReport.summary?.warnings ?? 0 }} warnings
+        </span>
+        <button
+          v-if="canEdge && !didReport.ok"
+          type="button"
+          class="danger"
+          :disabled="busy"
+          @click="applyDidDrift"
+        >
+          Apply catalog → SBC
+        </button>
+      </div>
+      <table v-if="didReport.drifts?.length" class="data-table drift-table">
+        <thead>
+          <tr>
+            <th>Severity</th>
+            <th>Kind</th>
+            <th>Prefix</th>
+            <th>E.164</th>
+            <th>Tenant</th>
+            <th>Expected setid</th>
+            <th>Actual setid</th>
+            <th>Detail</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(d, i) in didReport.drifts" :key="i" :class="d.severity">
+            <td>{{ d.severity }}</td>
+            <td><code>{{ d.kind }}</code></td>
+            <td><code>{{ d.prefix || '—' }}</code></td>
+            <td><code>{{ d.e164 || '—' }}</code></td>
+            <td><code>{{ d.tenant_shortuid || '—' }}</code></td>
+            <td>{{ d.expected_setid ?? '—' }}</td>
+            <td>{{ d.actual_setid ?? '—' }}</td>
+            <td>{{ d.detail }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </template>
+
     <table v-if="dids.length" class="data-table">
       <thead>
         <tr>
           <th>E.164</th>
-          <th>SIP prefix</th>
+          <th>Delivery</th>
+          <th>Match prefix</th>
           <th>Status</th>
           <th>Tenant</th>
           <th>Instance</th>
@@ -266,7 +403,8 @@ onMounted(load)
       <tbody>
         <tr v-for="row in dids" :key="row.e164 + row.tenant_shortuid" :class="row.status">
           <td><code>{{ row.e164 }}</code></td>
-          <td><code>{{ row.sip_prefix || row.e164_key || '—' }}</code></td>
+          <td>{{ row.delivery || '—' }}</td>
+          <td><code>{{ row.match_prefix || row.sip_prefix || row.e164_key || '—' }}</code></td>
           <td>{{ row.status }}</td>
           <td>
             <code>{{ row.tenant_shortuid }}</code>
@@ -311,7 +449,8 @@ onMounted(load)
   margin: 1rem 0;
 }
 .primary,
-.secondary {
+.secondary,
+.danger {
   padding: 0.4rem 0.85rem;
   border-radius: 4px;
   border: 1px solid var(--pbx-border);
@@ -326,8 +465,16 @@ onMounted(load)
   background: #fff;
   color: var(--pbx-text, #0f172a);
 }
+.danger {
+  background: #fff;
+  color: var(--pbx-danger, #b91c1c);
+  border-color: #fca5a5;
+  margin-top: 0.5rem;
+  align-self: flex-start;
+}
 .primary:disabled,
-.secondary:disabled {
+.secondary:disabled,
+.danger:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -375,10 +522,31 @@ onMounted(load)
 .ok-msg {
   color: var(--pbx-text-muted);
 }
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  border: 1px solid var(--pbx-border);
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+.summary.ok {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+.summary.drift {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
 .data-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 0.5rem;
+}
+.drift-table {
+  margin-bottom: 1.25rem;
 }
 .data-table th,
 .data-table td {
@@ -390,6 +558,14 @@ onMounted(load)
 }
 tr.released td {
   opacity: 0.55;
+}
+tr.error td:first-child {
+  color: var(--pbx-danger, #b91c1c);
+  font-weight: 600;
+}
+tr.warning td:first-child {
+  color: #b45309;
+  font-weight: 600;
 }
 .linkish {
   background: none;

@@ -222,8 +222,16 @@ export function listFleetDids() {
 }
 
 /**
- * Assign / reassign DID → tenant in catalog (`fleet_edge`); projects to SBC unless project:false.
- * @param {{ e164: string, tenant_shortuid: string, status?: string, carrier?: string, notes?: string, sip_prefix?: string, reassign?: boolean, project?: boolean }} body
+ * Catalog ↔ SBC fleet=did inbound rule drift (`fleet_edge`).
+ * Apply = {@link projectFleetDids} (catalog → edge).
+ */
+export function reconcileFleetDids() {
+  return gkFetch('/api/v1/dids/reconcile')
+}
+
+/**
+ * Assign / reassign DID or hop-1 block → tenant in catalog (`fleet_edge`); projects to SBC unless project:false.
+ * @param {{ e164: string, tenant_shortuid: string, status?: string, delivery?: 'singleton'|'block', carrier?: string, notes?: string, sip_prefix?: string, reassign?: boolean, project?: boolean }} body
  */
 export function assignFleetDid(body) {
   return gkFetch('/api/v1/dids/assign', {

@@ -171,7 +171,7 @@ async function submitCreate() {
       const resume = result?.resume
       createError.value =
         result?.error ||
-        'Provision failed after node create — use resume payload or Register on SBC after catalog retry'
+        'Provision failed after node create — use resume payload or Repair SBC domain after catalog retry'
       if (resume?.shortuid) {
         createError.value += ` (node shortuid ${resume.shortuid}; resume with shortuid+fqdn)`
       }
@@ -179,7 +179,7 @@ async function submitCreate() {
     }
     const su = result?.tenant?.shortuid || result?.node_tenant?.shortuid || ''
     if (result.partial && result.stages?.sbc === 'failed') {
-      createOk.value = `Tenant ${su} created on node + catalog; SBC domain failed — use Register on SBC. MainOut seeded when globals dialplan is set.`
+      createOk.value = `Tenant ${su} created on node + catalog; SBC domain failed — use Repair SBC domain. MainOut seeded when globals dialplan is set.`
     } else {
       createOk.value = `Tenant ${su} provisioned (node + catalog + SBC). MainOut seeded when globals dialplan is set.`
     }
@@ -204,7 +204,7 @@ async function doRegisterDomain(t) {
     await registerFleetTenantDomain(t.shortuid)
     await loadTenants()
   } catch (e) {
-    actionError.value = e?.message || 'Register on SBC failed'
+    actionError.value = e?.message || 'Repair SBC domain failed'
   } finally {
     busyId.value = ''
   }
@@ -269,7 +269,8 @@ onUnmounted(() => {
     <h1>Fleet tenants</h1>
     <p class="hint">
       Create provisions home node + catalog + SBC domain. Delete is a durable job (confirm shortuid).
-      Register on SBC repairs a missing domain. Move relocates a tenant between instances.
+      <strong>Repair SBC domain</strong> is only if create left catalog OK but Magrathea domain missing
+      (safe to re-run). Move relocates a tenant between instances.
     </p>
 
     <p v-if="canCreate" class="toolbar">
@@ -383,7 +384,7 @@ onUnmounted(() => {
                   :disabled="busyId === t.shortuid"
                   @click="closeRowMenu(); doRegisterDomain(t)"
                 >
-                  Register on SBC
+                  Repair SBC domain
                 </button>
                 <button
                   v-if="canMove"

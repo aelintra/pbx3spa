@@ -377,6 +377,23 @@ describe('fleetGatekeeper API login/logout', () => {
     expect(data.dids).toEqual([])
   })
 
+  it('reconcileFleetDids GETs /dids/reconcile', async () => {
+    session.setItem(TOKEN_KEY, 't')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ ok: true, drifts: [], summary: {} })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { reconcileFleetDids } = await import('@/api/fleetGatekeeper.js')
+    await reconcileFleetDids()
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://control.test/api/v1/dids/reconcile',
+      expect.any(Object)
+    )
+  })
+
   it('assignFleetDid POSTs /dids/assign', async () => {
     session.setItem(TOKEN_KEY, 't')
     const fetchMock = vi.fn().mockResolvedValue({
@@ -387,13 +404,21 @@ describe('fleetGatekeeper API login/logout', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     const { assignFleetDid } = await import('@/api/fleetGatekeeper.js')
-    await assignFleetDid({ e164: '+44111', tenant_shortuid: '9wvvnb', reassign: true })
+    await assignFleetDid({
+      e164: '+44111',
+      tenant_shortuid: '9wvvnb',
+      delivery: 'block',
+      sip_prefix: '019249264',
+      reassign: true
+    })
     expect(fetchMock).toHaveBeenCalledWith(
       'https://control.test/api/v1/dids/assign',
       expect.objectContaining({ method: 'POST' })
     )
     const body = JSON.parse(fetchMock.mock.calls[0][1].body)
     expect(body.reassign).toBe(true)
+    expect(body.delivery).toBe('block')
+    expect(body.sip_prefix).toBe('019249264')
   })
 
   it('401 from gkFetch clears stale token and abilities (PRE_RELEASE_SAFETY_DEBT #16)', async () => {
