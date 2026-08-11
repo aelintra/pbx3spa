@@ -44,13 +44,25 @@ const filteredLogs = computed(() => {
   return list.filter((log) => (log.path || '').toLowerCase().includes(q))
 })
 
+/** Coerce API/script booleans (avoid string "false" truthiness). */
+function asBool(v) {
+  return v === true || v === 1 || v === '1' || v === 'true'
+}
+
+const sipAvailable = computed(() => asBool(sipStatus.value?.available))
+const sipArmed = computed(() => asBool(sipStatus.value?.armed))
+const sipPcapOn = computed(() => asBool(sipStatus.value?.pcap))
+
 const sipBadge = computed(() => {
   const s = sipStatus.value
-  if (!s || !s.available) return 'Scripts not installed'
-  if (!s.armed) return 'Off'
-  if (s.pcap) return 'Armed — text + pcap'
+  if (!s || !sipAvailable.value) return 'Scripts not installed'
+  if (!sipArmed.value) return 'Off'
+  if (sipPcapOn.value) return 'Armed — text + pcap'
   return 'Armed — text'
 })
+
+const canArm = computed(() => sipAvailable.value && !sipArmed.value && !sipBusy.value)
+const canDisarm = computed(() => sipAvailable.value && sipArmed.value && !sipBusy.value)
 
 function formatSize(bytes) {
   if (!bytes || bytes === 0) return '—'
@@ -241,18 +253,26 @@ onMounted(async () => {
         AI-friendly; optional pcap for forensics. Auto-off after TTL.
       </p>
       <ListLoadingState v-if="sipLoading" message="Loading SIP debug status…" />
-      <p v-else-if="sipError" class="error">{{ sipError }}</p>
       <div v-else class="sip-controls">
+        <p v-if="sipError" class="error">{{ sipError }}</p>
         <p class="sip-status">
           Status: <strong>{{ sipBadge }}</strong>
-          <span v-if="sipStatus?.armed" class="sip-ttl">
-            · TTL remaining {{ formatTtl(sipStatus.ttl_remaining_sec) }}
+          <span v-if="sipArmed" class="sip-ttl">
+            · TTL remaining {{ formatTtl(sipStatus?.ttl_remaining_sec) }}
           </span>
         </p>
-        <p class="toolbar archive-toolbar">
+        <p v-if="sipStatus && !sipAvailable" class="archive-hint">
+          Tip-deploy pbx3 sip-debug scripts (or package <code>0.0.5-4</code>) on this home, then Refresh.
+        </p>
+        <div class="sip-action-row">
           <label class="class-label">
             TTL (min)
-            <select v-model.number="sipTtl" class="class-select" :disabled="sipBusy" aria-label="SIP debug TTL">
+            <select
+              v-model.number="sipTtl"
+              class="class-select"
+              :disabled="sipBusy || sipArmed"
+              aria-label="SIP debug TTL"
+            >
               <option :value="15">15</option>
               <option :value="30">30</option>
               <option :value="45">45</option>
@@ -260,29 +280,31 @@ onMounted(async () => {
             </select>
           </label>
           <label class="sip-pcap-label">
-            <input v-model="sipPcap" type="checkbox" :disabled="sipBusy" />
+            <input v-model="sipPcap" type="checkbox" :disabled="sipBusy || sipArmed" />
             Also capture pcap
           </label>
           <button
+            v-if="!sipArmed"
             type="button"
-            class="btn btn-primary"
-            :disabled="sipBusy || sipStatus?.armed"
+            class="btn btn-primary sip-start-btn"
+            :disabled="!canArm"
             @click="armSip"
           >
-            Start
+            {{ sipBusy ? 'Starting…' : 'Start SIP debug' }}
           </button>
           <button
+            v-else
             type="button"
-            class="btn btn-secondary"
-            :disabled="sipBusy || !sipStatus?.armed"
+            class="btn btn-primary sip-stop-btn"
+            :disabled="!canDisarm"
             @click="disarmSip"
           >
-            Stop
+            {{ sipBusy ? 'Stopping…' : 'Stop SIP debug' }}
           </button>
           <button type="button" class="btn btn-secondary" :disabled="sipBusy" @click="loadSipStatus">
             Refresh
           </button>
-        </p>
+        </div>
       </div>
     </section>
 
@@ -411,7 +433,11 @@ onMounted(async () => {
 .sip-controls {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: #f8fafc;
 }
 .sip-status {
   margin: 0;
@@ -421,12 +447,30 @@ onMounted(async () => {
   color: #64748b;
   font-size: 0.95rem;
 }
+.sip-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
 .sip-pcap-label {
   display: flex;
   align-items: center;
   gap: 0.35rem;
   font-size: 0.95rem;
   color: #475569;
+}
+.sip-start-btn,
+.sip-stop-btn {
+  font-weight: 600;
+  min-width: 10rem;
+}
+.sip-stop-btn {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+.sip-stop-btn:hover:not(:disabled) {
+  background: #991b1b;
 }
 .btn-primary {
   background: #0f172a;
