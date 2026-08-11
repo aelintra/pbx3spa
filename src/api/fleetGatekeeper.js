@@ -241,7 +241,7 @@ export function assignFleetDid(body) {
 }
 
 /**
- * Soft-release DID in catalog (`fleet_edge`).
+ * Soft-release DID in catalog, or hard-remove with `remove: true` (`fleet_edge`).
  * @param {{ e164: string, confirm?: boolean, remove?: boolean, project?: boolean }} body
  */
 export function releaseFleetDid(body) {

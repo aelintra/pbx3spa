@@ -7,6 +7,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   listFleetDids,
   listFleetTenants,
+  getFleetCatalog,
   assignFleetDid,
   releaseFleetDid,
   projectFleetDids,
@@ -22,6 +23,7 @@ import {
 
 const dids = ref([])
 const tenants = ref([])
+const instancesById = ref({})
 const loading = ref(false)
 const error = ref('')
 const actionMsg = ref('')
@@ -29,6 +31,8 @@ const busy = ref(false)
 const canEdge = computed(() => canFleet(FLEET_ABILITY.EDGE))
 
 const showAssign = ref(false)
+/** @type {import('vue').Ref<'create'|'edit'|'reallocate'>} */
+const formMode = ref('create')
 const form = ref({
   e164: '',
   delivery: 'singleton',
@@ -43,10 +47,37 @@ const form = ref({
 const didReport = ref(null)
 const checkingDrift = ref(false)
 
+const formTitle = computed(() => {
+  if (formMode.value === 'edit') return 'Update DID delivery'
+  if (formMode.value === 'reallocate') return 'Re-allocate released DID'
+  return 'Allocate new DID'
+})
+
+const formSubmitLabel = computed(() => {
+  if (busy.value) return 'Saving…'
+  if (formMode.value === 'edit') return 'Update + project'
+  if (formMode.value === 'reallocate') return 'Re-allocate + project'
+  return 'Allocate + project'
+})
+
+const e164Locked = computed(
+  () => formMode.value === 'edit' || formMode.value === 'reallocate'
+)
+
+function instanceDisplayName(row) {
+  if (row.instance_label && row.instance_label !== row.instance_id) {
+    return row.instance_label
+  }
+  const i = instancesById.value[row.instance_id]
+  if (!i) return row.instance_label || row.instance_id || '—'
+  return i.label || i.fqdn || row.instance_id || '—'
+}
+
 async function load() {
   if (!hasFleetGatekeeperToken()) {
     dids.value = []
     tenants.value = []
+    instancesById.value = {}
     error.value = ''
     loading.value = false
     return
@@ -57,10 +88,16 @@ async function load() {
     if (getFleetAbilities().length === 0) {
       await refreshFleetSession()
     }
-    const [list, tenantRows] = await Promise.all([
+    const [list, tenantRows, catalog] = await Promise.all([
       listFleetDids(),
-      listFleetTenants()
+      listFleetTenants(),
+      getFleetCatalog()
     ])
+    const map = {}
+    for (const i of catalog.instances || []) {
+      if (i?.id) map[i.id] = i
+    }
+    instancesById.value = map
     dids.value = list.dids || []
     tenants.value = tenantRows
   } catch (e) {
@@ -93,6 +130,59 @@ function blankForm() {
   }
 }
 
+function closeForm() {
+  showAssign.value = false
+  formMode.value = 'create'
+  form.value = blankForm()
+}
+
+function startCreate() {
+  if (showAssign.value && formMode.value === 'create') {
+    closeForm()
+    return
+  }
+  formMode.value = 'create'
+  form.value = blankForm()
+  showAssign.value = true
+  error.value = ''
+  actionMsg.value = ''
+}
+
+function fillFormFromRow(row, { reassign = false } = {}) {
+  form.value = {
+    e164: row.e164 || '',
+    delivery: row.delivery === 'block' ? 'block' : 'singleton',
+    sip_prefix:
+      row.sip_prefix ||
+      (row.match_prefix && row.match_prefix !== row.e164_key ? row.match_prefix : '') ||
+      '',
+    tenant_shortuid: row.tenant_shortuid || '',
+    status: row.status === 'released' ? 'active' : row.status || 'active',
+    carrier: row.carrier || '',
+    notes: row.notes || '',
+    reassign
+  }
+}
+
+/** Change SIP prefix / tenant / delivery on an existing catalog row. */
+function startEdit(row) {
+  if (!canEdge.value) return
+  formMode.value = 'edit'
+  fillFormFromRow(row, { reassign: false })
+  showAssign.value = true
+  error.value = ''
+  actionMsg.value = `Editing ${row.e164} — same catalog row; change fields and Update + project.`
+}
+
+function startReallocate(row) {
+  if (!canEdge.value) return
+  formMode.value = 'reallocate'
+  fillFormFromRow(row, { reassign: true })
+  showAssign.value = true
+  error.value = ''
+  actionMsg.value = `Re-allocate ${row.e164} — pick tenant and save (was released).`
+}
+
 async function submitAssign() {
   if (!canEdge.value) return
   if (form.value.delivery === 'block' && !form.value.sip_prefix.trim()) {
@@ -108,7 +198,7 @@ async function submitAssign() {
       tenant_shortuid: form.value.tenant_shortuid,
       status: form.value.status,
       delivery: form.value.delivery,
-      reassign: form.value.reassign
+      reassign: form.value.reassign || formMode.value !== 'create'
     }
     if (form.value.sip_prefix.trim()) body.sip_prefix = form.value.sip_prefix.trim()
     if (form.value.carrier.trim()) body.carrier = form.value.carrier.trim()
@@ -126,6 +216,7 @@ async function submitAssign() {
       error.value = (result.sbc.errors || [result.sbc.error || 'SBC project failed']).join(' · ')
     }
     showAssign.value = false
+    formMode.value = 'create'
     form.value = blankForm()
     didReport.value = null
     await load()
@@ -153,6 +244,31 @@ async function doRelease(row) {
     await load()
   } catch (e) {
     error.value = e?.message || 'Release failed'
+  } finally {
+    busy.value = false
+  }
+}
+
+/** Hard-drop a soft-released catalog ghost (API remove:true). */
+async function doRemove(row) {
+  if (!canEdge.value) return
+  const ok = window.confirm(
+    `Remove ${row.e164} from the catalog permanently?\n\n` +
+      'Deletes this released history row for tenant ' +
+      row.tenant_shortuid +
+      '. Does not change hand-authored SBC Number routes.'
+  )
+  if (!ok) return
+  busy.value = true
+  error.value = ''
+  actionMsg.value = ''
+  try {
+    const result = await releaseFleetDid({ e164: row.e164, confirm: true, remove: true })
+    actionMsg.value = `Removed ${row.e164} from catalog.` + formatSbc(result.sbc)
+    didReport.value = null
+    await load()
+  } catch (e) {
+    error.value = e?.message || 'Remove failed'
   } finally {
     busy.value = false
   }
@@ -206,7 +322,7 @@ async function applyDidDrift() {
   const ok = window.confirm(
     'Apply catalog → SBC for DID delivery?\n\n' +
       'Projects active/porting catalog rows onto fleet-owned dr_rules and removes orphans the projector owns.\n' +
-      'Does not change the catalog. Magrathea must not be treated as HoR for fleet=did.'
+      'Does not change the catalog. The SBC must not be treated as home of record for fleet-owned DID routes.'
   )
   if (!ok) return
   busy.value = true
@@ -234,12 +350,14 @@ onMounted(load)
     <h1>DID ownership</h1>
     <p class="hint">
       <strong>Catalog is home of record</strong> (<code>tenants/*/dids.json</code>) — this list is
-      <strong>catalog intent</strong>, not a live Magrathea scrape.
+      <strong>catalog intent</strong>, not a live SBC scrape.
       Allocate / reassign writes the catalog, then projects inbound <code>dr_rules</code>
-      (fleet-owned rows). Retarget hop-1 delivery here only — Magrathea must not edit
+      (fleet-owned rows). Retarget hop-1 delivery here only — the SBC admin UI must not edit
       <code>fleet=did</code> routes. Choose <strong>singleton</strong> or <strong>block</strong>:
       SIP prefix is the digit string OpenSIPS matches (e.g. block <code>019249264</code> vs
-      E.164 <code>+441924918076</code>). Soft <em>released</em> rows stay visible until hard-removed.
+      E.164 <code>+441924918076</code>).       Allocate writes a <strong>new</strong> catalog row; use <strong>Edit</strong> on a row to
+      change SIP prefix / tenant (same object). Soft <em>released</em> rows stay grey —
+      <strong>Re-allocate</strong> or <strong>Remove</strong>.
     </p>
 
     <div v-if="hasFleetGatekeeperToken()" class="toolbar">
@@ -251,7 +369,7 @@ onMounted(load)
         type="button"
         class="primary"
         :disabled="busy"
-        @click="showAssign = !showAssign"
+        @click="showAssign ? closeForm() : startCreate()"
       >
         {{ showAssign ? 'Cancel' : 'Allocate DID' }}
       </button>
@@ -277,9 +395,20 @@ onMounted(load)
     </div>
 
     <form v-if="showAssign && canEdge" class="assign-form" @submit.prevent="submitAssign">
+      <h2 class="form-title">{{ formTitle }}</h2>
+      <p v-if="formMode === 'edit'" class="form-note">
+        Same catalog row — change SIP prefix or tenant, then update. Not a new DID.
+      </p>
       <label>
         E.164
-        <input v-model="form.e164" type="text" required placeholder="+442071234567" autocomplete="off" />
+        <input
+          v-model="form.e164"
+          type="text"
+          required
+          placeholder="+442071234567"
+          autocomplete="off"
+          :readonly="e164Locked"
+        />
       </label>
       <label>
         Delivery
@@ -297,7 +426,7 @@ onMounted(load)
           :placeholder="
             form.delivery === 'block'
               ? 'required block digits (e.g. 019249264)'
-              : 'optional digits (as carrier sends)'
+              : 'as carrier sends (e.g. 01924918076)'
           "
           autocomplete="off"
         />
@@ -307,7 +436,7 @@ onMounted(load)
         <select v-model="form.tenant_shortuid" required>
           <option disabled value="">Select tenant…</option>
           <option v-for="t in tenants" :key="t.shortuid" :value="t.shortuid">
-            {{ t.name }} ({{ t.shortuid }})
+            {{ t.shortuid }} / {{ t.name }}
           </option>
         </select>
       </label>
@@ -327,12 +456,12 @@ onMounted(load)
         Notes
         <input v-model="form.notes" type="text" placeholder="optional" />
       </label>
-      <label class="check">
+      <label v-if="formMode === 'create'" class="check">
         <input v-model="form.reassign" type="checkbox" />
-        Reassign if already owned by another tenant (or same match prefix)
+        Take over if already owned by another tenant
       </label>
       <button type="submit" class="primary" :disabled="busy || !form.tenant_shortuid">
-        {{ busy ? 'Saving…' : 'Save + project' }}
+        {{ formSubmitLabel }}
       </button>
     </form>
 
@@ -408,21 +537,28 @@ onMounted(load)
           <td>{{ row.status }}</td>
           <td>
             <code>{{ row.tenant_shortuid }}</code>
-            <span v-if="row.tenant_label" class="muted"> {{ row.tenant_label }}</span>
+            <span v-if="row.tenant_label" class="muted"> / {{ row.tenant_label }}</span>
           </td>
-          <td><code>{{ row.instance_id || '—' }}</code></td>
+          <td>{{ instanceDisplayName(row) }}</td>
           <td>{{ row.sbc_dispatcher_setid ?? '—' }}</td>
           <td>{{ row.carrier || '—' }}</td>
-          <td>
-            <button
-              v-if="canEdge && row.status !== 'released'"
-              type="button"
-              class="linkish"
-              :disabled="busy"
-              @click="doRelease(row)"
-            >
-              Release
-            </button>
+          <td class="actions">
+            <template v-if="canEdge && row.status !== 'released'">
+              <button type="button" class="linkish" :disabled="busy" @click="startEdit(row)">
+                Edit
+              </button>
+              <button type="button" class="linkish" :disabled="busy" @click="doRelease(row)">
+                Release
+              </button>
+            </template>
+            <template v-else-if="canEdge && row.status === 'released'">
+              <button type="button" class="linkish" :disabled="busy" @click="startReallocate(row)">
+                Re-allocate
+              </button>
+              <button type="button" class="linkish danger-link" :disabled="busy" @click="doRemove(row)">
+                Remove
+              </button>
+            </template>
           </td>
         </tr>
       </tbody>
@@ -488,6 +624,23 @@ onMounted(load)
   border: 1px solid var(--pbx-border);
   border-radius: 4px;
   background: var(--pbx-surface, #f8fafc);
+}
+.form-title {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--pbx-text, #0f172a);
+}
+.form-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--pbx-text-muted);
+}
+.assign-form input[readonly] {
+  background: #e2e8f0;
+  color: var(--pbx-text, #0f172a);
 }
 .assign-form label {
   display: flex;
@@ -559,6 +712,9 @@ onMounted(load)
 tr.released td {
   opacity: 0.55;
 }
+tr.released td.actions {
+  opacity: 1;
+}
 tr.error td:first-child {
   color: var(--pbx-danger, #b91c1c);
   font-weight: 600;
@@ -566,6 +722,12 @@ tr.error td:first-child {
 tr.warning td:first-child {
   color: #b45309;
   font-weight: 600;
+}
+.actions {
+  white-space: nowrap;
+}
+.actions .linkish + .linkish {
+  margin-left: 0.75rem;
 }
 .linkish {
   background: none;
@@ -575,6 +737,9 @@ tr.warning td:first-child {
   font: inherit;
   padding: 0;
   text-decoration: underline;
+}
+.linkish.danger-link {
+  color: var(--pbx-danger, #b91c1c);
 }
 .linkish:disabled {
   opacity: 0.5;

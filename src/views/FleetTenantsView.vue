@@ -269,7 +269,7 @@ onUnmounted(() => {
     <h1>Fleet tenants</h1>
     <p class="hint">
       Create provisions home node + catalog + SBC domain. Delete is a durable job (confirm shortuid).
-      <strong>Repair SBC domain</strong> is only if create left catalog OK but Magrathea domain missing
+      <strong>Repair SBC domain</strong> is only if create left catalog OK but the SBC domain row is missing
       (safe to re-run). Move relocates a tenant between instances.
     </p>
 
