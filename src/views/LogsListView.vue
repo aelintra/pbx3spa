@@ -22,10 +22,19 @@ const archiveLoading = ref(false)
 const archiveError = ref('')
 const archiveDownloading = ref(null)
 
+const sipStatus = ref(null)
+const sipLoading = ref(false)
+const sipBusy = ref(false)
+const sipTtl = ref(30)
+const sipPcap = ref(false)
+const sipError = ref('')
+
 const ARCHIVE_CLASSES = [
   { value: 'syslog', label: 'syslog' },
   { value: 'asterisk-messages', label: 'Asterisk messages' },
-  { value: 'cdr', label: 'CDR CSV' }
+  { value: 'cdr', label: 'CDR CSV' },
+  { value: 'sip-text', label: 'SIP text' },
+  { value: 'sip-pcap', label: 'SIP pcap' }
 ]
 
 const filteredLogs = computed(() => {
@@ -35,6 +44,14 @@ const filteredLogs = computed(() => {
   return list.filter((log) => (log.path || '').toLowerCase().includes(q))
 })
 
+const sipBadge = computed(() => {
+  const s = sipStatus.value
+  if (!s || !s.available) return 'Scripts not installed'
+  if (!s.armed) return 'Off'
+  if (s.pcap) return 'Armed — text + pcap'
+  return 'Armed — text'
+})
+
 function formatSize(bytes) {
   if (!bytes || bytes === 0) return '—'
   const kb = bytes / 1024
@@ -42,6 +59,59 @@ function formatSize(bytes) {
   if (mb >= 1) return `${mb.toFixed(1)} MB`
   if (kb >= 1) return `${kb.toFixed(1)} KB`
   return `${bytes} B`
+}
+
+function formatTtl(sec) {
+  if (!sec || sec <= 0) return '—'
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return `${m}m ${s}s`
+}
+
+async function loadSipStatus() {
+  sipLoading.value = true
+  sipError.value = ''
+  try {
+    sipStatus.value = await getApiClient().get('syscommands/sipdebug/status')
+  } catch (err) {
+    sipStatus.value = null
+    sipError.value = firstErrorMessage(err, 'Failed to load SIP debug status')
+  } finally {
+    sipLoading.value = false
+  }
+}
+
+async function armSip() {
+  sipBusy.value = true
+  sipError.value = ''
+  try {
+    sipStatus.value = await getApiClient().post('syscommands/sipdebug/arm', {
+      ttl_minutes: sipTtl.value,
+      pcap: sipPcap.value
+    })
+    toast.show('SIP debug armed')
+    await loadLogs()
+  } catch (err) {
+    sipError.value = firstErrorMessage(err, 'Failed to arm SIP debug')
+    toast.show(sipError.value, 'error')
+  } finally {
+    sipBusy.value = false
+  }
+}
+
+async function disarmSip() {
+  sipBusy.value = true
+  sipError.value = ''
+  try {
+    sipStatus.value = await getApiClient().post('syscommands/sipdebug/disarm', {})
+    toast.show('SIP debug disarmed')
+    await loadLogs()
+  } catch (err) {
+    sipError.value = firstErrorMessage(err, 'Failed to disarm SIP debug')
+    toast.show(sipError.value, 'error')
+  } finally {
+    sipBusy.value = false
+  }
 }
 
 async function loadLogs() {
@@ -144,7 +214,7 @@ watch(archiveClass, () => {
 onMounted(async () => {
   await loadLogs()
   filterInputRef.value?.focus()
-  await loadArchive()
+  await Promise.all([loadArchive(), loadSipStatus()])
 })
 </script>
 
@@ -163,6 +233,58 @@ onMounted(async () => {
         />
       </p>
     </header>
+
+    <section class="sip-debug-section">
+      <h2 class="section-heading">SIP debug (home)</h2>
+      <p class="archive-hint">
+        Session-armed capture of <strong>SBC↔Asterisk</strong> only — not desk REGISTER. Text is
+        AI-friendly; optional pcap for forensics. Auto-off after TTL.
+      </p>
+      <ListLoadingState v-if="sipLoading" message="Loading SIP debug status…" />
+      <p v-else-if="sipError" class="error">{{ sipError }}</p>
+      <div v-else class="sip-controls">
+        <p class="sip-status">
+          Status: <strong>{{ sipBadge }}</strong>
+          <span v-if="sipStatus?.armed" class="sip-ttl">
+            · TTL remaining {{ formatTtl(sipStatus.ttl_remaining_sec) }}
+          </span>
+        </p>
+        <p class="toolbar archive-toolbar">
+          <label class="class-label">
+            TTL (min)
+            <select v-model.number="sipTtl" class="class-select" :disabled="sipBusy" aria-label="SIP debug TTL">
+              <option :value="15">15</option>
+              <option :value="30">30</option>
+              <option :value="45">45</option>
+              <option :value="60">60</option>
+            </select>
+          </label>
+          <label class="sip-pcap-label">
+            <input v-model="sipPcap" type="checkbox" :disabled="sipBusy" />
+            Also capture pcap
+          </label>
+          <button
+            type="button"
+            class="btn btn-primary"
+            :disabled="sipBusy || sipStatus?.armed"
+            @click="armSip"
+          >
+            Start
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            :disabled="sipBusy || !sipStatus?.armed"
+            @click="disarmSip"
+          >
+            Stop
+          </button>
+          <button type="button" class="btn btn-secondary" :disabled="sipBusy" @click="loadSipStatus">
+            Refresh
+          </button>
+        </p>
+      </div>
+    </section>
 
     <section v-if="loading || error" class="list-states">
       <ListLoadingState v-if="loading" message="Loading logs from API…" />
@@ -189,7 +311,7 @@ onMounted(async () => {
             :key="log.path"
             class="log-row"
             :class="{ 'log-missing': !log.exists }"
-            @click="log.exists && openLogModal(log.path)"
+            @click="log.exists && !String(log.path).includes('siplog/') && openLogModal(log.path)"
           >
             <td class="log-path">
               {{ log.path }}
@@ -282,8 +404,41 @@ onMounted(async () => {
   margin: 0;
 }
 .list-body,
-.archive-section {
+.archive-section,
+.sip-debug-section {
   margin: 0;
+}
+.sip-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sip-status {
+  margin: 0;
+  color: #334155;
+}
+.sip-ttl {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+.sip-pcap-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+  color: #475569;
+}
+.btn-primary {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #1e293b;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 .section-heading {
   margin: 0 0 0.5rem;
