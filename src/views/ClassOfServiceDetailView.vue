@@ -277,7 +277,8 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-description"
               v-model="editDescription"
               label="Description"
-              type="text"
+              multiline
+              :rows="4"
             />
           </div>
 
@@ -288,8 +289,9 @@ const panelTitleTenantSuffix = computed(() => {
               v-model="editDialplan"
               label="Dialplan (required)"
               help-pkey="cosdialplan"
-              type="text"
-              placeholder="Dialplan fragment"
+              multiline
+              :rows="10"
+              placeholder="Space-separated Asterisk patterns (e.g. _070. _001268.)"
               :required="true"
             />
             <FormToggle

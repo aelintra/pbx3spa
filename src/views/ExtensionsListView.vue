@@ -462,7 +462,7 @@ onMounted(loadExtensions)
             <td>{{ e.pkey }}</td>
             <td class="cell-immutable" title="Immutable">{{ sipIdentityDisplay(e) }}</td>
             <td>{{ tenantPkeyDisplay(e) }}</td>
-            <ListActiveChip :active="e.active" />
+            <ListActiveChip :active="e.active" :updater="e.z_updater" />
             <td :title="e.desc ?? e.cname ?? e.description ?? ''">{{ userDisplay(e) }}</td>
             <td>{{ e.extension_type ?? '—' }}</td>
             <td class="cell-immutable" title="Immutable">{{ e.device ?? e.technology ?? '—' }}</td>

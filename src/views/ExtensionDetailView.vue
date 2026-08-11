@@ -431,8 +431,14 @@ const panelTitleTenantSuffix = computed(() => {
           class="detail-active-inactive-hint"
           role="status"
         >
-          Inactive extensions do not take calls until you activate this record and commit the
-          change.
+          <template v-if="extension.z_updater === 'velocity'">
+            Disabled by toll-fraud velocity (IRSF surge). Activate and commit to restore this
+            phone; investigate compromise before re-enabling.
+          </template>
+          <template v-else>
+            Inactive extensions do not take calls until you activate this record and commit the
+            change.
+          </template>
         </p>
       </div>
     </PanelBackLink>

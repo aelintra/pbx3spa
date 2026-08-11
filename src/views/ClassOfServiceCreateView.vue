@@ -210,7 +210,8 @@ async function onSubmit(e) {
           id="description"
           v-model="description"
           label="Description"
-          type="text"
+          multiline
+          :rows="4"
           placeholder="Short description"
         />
       </div>
@@ -240,8 +241,9 @@ async function onSubmit(e) {
           v-model="dialplan"
           label="Dialplan"
           help-pkey="cosdialplan"
-          type="text"
-          placeholder="Dialplan fragment (required)"
+          multiline
+          :rows="10"
+          placeholder="Space-separated Asterisk patterns (required)"
           :required="true"
         />
         <FormToggle
