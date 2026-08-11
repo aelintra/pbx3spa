@@ -277,7 +277,7 @@ onMounted(async () => {
         <p v-if="sipStatus && !sipAvailable" class="archive-hint">
           Tip-deploy pbx3 sip-debug scripts (or package <code>0.0.5-4</code>) on this home, then Refresh.
         </p>
-        <div class="sip-action-row">
+        <div class="sip-options-row">
           <label class="class-label">
             TTL (min)
             <select
@@ -296,6 +296,8 @@ onMounted(async () => {
             <input v-model="sipPcap" type="checkbox" :disabled="sipBusy || sipArmed" />
             Also capture pcap
           </label>
+        </div>
+        <div class="sip-action-row">
           <button
             v-if="!sipArmed"
             type="button"
@@ -476,6 +478,7 @@ onMounted(async () => {
   color: #64748b;
   font-size: 0.95rem;
 }
+.sip-options-row,
 .sip-action-row {
   display: flex;
   flex-wrap: wrap;
