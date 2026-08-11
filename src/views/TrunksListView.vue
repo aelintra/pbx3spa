@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useFleetPosture } from '@/composables/useFleetPosture'
 import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
@@ -15,6 +16,9 @@ import LiveDataFetchNotice from '@/components/LiveDataFetchNotice.vue'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import ListLiveLatencyChip from '@/components/ListLiveLatencyChip.vue'
 import { isLiveStatusOnline } from '@/utils/liveLatencyChip'
+
+const { loadFleetPosture, isFleetNode } = useFleetPosture()
+const fleetReady = ref(false)
 
 const { filterText } = useStickyFilter('trunks')
 const toast = useToastStore()
@@ -266,7 +270,11 @@ async function confirmAndDeleteTrunk(shortuid) {
   }
 }
 
-onMounted(loadTrunks)
+onMounted(async () => {
+  await loadFleetPosture()
+  fleetReady.value = true
+  await loadTrunks()
+})
 </script>
 
 <template>
@@ -274,7 +282,14 @@ onMounted(loadTrunks)
     <header class="list-header">
       <h1>Trunks</h1>
       <p class="toolbar">
-        <router-link :to="{ name: 'trunk-create' }" class="add-btn">Create</router-link>
+        <router-link
+          v-if="fleetReady && !isFleetNode()"
+          :to="{ name: 'trunk-create' }"
+          class="add-btn"
+        >Create</router-link>
+        <span v-else-if="fleetReady && isFleetNode()" class="fleet-hint">
+          Fleet: edit Egress (mangle) here — create carriers on the SBC
+        </span>
         <button
           type="button"
           class="export-btn"
@@ -688,6 +703,10 @@ onMounted(loadTrunks)
 }
 .add-btn:hover {
   background: #1d4ed8;
+}
+.fleet-hint {
+  font-size: 0.875rem;
+  color: var(--pbx-text-muted, #64748b);
 }
 .export-btn {
   padding: 0.5rem 1rem;

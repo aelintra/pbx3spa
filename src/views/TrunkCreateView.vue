@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
+import { useFleetPosture } from '@/composables/useFleetPosture'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateTrunkPkey } from '@/utils/validation'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
@@ -13,7 +14,9 @@ import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const router = useRouter()
 const toast = useToastStore()
+const { loadFleetPosture, isFleetNode } = useFleetPosture()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const fleetBlocked = ref(false)
 const technology = ref('SIP')
 /** SIP only: matches PBX pjsipreg (SND / RCV) or trusted peer (null in API). */
 const sipRegMode = ref('TRUSTED')
@@ -63,6 +66,13 @@ watch(technology, (t) => {
 })
 
 onMounted(async () => {
+  await loadFleetPosture()
+  if (isFleetNode()) {
+    fleetBlocked.value = true
+    error.value =
+      'Fleet mode: carriers live on the SBC. Edit Egress (e.g. mangle) here; do not create new trunks on the node.'
+    return
+  }
   await ensureFetched()
   applySchemaDefaults('trunks', { cluster, transport, cname, description })
 })
@@ -70,6 +80,11 @@ onMounted(async () => {
 async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
+  if (fleetBlocked.value || isFleetNode()) {
+    error.value =
+      'Fleet mode: carriers live on the SBC. Edit Egress (e.g. mangle) here; do not create new trunks on the node.'
+    return
+  }
   if (!typeChosen.value) {
     error.value = 'Please choose a technology'
     return
@@ -168,6 +183,11 @@ function onKeydown(e) {
     <form class="form" @submit="onSubmit">
       <p v-if="error" id="trunk-create-error" class="error" role="alert">{{ error }}</p>
 
+      <div v-if="fleetBlocked" class="actions actions-top">
+        <button type="button" class="secondary" @click="goBack">Back to Trunks</button>
+      </div>
+
+      <template v-if="!fleetBlocked">
       <div class="actions actions-top">
         <button type="submit" :disabled="loading || !typeChosen">
           {{ loading ? 'Creating…' : 'Create' }}
@@ -270,6 +290,7 @@ function onKeydown(e) {
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
       </div>
+      </template>
     </form>
   </div>
 </template>
