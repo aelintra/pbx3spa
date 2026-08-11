@@ -422,6 +422,17 @@ onMounted(async () => {
 .list-header {
   margin: 0;
 }
+.list-header h1 {
+  margin: 0;
+}
+.toolbar {
+  margin: 0.75rem 0 0 0;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
 .list-states {
   margin: 0;
 }
