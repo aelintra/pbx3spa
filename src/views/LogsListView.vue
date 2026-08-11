@@ -37,11 +37,24 @@ const ARCHIVE_CLASSES = [
   { value: 'sip-pcap', label: 'SIP pcap' }
 ]
 
+/** Friendlier Local list labels (API path stays the key for download/view). */
+function logDisplayLabel(path) {
+  const p = String(path || '')
+  if (p === 'astsipdebug') return 'SIP text (live)'
+  if (p.startsWith('sip-text/')) return `SIP text · ${p.slice('sip-text/'.length)}`
+  if (p.startsWith('siplog/')) return `SIP pcap · ${p.slice('siplog/'.length)}`
+  return p
+}
+
 const filteredLogs = computed(() => {
   const list = logs.value
   const q = (filterText.value || '').trim().toLowerCase()
   if (!q) return list
-  return list.filter((log) => (log.path || '').toLowerCase().includes(q))
+  return list.filter((log) => {
+    const path = (log.path || '').toLowerCase()
+    const label = logDisplayLabel(log.path).toLowerCase()
+    return path.includes(q) || label.includes(q)
+  })
 })
 
 /** Coerce API/script booleans (avoid string "false" truthiness). */
@@ -333,10 +346,14 @@ onMounted(async () => {
             :key="log.path"
             class="log-row"
             :class="{ 'log-missing': !log.exists }"
-            @click="log.exists && !String(log.path).includes('siplog/') && openLogModal(log.path)"
+            @click="
+              log.exists &&
+                !String(log.path).includes('siplog/') &&
+                openLogModal(log.path)
+            "
           >
             <td class="log-path">
-              {{ log.path }}
+              {{ logDisplayLabel(log.path) }}
               <span v-if="!log.exists" class="missing-badge">(not found)</span>
             </td>
             <td class="size-col">{{ log.exists ? formatSize(log.size) : '—' }}</td>
@@ -360,8 +377,9 @@ onMounted(async () => {
     <section class="archive-section">
       <h2 class="section-heading">S3 archive (cold)</h2>
       <p class="archive-hint">
-        Rotated files already shipped to the org bucket. Download a file and use local tools to
-        inspect it.
+        Rotated files already shipped to the org bucket. For session SIP captures, set Class to
+        <strong>SIP text</strong> or <strong>SIP pcap</strong> (appears after disarm/TTL rotate +
+        log-ship). Download a file and use local tools to inspect it.
       </p>
       <p class="toolbar archive-toolbar">
         <label class="class-label">
@@ -489,12 +507,12 @@ onMounted(async () => {
   cursor: not-allowed;
 }
 .btn.btn-primary {
-  background: #0f172a;
+  background: #2563eb;
   color: #fff;
-  border-color: #0f172a;
+  border-color: #2563eb;
 }
 .btn.btn-primary:hover:not(:disabled) {
-  background: #1e293b;
+  background: #1d4ed8;
 }
 .btn.sip-stop-btn {
   background: #b91c1c;
