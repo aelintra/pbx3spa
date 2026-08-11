@@ -465,24 +465,36 @@ onMounted(async () => {
   font-weight: 600;
   min-width: 10rem;
 }
-.sip-stop-btn {
-  background: #b91c1c;
-  border-color: #b91c1c;
-}
-.sip-stop-btn:hover:not(:disabled) {
-  background: #991b1b;
-}
-.btn-primary {
-  background: #0f172a;
-  color: #fff;
-  border-color: #0f172a;
-}
-.btn-primary:hover:not(:disabled) {
-  background: #1e293b;
+.btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  cursor: pointer;
 }
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+.btn.btn-primary {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+.btn.btn-primary:hover:not(:disabled) {
+  background: #1e293b;
+}
+.btn.sip-stop-btn {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: #fff;
+}
+.btn.sip-stop-btn:hover:not(:disabled) {
+  background: #991b1b;
+}
+.btn.btn-secondary:hover:not(:disabled) {
+  background: #f1f5f9;
 }
 .section-heading {
   margin: 0 0 0.5rem;
@@ -512,6 +524,9 @@ onMounted(async () => {
   padding: 0.35rem 0.5rem;
   border: 1px solid #cbd5e1;
   border-radius: 0.375rem;
+  background: #fff;
+  color: #0f172a;
+  min-width: 4.5rem;
 }
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -591,15 +606,5 @@ onMounted(async () => {
   padding: 0.4rem 0.6rem;
   border: 1px solid #cbd5e1;
   border-radius: 0.375rem;
-}
-.btn {
-  padding: 0.35rem 0.75rem;
-  border-radius: 0.375rem;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  cursor: pointer;
-}
-.btn-secondary:hover:not(:disabled) {
-  background: #f1f5f9;
 }
 </style>
