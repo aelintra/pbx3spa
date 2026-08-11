@@ -260,7 +260,7 @@ onMounted(async () => {
     </header>
 
     <section class="sip-debug-section">
-      <h2 class="section-heading">SIP debug (home)</h2>
+      <h2 class="section-heading">SIP debug (instance)</h2>
       <p class="archive-hint">
         Session-armed capture of <strong>SBC↔Asterisk</strong> only — not desk REGISTER. Text is
         AI-friendly; optional pcap for forensics. Auto-off after TTL.
@@ -275,7 +275,7 @@ onMounted(async () => {
           </span>
         </p>
         <p v-if="sipStatus && !sipAvailable" class="archive-hint">
-          Tip-deploy pbx3 sip-debug scripts (or package <code>0.0.5-4</code>) on this home, then Refresh.
+          Tip-deploy pbx3 sip-debug scripts (or package <code>0.0.5-4</code>) on this instance, then Refresh.
         </p>
         <div class="sip-options-row">
           <label class="class-label">
