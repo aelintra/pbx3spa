@@ -11,6 +11,7 @@ const props = defineProps({
 
 const volume = computed(() => props.cdr?.volume_24h || null)
 const outcome = computed(() => props.cdr?.outcome_today || null)
+const destWhere = computed(() => props.cdr?.dest_where_today || null)
 const tzHint = computed(() => {
   const id = String(props.cdr?.timezone || '').trim()
   return id ? timezoneLabel(id) || id : ''
@@ -26,6 +27,21 @@ const outcomeSegments = computed(() => {
     { key: 'other', label: 'Other', value: o.other || 0, color: '#64748b' }
   ]
 })
+
+const destSegments = computed(() => {
+  const d = destWhere.value || {}
+  return [
+    { key: 'domestic', label: 'Domestic', value: d.domestic || 0, color: '#2563eb' },
+    { key: 'international', label: 'International', value: d.international || 0, color: '#7c3aed' },
+    { key: 'high_cost', label: 'High-cost', value: d.high_cost || 0, color: '#dc2626' },
+    { key: 'internal', label: 'Internal', value: d.internal || 0, color: '#94a3b8' }
+  ]
+})
+
+const homeCc = computed(() => {
+  const cc = String(destWhere.value?.home_country_code || '').trim()
+  return cc ? `+${cc}` : ''
+})
 </script>
 
 <template>
@@ -35,7 +51,7 @@ const outcomeSegments = computed(() => {
       <RouterLink class="cdr-link" to="/cdr">Open CDR →</RouterLink>
     </div>
     <template v-else>
-      <div class="chart-card">
+      <div class="chart-card chart-card--wide">
         <div class="chart-head">
           <h3 class="chart-title">Call volume (24h)</h3>
           <RouterLink class="cdr-link" to="/cdr">Open CDR →</RouterLink>
@@ -59,6 +75,18 @@ const outcomeSegments = computed(() => {
         <p v-if="tzHint" class="chart-tz">Since midnight {{ tzHint }}</p>
         <HomeDoughnut :segments="outcomeSegments" />
       </div>
+      <div class="chart-card">
+        <div class="chart-head">
+          <h3 class="chart-title">Where calls went (today)</h3>
+          <RouterLink class="cdr-link" to="/cdr">Open CDR →</RouterLink>
+        </div>
+        <p class="chart-tz">
+          Dest class
+          <span v-if="homeCc"> · home {{ homeCc }}</span>
+          <span v-if="tzHint"> · since midnight {{ tzHint }}</span>
+        </p>
+        <HomeDoughnut :segments="destSegments" />
+      </div>
     </template>
   </section>
 </template>
@@ -68,6 +96,9 @@ const outcomeSegments = computed(() => {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+}
+.chart-card--wide {
+  grid-column: 1 / -1;
 }
 @media (max-width: 52rem) {
   .cdr-charts {
