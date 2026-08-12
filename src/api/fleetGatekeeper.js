@@ -627,6 +627,19 @@ export function patchEdgeSettings(body) {
   })
 }
 
+/** Fleet velocity policy (S3 catalog/velocity-policy.json). */
+export function getFleetVelocityPolicy() {
+  return gkFetch('/api/v1/velocity-policy')
+}
+
+/** @param {Record<string, unknown>} body */
+export function putFleetVelocityPolicy(body) {
+  return gkFetch('/api/v1/velocity-policy', {
+    method: 'PUT',
+    body: JSON.stringify(body)
+  })
+}
+
 // ── Dial cohorts / Site Groups (C1–C4) ───────────────────────────────
 
 /** Index rollup for Fleet → Site Groups list. */
