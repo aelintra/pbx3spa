@@ -67,6 +67,8 @@ const baseUrl = ref(getDefaultApiBaseUrl() ?? '')
 const email = ref('')
 const password = ref('')
 const totpCode = ref('')
+/** @type {import('vue').Ref<HTMLInputElement | null>} */
+const totpCodeEl = ref(null)
 const challengeId = ref('')
 /** @type {import('vue').Ref<'instance'|'tenant'|null>} */
 const pendingLoginMode = ref(null)
@@ -110,6 +112,10 @@ function beginTotpChallenge(challenge, { mode, apiUrl, tenantShortuid = null }) 
   totpCode.value = ''
   error.value = ''
   step.value = 'totp'
+  // HTML autofocus only runs on initial document load; step is v-if mounted later.
+  void nextTick(() => {
+    totpCodeEl.value?.focus({ preventScroll: true })
+  })
 }
 
 async function finishWithToken(url, accessToken, { tenantShortuid = null } = {}) {
@@ -619,6 +625,7 @@ async function onSubmit(e) {
         <label for="totpCode">From your authenticator</label>
         <input
           id="totpCode"
+          ref="totpCodeEl"
           v-model="totpCode"
           type="text"
           name="instance_mfa_token"
@@ -631,7 +638,6 @@ async function onSubmit(e) {
           data-form-type="other"
           placeholder="Paste from authenticator"
           required
-          autofocus
         />
         <p v-if="error" class="error" role="alert">{{ error }}</p>
         <button type="submit" class="btn-primary" :disabled="loading">

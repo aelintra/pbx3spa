@@ -5,7 +5,7 @@
  * S10.1: session must include fleet_read (enforced after login /me).
  * S10.8: form kinship with LoginView credentials.
  */
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import {
   hasFleetGatekeeperToken,
   setFleetGatekeeperToken,
@@ -54,6 +54,10 @@ async function doLogin() {
       challengeId.value = String(data.challenge_id)
       totpCode.value = ''
       totpFieldLocked.value = true
+      // Challenge form mounts via v-else; focus after paint (unlocks via @focus).
+      void nextTick(() => {
+        totpInputEl.value?.focus({ preventScroll: true })
+      })
       return
     }
     challengeId.value = ''
