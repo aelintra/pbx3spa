@@ -231,7 +231,7 @@ async function doRelease(row) {
   if (!canEdge.value) return
   const ok = window.confirm(
     `Release ${row.e164} from tenant ${row.tenant_shortuid}?\n\n` +
-      'Catalog status → released, then re-project that tenant to the SBC.'
+      'This marks the DID released in the catalog and updates Magrathea inbound routes for that tenant. No further action needed.'
   )
   if (!ok) return
   busy.value = true
