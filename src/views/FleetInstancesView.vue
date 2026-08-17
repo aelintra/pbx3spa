@@ -132,9 +132,12 @@ function startProvision(row) {
   provisioningId.value = row.id
   editingId.value = ''
   linkingId.value = ''
-  provisionUri.value =
-    row.sbc_backend_uri ||
-    (row.fqdn ? `sip:${String(row.fqdn).toLowerCase()}:5060` : '')
+  // Prefer an existing IP URI; never pre-fill sip:{fqdn}:5060 — operators click through
+  // and the SBC rejects DNS-name backends. Empty field + IP placeholder forces a real IP.
+  const existing = String(row.sbc_backend_uri || '').trim()
+  const host = existing.replace(/^sip:/i, '').split(':')[0] || ''
+  const looksLikeIp = /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)
+  provisionUri.value = looksLikeIp ? existing : ''
   actionError.value = ''
 }
 
@@ -147,6 +150,17 @@ async function doProvision() {
   const row = provisioningRow.value
   if (!row) return
   actionError.value = ''
+  const uri = provisionUri.value.trim()
+  if (!uri) {
+    actionError.value = 'Backend SIP URI required — use sip:nnn.nnn.nnn.nnn:5060 (public IP, not FQDN)'
+    return
+  }
+  const host = uri.replace(/^sip:/i, '').split(':')[0] || ''
+  if (!/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) {
+    actionError.value =
+      'Backend SIP URI must use a public IP (sip:nnn.nnn.nnn.nnn:5060). FQDN backends are rejected.'
+    return
+  }
   const hasSetid = instanceHasSetid(row)
   if (hasSetid) {
     const ok = window.confirm(
@@ -157,11 +171,7 @@ async function doProvision() {
   }
   busyId.value = row.id
   try {
-    const body = {}
-    const uri = provisionUri.value.trim()
-    if (uri) {
-      body.backend_uri = uri
-    }
+    const body = { backend_uri: uri }
     if (hasSetid) {
       body.confirm = true
     }
@@ -489,7 +499,7 @@ onUnmounted(() => {
         SBC backend URI (optional)
         <input
           v-model="reg.sbc_backend_uri"
-          placeholder="sip:fqdn:5060 — used by Provision edge"
+          placeholder="sip:nnn.nnn.nnn.nnn:5060 — public IP for Provision edge"
           autocomplete="off"
         />
       </label>
@@ -519,11 +529,11 @@ onUnmounted(() => {
         </span>
       </div>
       <label class="edge-panel__field">
-        Backend SIP URI
+        Backend SIP URI (public IP — not FQDN)
         <input
           v-model="provisionUri"
           class="inline-input"
-          placeholder="sip:host:5060"
+          placeholder="sip:nnn.nnn.nnn.nnn:5060"
           autocomplete="off"
         />
       </label>
