@@ -574,15 +574,23 @@ onUnmounted(() => {
         >
           <td>
             <template v-if="editingId === i.id">
-              <input
-                v-model="editDraft.label"
-                class="inline-input"
-                placeholder="Friendly Name"
-                aria-label="Friendly Name"
-              />
+              <label class="notes-edit">
+                Name
+                <input
+                  v-model="editDraft.label"
+                  class="inline-input"
+                  placeholder="friendly Name (required)"
+                  autocomplete="off"
+                />
+              </label>
               <label class="notes-edit">
                 Notes
-                <input v-model="editDraft.notes" class="inline-input" />
+                <textarea
+                  v-model="editDraft.notes"
+                  class="inline-input notes-textarea"
+                  rows="3"
+                  autocomplete="off"
+                />
               </label>
               <div class="action-row">
                 <button type="button" class="linkish" :disabled="busyId === i.id" @click="saveEdit(i.id)">
@@ -1044,6 +1052,14 @@ onUnmounted(() => {
   margin: 0.35rem 0;
   font-size: 0.8rem;
   color: var(--pbx-text-muted);
+}
+.notes-edit .notes-textarea {
+  display: block;
+  width: 100%;
+  min-width: 14rem;
+  min-height: 4.5rem;
+  resize: vertical;
+  box-sizing: border-box;
 }
 .linkish {
   border: none;
