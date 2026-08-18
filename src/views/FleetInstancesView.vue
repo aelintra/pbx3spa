@@ -423,8 +423,8 @@ onUnmounted(() => {
     <p class="hint">
       Org catalog via gatekeeper (S3 home of record). Register upserts the directory row after a live
       <code>/up</code> check. Soft decommission hides from the picker only.
-      <strong>Provision edge</strong> creates a dispatcher set + Asterisk Peer on the SBC and writes
-      catalog setid (Rule 13). If the edge already exists (e.g. after rebuild) but Setid is blank, use
+      <strong>Provision edge</strong> creates a dispatcher set + Asterisk Peer on the SBC, registers the
+      instance FQDN as a fleet domain route (setid), and writes catalog setid (Rule 13). If the edge already exists (e.g. after rebuild) but Setid is blank, use
       <strong>Link setid</strong> on the row — catch-up only, does not create a dispatcher set.
       Applying catalog setid onto tenant domains is
       <RouterLink to="/fleet/reconcile">Reconcile → Apply catalog → SBC</RouterLink>.

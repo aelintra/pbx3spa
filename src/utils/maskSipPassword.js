@@ -1,8 +1,7 @@
 /**
  * SIP password display state for the extension detail view's "SIP Password" field.
- * Masked by default (`type=password`); only shown in cleartext right after a
- * successful regenerate, since the operator needs to copy the new value into
- * the phone before it can register again (PRE_RELEASE_SAFETY_DEBT #15).
+ * Masked by default (`type=password`); shown in cleartext when the operator clicks
+ * Show or Copy, or right after a successful regenerate.
  */
 
 /** @param {unknown} passwd */
@@ -20,7 +19,7 @@ export function sipPasswordFieldType(revealed, hasPassword) {
 
 /**
  * @param {unknown} passwd
- * @param {boolean} revealed - true only immediately after a successful regenerate
+ * @param {boolean} revealed - true when operator clicked Show/Copy or after regenerate
  * @returns {{ value: string, type: 'text'|'password', placeholder: string }}
  */
 export function maskSipPassword(passwd, revealed) {

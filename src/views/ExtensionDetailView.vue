@@ -6,7 +6,7 @@ import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { firstErrorMessage } from '@/utils/formErrors'
-import { maskSipPassword } from '@/utils/maskSipPassword'
+import { maskSipPassword, sipPasswordFieldValue } from '@/utils/maskSipPassword'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
@@ -65,7 +65,7 @@ const editRingdelay = ref('')
 const confirmRegenerateSipOpen = ref(false)
 const regeneratingSip = ref(false)
 const regenerateSipError = ref('')
-/** Cleared on every (re)load; only set after a successful regenerate this session. */
+/** Cleared on every (re)load; set after regenerate or when operator clicks Show. */
 const sipPasswordRevealed = ref(false)
 const cosRules = ref([])
 const openCos = ref({})
@@ -82,10 +82,12 @@ const isWebRtcExtension = computed(() => {
   return d != null && String(d).trim().toLowerCase() === 'webrtc'
 })
 
-/** Masked by default; revealed only right after a regenerate (PRE_RELEASE_SAFETY_DEBT #15). */
+/** Masked by default; revealed after Show or a successful regenerate. */
 const sipPasswordField = computed(() =>
   maskSipPassword(extension.value?.passwd, sipPasswordRevealed.value)
 )
+
+const hasSipPassword = computed(() => Boolean(sipPasswordField.value.value))
 
 const clusterToTenantPkey = computed(() => {
   const map = new Map()
@@ -381,6 +383,27 @@ function cancelRegenerateSip() {
   confirmRegenerateSipOpen.value = false
 }
 
+function toggleSipPasswordReveal() {
+  if (!hasSipPassword.value) return
+  sipPasswordRevealed.value = !sipPasswordRevealed.value
+}
+
+async function copySipPassword() {
+  const secret = sipPasswordFieldValue(extension.value?.passwd)
+  if (!secret) {
+    toast.show('No SIP password to copy')
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(secret)
+    sipPasswordRevealed.value = true
+    toast.show('SIP password copied')
+  } catch {
+    sipPasswordRevealed.value = true
+    toast.show('Could not copy — select and copy the password field')
+  }
+}
+
 async function confirmRegenerateSip() {
   regenerateSipError.value = ''
   regeneratingSip.value = true
@@ -568,6 +591,22 @@ const panelTitleTenantSuffix = computed(() => {
                     readonly
                     title="Immutable"
                   />
+                  <button
+                    type="button"
+                    class="sip-action-btn"
+                    :disabled="!hasSipPassword || saving || regeneratingSip"
+                    @click="toggleSipPasswordReveal"
+                  >
+                    {{ sipPasswordRevealed ? 'Hide' : 'Show' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="sip-action-btn"
+                    :disabled="!hasSipPassword || saving || regeneratingSip"
+                    @click="copySipPassword"
+                  >
+                    Copy
+                  </button>
                   <button
                     type="button"
                     class="sip-regenerate-btn"
@@ -1143,6 +1182,27 @@ const panelTitleTenantSuffix = computed(() => {
 }
 .sip-regenerate-btn:disabled {
   opacity: 0.65;
+  cursor: not-allowed;
+}
+.sip-action-btn {
+  flex-shrink: 0;
+  align-self: stretch;
+  padding: 0 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #0f172a;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sip-action-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+.sip-action-btn:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
