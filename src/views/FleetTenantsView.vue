@@ -27,6 +27,9 @@ const loading = ref(true)
 const error = ref('')
 const actionError = ref('')
 const busyId = ref('')
+/** Tenant shortuid while createTenantDelete runs (preflight → awaiting_confirm). */
+const deleteBusyId = ref('')
+const deleteBusyName = ref('')
 const canMove = ref(false)
 const canEdge = ref(false)
 const canCreate = ref(false)
@@ -218,6 +221,8 @@ async function doDelete(t) {
       'This removes the SBC domain, wipes the tenant on the node, and soft-decommissions catalog.'
   )
   if (!ok) return
+  deleteBusyId.value = t.shortuid
+  deleteBusyName.value = t.name || t.shortuid
   busyId.value = t.shortuid
   try {
     const job = await createTenantDelete({ tenant_shortuid: t.shortuid })
@@ -228,7 +233,8 @@ async function doDelete(t) {
     })
   } catch (e) {
     actionError.value = e?.message || 'Failed to start delete job'
-  } finally {
+    deleteBusyId.value = ''
+    deleteBusyName.value = ''
     busyId.value = ''
   }
 }
@@ -286,6 +292,19 @@ onUnmounted(() => {
 
     <p v-if="createOk" class="ok">{{ createOk }}</p>
     <p v-if="actionError" class="error">{{ actionError }}</p>
+    <p
+      v-if="deleteBusyId"
+      class="delete-status"
+      role="status"
+      aria-live="polite"
+      :aria-busy="true"
+    >
+      <span class="spinner" aria-hidden="true" />
+      <span>
+        Starting delete for <strong>{{ deleteBusyName }}</strong>
+        (<code>{{ deleteBusyId }}</code>) — running preflight…
+      </span>
+    </p>
     <p v-if="loading">Loading…</p>
     <p v-else-if="error" class="error">{{ error }}</p>
 
@@ -401,9 +420,15 @@ onUnmounted(() => {
                   role="menuitem"
                   class="row-menu-item row-menu-item--danger"
                   :disabled="busyId === t.shortuid"
+                  :aria-busy="deleteBusyId === t.shortuid"
                   @click="closeRowMenu(); doDelete(t)"
                 >
-                  Delete
+                  <span
+                    v-if="deleteBusyId === t.shortuid"
+                    class="spinner spinner-inline"
+                    aria-hidden="true"
+                  />
+                  {{ deleteBusyId === t.shortuid ? 'Starting delete…' : 'Delete' }}
                 </button>
               </div>
             </div>
@@ -451,6 +476,39 @@ onUnmounted(() => {
 .secondary:disabled {
   opacity: 0.55;
   cursor: wait;
+}
+.delete-status {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.35rem;
+  font-size: 0.9rem;
+  background: #eff6ff;
+  color: #1e3a8a;
+  border: 1px solid #bfdbfe;
+}
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #93c5fd;
+  border-top-color: #1e3a8a;
+  border-radius: 50%;
+  animation: fleet-tenant-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+.spinner-inline {
+  width: 0.85rem;
+  height: 0.85rem;
+  display: inline-block;
+  vertical-align: -0.1rem;
+  margin-right: 0.25rem;
+}
+@keyframes fleet-tenant-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .error {
   color: var(--pbx-danger, #b91c1c);

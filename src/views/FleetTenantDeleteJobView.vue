@@ -184,7 +184,10 @@ onUnmounted(() => {
     </p>
 
     <p v-if="error" class="error">{{ error }}</p>
-    <p v-if="!job && !error">Loading…</p>
+    <p v-if="!job && !error" class="status-banner status-working" role="status" aria-busy="true">
+      <span class="spinner" aria-hidden="true" />
+      <span>Loading delete job…</span>
+    </p>
 
     <template v-if="job">
       <p
