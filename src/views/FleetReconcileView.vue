@@ -6,6 +6,7 @@ import { ref, computed, onMounted } from 'vue'
 import {
   getFleetReconcile,
   projectFleetReconcile,
+  pruneFleetReconcileOrphans,
   refreshFleetSession
 } from '@/api/fleetGatekeeper'
 import {
@@ -18,12 +19,19 @@ import {
 const report = ref(null)
 const loading = ref(false)
 const projecting = ref(false)
+const pruning = ref(false)
 const error = ref('')
 const actionMsg = ref('')
 const canEdge = computed(() => canFleet(FLEET_ABILITY.EDGE))
 
 const projectableCount = computed(() =>
-  (report.value?.drifts || []).filter((d) => d.kind === 'setid_mismatch').length
+  (report.value?.drifts || []).filter(
+    (d) => d.kind === 'setid_mismatch' || d.kind === 'missing_fleet_tag'
+  ).length
+)
+
+const orphanCount = computed(() =>
+  (report.value?.drifts || []).filter((d) => d.kind === 'orphan_on_sbc').length
 )
 
 async function load() {
@@ -94,6 +102,46 @@ async function forceProject() {
   }
 }
 
+async function pruneOrphans() {
+  if (!canEdge.value || orphanCount.value < 1) return
+  const ok = window.confirm(
+    `Remove ${orphanCount.value} orphan SBC domain row(s)?\n\n` +
+      'These domains are on the SBC but not in the active catalog ' +
+      '(leftover from prior tenants, deleted installs, or decommissioned instances).\n\n' +
+      'Fleet-owned rows only. Dispatcher sets are not removed.'
+  )
+  if (!ok) return
+
+  pruning.value = true
+  actionMsg.value = ''
+  error.value = ''
+  try {
+    const result = await pruneFleetReconcileOrphans({ confirm: true, fleet_owned_only: true })
+    const pruned = result.pruned || []
+    const okN = pruned.filter((p) => p.ok).length
+    const failN = pruned.length - okN
+    const skipN = (result.skipped || []).length
+    const failDetail = pruned
+      .filter((p) => !p.ok)
+      .map((p) => `${p.domain}: ${p.error || 'failed'}`)
+      .join(' · ')
+    actionMsg.value =
+      `Removed ${okN} orphan domain(s)` +
+      (failN ? `, ${failN} failed` : '') +
+      (skipN ? `; ${skipN} skipped (not fleet-owned)` : '') +
+      '.'
+    if (failDetail) {
+      error.value = failDetail
+      actionMsg.value = ''
+    }
+    report.value = result.after || (await getFleetReconcile())
+  } catch (e) {
+    error.value = e?.message || 'Prune failed'
+  } finally {
+    pruning.value = false
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -118,20 +166,33 @@ onMounted(load)
         Project never “undoes” a catalog edit. It makes the SBC match whatever the catalog
         currently says (including a wrong setid — that will fail or break routing).
       </li>
+      <li>
+        <strong>Orphan domains</strong> (prior lab cycles, Fleet Delete skipped, decommissioned
+        instances) are removed automatically on <strong>Provision edge</strong>, or manually here.
+      </li>
     </ul>
 
     <div v-if="hasFleetGatekeeperToken()" class="toolbar">
-      <button type="button" class="primary" :disabled="loading || projecting || !canEdge" @click="load">
+      <button type="button" class="primary" :disabled="loading || projecting || pruning || !canEdge" @click="load">
         {{ loading ? 'Checking…' : 'Run check' }}
       </button>
       <button
         v-if="projectableCount > 0"
         type="button"
         class="danger"
-        :disabled="loading || projecting || !canEdge"
+        :disabled="loading || projecting || pruning || !canEdge"
         @click="forceProject"
       >
         {{ projecting ? 'Applying…' : `Apply catalog → SBC (${projectableCount})` }}
+      </button>
+      <button
+        v-if="orphanCount > 0"
+        type="button"
+        class="danger"
+        :disabled="loading || projecting || pruning || !canEdge"
+        @click="pruneOrphans"
+      >
+        {{ pruning ? 'Removing…' : `Remove orphan domains (${orphanCount})` }}
       </button>
       <span v-if="report?.checked_at" class="checked-at">Last check {{ report.checked_at }}</span>
     </div>

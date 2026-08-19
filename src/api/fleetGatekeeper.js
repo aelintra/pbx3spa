@@ -350,6 +350,17 @@ export function projectFleetReconcile(body = { confirm: true }) {
   })
 }
 
+/**
+ * Remove orphan SBC domains not authored in catalog (`fleet_edge`).
+ * @param {{ confirm?: boolean, dry_run?: boolean, domains?: string[], fleet_owned_only?: boolean }} [body]
+ */
+export function pruneFleetReconcileOrphans(body = { confirm: true }) {
+  return gkFetch('/api/v1/reconcile/prune-orphans', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
 /** @param {Record<string, unknown>} body */
 export function registerFleetInstance(body) {
   return gkFetch('/api/v1/instances', {
