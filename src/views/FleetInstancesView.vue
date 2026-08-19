@@ -14,7 +14,6 @@ import {
 } from '@/api/fleetGatekeeper'
 import {
   hasFleetGatekeeperToken,
-  getFleetAbilities,
   canFleet,
   FLEET_ABILITY
 } from '@/config/fleetGatekeeper'
@@ -29,8 +28,8 @@ const actionError = ref('')
 const busyId = ref('')
 const copiedId = ref('')
 let copiedTimer = 0
-const canManage = computed(() => canFleet(FLEET_ABILITY.INSTANCES))
-const canEdge = computed(() => canFleet(FLEET_ABILITY.EDGE))
+const canManage = ref(false)
+const canEdge = ref(false)
 
 const showRegister = ref(false)
 const registerBusy = ref(false)
@@ -64,6 +63,8 @@ async function load({ soft = false } = {}) {
     error.value = ''
     instances.value = []
     dispatcherSets.value = []
+    canManage.value = false
+    canEdge.value = false
     return
   }
   if (soft) {
@@ -74,9 +75,11 @@ async function load({ soft = false } = {}) {
   error.value = ''
   actionError.value = ''
   try {
-    if (getFleetAbilities().length === 0) {
-      await refreshFleetSession()
-    }
+    // Always re-read /me. Cached sessionStorage abilities can be stale (e.g. fleet_read
+    // from a prior session) and would hide Register instance.
+    await refreshFleetSession()
+    canManage.value = canFleet(FLEET_ABILITY.INSTANCES)
+    canEdge.value = canFleet(FLEET_ABILITY.EDGE)
     const [catalog, sets] = await Promise.all([
       getFleetCatalog(),
       listFleetDispatcherSets().catch(() => [])
@@ -433,12 +436,11 @@ onUnmounted(() => {
 
     <p v-if="actionError" class="error">{{ actionError }}</p>
 
-    <div v-if="hasFleetGatekeeperToken()" class="toolbar">
+    <div class="toolbar">
       <button type="button" class="secondary" :disabled="loading || refreshing" @click="refresh">
         {{ refreshing ? 'Refreshing…' : 'Refresh' }}
       </button>
       <button
-        v-if="canManage"
         type="button"
         class="primary"
         @click="showRegister = !showRegister"
@@ -448,7 +450,7 @@ onUnmounted(() => {
     </div>
 
     <form
-      v-if="showRegister && canManage"
+      v-if="showRegister"
       class="register-box"
       @submit.prevent="doRegister"
     >
@@ -842,12 +844,40 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
 }
-.register-box input,
+.register-box input:not([type='checkbox']),
 .register-box select,
 .inline-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  min-height: 2.25rem;
   padding: 0.35rem 0.5rem;
   font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.35;
   color: var(--pbx-text, inherit);
+  background-color: var(--pbx-panel, #fff);
+  border: 1px solid var(--pbx-border, #e2e8f0);
+  border-radius: 4px;
+}
+.register-box select {
+  /* Strip macOS native chrome (gradient + extra height). Match text inputs. */
+  height: 2.25rem;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--pbx-panel, #fff);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.55rem center;
+  background-size: 0.75rem;
+  padding-right: 1.75rem;
+}
+.register-box input:not([type='checkbox']):focus,
+.register-box select:focus {
+  outline: none;
+  border-color: var(--pbx-accent-bright, #3b82f6);
+  box-shadow: 0 0 0 3px var(--pbx-focus-ring, rgba(59, 130, 246, 0.1));
 }
 .edge-panel {
   margin: 0.75rem 0 1rem;
