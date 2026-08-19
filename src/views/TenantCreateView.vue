@@ -187,17 +187,20 @@ onMounted(async () => {
     error.value = 'Fleet mode: create tenants via Fleet → Tenants (not on-node Create).'
     return
   }
+
   await ensureFetched()
   try {
     const g = await getApiClient().get('sysglobals')
     auth.setGlobalsFqdnFromSysglobal(g)
     const raw = g?.domain
-    globalsDomain.value = raw != null && String(raw).trim() !== '' ? String(raw).trim() : ''
+    globalsDomain.value =
+      raw != null && String(raw).trim() !== '' ? String(raw).trim() : ''
   } catch {
     globalsDomain.value = ''
   } finally {
     globalsFetchDone.value = true
   }
+
   applySchemaDefaults('tenants', {
     description,
     clusterclid,
@@ -209,6 +212,7 @@ onMounted(async () => {
     abstimeout: toRef(formTimers, 'abstimeout'),
     masteroclo: toRef(formTimers, 'masteroclo')
   })
+
   nextTick().then(() => pkeyInput.value?.focus())
 })
 </script>
