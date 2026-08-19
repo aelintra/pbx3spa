@@ -10,6 +10,7 @@ import {
   registerFleetInstance,
   patchFleetInstance,
   decommissionFleetInstance,
+  removeFleetInstanceFromCatalog,
   provisionFleetInstanceEdge
 } from '@/api/fleetGatekeeper'
 import {
@@ -263,6 +264,25 @@ async function doDecommission(row) {
   }
 }
 
+async function doRemoveFromCatalog(row) {
+  const ok = window.confirm(
+    `Remove "${row.label || row.fqdn || row.id}" from the catalog?\n\n` +
+      'Only for decommissioned instances. Drops the catalog row; S3 meta and backups are kept.\n' +
+      'Does not stop the node or tear down SBC edge routing.'
+  )
+  if (!ok) return
+  actionError.value = ''
+  busyId.value = row.id
+  try {
+    await removeFleetInstanceFromCatalog(row.id)
+    await load()
+  } catch (e) {
+    actionError.value = e?.message || 'Remove from catalog failed'
+  } finally {
+    busyId.value = ''
+  }
+}
+
 async function doRegister() {
   actionError.value = ''
   registerBusy.value = true
@@ -426,6 +446,7 @@ onUnmounted(() => {
     <p class="hint">
       Org catalog via gatekeeper (S3 home of record). Register upserts the directory row after a live
       <code>/up</code> check. Soft decommission hides from the picker only.
+      <strong>Remove</strong> (decommissioned rows only) drops the catalog entry; S3 meta and backups stay.
       <strong>Provision edge</strong> creates a dispatcher set + Asterisk Peer on the SBC, registers the
       instance FQDN as a fleet domain route (setid), and writes catalog setid (Rule 13). If the edge already exists (e.g. after rebuild) but Setid is blank, use
       <strong>Link setid</strong> on the row — catch-up only, does not create a dispatcher set.
@@ -774,6 +795,17 @@ onUnmounted(() => {
                     @click="closeRowPopups(); doDecommission(i)"
                   >
                     Decom
+                  </button>
+                  <button
+                    v-if="canManage && (i.status || 'active') === 'decommissioned'"
+                    type="button"
+                    role="menuitem"
+                    class="row-menu-item row-menu-item--danger"
+                    :disabled="busyId === i.id"
+                    title="Hard remove catalog row (meta/backups kept)"
+                    @click="closeRowPopups(); doRemoveFromCatalog(i)"
+                  >
+                    Remove
                   </button>
                   <button
                     v-if="canManage && instanceHasSetid(i)"

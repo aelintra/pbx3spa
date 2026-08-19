@@ -404,6 +404,21 @@ export function decommissionFleetInstance(id, opts = {}) {
   })
 }
 
+/**
+ * Hard remove decommissioned instance from catalog (mirrors unregister-instance.sh --remove).
+ * @param {string} id
+ * @param {{ notes?: string }} [opts]
+ */
+export function removeFleetInstanceFromCatalog(id, opts = {}) {
+  return gkFetch(`/api/v1/instances/${encodeURIComponent(id)}/remove`, {
+    method: 'POST',
+    body: JSON.stringify({
+      confirm: true,
+      ...(opts.notes ? { notes: opts.notes } : {})
+    })
+  })
+}
+
 export function listTenantMoves(limit = 50) {
   const q = new URLSearchParams({ limit: String(limit) })
   return gkFetch(`/api/v1/tenant-moves?${q}`).then((d) => d.jobs || [])
