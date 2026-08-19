@@ -25,6 +25,24 @@ function base() {
   return url
 }
 
+/** Drop the operator session only for Gatekeeper auth failure, not proxied SBC 401. */
+function shouldDropFleetSession(res, data) {
+  if (res.status !== 401) {
+    return false
+  }
+  let path = ''
+  try {
+    path = new URL(res.url, 'http://local.invalid').pathname
+  } catch {
+    path = ''
+  }
+  if (path.includes('/api/v1/auth/')) {
+    return true
+  }
+  const msg = String(data?.error || data?.message || '')
+  return msg === 'Unauthorized'
+}
+
 async function parseJsonResponse(res) {
   const text = await res.text()
   let data = null
@@ -33,9 +51,7 @@ async function parseJsonResponse(res) {
   } catch {
     data = { raw: text }
   }
-  if (res.status === 401) {
-    // Stale/expired Bearer — mirrors instance api/client.js 401 handling.
-    // clearFleetGatekeeperToken() also clears cached abilities.
+  if (shouldDropFleetSession(res, data)) {
     clearFleetGatekeeperToken()
   }
   if (!res.ok) {

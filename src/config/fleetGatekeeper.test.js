@@ -421,11 +421,12 @@ describe('fleetGatekeeper API login/logout', () => {
     expect(body.sip_prefix).toBe('019249264')
   })
 
-  it('401 from gkFetch clears stale token and abilities (PRE_RELEASE_SAFETY_DEBT #16)', async () => {
+  it('401 from /auth/me clears stale token and abilities (PRE_RELEASE_SAFETY_DEBT #16)', async () => {
     session.setItem(TOKEN_KEY, 'stale-token')
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
       status: 401,
+      url: 'https://control.test/api/v1/auth/me',
       text: async () => JSON.stringify({ error: 'Unauthenticated' })
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -441,20 +442,41 @@ describe('fleetGatekeeper API login/logout', () => {
     expect(getFleetAbilities()).toEqual([])
   })
 
-  it('401 from a non-auth gkFetch call also clears the stale token', async () => {
+  it('401 Unauthorized from a non-auth call still clears the operator session', async () => {
     session.setItem(TOKEN_KEY, 'stale-token')
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
       status: 401,
-      text: async () => JSON.stringify({ error: 'Token expired' })
+      url: 'https://control.test/api/v1/tenants',
+      text: async () => JSON.stringify({ error: 'Unauthorized' })
     })
     vi.stubGlobal('fetch', fetchMock)
 
     const { listFleetTenants } = await import('@/api/fleetGatekeeper.js')
     const { getFleetGatekeeperToken } = await import('@/config/fleetGatekeeper.js')
 
-    await expect(listFleetTenants()).rejects.toThrow(/Token expired/)
+    await expect(listFleetTenants()).rejects.toThrow(/^Unauthorized$/)
     expect(getFleetGatekeeperToken()).toBe('')
+  })
+
+  it('does not logout when Gatekeeper relays an SBC 401', async () => {
+    session.setItem(TOKEN_KEY, 'keep-me')
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      url: 'https://control.test/api/v1/sbc/dispatcher-sets',
+      text: async () =>
+        JSON.stringify({
+          error: 'HTTP GET http://192.168.1.85/api/fleet/dispatcher-sets → 401: Unauthorized'
+        })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { listFleetDispatcherSets } = await import('@/api/fleetGatekeeper.js')
+    const { getFleetGatekeeperToken } = await import('@/config/fleetGatekeeper.js')
+
+    await expect(listFleetDispatcherSets()).rejects.toThrow(/dispatcher-sets/)
+    expect(getFleetGatekeeperToken()).toBe('keep-me')
   })
 
   it('projectFleetDids POSTs /dids/project', async () => {
