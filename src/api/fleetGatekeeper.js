@@ -56,7 +56,11 @@ async function parseJsonResponse(res) {
   }
   if (!res.ok) {
     const msg = data?.error || data?.message || `Gatekeeper ${res.status}`
-    throw new Error(msg)
+    const err = new Error(msg)
+    if (Array.isArray(data?.blocking_tenants)) {
+      err.blockingTenants = data.blocking_tenants
+    }
+    throw err
   }
   return data
 }

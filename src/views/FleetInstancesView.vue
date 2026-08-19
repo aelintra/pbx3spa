@@ -6,6 +6,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   getFleetCatalog,
   listFleetDispatcherSets,
+  listFleetTenants,
   refreshFleetSession,
   registerFleetInstance,
   patchFleetInstance,
@@ -21,6 +22,7 @@ import {
 import { instanceHealthBadge, probeRttLabel, instanceEgressBadge, freshestProbeAgeMs, formatProbeAge } from '@/utils/fleetInstanceHealth'
 
 const instances = ref([])
+const fleetTenants = ref([])
 const dispatcherSets = ref([])
 const loading = ref(true)
 const refreshing = ref(false)
@@ -63,6 +65,7 @@ async function load({ soft = false } = {}) {
     refreshing.value = false
     error.value = ''
     instances.value = []
+    fleetTenants.value = []
     dispatcherSets.value = []
     canManage.value = false
     canEdge.value = false
@@ -81,11 +84,13 @@ async function load({ soft = false } = {}) {
     await refreshFleetSession()
     canManage.value = canFleet(FLEET_ABILITY.INSTANCES)
     canEdge.value = canFleet(FLEET_ABILITY.EDGE)
-    const [catalog, sets] = await Promise.all([
+    const [catalog, sets, tenants] = await Promise.all([
       getFleetCatalog(),
-      listFleetDispatcherSets().catch(() => [])
+      listFleetDispatcherSets().catch(() => []),
+      listFleetTenants().catch(() => [])
     ])
     instances.value = catalog.instances || []
+    fleetTenants.value = tenants
     dispatcherSets.value = sets
   } catch (e) {
     error.value = e?.message || 'Failed to load fleet instances'
@@ -240,13 +245,44 @@ async function setStatus(id, status) {
     await patchFleetInstance(id, { status })
     await load()
   } catch (e) {
-    actionError.value = e?.message || 'Status update failed'
+    actionError.value = formatDecomBlockError(e) || e?.message || 'Status update failed'
   } finally {
     busyId.value = ''
   }
 }
 
+function decomBlockers(instanceId) {
+  const id = String(instanceId || '')
+  if (!id) return []
+  return fleetTenants.value.filter((t) => String(t.instance_id || '') === id)
+}
+
+function decomBlockerSummary(row) {
+  const blockers = decomBlockers(row?.id)
+  if (!blockers.length) return ''
+  const names = blockers.map((t) => t.name || t.shortuid).join(', ')
+  return `Move or delete active tenants first: ${names}`
+}
+
+function formatDecomBlockError(err) {
+  const blockers = err?.blockingTenants
+  if (!Array.isArray(blockers) || !blockers.length) return ''
+  const names = blockers
+    .map((t) => {
+      const su = t.shortuid || t.tenant_shortuid || '?'
+      const label = t.pkey || t.name
+      return label && label !== su ? `${su} (${label})` : su
+    })
+    .join(', ')
+  return `Cannot decommission while active tenants remain: ${names}. Move or delete each tenant first.`
+}
+
 async function doDecommission(row) {
+  const blockers = decomBlockers(row.id)
+  if (blockers.length) {
+    actionError.value = formatDecomBlockError({ blockingTenants: blockers })
+    return
+  }
   const ok = window.confirm(
     `Soft-decommission "${row.label || row.fqdn || row.id}"?\n\n` +
       'Hides it from the instance picker. Does not stop the node or delete S3 backups.'
@@ -258,7 +294,7 @@ async function doDecommission(row) {
     await decommissionFleetInstance(row.id)
     await load()
   } catch (e) {
-    actionError.value = e?.message || 'Decommission failed'
+    actionError.value = formatDecomBlockError(e) || e?.message || 'Decommission failed'
   } finally {
     busyId.value = ''
   }
@@ -445,7 +481,8 @@ onUnmounted(() => {
     <h1>Fleet instances</h1>
     <p class="hint">
       Org catalog via gatekeeper (S3 home of record). Register upserts the directory row after a live
-      <code>/up</code> check. Soft decommission hides from the picker only.
+      <code>/up</code> check. Soft decommission hides from the picker only; blocked while active tenants
+      still home on the instance (move or delete each tenant first).
       <strong>Remove</strong> (decommissioned rows only) drops the catalog entry; S3 meta and backups stay.
       <strong>Provision edge</strong> creates a dispatcher set + Asterisk Peer on the SBC, registers the
       instance FQDN as a fleet domain route (setid), and writes catalog setid (Rule 13). If the edge already exists (e.g. after rebuild) but Setid is blank, use
@@ -626,6 +663,7 @@ onUnmounted(() => {
             </template>
             <template v-else>
               <div class="inst-label">{{ i.label || i.fqdn || i.id }}</div>
+              <p v-if="decomBlockerSummary(i)" class="decom-block-hint">{{ decomBlockerSummary(i) }}</p>
             </template>
           </td>
           <td class="cell-fqdn">
@@ -791,7 +829,8 @@ onUnmounted(() => {
                     type="button"
                     role="menuitem"
                     class="row-menu-item row-menu-item--danger"
-                    :disabled="busyId === i.id"
+                    :disabled="busyId === i.id || decomBlockers(i.id).length > 0"
+                    :title="decomBlockerSummary(i) || undefined"
                     @click="closeRowPopups(); doDecommission(i)"
                   >
                     Decom
@@ -1099,6 +1138,14 @@ onUnmounted(() => {
 .cell-setid .setid-warn {
   margin: 0.25rem 0 0;
   max-width: 11rem;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  white-space: normal;
+  color: var(--pbx-danger, #b91c1c);
+}
+.decom-block-hint {
+  margin: 0.25rem 0 0;
+  max-width: 14rem;
   font-size: 0.72rem;
   line-height: 1.3;
   white-space: normal;
