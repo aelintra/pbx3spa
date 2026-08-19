@@ -16,7 +16,7 @@ import { useFleetPosture } from '@/composables/useFleetPosture'
 
 const { filterText } = useStickyFilter('tenants')
 const { clearTenantContext } = useSessionContext()
-const { loadFleetPosture, isFleetNode } = useFleetPosture()
+const { loadFleetPosture, isFleetNode, error: fleetPostureError } = useFleetPosture()
 const toast = useToastStore()
 const tenants = ref([])
 const loading = ref(true)
@@ -187,7 +187,9 @@ async function confirmAndDeleteTenant(pkey) {
 onMounted(async () => {
   clearTenantContext()
   await loadFleetPosture()
-  fleetLocked.value = isFleetNode()
+  // If fleet posture cannot be determined, default to Fleet-locked to avoid
+  // creating instance-only/orphan tenants in a fleet-backed environment.
+  fleetLocked.value = isFleetNode() || Boolean(fleetPostureError.value)
   loadTenants()
 })
 </script>

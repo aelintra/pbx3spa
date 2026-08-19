@@ -43,7 +43,7 @@ const router = useRouter()
 const toast = useToastStore()
 const auth = useAuthStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
-const { loadFleetPosture, isFleetNode } = useFleetPosture()
+const { loadFleetPosture, isFleetNode, error: fleetPostureError } = useFleetPosture()
 const pkey = ref('')
 const description = ref('')
 const clusterclid = ref('')
@@ -182,7 +182,7 @@ function onKeydown(e) {
 
 onMounted(async () => {
   await loadFleetPosture()
-  if (isFleetNode()) {
+  if (isFleetNode() || Boolean(fleetPostureError.value)) {
     fleetBlocked.value = true
     error.value = 'Fleet mode: create tenants via Fleet → Tenants (not on-node Create).'
     return
