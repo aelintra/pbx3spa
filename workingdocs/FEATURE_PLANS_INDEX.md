@@ -7,7 +7,7 @@
 | Extension provisioning | EXTENSION_PROVISIONING_QUICKSTART.md → EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md | done |
 | Trunk create | TRUNK_IMPLEMENTATION_PLAN.md, COMPLEX_CREATE_PLAN.md | done |
 | DDI / Inbound routes | DDI_CREATE_PLAN.md, COMPLEX_CREATE_PLAN.md | done |
-| IVR create | COMPLEX_CREATE_PLAN.md, wizardnotes/ivr/ | done |
+| IVR create | COMPLEX_CREATE_PLAN.md | done |
 | Certificates / Let's Encrypt | **pbx3** `workingdocs/TLS_AND_CERTIFICATES.md` (**§0**) → `CERTIFICATES_PANEL_AND_API.md` | done (fleet = instance-only LE) |
 | LE multi-SAN (solo/direct only) | **pbx3** `workingdocs/LETSENCRYPT_PER_TENANT_FQDN.md` | solo/direct; not SBC fleet default |
 | Permissions / admin | PERMISSIONS_MINIMAL_DEPLOY_PLAN.md, ADMIN_PANELS_AND_PERMISSIONS.md, AUTH_PATTERNS.md | done (Phase 0) |

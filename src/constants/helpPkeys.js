@@ -1,6 +1,6 @@
 /**
  * Explicit tt_help_core pkeys for object identity fields where SPA control id is `pkey`
- * (or edit-identity-pkey) but the DB help row uses a legacy Sail65 name.
+ * (or edit-identity-pkey) but the DB help row uses a legacy SARK pkey.
  */
 export const OBJECT_PKEY_HELP = {
   tenant: 'tenantname',

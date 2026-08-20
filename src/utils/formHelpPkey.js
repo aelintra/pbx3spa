@@ -36,7 +36,7 @@ const FIREWALL6_FIELD_TO_PKEY = {
 }
 
 /**
- * Column / derived id → tt_help_core.pkey (legacy Sail65 names and SPA aliases).
+ * Column / derived id → tt_help_core.pkey (legacy SARK help keys and SPA aliases).
  */
 const COLUMN_TO_HELP_PKEY = {
   greetnum: 'greeting',

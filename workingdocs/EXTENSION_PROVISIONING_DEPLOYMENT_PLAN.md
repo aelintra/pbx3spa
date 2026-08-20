@@ -12,7 +12,7 @@
 2. **DATABASE_CHANGES_FOR_PROVISIONING.md** – exact list of DB changes (user is doing these manually; no Laravel migrations on PBX3).
 3. **EXTENSION_PROVISIONING_QUICKSTART.md** – one-page quick reference: key files, pre-build checks, what can be deferred.
 4. **EXTENSION_PROVISIONING_ISSUES.md** – known bugs/fixes (getVendorFromMac path, adjustAstProvSettings object syntax, etc.).
-5. **OLD_SYSTEM_EXTENSION_CREATE_REFERENCE.md** – how the legacy system did create/Save/Commit (for parity).
+5. **LEGACY_SARK_EXTENSION_CREATE_REFERENCE.md** – how the legacy SARK admin UI did create/Save/Commit (for parity).
 6. **PANEL_PATTERN.md** – frontend conventions (FormSegmentedPill, useSchema, etc.).
 
 **Implementation order:** Schema (user) → API (ExtensionController save/update, getVendorFromMac, adjustAstProvSettings, Device/globals) → Frontend (ExtensionCreateView extensionType/MAC, then Save/Commit when designed). PJSIP endpoint edit in UI can be deferred.
@@ -24,9 +24,9 @@
 **Scope:** Schema changes, API updates, frontend updates to support two extension types: SIP (with optional MAC for provisioning), WebRTC.
 **Note:** Mailbox option deferred - can be created via other methods.
 
-**Reference:** How the old system did it is captured in `workingdocs/OLD_SYSTEM_EXTENSION_CREATE_REFERENCE.md`.
+**Reference:** How the legacy system did it is captured in `workingdocs/LEGACY_SARK_EXTENSION_CREATE_REFERENCE.md`.
 
-**Device table:** Schema and data lifted from sail65 (`/Users/jeffstokoe/GiT/sail65/sail-6/opt/sark/db`) as-is and integrated: Device CREATE added to `sqlite_create_instance.sql`, data in `sqlite_device_data.sql` (copy of `db_v4_device.sql`), loaded by `create.initial.db` and `reloader.sh` after instance schema. You can review/edit `sqlite_device_data.sql` as needed.
+**Device table:** Schema and data lifted from the legacy SARK package as-is and integrated: Device CREATE added to `sqlite_create_instance.sql`, data in `sqlite_device_data.sql` (copy of legacy `db_v4_device.sql`), loaded by `create.initial.db` and `reloader.sh` after instance schema. You can review/edit `sqlite_device_data.sql` as needed.
 
 ---
 
@@ -230,7 +230,7 @@ So the **Asterisk object is created when the generator runs**, not when the API 
 **Implications:**
 
 - **Single writer:** Only the generator (running on the instance with the correct SYSDB and ASTENDPOINTS) creates or updates the endpoint file. No duplicate logic in the API.
-- **Save vs Commit (old-system pattern):** In the old system **Save** (on create/edit panels) wrote to the DB and set the dirty flag (Commit button went red), but the user did **not** have to press Commit before leaving the panel. The user could do a **series of Saves** on different rows/objects, then press **Commit** once when done; Commit ran the generator and Asterisk reload (button went green). So: **Save** = persist to DB + set dirty; **Commit** = run generator + reload. PBX3 should mirror this: Save (create/update) never runs the generator; Commit is a separate action (e.g. button on every panel or in app chrome), green when clean and red when there are uncommitted changes. See **OLD_SYSTEM_EXTENSION_CREATE_REFERENCE.md §9** for sail65 implementation (commitflag, sysCommit, commitButton).
+- **Save vs Commit (legacy pattern):** In the legacy SARK admin UI **Save** (on create/edit panels) wrote to the DB and set the dirty flag (Commit button went red), but the user did **not** have to press Commit before leaving the panel. The user could do a **series of Saves** on different rows/objects, then press **Commit** once when done; Commit ran the generator and Asterisk reload (button went green). So: **Save** = persist to DB + set dirty; **Commit** = run generator + reload. PBX3 should mirror this: Save (create/update) never runs the generator; Commit is a separate action (e.g. button on every panel or in app chrome), green when clean and red when there are uncommitted changes. See **LEGACY_SARK_EXTENSION_CREATE_REFERENCE.md §9** (commitflag, sysCommit, commitButton).
 - **Edit flow:** If the user edits the PJSIP config in the UI, the API still needs a way to **write** the endpoint file content (e.g. an API that the frontend calls, which triggers a write on the instance side). So: create = DB + set dirty; Commit = run generator + reload. Edit of endpoint content = API write to file + set dirty; Commit = run generator + reload.
 
 ---
@@ -390,7 +390,7 @@ When implementing frontend changes, verify:
   - Script filters for supported vendors: Snom, Panasonic, Yealink, Polycom, Fanvil, Cisco, Gigaset, Aastra, Grandstream, Vtech
 - **provisionwith:** Read from `globals.FQDNPROV` on create, default 'IP'
 - **pjsipuser:** Already exists, holds PJSIP template (no changes needed)
-- **Save vs Commit:** Old system had **Save** (persist to DB + set dirty; user can leave without committing) and **Commit** (run generator + reload; user could batch many Saves and press Commit once when done). This is a common admin-panel pattern (draft/apply or save/deploy). PBX3 should replicate it (see §2.7 and OLD_SYSTEM_EXTENSION_CREATE_REFERENCE.md §9).
+- **Save vs Commit:** Legacy SARK had **Save** (persist to DB + set dirty; user can leave without committing) and **Commit** (run generator + reload; user could batch many Saves and press Commit once when done). This is a common admin-panel pattern (draft/apply or save/deploy). PBX3 should replicate it (see §2.7 and LEGACY_SARK_EXTENSION_CREATE_REFERENCE.md §9).
 
 ---
 

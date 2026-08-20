@@ -28,7 +28,7 @@ const NAMED_ENTITIES = {
   '&gt;': '>'
 }
 
-/** Decode common HTML entities from legacy Sail65 help text. */
+/** Decode common HTML entities from legacy SARK help text. */
 export function decodeHtmlEntities(text) {
   if (!text) return ''
   let out = text

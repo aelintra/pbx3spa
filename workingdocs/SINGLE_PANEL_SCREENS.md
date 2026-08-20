@@ -1,8 +1,8 @@
 # Single-panel screens (no List/Create — one screen per resource)
 
-**Purpose:** Plan and track the single-screen panels we are bringing across from the old system (SARK, sail-6). These are **singleton** or **single-view** panels: one route, one view, no list/detail/create split. See PANEL_PATTERN.md § "Singleton / edit-only panels" for the pattern (SysglobalsEditView is the reference).
+**Purpose:** Plan and track the single-screen panels ported from the legacy SARK admin UI. These are **singleton** or **single-view** panels: one route, one view, no list/detail/create split. See PANEL_PATTERN.md § "Singleton / edit-only panels" for the pattern (SysglobalsEditView is the reference).
 
-**Old system reference:** `/Users/jeffstokoe/GiT/sail65/sail-6/opt/sark/php/`
+**Open backlog:** **`LEGACY_SARK_PANEL_BACKLOG.md`**
 
 ---
 

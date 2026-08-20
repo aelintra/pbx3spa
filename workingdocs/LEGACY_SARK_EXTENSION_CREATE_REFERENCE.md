@@ -1,8 +1,8 @@
-# Old System (sail65) Extension Create Reference
+# Legacy SARK extension create reference
 
-**Purpose:** Capture how the legacy system created extensions and produced usable Asterisk PJSIP objects, for parity and for questioning whether PBX3 can do it more simply.
+**Purpose:** Capture how the pre-PBX3 legacy SARK admin UI created extensions and produced usable Asterisk PJSIP objects — for parity checks and Save/Commit behaviour.
 
-**Source:** `/Users/jeffstokoe/GiT/sail65/sail-6/opt/sark/`
+**Historical source:** legacy SARK admin package (`sarkextension/view.php`, `srkHelperClass`, etc.). Paths archived in **`~/GiT/pbx3-ops/devdocs/archive/legacy-sark-wizards/`** if needed.
 
 ---
 
@@ -29,7 +29,7 @@
 5. **Insert:** `$this->helper->createTuple("ipphone", $tuple)`.
 6. **If insert OK:** create COS links; then if `device == "WebRTC"` → `$this->helper->createPjsipWebrtcInstance($tuple['pkey'])`, else → `$this->helper->createPjsipPhoneInstance($tuple['pkey'])`.
 
-So PJSIP instance creation runs in the **same PHP request**, immediately after the DB insert, using **pkey** (e.g. `2001`).
+So PJSIP instance creation ran in the **same PHP request**, immediately after the DB insert, using **pkey** (e.g. `2001`).
 
 ---
 
@@ -92,7 +92,7 @@ So: **Save** = persist to DB + set dirty (commit goes red). **Commit** = run gen
 - **Red** when there were uncommitted changes (something had been saved to DB but generator had not yet run).
 - **When pressed:** Fired the generator (rebuilt all Asterisk .conf files from DB) and issued an Asterisk reload.
 
-**Implementation (sail65):**
+**Implementation (legacy SARK):**
 
 - **Dirty state:** `commitOn()` in srkHelperClass touches `/opt/sark/cache/commitflag`. Any panel that writes to the DB (create, **Save** on edit, delete) calls `$this->helper->commitOn()` so the flag is set.
 - **Button state:** srkPageClass `commitButton()` checks `file_exists('/opt/sark/cache/commitflag')`. If the flag exists → show the “needs commit” button (commitClick.png, highlighted/red); if not → show normal commit button (commit.png, green).

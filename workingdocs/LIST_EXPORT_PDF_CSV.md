@@ -28,7 +28,7 @@
 
 - **Library:** [dompdf](https://github.com/dompdf/dompdf) (PHP, open source). In Laravel the usual wrapper is [barryvdh/laravel-dompdf](https://github.com/barryvdh/laravel-dompdf).
 - **Flow:** New endpoint e.g. `GET /extensions/export/pdf?cluster=...&...` (same query params as the list). Controller fetches extensions (reuse list logic), renders an HTML view (Blade or simple HTML string) with a table, passes HTML to dompdf → returns `application/pdf`.
-- **Pros:** One consistent report layout; easy to add headers/footers, page breaks, “Generated at …”; no extra SPA bundle; same pattern for Queues, Trunks, etc. Familiar approach (Sail65-style server-side PDF).
+- **Pros:** One consistent report layout; easy to add headers/footers, page breaks, “Generated at …”; no extra SPA bundle; same pattern for Queues, Trunks, etc. Familiar legacy SARK server-side PDF approach.
 - **Cons:** Requires backend work and a small Blade/HTML template per resource (or one parameterised template).
 
 ### Option B: Frontend (SPA + jsPDF)

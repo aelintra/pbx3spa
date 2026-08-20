@@ -1,6 +1,6 @@
 # Complex create flows — planning
 
-Planning for create flows that in the old system used a **type chooser** and **conditional fields**: Inbound routes (DDI), Extensions, Trunks, IVRs. See **wizardnotes/** for legacy analysis (add-wizard.md, agent-brief-spa.md per resource).
+Planning for create flows that in the old system used a **type chooser** and **conditional fields**: Inbound routes (DDI), Extensions, Trunks, IVRs. Legacy analysis archived in **`~/GiT/pbx3-ops/devdocs/archive/legacy-sark-wizards/`** (add-wizard.md, agent-brief-spa.md per resource).
 
 **Trunk/route ownership and allocation:** Trunks are collective (shared); DIDs are privately owned by the tenant. Trunk allocation (virtual trunks with standard names — Primary, Secondary, International, Failover — mapped to real trunks by the admin) supports tenant portability. See **TRUNK_ROUTE_MULTITENANCY.md** for the full model; virtual-trunk schema/API/UI are a later phase after the current trunk create work.
 
@@ -16,7 +16,7 @@ Planning for create flows that in the old system used a **type chooser** and **c
 
 **Why this (and not split-by-type):**
 
-- Matches legacy and wizardnotes; one “Create” button per resource; one API contract per resource; easy to extend (new type = new option in chooser + new branch in API). Splitting by type would multiply list actions, routes, and endpoints and diverge from the analysed flow.
+- Matches legacy create-wizard pattern; one “Create” button per resource; one API contract per resource; easy to extend (new type = new option in chooser + new branch in API). Splitting by type would multiply list actions, routes, and endpoints and diverge from the analysed flow.
 
 ---
 
@@ -86,7 +86,7 @@ So we can ship a type-chooser trunk create quickly on the current API, then exte
 
 ### Later — Full five types
 
-When API supports the full legacy set, add to the chooser: “SIP (send registration)”, “SIP (accept registration)”, “SIP (trusted peer)”, “InterSARK”, with type-specific validation and conditional fields per wizardnotes/trunk/agent-brief-spa.md.
+When API supports the full legacy set, add to the chooser: “SIP (send registration)”, “SIP (accept registration)”, “SIP (trusted peer)”, “InterSARK”, with type-specific validation and conditional fields per archived trunk wizard notes (`legacy-sark-wizards/trunk/agent-brief-spa.md`).
 
 ---
 
@@ -102,7 +102,6 @@ When API supports the full legacy set, add to the chooser: “SIP (send registra
 
 ## 5. References
 
-- **wizardnotes/trunk/** — add-wizard.md (legacy behaviour), agent-brief-spa.md (SPA contract, visibility rules).
-- **wizardnotes/ddi/**, **wizardnotes/extension/**, **wizardnotes/ivr/** — same structure for DDI, Extension, IVR.
+- **`~/GiT/pbx3-ops/devdocs/archive/legacy-sark-wizards/`** — archived add-wizard.md / agent-brief-spa.md per resource (DDI, extension, trunk, IVR).
 - **PANEL_PATTERN.md** §3 (create form), §4.2 (segmented pills), §8 (reference implementation status).
 - **PROJECT_PLAN.md** § Current state — to-do (create panels), next chat.

@@ -42,13 +42,13 @@
 1. **API may still return "—"** on some servers if the "Unknown" change in Helper.php wasn’t deployed. Frontend normalises "—" to "Unknown" so the list always shows Unknown when there’s no real data.
 2. **Live keys are pkey strings.** The list can have duplicate pkeys (same extension number in different tenants); each row still looks up by `e.pkey` and gets the same live entry (Asterisk doesn’t distinguish by tenant for PJSIP endpoint name).
 3. **indexLive skips `active = NO`** (legacy SARK parity). Inactive SIP rows have no live entry → **Unknown** for IP/Status.
-4. **PJSIPShowEndpoints** (plural) returns a high-level list without Contact/RoundtripUsec; we must use **PJSIPShowEndpoint** (singular) per extension to get IP and RTT. See old SARK `srkAmiHelperClass` (sail65) for reference.
+4. **PJSIPShowEndpoints** (plural) returns a high-level list without Contact/RoundtripUsec; we must use **PJSIPShowEndpoint** (singular) per extension to get IP and RTT. See legacy SARK `srkAmiHelperClass` for the original pattern.
 
 ---
 
 ## Reference
 
-- Old panel (sail65): `sarkextension/view.php` (showMain table: IP, latency from AMI); `srkAmiHelperClass` (get_pjsip_array, getIpAddressFromPeer, getLatencyFromPeer).
+- Legacy extension panel: `sarkextension/view.php` (showMain table: IP, latency from AMI); `srkAmiHelperClass` (get_pjsip_array, getIpAddressFromPeer, getLatencyFromPeer).
 - API: `pbx3api/app/Http/Controllers/ExtensionController.php` (indexLive, showruntime), `app/Helpers/Helper.php` (pjsip_endpoint_live), `app/CustomClasses/Ami.php` (`amiPjsipShowEndpointForLive`, `amiQueryUntilBlankLine`).
 - Frontend: `pbx3spa/src/views/ExtensionsListView.vue` (liveData, ipDisplay, statusDisplay, liveValueDisplay), `ExtensionDetailView.vue` (Runtime section ip/latency); **Trunks:** `TrunksListView.vue` (same list pattern after `GET trunks`).
 - API (trunks): `pbx3api/app/Http/Controllers/TrunkController.php` (`indexLive`), `routes/api.php` (`trunks/live` before `trunks/{trunk}`).

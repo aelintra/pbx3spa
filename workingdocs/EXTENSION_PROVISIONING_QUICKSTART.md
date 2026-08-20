@@ -11,7 +11,7 @@
 | 1 | **EXTENSION_PROVISIONING_DEPLOYMENT_PLAN.md** | Full plan; §8 Build readiness, §5 Implementation order, §2 API / §3 Frontend |
 | 2 | **DATABASE_CHANGES_FOR_PROVISIONING.md** | Exact DB changes (user applies manually; you don’t run Laravel migrations on PBX3) |
 | 3 | **EXTENSION_PROVISIONING_ISSUES.md** | Known fixes: getVendorFromMac path, adjustAstProvSettings object syntax, protocol dirty check, etc. |
-| 4 | **OLD_SYSTEM_EXTENSION_CREATE_REFERENCE.md** | Legacy create/Save/Commit behaviour (for parity) |
+| 4 | **LEGACY_SARK_EXTENSION_CREATE_REFERENCE.md** | Legacy create/Save/Commit behaviour (for parity) |
 | 5 | **PANEL_PATTERN.md** | Frontend: FormSegmentedPill, useSchema, list/detail/create conventions |
 
 ---

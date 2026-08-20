@@ -1,8 +1,8 @@
-# Sail65 → PBX3 Panel Port Plan
+# Sail65 → PBX3 Panel Port Plan (archived)
 
-**Purpose:** Plan ports of panels from the legacy SARK UI (sail65 repo) into pbx3 SPA + pbx3api, following established patterns.
+**Superseded (2026-08-19):** **`../LEGACY_SARK_PANEL_BACKLOG.md`** (open items) · product **`pbx3/workingdocs/TODO.md`** §36.
 
-**Source repo:** `/Users/jeffstokoe/GiT/sail65` (sail-6 = package under `opt/sark`).
+**Purpose:** Historical plan for ports of panels from the legacy SARK admin UI into pbx3 SPA + pbx3api.
 
 **Data source of truth:** The **pbx3** database schema is the authority for what tables and columns exist. Sail65 is reference only for UI and behaviour; schema may have changed in the new system. When planning or implementing a panel port, **begin by reading the pbx3 SQL files** in `pbx3/pbx3-1/opt/pbx3/db/db_sql/` to establish the data model. See § **Source of truth: pbx3 DB schema** below.
 

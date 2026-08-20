@@ -143,8 +143,8 @@
   - Must call `adjustAstProvSettings()` to add transport/protocol includes
   - Must handle Cisco XML closing tags if Cisco device
   - Must validate MAC not duplicate (excluding current extension)
-- **Provisioning listener:** Located at `/Users/jeffstokoe/GiT/sail65/sail-6/opt/sark/provisioning` - handles actual provisioning requests
-- **Device table structure:** Found in `/Users/jeffstokoe/GiT/sail65/sail-6/opt/sark/db/db_v4_create.sql` (lines 104-124)
+- **Provisioning listener:** Legacy SARK provisioning responder (see **`PROVISIONING_SERVER_REQUIREMENTS.md`**).
+- **Device table structure:** Legacy SARK `device` table — now in **`sqlite_create_instance.sql`** / **`sqlite_device_data.sql`**.
   - **Key columns:**
     - `pkey` (PRIMARY KEY) - device vendor name (e.g., 'Yealink', 'Cisco', 'General SIP')
     - `sipiaxfriend` - Asterisk SIP/PJSIP template (stored in `ipphone.pjsipuser`)
