@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
@@ -11,6 +11,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import {
   ADVANCED_KEYS,
   ADVANCED_FIELDS,
@@ -67,6 +68,17 @@ const deleteError = ref('')
 const deleting = ref(false)
 const confirmDeleteOpen = ref(false)
 const fleetLocked = ref(false)
+
+/** Custom MOH files under /usr/share/asterisk/moh-{shortuid}/ */
+const mohFiles = ref([])
+const mohLoading = ref(false)
+const mohError = ref('')
+const mohUploading = ref(false)
+const mohFileInput = ref(null)
+const mohDeleting = ref(null)
+const mohPlaybackName = ref(null)
+const mohPlaybackUrl = ref(null)
+const mohAudioEl = ref(null)
 
 const pkey = computed(() => route.params.pkey)
 const isDefault = computed(() => tenant.value?.pkey === 'default')
@@ -132,10 +144,121 @@ function syncEditFromTenant() {
   syncKeysToForm(TIMERS_KEYS, formTimers)
   if (!formTimers.masteroclo) formTimers.masteroclo = 'AUTO'
   syncKeysToForm(ADVANCED_KEYS, formAdvanced)
+  if (formAdvanced.usemohcustom !== 'YES' && formAdvanced.usemohcustom !== 'NO') {
+    formAdvanced.usemohcustom = 'NO'
+  }
   syncKeysToForm(CALL_RECORDING_KEYS, formCallRecording)
   syncKeysToForm(MONITORING_KEYS, formMonitoring)
   syncKeysToForm(CALL_CONTROL_KEYS, formCallControl)
   syncKeysToForm(LDAP_KEYS, formLdap)
+  fetchMoh()
+}
+
+async function fetchMoh() {
+  if (!pkey.value) return
+  mohLoading.value = true
+  mohError.value = ''
+  try {
+    const data = await getApiClient().get(`tenants/${encodeURIComponent(pkey.value)}/moh`)
+    mohFiles.value = Array.isArray(data?.files) ? data.files : []
+    if (data?.usemohcustom === 'YES' || data?.usemohcustom === 'NO') {
+      formAdvanced.usemohcustom = data.usemohcustom
+    }
+  } catch (err) {
+    mohError.value = firstErrorMessage(err, 'Failed to load Music-on-Hold files')
+    mohFiles.value = []
+  } finally {
+    mohLoading.value = false
+  }
+}
+
+function pickMohFile() {
+  mohFileInput.value?.click()
+}
+
+async function onMohFileSelected(e) {
+  const file = e.target?.files?.[0]
+  e.target.value = ''
+  if (!file || !pkey.value) return
+  mohUploading.value = true
+  mohError.value = ''
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    await getApiClient().postFile(`tenants/${encodeURIComponent(pkey.value)}/moh`, fd)
+    toast.show(`MOH file ${file.name} uploaded`)
+    await fetchMoh()
+  } catch (err) {
+    mohError.value = firstErrorMessage(err, 'Failed to upload MOH file')
+  } finally {
+    mohUploading.value = false
+  }
+}
+
+function stopMohPlayback() {
+  const a = mohAudioEl.value
+  if (a) {
+    a.pause()
+    a.removeAttribute('src')
+    a.load()
+  }
+  if (mohPlaybackUrl.value) {
+    URL.revokeObjectURL(mohPlaybackUrl.value)
+    mohPlaybackUrl.value = null
+  }
+  mohPlaybackName.value = null
+}
+
+async function playMoh(name) {
+  if (!pkey.value || !name) return
+  if (mohPlaybackName.value === name) {
+    const a = mohAudioEl.value
+    if (a && !a.paused) {
+      a.pause()
+      return
+    }
+    if (a) {
+      a.play().catch(() => {})
+      return
+    }
+  }
+  stopMohPlayback()
+  try {
+    const blob = await getApiClient().getBlob(
+      `tenants/${encodeURIComponent(pkey.value)}/moh/${encodeURIComponent(name)}`
+    )
+    const url = URL.createObjectURL(blob)
+    mohPlaybackUrl.value = url
+    mohPlaybackName.value = name
+    await nextTick()
+    const a = mohAudioEl.value
+    if (a) {
+      a.src = url
+      await a.play()
+    }
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Failed to play MOH file'), 'error')
+    stopMohPlayback()
+  }
+}
+
+async function deleteMoh(name) {
+  if (!pkey.value || !name) return
+  if (!window.confirm(`Delete MOH file ${name}?`)) return
+  mohDeleting.value = name
+  mohError.value = ''
+  try {
+    if (mohPlaybackName.value === name) stopMohPlayback()
+    await getApiClient().delete(
+      `tenants/${encodeURIComponent(pkey.value)}/moh/${encodeURIComponent(name)}`
+    )
+    toast.show(`Deleted ${name}`)
+    await fetchMoh()
+  } catch (err) {
+    mohError.value = firstErrorMessage(err, 'Failed to delete MOH file')
+  } finally {
+    mohDeleting.value = null
+  }
 }
 
 onMounted(async () => {
@@ -144,7 +267,10 @@ onMounted(async () => {
   await ensureFetched()
   await fetchTenant()
 })
-onUnmounted(() => clearTenantContext())
+onUnmounted(() => {
+  stopMohPlayback()
+  clearTenantContext()
+})
 watch(pkey, fetchTenant)
 
 watch(
@@ -470,6 +596,75 @@ async function confirmAndDelete() {
             />
           </div>
 
+          <h2 class="detail-heading">
+            Music-on-Hold
+            <FieldHelpIcon pkey="mohhead" />
+          </h2>
+          <div class="form-fields moh-fields">
+            <p class="moh-hint">
+              Custom MOH files for this tenant (8 kHz mono WAV preferred). With no files, Asterisk
+              uses the system default. Enable Custom MOH after uploading, then Commit.
+            </p>
+            <p v-if="mohError" class="error" role="alert">{{ mohError }}</p>
+            <div class="moh-toolbar">
+              <button
+                type="button"
+                class="secondary"
+                :disabled="mohUploading"
+                @click="pickMohFile"
+              >
+                {{ mohUploading ? 'Uploading…' : 'Upload MOH' }}
+              </button>
+              <input
+                ref="mohFileInput"
+                type="file"
+                class="moh-file-input"
+                accept=".wav,.mp3,.gsm,audio/wav,audio/mpeg"
+                @change="onMohFileSelected"
+              />
+            </div>
+            <p v-if="mohLoading" class="moh-hint">Loading MOH files…</p>
+            <table v-else-if="mohFiles.length" class="moh-table">
+              <thead>
+                <tr>
+                  <th>File</th>
+                  <th>Play</th>
+                  <th>Delete</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="f in mohFiles" :key="f.name">
+                  <td>{{ f.name }}</td>
+                  <td>
+                    <button type="button" class="secondary moh-row-btn" @click="playMoh(f.name)">
+                      {{ mohPlaybackName === f.name ? 'Pause' : 'Play' }}
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="action-delete moh-row-btn"
+                      :disabled="mohDeleting === f.name"
+                      @click="deleteMoh(f.name)"
+                    >
+                      {{ mohDeleting === f.name ? 'Deleting…' : 'Delete' }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p v-else class="moh-hint">No sound files loaded for this tenant. Defaults will be used.</p>
+            <audio ref="mohAudioEl" class="moh-audio" preload="none" @ended="stopMohPlayback" />
+            <FormToggle
+              id="edit-usemohcustom"
+              v-model="formAdvanced.usemohcustom"
+              label="Custom MOH Active"
+              help-pkey="usemohcustom"
+              yes-value="YES"
+              no-value="NO"
+            />
+          </div>
+
           <h2 class="detail-heading">Advanced</h2>
           <div class="form-fields advanced-fields">
             <template v-for="f in ADVANCED_FIELDS" :key="f.key">
@@ -785,8 +980,62 @@ async function confirmAndDelete() {
 .timers-fields,
 .call-recording-fields,
 .call-control-fields,
-.ldap-fields {
+.ldap-fields,
+.moh-fields {
   margin-top: 0.5rem;
+}
+.moh-hint {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+.moh-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.moh-file-input {
+  display: none;
+}
+.moh-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+.moh-table th,
+.moh-table td {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.moh-row-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.moh-row-btn.secondary {
+  color: #64748b;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+}
+.moh-row-btn.action-delete {
+  color: #fff;
+  background: #dc2626;
+  border: none;
+}
+.moh-row-btn.action-delete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.moh-audio {
+  display: none;
+}
+.detail-heading :deep(.help-icon),
+.detail-heading :deep(button) {
+  vertical-align: middle;
 }
 .edit-form {
   margin-bottom: 1rem;

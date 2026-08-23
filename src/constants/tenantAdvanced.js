@@ -194,12 +194,6 @@ export const ADVANCED_FIELDS = [
   { key: 'operator', label: 'Operator', type: 'number', helpPkey: 'clustersysop' },
   { key: 'sysop', label: 'Sysop', type: 'number' },
   { key: 'syspass', label: 'Sys pass', type: 'password' },
-  {
-    key: 'usemohcustom',
-    label: 'Use MOH custom',
-    type: 'pill',
-    options: ['YES', 'NO']
-  },
   { key: 'vmail_age', label: 'Vmail age', type: 'number' },
   { key: 'voice_instr', label: 'Voice instr', type: 'boolean' }
 ]
@@ -338,7 +332,10 @@ function buildPayloadFromFields(formState, fieldDefs) {
  * Build API payload for advanced fields from form state (formAdvanced reactive object).
  */
 export function buildAdvancedPayload(formAdvanced) {
-  return buildPayloadFromFields(formAdvanced, ADVANCED_FIELDS)
+  const out = buildPayloadFromFields(formAdvanced, ADVANCED_FIELDS)
+  // Edited in Music-on-Hold section (not ADVANCED_FIELDS); always persist YES/NO.
+  out.usemohcustom = formAdvanced.usemohcustom === 'YES' ? 'YES' : 'NO'
+  return out
 }
 
 /**
