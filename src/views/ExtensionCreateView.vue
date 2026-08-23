@@ -35,6 +35,7 @@ const celltwin = ref('OFF')
 const devicerec = ref('None')
 const protocol = ref('IPV4')
 const vmailfwd = ref('')
+const namedGroups = ref('ALL')
 const tenants = ref([])
 const tenantsLoading = ref(true)
 const error = ref('')
@@ -92,6 +93,7 @@ function resetForm() {
   devicerec.value = 'None'
   protocol.value = 'IPV4'
   vmailfwd.value = ''
+  namedGroups.value = 'ALL'
   pkeyValidation.reset()
   clusterValidation.reset()
   error.value = ''
@@ -174,6 +176,7 @@ async function onSubmit(e) {
     if (callerid.value.trim()) body.callerid = callerid.value.trim()
     if (cellphone.value.trim()) body.cellphone = cellphone.value.trim()
     if (vmailfwd.value.trim()) body.vmailfwd = vmailfwd.value.trim()
+    body.named_groups = namedGroups.value.trim() || 'ALL'
     await getApiClient().post('extensions', body)
     toast.show(`Extension ${pkey.value.trim()} created`)
     resetForm()
@@ -344,6 +347,14 @@ function onKeydown(e) {
           label="DVR voicemail"
           type="text"
           placeholder="Extension pkey for voicemail"
+        />
+        <FormField
+          id="named_groups"
+          v-model="namedGroups"
+          label="Named pickup groups"
+          type="text"
+          placeholder="ALL"
+          hint="Default ALL = whole tenant. Comma-separated department names or digit tokens (e.g. sales or 1,2)."
         />
         <FormSegmentedPill
           id="protocol"

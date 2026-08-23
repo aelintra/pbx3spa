@@ -47,6 +47,7 @@ const editCelltwin = ref('OFF')
 const editDevicerec = ref('None')
 const editDvrvmail = ref('')
 const editExtalert = ref('')
+const editNamedGroups = ref('ALL')
 const editMacaddr = ref('')
 const editProtocol = ref('IPV4')
 const editProvision = ref('')
@@ -173,6 +174,10 @@ async function fetchExtension() {
       rawDevicerec === 'OTR' || rawDevicerec === 'OTRR' ? 'Both' : (rawDevicerec ?? 'None')
     editDvrvmail.value = ext?.dvrvmail ?? ''
     editExtalert.value = ext?.extalert ?? ''
+    editNamedGroups.value =
+      ext?.named_groups != null && String(ext.named_groups).trim() !== ''
+        ? String(ext.named_groups).trim()
+        : 'ALL'
     editMacaddr.value = ext?.macaddr != null ? String(ext.macaddr).trim() : ''
     editProtocol.value = ext?.protocol ?? 'IPV4'
     editProvision.value = ext?.provision ?? ''
@@ -299,6 +304,7 @@ async function saveEdit(e) {
       devicerec: editDevicerec.value,
       dvrvmail: editDvrvmail.value.trim() || undefined,
       extalert: editExtalert.value.trim() || undefined,
+      named_groups: editNamedGroups.value.trim() || 'ALL',
       macaddr: isWebRtcExtension.value
         ? null
         : editMacaddr.value.trim()
@@ -770,6 +776,14 @@ const panelTitleTenantSuffix = computed(() => {
               type="text"
               inputmode="numeric"
               placeholder="e.g. 3"
+            />
+            <FormField
+              id="edit-named-groups"
+              v-model="editNamedGroups"
+              label="Named pickup groups"
+              type="text"
+              placeholder="ALL"
+              hint="Default ALL = whole tenant. Comma-separated department names or digit tokens (e.g. sales or 1,2). Takes effect on Commit."
             />
             <FormField id="edit-extalert" v-model="editExtalert" label="Ext alert" type="text" />
             <FormSegmentedPill
