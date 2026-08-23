@@ -40,12 +40,6 @@ function tenantPkeyDisplay(app) {
   return clusterToTenantPkey.value.get(s) ?? s
 }
 
-/** UID (shortuid) for display — same pattern as other resource lists */
-function uidDisplay(app) {
-  const v = app.shortuid
-  return v == null || v === '' ? '—' : String(v)
-}
-
 function str(v) {
   return v == null ? '' : String(v)
 }
@@ -172,7 +166,7 @@ onMounted(loadApps)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by app name, UID, tenant, description, span, or active"
+          placeholder="Filter by app name, tenant, description, span, or active"
           aria-label="Filter custom apps"
         />
       </p>
@@ -201,14 +195,6 @@ onMounted(loadApps)
               @click="setSort('pkey')"
             >
               App name
-            </th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('shortuid')"
-              @click="setSort('shortuid')"
-            >
-              UID
             </th>
             <th
               class="th-sortable"
@@ -285,7 +271,6 @@ onMounted(loadApps)
         <tbody>
           <tr v-for="a in sortedApps" :key="a.shortuid ?? a.id ?? a.pkey">
             <td class="cell-immutable" title="Immutable">{{ a.pkey }}</td>
-            <td class="cell-immutable" title="Immutable">{{ uidDisplay(a) }}</td>
             <td>{{ tenantPkeyDisplay(a) }}</td>
             <ListActiveChip :active="a.active" />
             <td>{{ a.description ?? '—' }}</td>

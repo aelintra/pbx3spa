@@ -55,11 +55,6 @@ function targetDisplay(row) {
   return '—'
 }
 
-function uidDisplay(row) {
-  const v = row.shortuid
-  return v == null || v === '' ? '—' : String(v)
-}
-
 function str(v) {
   return v == null ? '' : String(v)
 }
@@ -269,14 +264,6 @@ onMounted(loadRows)
               Description
             </th>
             <th>Source</th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('shortuid')"
-              @click="setSort('shortuid')"
-            >
-              UID
-            </th>
             <th class="th-actions" title="Edit">
               <span class="action-icon" aria-hidden="true">
                 <svg
@@ -325,7 +312,6 @@ onMounted(loadRows)
             <ListActiveChip :active="r.active" />
             <td>{{ r.description || '—' }}</td>
             <td>{{ sourceLabel(r) }}</td>
-            <td class="cell-immutable">{{ uidDisplay(r) }}</td>
             <td>
               <router-link
                 v-if="r.shortuid"

@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
-import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
@@ -17,10 +16,7 @@ import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
-const { getSchema, ensureFetched } = useSchema()
-function isReadOnly(field) {
-  return getSchema('cosrules')?.read_only?.includes(field) ?? false
-}
+const { ensureFetched } = useSchema()
 const cosrule = ref(null)
 const tenants = ref([])
 const loading = ref(true)
@@ -32,6 +28,8 @@ const editDescription = ref('')
 const editDialplan = ref('')
 const editDefaultopen = ref('NO')
 const editDefaultclosed = ref('NO')
+const editOrideopen = ref('NO')
+const editOrideclosed = ref('NO')
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -85,6 +83,8 @@ async function fetchCosrule() {
     editDialplan.value = c?.dialplan ?? ''
     editDefaultopen.value = c?.defaultopen === 'YES' ? 'YES' : 'NO'
     editDefaultclosed.value = c?.defaultclosed === 'YES' ? 'YES' : 'NO'
+    editOrideopen.value = c?.orideopen === 'YES' ? 'YES' : 'NO'
+    editOrideclosed.value = c?.orideclosed === 'YES' ? 'YES' : 'NO'
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load Class of Service rule')
     cosrule.value = null
@@ -131,11 +131,15 @@ async function saveEdit(e) {
       description: editDescription.value.trim() || null,
       dialplan: editDialplan.value.trim(),
       defaultopen: editDefaultopen.value,
-      defaultclosed: editDefaultclosed.value
+      defaultclosed: editDefaultclosed.value,
+      orideopen: editOrideopen.value,
+      orideclosed: editOrideclosed.value
     }
     await getApiClient().put(`cosrules/${encodeURIComponent(shortuid.value)}`, body)
     await fetchCosrule()
-    toast.show(`Class of Service rule ${cosrule.value?.pkey ?? ''} saved`)
+    toast.show(
+      `Class of Service rule ${cosrule.value?.cname || cosrule.value?.pkey || ''} saved`
+    )
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update Class of Service rule')
   } finally {
@@ -167,7 +171,9 @@ async function confirmAndDelete() {
   }
 }
 
-const displayName = computed(() => cosrule.value?.pkey ?? '')
+const displayName = computed(
+  () => cosrule.value?.cname || cosrule.value?.pkey || cosrule.value?.shortuid || ''
+)
 
 const panelTitleTenantSuffix = computed(() => {
   if (!cosrule.value) return ''
@@ -175,15 +181,32 @@ const panelTitleTenantSuffix = computed(() => {
   if (!t) return ''
   return ` (${t})`
 })
+
+/** Product seeds use stable pkey (HR_*); SPA create uses pkey === shortuid — hide redundant Key row. */
+const showStableKey = computed(() => {
+  const c = cosrule.value
+  if (!c) return false
+  const pkey = String(c.pkey ?? '').trim()
+  const suid = String(c.shortuid ?? '').trim()
+  return pkey !== '' && suid !== '' && pkey !== suid
+})
+
+/** Product seeds (HR_*): show Key + UID; SPA rules (pkey === shortuid): hide both readonly rows. */
+const showUid = computed(() => {
+  if (!showStableKey.value) return false
+  const c = cosrule.value
+  if (!c) return false
+  return String(c.shortuid ?? '').trim() !== ''
+})
 </script>
 
 <template>
   <div class="detail-view" @keydown="onKeydown">
     <PanelBackLink :to="{ name: 'cosrules' }" label="Class of Service">
-      <div class="detail-panel-head">
+      <div class="detail-panel-head detail-panel-head--compact">
         <div class="detail-title-status-row">
           <h1 class="detail-panel-title">
-            Edit Class of Service {{ displayName }}{{ panelTitleTenantSuffix }}
+            Edit CoS {{ displayName }}{{ panelTitleTenantSuffix }}
           </h1>
           <DetailActiveStatusBar v-if="cosrule" v-model="editActive" toggle-id="edit-cos-active" />
         </div>
@@ -217,44 +240,18 @@ const panelTitleTenantSuffix = computed(() => {
           </div>
 
           <h2 class="detail-heading">Identity</h2>
-          <div class="form-fields">
-            <template v-if="cosrule.shortuid != null && cosrule.shortuid !== ''">
-              <FormReadonly
-                v-if="isReadOnly('shortuid')"
-                id="edit-identity-shortuid"
-                label="UID"
-                :value="cosrule.shortuid ?? '—'"
-                class="readonly-identity"
-              />
-              <FormField
-                v-else
-                id="edit-identity-shortuid"
-                :model-value="cosrule.shortuid ?? '—'"
-                label="UID"
-                disabled
-                class="readonly-identity"
-              />
-            </template>
-            <template v-if="cosrule.id != null && cosrule.id !== ''">
-              <FormReadonly
-                v-if="isReadOnly('id')"
-                id="edit-identity-id"
-                label="KSUID"
-                :value="cosrule.id ?? '—'"
-                class="readonly-identity"
-              />
-              <FormField
-                v-else
-                id="edit-identity-id"
-                :model-value="cosrule.id ?? '—'"
-                label="KSUID"
-                disabled
-                class="readonly-identity"
-              />
-            </template>
+          <div class="form-fields form-fields-compact">
             <FormReadonly
+              v-if="showUid"
+              id="edit-identity-shortuid"
+              label="UID"
+              :value="cosrule.shortuid ?? '—'"
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="showStableKey"
               id="edit-identity-pkey"
-              label="CoS key"
+              label="Key"
               help-pkey="cosname"
               :value="cosrule.pkey ?? '—'"
               class="readonly-identity"
@@ -269,7 +266,7 @@ const panelTitleTenantSuffix = computed(() => {
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"
-              label="Tenant (required)"
+              label="Tenant"
               :options="tenantOptionsForSelect"
               :required="true"
             />
@@ -278,51 +275,56 @@ const panelTitleTenantSuffix = computed(() => {
               v-model="editDescription"
               label="Description"
               multiline
-              :rows="4"
+              :rows="1"
             />
           </div>
 
           <h2 class="detail-heading">Settings</h2>
-          <div class="form-fields">
+          <div class="form-fields form-fields-compact">
             <FormField
               id="edit-dialplan"
               v-model="editDialplan"
               label="Dialplan (required)"
               help-pkey="cosdialplan"
               multiline
-              :rows="10"
+              :rows="3"
               placeholder="Space-separated Asterisk patterns (e.g. _070. _001268.)"
               :required="true"
             />
-            <FormToggle
-              id="edit-defaultopen"
-              v-model="editDefaultopen"
-              label="Default open"
-              help-pkey="cosopen"
-              yes-value="YES"
-              no-value="NO"
-            />
-            <FormToggle
-              id="edit-defaultclosed"
-              v-model="editDefaultclosed"
-              label="Default closed"
-              help-pkey="cosclosed"
-              yes-value="YES"
-              no-value="NO"
-            />
-          </div>
-
-          <div class="edit-actions">
-            <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
-            <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
-            <button
-              type="button"
-              class="action-delete"
-              :disabled="deleting"
-              @click="askConfirmDelete"
-            >
-              {{ deleting ? 'Deleting…' : 'Delete' }}
-            </button>
+            <div class="cos-toggle-grid">
+              <FormToggle
+                id="edit-defaultopen"
+                v-model="editDefaultopen"
+                label="Default open"
+                help-pkey="cosopen"
+                yes-value="YES"
+                no-value="NO"
+              />
+              <FormToggle
+                id="edit-orideopen"
+                v-model="editOrideopen"
+                label="Override open"
+                help-pkey="orideopen"
+                yes-value="YES"
+                no-value="NO"
+              />
+              <FormToggle
+                id="edit-defaultclosed"
+                v-model="editDefaultclosed"
+                label="Default closed"
+                help-pkey="cosclosed"
+                yes-value="YES"
+                no-value="NO"
+              />
+              <FormToggle
+                id="edit-orideclosed"
+                v-model="editOrideclosed"
+                label="Override closed"
+                help-pkey="orideclosed"
+                yes-value="YES"
+                no-value="NO"
+              />
+            </div>
           </div>
         </form>
       </div>
@@ -349,30 +351,58 @@ const panelTitleTenantSuffix = computed(() => {
 .detail-view {
   max-width: 52rem;
 }
+.detail-panel-head--compact .detail-title-status-row {
+  flex-wrap: wrap;
+}
+.detail-view :deep(.panel-back-header) {
+  margin-bottom: 0.35rem;
+}
 .loading,
 .error {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 .error {
   color: #dc2626;
 }
 .detail-content {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 .detail-heading {
   font-size: 1rem;
   font-weight: 600;
   color: #334155;
-  margin: 1.5rem 0 0.5rem 0;
+  margin: 0.75rem 0 0.25rem 0;
 }
 .detail-heading:first-of-type {
   margin-top: 0;
+}
+.form-fields-compact :deep(.form-field) {
+  margin-bottom: 0.5rem;
 }
 .form-fields {
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
+}
+.cos-toggle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.25rem;
+  max-width: 36rem;
+}
+.cos-toggle-grid :deep(.form-field) {
+  margin-bottom: 0.35rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+.cos-toggle-grid :deep(.form-field-label) {
+  padding-top: 0;
+}
+@media (max-width: 640px) {
+  .cos-toggle-grid {
+    grid-template-columns: 1fr;
+  }
 }
 .readonly-identity :deep(.form-field-label),
 .readonly-identity :deep(.form-readonly) {
@@ -383,14 +413,15 @@ const panelTitleTenantSuffix = computed(() => {
   border-color: #e2e8f0;
 }
 .edit-form {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
   max-width: 52rem;
 }
 .edit-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 .edit-actions button {

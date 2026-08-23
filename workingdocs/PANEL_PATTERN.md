@@ -58,10 +58,12 @@ There is **no fourth panel** (e.g. no "item list" or intermediate list). Navigat
 
 ### Optional: List export (CSV / PDF)
 
-**Main list panels** may optionally include **Export CSV** and **Export PDF** in the toolbar so users can download the current list (filtered/sorted for CSV; full list from API for PDF). When adding a new list panel, consider including export if the resource is a table of config/records that operators might want to share, audit, or archive.
+**Product lock (2026-08-23):** Do **not** add Export to every list. Required set for legacy **sarkreport** replacement: **Greetings**, **Day timers**, **Holiday timers**, **Route profiles**, **Class of Service**. Earlier lists that already ship Export (Extensions, Tenants, Trunks, Routes, Inbound, Queues, IVRs, Conferences, Agents) keep it. Omit export on remaining panels unless product asks.
 
-- **Include export for:** Standard CRUD list panels (e.g. Queues, Trunks, Routes, Inbound routes, IVRs, Agents, Tenants, Conferences, Extensions). Same pattern for each.
-- **Omit or defer for:** Sensitive lists (e.g. Users), or views that are not a simple table of records (e.g. file browser where “export” would mean something else).
+**Main list panels** may include **Export CSV** and **Export PDF** in the toolbar (filtered/sorted for CSV; full list from API for PDF) when in the lock set above or when product explicitly requests it.
+
+- **Include export for:** The locked set + already-shipped lists above.
+- **Omit or defer for:** Sensitive lists (e.g. Users), remaining CRUD lists not in the lock, or views that are not a simple table of records.
 
 **SPA (list view):**
 
@@ -1072,11 +1074,11 @@ function syncEditFromResource() {
 - Placeholder: Describes what can be filtered
 
 **Columns:**
-- **Identity:** Primary identifier (pkey/name), UID (shortuid) if the resource has it—use immutable styling for shortuid.
+- **Identity:** Primary identifier (pkey/name). **List UID (shortuid) column — keep only where operators need it:** **Extensions** (header **SIP ID**), **IVRs**, **Queues**. Do **not** show a UID column on other list panels (customers do not think in SUID; keep shortuid for routing/API and optional silent filter match).
 - **Tenant** (if applicable)—resolve cluster/shortuid to tenant pkey for display (see Tenant Resolution Pattern).
-- **Key display columns** from the resource that users need to scan: cross-reference the schema and controller and include columns such as description, active, strategy, timeout, dialplan, path1, etc., as appropriate for the resource. Do not leave list panels with too few columns; add the ones that match common use (e.g. Queues: UID, Active, Strategy, Timeout; Routes: Dialplan, Path 1, Active).
+- **Key display columns** from the resource that users need to scan: cross-reference the schema and controller and include columns such as description, active, strategy, timeout, dialplan, path1, etc., as appropriate for the resource. Do not leave list panels with too few columns; add the ones that match common use (e.g. Queues: SIP/UID, Active, Strategy, Timeout; Routes: Dialplan, Path 1, Active — no UID).
 - **Every list column** should be **sortable** (use `th-sortable`, `setSort`, `sortClass`).
-- **Include new columns in the filter** so the search box can match them; update the filter computed and the placeholder text (e.g. "Filter by name, UID, tenant, description, dialplan, path 1, or active").
+- **Include new columns in the filter** so the search box can match them; update the filter computed and the placeholder text (do not advertise UID in the placeholder unless the list shows a UID/SIP ID column).
 - **Numeric columns** (e.g. timeout, maxlen): implement **numeric sort** in the sort comparator (compare `Number(a[key])` vs `Number(b[key])`, treating NaN as lowest) so "10" sorts after "9". For non-numeric columns, string sort is fine.
 - **Edit and Delete actions:** Use icons only (pencil for Edit, **trash can SVG** for Delete). See **List view: Edit and Delete action icons** for the standard trash SVG, classes (`cell-link cell-link-delete cell-link-icon`), and header/row markup.
 

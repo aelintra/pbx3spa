@@ -8,6 +8,7 @@ import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import { exportListToCsv } from '@/utils/exportCsv'
 
 const { filterText } = useStickyFilter('routeprofiles')
 const toast = useToastStore()
@@ -18,6 +19,7 @@ const error = ref('')
 const deleteError = ref('')
 const deletingShortuid = ref(null)
 const confirmDeleteShortuid = ref(null)
+const exportPdfLoading = ref(false)
 const { sortKey, sortOrder } = useStickySort('routeprofiles', { defaultKey: 'name' })
 
 const clusterToTenantPkey = computed(() => {
@@ -89,6 +91,35 @@ function sortClass(k) {
   return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
 }
 
+const routeprofileExportColumns = computed(() => [
+  { key: 'cluster', label: 'Tenant', getValue: (p) => tenantPkeyDisplay(p) },
+  { key: 'name', label: 'Name' },
+  { key: 'lines', label: 'Modes', getValue: (p) => lineCount(p) }
+])
+
+function doExportCsv() {
+  exportListToCsv(sorted.value, routeprofileExportColumns.value, 'routeprofiles.csv')
+  toast.show('CSV downloaded')
+}
+
+async function doExportPdf() {
+  exportPdfLoading.value = true
+  try {
+    const blob = await getApiClient().getBlob('routeprofiles/export/pdf')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'routeprofiles.pdf'
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.show('PDF downloaded')
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Export failed'), 'error')
+  } finally {
+    exportPdfLoading.value = false
+  }
+}
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -140,6 +171,22 @@ onMounted(load)
       <h1>Route profiles</h1>
       <div class="header-actions">
         <router-link :to="{ name: 'routeprofile-create' }" class="add-btn">Create</router-link>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sorted.length === 0"
+          @click="doExportCsv"
+        >
+          Export CSV
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sorted.length === 0 || exportPdfLoading"
+          @click="doExportPdf"
+        >
+          {{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}
+        </button>
       </div>
     </div>
     <div class="toolbar">
@@ -170,14 +217,6 @@ onMounted(load)
               <th
                 class="th-sortable"
                 title="Click to sort"
-                :class="sortClass('shortuid')"
-                @click="setSort('shortuid')"
-              >
-                UID
-              </th>
-              <th
-                class="th-sortable"
-                title="Click to sort"
                 :class="sortClass('cluster')"
                 @click="setSort('cluster')"
               >
@@ -197,7 +236,7 @@ onMounted(load)
                 :class="sortClass('lines')"
                 @click="setSort('lines')"
               >
-                Lines
+                Modes
               </th>
               <th class="th-actions" title="Edit">Edit</th>
               <th class="th-actions" title="Delete">Delete</th>
@@ -205,7 +244,6 @@ onMounted(load)
           </thead>
           <tbody>
             <tr v-for="p in sorted" :key="p.shortuid || p.id">
-              <td class="cell-immutable">{{ p.shortuid ?? '—' }}</td>
               <td>{{ tenantPkeyDisplay(p) }}</td>
               <td>{{ p.name ?? '—' }}</td>
               <td>{{ lineCount(p) }}</td>
@@ -268,6 +306,29 @@ onMounted(load)
   border-radius: 0.35rem;
   text-decoration: none;
   font-size: 0.9rem;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.export-btn {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.35rem;
+  cursor: pointer;
+}
+.export-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .toolbar {
   margin-bottom: 0.75rem;

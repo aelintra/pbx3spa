@@ -9,6 +9,7 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import { exportListToCsv } from '@/utils/exportCsv'
 
 const { filterText } = useStickyFilter('cosrules')
 const toast = useToastStore()
@@ -19,7 +20,8 @@ const error = ref('')
 const deleteError = ref('')
 const deletingShortuid = ref(null)
 const confirmDeleteShortuid = ref(null)
-const { sortKey, sortOrder } = useStickySort('cosrules', { defaultKey: 'pkey' })
+const exportPdfLoading = ref(false)
+const { sortKey, sortOrder } = useStickySort('cosrules', { defaultKey: 'cname' })
 
 const clusterToTenantPkey = computed(() => {
   const map = new Map()
@@ -95,6 +97,42 @@ function sortClass(k) {
   return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
 }
 
+const cosruleExportColumns = computed(() => [
+  { key: 'cname', label: 'Name' },
+  { key: 'pkey', label: 'Key' },
+  { key: 'cluster', label: 'Tenant', getValue: (c) => tenantPkeyDisplay(c) },
+  { key: 'active', label: 'Active' },
+  { key: 'dialplan', label: 'Dialplan' },
+  { key: 'defaultopen', label: 'Default open' },
+  { key: 'orideopen', label: 'Override open' },
+  { key: 'defaultclosed', label: 'Default closed' },
+  { key: 'orideclosed', label: 'Override closed' },
+  { key: 'description', label: 'Description' }
+])
+
+function doExportCsv() {
+  exportListToCsv(sortedCosrules.value, cosruleExportColumns.value, 'cosrules.csv')
+  toast.show('CSV downloaded')
+}
+
+async function doExportPdf() {
+  exportPdfLoading.value = true
+  try {
+    const blob = await getApiClient().getBlob('cosrules/export/pdf')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'cosrules.pdf'
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.show('PDF downloaded')
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Export failed'), 'error')
+  } finally {
+    exportPdfLoading.value = false
+  }
+}
+
 async function loadCosrules() {
   loading.value = true
   error.value = ''
@@ -146,6 +184,22 @@ onMounted(loadCosrules)
       <h1>Class of Service</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'cosrule-create' }" class="add-btn">Create</router-link>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedCosrules.length === 0"
+          @click="doExportCsv"
+        >
+          Export CSV
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedCosrules.length === 0 || exportPdfLoading"
+          @click="doExportPdf"
+        >
+          {{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}
+        </button>
         <input
           v-model="filterText"
           type="search"
@@ -173,18 +227,18 @@ onMounted(loadCosrules)
             <th
               class="th-sortable"
               title="Click to sort"
-              :class="sortClass('pkey')"
-              @click="setSort('pkey')"
+              :class="sortClass('cname')"
+              @click="setSort('cname')"
             >
-              CoS key
+              Name
             </th>
             <th
               class="th-sortable"
               title="Click to sort"
-              :class="sortClass('shortuid')"
-              @click="setSort('shortuid')"
+              :class="sortClass('pkey')"
+              @click="setSort('pkey')"
             >
-              UID
+              Key
             </th>
             <th
               class="th-sortable"
@@ -205,14 +259,6 @@ onMounted(loadCosrules)
             <th
               class="th-sortable"
               title="Click to sort"
-              :class="sortClass('cname')"
-              @click="setSort('cname')"
-            >
-              Name
-            </th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
               :class="sortClass('dialplan')"
               @click="setSort('dialplan')"
             >
@@ -229,10 +275,26 @@ onMounted(loadCosrules)
             <th
               class="th-sortable"
               title="Click to sort"
+              :class="sortClass('orideopen')"
+              @click="setSort('orideopen')"
+            >
+              Override open
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
               :class="sortClass('defaultclosed')"
               @click="setSort('defaultclosed')"
             >
               Default closed
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
+              :class="sortClass('orideclosed')"
+              @click="setSort('orideclosed')"
+            >
+              Override closed
             </th>
             <th
               class="th-sortable"
@@ -285,16 +347,17 @@ onMounted(loadCosrules)
             v-for="c in sortedCosrules"
             :key="c.shortuid || c.id || (c.cluster || '') + '-' + (c.pkey || '')"
           >
+            <td>{{ c.cname ?? '—' }}</td>
             <td>{{ c.pkey }}</td>
-            <td class="cell-immutable" title="Immutable">{{ c.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(c) }}</td>
             <ListActiveChip :active="c.active" />
-            <td>{{ c.cname ?? '—' }}</td>
             <td class="td-dialplan" :title="(c.dialplan ?? '').toString()">
               {{ c.dialplan != null && String(c.dialplan).trim() !== '' ? c.dialplan : '—' }}
             </td>
             <td>{{ c.defaultopen ?? '—' }}</td>
+            <td>{{ c.orideopen ?? '—' }}</td>
             <td>{{ c.defaultclosed ?? '—' }}</td>
+            <td>{{ c.orideclosed ?? '—' }}</td>
             <td>{{ c.description ?? '—' }}</td>
             <td>
               <router-link
@@ -521,6 +584,24 @@ onMounted(loadCosrules)
 }
 .add-btn:hover {
   background: #1d4ed8;
+}
+.export-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.export-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .filter-input {
   padding: 0.5rem 0.75rem;

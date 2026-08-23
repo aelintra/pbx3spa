@@ -422,7 +422,7 @@ useInactivityLogout(logout, computed(() => auth.isLoggedIn))
 
 <style scoped>
 .app-layout {
-  --pbx-shell-sidebar-width: 15.75rem;
+  --pbx-shell-sidebar-width: 14.5rem;
   display: flex;
   height: 100vh;
   overflow: hidden;

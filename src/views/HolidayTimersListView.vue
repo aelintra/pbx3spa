@@ -8,6 +8,7 @@ import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import { exportListToCsv } from '@/utils/exportCsv'
 
 const { filterText } = useStickyFilter('holidaytimers')
 const toast = useToastStore()
@@ -18,6 +19,7 @@ const error = ref('')
 const deleteError = ref('')
 const deletingShortuid = ref(null)
 const confirmDeleteShortuid = ref(null)
+const exportPdfLoading = ref(false)
 const { sortKey, sortOrder } = useStickySort('holidaytimers', { defaultKey: 'stime' })
 
 const clusterToTenantPkey = computed(() => {
@@ -127,6 +129,38 @@ function sortClass(k) {
   return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
 }
 
+const holidaytimerExportColumns = computed(() => [
+  { key: 'cluster', label: 'Tenant', getValue: (h) => tenantPkeyDisplay(h) },
+  { key: 'stime', label: 'Start', getValue: (h) => formatEpoch(h.stime) },
+  { key: 'etime', label: 'End', getValue: (h) => formatEpoch(h.etime) },
+  { key: 'description', label: 'Description' },
+  { key: 'route', label: 'Route' },
+  { key: 'state', label: 'State', getValue: (h) => stateDisplay(h) }
+])
+
+function doExportCsv() {
+  exportListToCsv(sortedHolidaytimers.value, holidaytimerExportColumns.value, 'holidaytimers.csv')
+  toast.show('CSV downloaded')
+}
+
+async function doExportPdf() {
+  exportPdfLoading.value = true
+  try {
+    const blob = await getApiClient().getBlob('holidaytimers/export/pdf')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'holidaytimers.pdf'
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.show('PDF downloaded')
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Export failed'), 'error')
+  } finally {
+    exportPdfLoading.value = false
+  }
+}
+
 async function loadHolidaytimers() {
   loading.value = true
   error.value = ''
@@ -178,11 +212,27 @@ onMounted(loadHolidaytimers)
       <h1>Holiday timers</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'holidaytimer-create' }" class="add-btn">Create</router-link>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedHolidaytimers.length === 0"
+          @click="doExportCsv"
+        >
+          Export CSV
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedHolidaytimers.length === 0 || exportPdfLoading"
+          @click="doExportPdf"
+        >
+          {{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}
+        </button>
         <input
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by UID, tenant, description, route, state, dates"
+          placeholder="Filter by tenant, description, route, state, dates"
           aria-label="Filter Holiday timers"
         />
       </p>
@@ -205,14 +255,6 @@ onMounted(loadHolidaytimers)
       <table v-else class="table">
         <thead>
           <tr>
-            <th
-              class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('shortuid')"
-              @click="setSort('shortuid')"
-            >
-              UID
-            </th>
             <th
               class="th-sortable"
               title="Click to sort"
@@ -301,7 +343,6 @@ onMounted(loadHolidaytimers)
         </thead>
         <tbody>
           <tr v-for="h in sortedHolidaytimers" :key="h.shortuid || h.id || h.pkey">
-            <td class="cell-immutable" title="Immutable">{{ h.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(h) }}</td>
             <td>{{ formatEpoch(h.stime) }}</td>
             <td>{{ formatEpoch(h.etime) }}</td>
@@ -533,6 +574,24 @@ onMounted(loadHolidaytimers)
 }
 .add-btn:hover {
   background: #1d4ed8;
+}
+.export-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.export-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .filter-input {
   padding: 0.5rem 0.75rem;

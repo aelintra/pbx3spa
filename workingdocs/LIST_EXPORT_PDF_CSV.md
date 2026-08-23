@@ -1,8 +1,8 @@
 # List export (PDF / CSV) – how to produce them
 
-**Context:** Replace sarkreport with “Export” on each list panel. Export = current filtered/sorted list as PDF or CSV. This doc recommends how to generate PDFs and CSVs.
+**Context:** Replace sarkreport with “Export” on selected list panels (not a dedicated Reports nav). **Product lock (2026-08-23):** Greetings, Day timers, Holiday timers, Route profiles, Class of Service — plus lists that already had export. Do **not** roll export onto every remaining panel.
 
-**Pattern:** When adding a **new main list panel**, optionally include Export CSV and Export PDF following the same approach. See **PANEL_PATTERN.md** § “Optional: List export (CSV / PDF)” for when to add it and the step-by-step (SPA toolbar, export columns, API route + controller + Blade view).
+**Pattern:** When adding export to a list, follow **PANEL_PATTERN.md** § “Optional: List export (CSV / PDF)” (SPA toolbar, export columns, API route + controller + Blade view).
 
 ---
 

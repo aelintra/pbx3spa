@@ -29,12 +29,6 @@ const { sortKey, sortOrder } = useStickySort('tenants', { defaultKey: 'pkey' })
 const fleetLocked = ref(false)
 
 // --- Display helpers ---
-/** UID (shortuid) for display */
-function localUidDisplay(t) {
-  const v = t.shortuid
-  return v == null || v === '' ? '—' : String(v)
-}
-
 /** Master force: masteroclo; schedule mode from timer when present. */
 function timerStatusDisplay(t) {
   const force = t.masteroclo != null && t.masteroclo !== '' ? t.masteroclo : 'AUTO'
@@ -111,7 +105,6 @@ function sortClass(key) {
 
 const tenantExportColumns = computed(() => [
   { key: 'pkey', label: 'Pkey' },
-  { key: 'shortuid', label: 'UID', getValue: (t) => localUidDisplay(t) },
   { key: 'active', label: 'Active' },
   { key: 'description', label: 'Description' },
   { key: 'clusterclid', label: 'CLID' },
@@ -227,7 +220,7 @@ onMounted(async () => {
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, UID, active, description, CLID, Abstime, ChanMax, or timer"
+          placeholder="Filter by name, active, description, CLID, Abstime, ChanMax, or timer"
           aria-label="Filter tenants"
         />
       </p>
@@ -262,14 +255,6 @@ onMounted(async () => {
               @click="setSort('pkey')"
             >
               name
-            </th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('shortuid')"
-              @click="setSort('shortuid')"
-            >
-              UID
             </th>
             <th
               class="th-sortable"
@@ -360,7 +345,6 @@ onMounted(async () => {
         <tbody>
           <tr v-for="t in sortedTenants" :key="t.pkey">
             <td>{{ t.pkey }}</td>
-            <td class="cell-immutable" title="Immutable">{{ localUidDisplay(t) }}</td>
             <ListActiveChip :active="t.active" />
             <td>{{ t.description ?? '—' }}</td>
             <td>{{ t.clusterclid != null && t.clusterclid !== '' ? t.clusterclid : '—' }}</td>

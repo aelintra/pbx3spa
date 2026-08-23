@@ -8,6 +8,7 @@ import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import { exportListToCsv } from '@/utils/exportCsv'
 
 const { filterText } = useStickyFilter('greetings')
 const toast = useToastStore()
@@ -19,6 +20,7 @@ const deleteError = ref('')
 const deletingShortuid = ref(null)
 const confirmDeleteShortuid = ref(null)
 const downloadingShortuid = ref(null)
+const exportPdfLoading = ref(false)
 const { sortKey, sortOrder } = useStickySort('greetings', { defaultKey: 'pkey' })
 
 // Playback: one shared Audio element; which row is loaded/playing
@@ -122,6 +124,37 @@ function setSort(k) {
 function sortClass(k) {
   if (sortKey.value !== k) return ''
   return sortOrder.value === 'asc' ? 'sort-asc' : 'sort-desc'
+}
+
+const greetingExportColumns = computed(() => [
+  { key: 'pkey', label: 'Number', getValue: (g) => greetingNumberDisplay(g) },
+  { key: 'cluster', label: 'Tenant', getValue: (g) => tenantPkeyDisplay(g) },
+  { key: 'cname', label: 'Name' },
+  { key: 'filename', label: 'Original filename' },
+  { key: 'type', label: 'File Type' }
+])
+
+function doExportCsv() {
+  exportListToCsv(sortedGreetings.value, greetingExportColumns.value, 'greetings.csv')
+  toast.show('CSV downloaded')
+}
+
+async function doExportPdf() {
+  exportPdfLoading.value = true
+  try {
+    const blob = await getApiClient().getBlob('greetingrecords/export/pdf')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'greetings.pdf'
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.show('PDF downloaded')
+  } catch (err) {
+    toast.show(firstErrorMessage(err, 'Export failed'), 'error')
+  } finally {
+    exportPdfLoading.value = false
+  }
 }
 
 async function loadGreetings() {
@@ -297,6 +330,22 @@ onUnmounted(() => {
       <h1>Greetings</h1>
       <p class="toolbar">
         <router-link :to="{ name: 'greeting-create' }" class="add-btn">Create</router-link>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedGreetings.length === 0"
+          @click="doExportCsv"
+        >
+          Export CSV
+        </button>
+        <button
+          type="button"
+          class="export-btn"
+          :disabled="sortedGreetings.length === 0 || exportPdfLoading"
+          @click="doExportPdf"
+        >
+          {{ exportPdfLoading ? 'Exporting…' : 'Export PDF' }}
+        </button>
         <input
           v-model="filterText"
           type="search"
@@ -328,14 +377,6 @@ onUnmounted(() => {
               @click="setSort('pkey')"
             >
               Number
-            </th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('shortuid')"
-              @click="setSort('shortuid')"
-            >
-              UID
             </th>
             <th
               class="th-sortable"
@@ -447,7 +488,6 @@ onUnmounted(() => {
             :key="g.shortuid || g.id || (g.cluster || '') + '-' + (g.pkey || '')"
           >
             <td>{{ greetingNumberDisplay(g) }}</td>
-            <td class="cell-immutable" title="Immutable">{{ g.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(g) }}</td>
             <td>{{ g.cname ?? '' }}</td>
             <td>{{ g.filename ?? '—' }}</td>
@@ -861,6 +901,24 @@ onUnmounted(() => {
 }
 .add-btn:hover {
   background: #1d4ed8;
+}
+.export-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.export-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .filter-input {
   padding: 0.5rem 0.75rem;

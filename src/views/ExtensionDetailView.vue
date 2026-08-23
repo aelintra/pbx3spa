@@ -235,12 +235,15 @@ async function fetchCos() {
 }
 
 function ruleKey(rule) {
+  // Junction / API still key by pkey; UI label prefers human name.
+  const name = rule?.cname != null && String(rule.cname).trim() !== '' ? String(rule.cname).trim() : ''
+  if (name) return name
   return rule?.pkey != null ? String(rule.pkey) : ''
 }
 
 function ruleDescription(rule) {
-  const name = rule?.cname || rule?.description
-  return name && String(name).trim() ? String(name).trim() : ''
+  const desc = rule?.description
+  return desc && String(desc).trim() ? String(desc).trim() : ''
 }
 
 onMounted(async () => {

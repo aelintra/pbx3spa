@@ -120,7 +120,7 @@ function sortValue(e, key) {
   return v == null ? '' : String(v)
 }
 
-/** SIP Identity = shortuid for display */
+/** SIP ID = shortuid for display */
 function sipIdentityDisplay(e) {
   const v = e.shortuid
   return v == null || v === '' ? '—' : String(v)
@@ -178,7 +178,7 @@ function sortClass(key) {
 /** Column defs for CSV export (match list columns; getValue uses current display helpers). */
 const extensionExportColumns = computed(() => [
   { key: 'pkey', label: 'Ext' },
-  { key: 'shortuid', label: 'SIP Identity', getValue: (e) => sipIdentityDisplay(e) },
+  { key: 'shortuid', label: 'SIP ID', getValue: (e) => sipIdentityDisplay(e) },
   { key: 'cluster', label: 'Tenant', getValue: (e) => tenantPkeyDisplay(e) },
   { key: 'active', label: 'Active' },
   { key: 'desc', label: 'User', getValue: (e) => userDisplay(e) },
@@ -352,7 +352,7 @@ onMounted(loadExtensions)
               :class="sortClass('shortuid')"
               @click="setSort('shortuid')"
             >
-              SIP Identity
+              SIP ID
             </th>
             <th
               class="th-sortable"

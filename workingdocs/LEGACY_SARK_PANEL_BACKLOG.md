@@ -6,34 +6,40 @@
 
 **Full historical inventory** (legacy panel list + legacy SARK→PBX3 mapping table): **`archive/SAIL65_PANEL_PORT_PLAN.md`**.
 
-**Not porting:** sarkcallback, sarkreception, sarkphone (and similar retired panels).
+**Not porting:** sarkcallback, sarkreception, sarkphone (and similar retired panels); **sark3pcerts** (only useful with in-house HTTP provisioning — **won't-do** 2026-08-23; use manufacturer RPS — **`PROVISIONING_SERVER_REQUIREMENTS.md`**).
+
+---
+
+## Done pending lab sign-off
+
+### Class of Service (sarkcos) — **2026-08-23**
+
+**Status:** P1 engineering **done** on `main`; **lab sign-off** still open (Save → Commit → outbound dial matrix).
+
+**Shipped:**
+
+- **`cosrules`** list/create/detail — `ClassOfService*View`, `ClassOfServiceController`.
+- CoS rule **`defaultopen`** / **`defaultclosed`** editable on create/edit; list columns; new extensions seeded via `ExtensionController::create_default_cos_instances()`.
+- Extension edit: daytime / nighttime COS matrix (`ipphonecosopen` / `ipphonecosclosed`) — `ExtensionDetailView` + **`GET/PUT extensions/{extension}/cos`**.
+- Instance **`globals.cosstart`** on Instance Globals — `SysglobalsEditView`.
+- CoS rule **`orideopen`** / **`orideclosed`** (Override) — create/detail/list + API; GenAst forces rule onto **all** extensions on Commit (no junction backfill).
+- SPA create: **no operator CoS key** — API sets **`pkey = shortuid`**; seeds may still use stable names (`HR_UK070`, `HR_OFFSHORE`). Extension matrix labels prefer **cname**.
+- Junction assignment uses **`extensions/{extension}/cos`** (not standalone SPA panels for **`cosopens`** / **`coscloses`** — by design; see **`~/GiT/pbx3-ops/devdocs/pbx3api/workingdocs/COS_AUDIT_PROTOTYPE.md`** §5.2).
+
+**Lab sign-off:** `cosstart` ON → rule defaults → extension matrix → Override → Save → Commit → allowed/blocked outbound patterns. CoS stays **binary** open/closed (day-parts Q8 — **`TIME_BASED_ROUTING_REQUIREMENTS.md`** §5.10).
+
+**Optional follow-on (not blocking close):** feature tests for `extensions/{id}/cos`; deprecate or fix legacy `/cosopens` / `/coscloses` CRUD.
 
 ---
 
 ## Open / partial
-
-### Partial — Class of Service (sarkcos)
-
-- **`cosrules`** list/create/detail done.
-- **Still missing:**
-  - Extension edit: daytime / nighttime COS matrix (`ipphonecosopen` / `ipphonecosclosed`).
-  - CoS rule **`defaultopen`** / **`defaultclosed`** editable on create/edit (SPA read-only today).
-  - Instance **`globals.cosstart`** on Instance Globals.
-  - SPA consumer for **`cosopens`** / **`coscloses`** beyond create-time seeding.
-- See **`pbx3api/workingdocs/COS_AUDIT_PROTOTYPE.md`** §5.2 · product **`TODO.md`** §P1.
 
 ### Higher value
 
 | Legacy panel | PBX3 direction |
 |--------------|----------------|
 | **sarkrecordings** | Read-only list + play/download; may tie to **`RECORDINGS_STORAGE_DESIGN.md`** |
-| **sarkreport** | PDF export per list panel (not a separate nav item) |
-
-### Security / provisioning
-
-| Legacy panel | PBX3 direction |
-|--------------|----------------|
-| **sark3pcerts** | 3rd-party provisioning certs (Snom, Yealink, …) — separate from main Certificates; see **`PROVISIONING_SERVER_REQUIREMENTS.md`** |
+| **sarkreport** | **Done as inline exports (2026-08-23)** — no dedicated Reports nav. **Export PDF/CSV** on these lists only: Greetings, Day timers, Holiday timers, Route profiles, Class of Service. Other lists that already had export keep it; do **not** add export to every remaining panel. |
 
 ### Operational / niche
 

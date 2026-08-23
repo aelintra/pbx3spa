@@ -68,12 +68,6 @@ function tenantPkeyDisplay(route) {
   return clusterToTenantPkey.value.get(s) ?? s
 }
 
-/** UID (shortuid) for display */
-function localUidDisplay(r) {
-  const v = r.shortuid
-  return v == null || v === '' ? '—' : String(v)
-}
-
 const filteredRoutes = computed(() => {
   const list = routes.value
   const q = (filterText.value || '').trim().toLowerCase()
@@ -140,7 +134,6 @@ function sortClass(key) {
 
 const routeExportColumns = computed(() => [
   { key: 'pkey', label: 'Name' },
-  { key: 'shortuid', label: 'UID', getValue: (r) => localUidDisplay(r) },
   { key: 'cluster', label: 'Tenant', getValue: (r) => tenantPkeyDisplay(r) },
   { key: 'active', label: 'Active', getValue: (r) => (r.active ?? '').toString().trim() || 'None' },
   {
@@ -259,7 +252,7 @@ onMounted(loadRoutes)
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, UID, tenant, description, dialplan, path 1, or active"
+          placeholder="Filter by name, tenant, description, dialplan, path 1, or active"
           aria-label="Filter routes"
         />
       </p>
@@ -294,14 +287,6 @@ onMounted(loadRoutes)
               @click="setSort('pkey')"
             >
               name
-            </th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('shortuid')"
-              @click="setSort('shortuid')"
-            >
-              UID
             </th>
             <th
               class="th-sortable"
@@ -387,7 +372,6 @@ onMounted(loadRoutes)
             :key="r.shortuid || r.id || (r.cluster || '') + '-' + (r.pkey || '')"
           >
             <td>{{ r.pkey }}</td>
-            <td class="cell-immutable" title="Immutable">{{ localUidDisplay(r) }}</td>
             <td>{{ tenantPkeyDisplay(r) }}</td>
             <ListActiveChip :active="r.active" />
             <td>{{ (r.description ?? '').toString().trim() || 'None' }}</td>

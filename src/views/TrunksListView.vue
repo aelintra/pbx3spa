@@ -55,12 +55,6 @@ function tenantPkeyDisplay(trunk) {
   return clusterToTenantPkey.value.get(s) ?? s
 }
 
-/** UID (shortuid) for display */
-function localUidDisplay(tr) {
-  const v = tr.shortuid
-  return v == null || v === '' ? '—' : String(v)
-}
-
 function liveValueDisplay(val) {
   const s = (val ?? '').toString().trim()
   if (!s || s === '—' || s === '\u2014') return 'Unknown'
@@ -176,7 +170,6 @@ function sortClass(key) {
 
 const trunkExportColumns = computed(() => [
   { key: 'pkey', label: 'Name' },
-  { key: 'shortuid', label: 'UID', getValue: (tr) => localUidDisplay(tr) },
   { key: 'cluster', label: 'Tenant', getValue: (tr) => tenantPkeyDisplay(tr) },
   { key: 'active', label: 'Active' },
   { key: 'description', label: 'Description' },
@@ -310,7 +303,7 @@ onMounted(async () => {
           v-model="filterText"
           type="search"
           class="filter-input"
-          placeholder="Filter by name, UID, tenant, description, host, or active"
+          placeholder="Filter by name, tenant, description, host, or active"
           aria-label="Filter trunks"
         />
       </p>
@@ -349,14 +342,6 @@ onMounted(async () => {
               @click="setSort('pkey')"
             >
               name
-            </th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('shortuid')"
-              @click="setSort('shortuid')"
-            >
-              UID
             </th>
             <th
               class="th-sortable"
@@ -440,7 +425,6 @@ onMounted(async () => {
             :key="tr.shortuid || tr.id || (tr.cluster || '') + '-' + (tr.pkey || '')"
           >
             <td>{{ tr.pkey }}</td>
-            <td class="cell-immutable" title="Immutable">{{ localUidDisplay(tr) }}</td>
             <td>{{ tenantPkeyDisplay(tr) }}</td>
             <ListActiveChip :active="tr.active" />
             <td>{{ tr.description ?? '—' }}</td>

@@ -5,8 +5,7 @@ import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
-import { validateCosPkey, validateTenant } from '@/utils/validation'
-import { normalizeList } from '@/utils/listResponse'
+import { validateTenant } from '@/utils/validation'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
@@ -17,11 +16,12 @@ import PanelBackLink from '@/components/PanelBackLink.vue'
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
-const pkey = ref('')
 const cluster = ref('default')
 const active = ref('YES')
 const defaultopen = ref('NO')
 const defaultclosed = ref('NO')
+const orideopen = ref('NO')
+const orideclosed = ref('NO')
 const cname = ref('')
 const description = ref('')
 const dialplan = ref('')
@@ -29,9 +29,7 @@ const tenants = ref([])
 const tenantsLoading = ref(true)
 const error = ref('')
 const loading = ref(false)
-const pkeyInput = ref(null)
 
-const pkeyValidation = useFormValidation(pkey, validateCosPkey)
 const clusterValidation = useFormValidation(cluster, validateTenant)
 
 const tenantOptions = computed(() => {
@@ -69,6 +67,8 @@ onMounted(async () => {
     active,
     defaultopen,
     defaultclosed,
+    orideopen,
+    orideclosed,
     cname,
     description,
     dialplan
@@ -77,15 +77,15 @@ onMounted(async () => {
 })
 
 function resetForm() {
-  pkey.value = ''
   cluster.value = 'default'
   active.value = 'YES'
   defaultopen.value = 'NO'
   defaultclosed.value = 'NO'
+  orideopen.value = 'NO'
+  orideclosed.value = 'NO'
   cname.value = ''
   description.value = ''
   dialplan.value = ''
-  pkeyValidation.reset()
   clusterValidation.reset()
   error.value = ''
 }
@@ -105,47 +105,43 @@ async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
 
-  const validations = [
-    { ...pkeyValidation, fieldId: 'pkey' },
-    { ...clusterValidation, fieldId: 'cluster' }
-  ]
+  const validations = [{ ...clusterValidation, fieldId: 'cluster' }]
   if (!dialplan.value || !String(dialplan.value).trim()) {
     error.value = 'Dialplan is required'
     return
   }
   if (!validateAll(validations)) {
     await nextTick()
-    focusFirstError(validations, (id) => {
-      if (id === 'pkey' && pkeyInput.value) return pkeyInput.value
-      return document.getElementById(id)
-    })
+    focusFirstError(validations, (id) => document.getElementById(id))
     return
   }
 
   loading.value = true
   try {
     const body = {
-      pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
       active: active.value,
       defaultopen: defaultopen.value,
       defaultclosed: defaultclosed.value,
+      orideopen: orideopen.value,
+      orideclosed: orideclosed.value,
       cname: cname.value.trim() || null,
       description: description.value.trim() || null,
       dialplan: dialplan.value.trim()
     }
-    await getApiClient().post('cosrules', body)
-    toast.show(`Class of Service rule ${pkey.value} created`)
+    const created = await getApiClient().post('cosrules', body)
+    const label =
+      (created?.cname && String(created.cname).trim()) ||
+      created?.shortuid ||
+      created?.pkey ||
+      'rule'
+    toast.show(`Class of Service rule ${label} created`)
     resetForm()
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
-      if (errors.pkey) {
-        pkeyValidation.touched.value = true
-        pkeyValidation.error.value = Array.isArray(errors.pkey) ? errors.pkey[0] : errors.pkey
-      }
       if (errors.cluster) {
         clusterValidation.touched.value = true
         clusterValidation.error.value = Array.isArray(errors.cluster)
@@ -156,10 +152,7 @@ async function onSubmit(e) {
         error.value = Array.isArray(errors.dialplan) ? errors.dialplan[0] : errors.dialplan
       }
       await nextTick()
-      focusFirstError(validations, (id) => {
-        if (id === 'pkey' && pkeyInput.value) return pkeyInput.value
-        return document.getElementById(id)
-      })
+      focusFirstError(validations, (id) => document.getElementById(id))
     }
     if (!errors) error.value = firstErrorMessage(err, 'Failed to create Class of Service rule')
   } finally {
@@ -187,24 +180,11 @@ async function onSubmit(e) {
       <h2 class="detail-heading">Identity</h2>
       <div class="form-fields">
         <FormField
-          id="pkey"
-          ref="pkeyInput"
-          v-model="pkey"
-          label="CoS key"
-          help-pkey="cosname"
-          type="text"
-          placeholder="e.g. internal"
-          :error="pkeyValidation.error.value"
-          :touched="pkeyValidation.touched.value"
-          :required="true"
-          @blur="pkeyValidation.onBlur"
-        />
-        <FormField
           id="cname"
           v-model="cname"
           label="Common name"
           type="text"
-          placeholder="Display name"
+          placeholder="Display name (e.g. Block premium)"
         />
         <FormField
           id="description"
@@ -255,10 +235,26 @@ async function onSubmit(e) {
           no-value="NO"
         />
         <FormToggle
+          id="orideopen"
+          v-model="orideopen"
+          label="Override open"
+          help-pkey="orideopen"
+          yes-value="YES"
+          no-value="NO"
+        />
+        <FormToggle
           id="defaultclosed"
           v-model="defaultclosed"
           label="Default closed"
           help-pkey="cosclosed"
+          yes-value="YES"
+          no-value="NO"
+        />
+        <FormToggle
+          id="orideclosed"
+          v-model="orideclosed"
+          label="Override closed"
+          help-pkey="orideclosed"
           yes-value="YES"
           no-value="NO"
         />

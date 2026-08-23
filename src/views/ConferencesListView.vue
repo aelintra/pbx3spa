@@ -97,7 +97,6 @@ function sortClass(k) {
 
 const conferenceExportColumns = computed(() => [
   { key: 'pkey', label: 'Room' },
-  { key: 'shortuid', label: 'UID' },
   { key: 'cluster', label: 'Tenant', getValue: (c) => tenantPkeyDisplay(c) },
   { key: 'active', label: 'Active' },
   { key: 'cname', label: 'Name' },
@@ -229,14 +228,6 @@ onMounted(loadConferences)
             <th
               class="th-sortable"
               title="Click to sort"
-              :class="sortClass('shortuid')"
-              @click="setSort('shortuid')"
-            >
-              UID
-            </th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
               :class="sortClass('cluster')"
               @click="setSort('cluster')"
             >
@@ -310,7 +301,6 @@ onMounted(loadConferences)
             :key="c.shortuid || c.id || (c.cluster || '') + '-' + (c.pkey || '')"
           >
             <td>{{ c.pkey }}</td>
-            <td class="cell-immutable" title="Immutable">{{ c.shortuid ?? '—' }}</td>
             <td>{{ tenantPkeyDisplay(c) }}</td>
             <ListActiveChip :active="c.active" />
             <td>{{ c.cname ?? '—' }}</td>
