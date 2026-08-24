@@ -44,7 +44,7 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const auth = useAuthStore()
-const { setTenantContext, clearTenantContext } = useSessionContext()
+const { clearTenantContext } = useSessionContext()
 const { loadFleetPosture, isFleetNode } = useFleetPosture()
 const { getSchema, ensureFetched } = useSchema()
 function isReadOnly(field) {
@@ -272,17 +272,6 @@ onUnmounted(() => {
   clearTenantContext()
 })
 watch(pkey, fetchTenant)
-
-watch(
-  () => tenant.value,
-  (t) => {
-    if (!t?.pkey) return
-    const pk = String(t.pkey)
-    const fq = (t.fqdn && String(t.fqdn).trim()) || ''
-    setTenantContext(pk, fq || pk)
-  },
-  { immediate: true }
-)
 
 function goBack() {
   router.push({ name: 'tenants' })
