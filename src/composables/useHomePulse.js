@@ -4,6 +4,7 @@ import { buildIncludeQuery } from '@/utils/homePulse'
 
 /**
  * Fetch + poll GET /home/pulse.
+ * Polling pauses while the document tab is hidden (fewer AMI hits on Home).
  * @param {{ include?: string[], intervalMs?: number, immediate?: boolean }} [options]
  */
 export function useHomePulse(options = {}) {
@@ -33,6 +34,9 @@ export function useHomePulse(options = {}) {
 
   function startPolling() {
     stopPolling()
+    if (typeof document !== 'undefined' && document.hidden) {
+      return
+    }
     timer = setInterval(() => {
       void load()
     }, intervalMs)
@@ -45,7 +49,18 @@ export function useHomePulse(options = {}) {
     }
   }
 
+  function onVisibilityChange() {
+    if (document.hidden) {
+      stopPolling()
+      return
+    }
+    void load().then(() => startPolling())
+  }
+
   onMounted(() => {
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibilityChange)
+    }
     if (immediate) {
       void load().then(() => startPolling())
     }
@@ -53,6 +68,9 @@ export function useHomePulse(options = {}) {
 
   onUnmounted(() => {
     stopPolling()
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
   })
 
   return {
