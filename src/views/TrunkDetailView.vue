@@ -435,12 +435,11 @@ async function confirmAndDelete() {
             <FormField id="edit-transform" v-model="editTransform" label="Transform" type="text" />
             <FormField
               v-if="auth.isAdmin"
-              id="edit-pjsip-overlay"
+              id="edit-pjsip_overlay"
               v-model="editPjsipOverlay"
               label="PJSIP overlay"
               type="text"
               placeholder="Thin overlay fragment (type= + keys)"
-              hint="Thin fragment merged into the stock trunk template on Commit (replace/add keys by type=). Leave empty for stock."
               :multiline="true"
               :rows="8"
             />

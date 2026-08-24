@@ -35,7 +35,9 @@ const celltwin = ref('OFF')
 const devicerec = ref('None')
 const protocol = ref('IPV4')
 const vmailfwd = ref('')
-const namedGroups = ref('ALL')
+const namedCallGroup = ref('ALL')
+const namedPickupGroup = ref('ALL')
+const hasCellphone = computed(() => String(cellphone.value ?? '').trim() !== '')
 const tenants = ref([])
 const tenantsLoading = ref(true)
 const error = ref('')
@@ -76,6 +78,10 @@ watch(extensionType, (val) => {
   else if (val === 'SIP') transport.value = 'udp'
 })
 
+watch(cellphone, (val) => {
+  if (!String(val ?? '').trim()) celltwin.value = 'OFF'
+})
+
 function resetForm() {
   extensionType.value = 'SIP'
   pkey.value = ''
@@ -93,7 +99,8 @@ function resetForm() {
   devicerec.value = 'None'
   protocol.value = 'IPV4'
   vmailfwd.value = ''
-  namedGroups.value = 'ALL'
+  namedCallGroup.value = 'ALL'
+  namedPickupGroup.value = 'ALL'
   pkeyValidation.reset()
   clusterValidation.reset()
   error.value = ''
@@ -163,7 +170,7 @@ async function onSubmit(e) {
       active: active.value,
       transport: transport.value,
       callbackto: callbackto.value,
-      celltwin: celltwin.value,
+      celltwin: hasCellphone.value ? celltwin.value : 'OFF',
       devicerec: devicerec.value,
       protocol: protocol.value
     }
@@ -176,7 +183,8 @@ async function onSubmit(e) {
     if (callerid.value.trim()) body.callerid = callerid.value.trim()
     if (cellphone.value.trim()) body.cellphone = cellphone.value.trim()
     if (vmailfwd.value.trim()) body.vmailfwd = vmailfwd.value.trim()
-    body.named_groups = namedGroups.value.trim() || 'ALL'
+    body.named_call_group = namedCallGroup.value.trim() || 'ALL'
+    body.named_pickup_group = namedPickupGroup.value.trim() || 'ALL'
     await getApiClient().post('extensions', body)
     toast.show(`Extension ${pkey.value.trim()} created`)
     resetForm()
@@ -329,6 +337,7 @@ function onKeydown(e) {
           inputmode="numeric"
         />
         <FormToggle
+          v-if="hasCellphone"
           id="celltwin"
           v-model="celltwin"
           label="Cell twin"
@@ -342,25 +351,31 @@ function onKeydown(e) {
           :options="['default', 'None', 'Inbound', 'Outbound', 'Both']"
         />
         <FormField
-          id="dvrvmail"
-          v-model="dvrvmail"
-          label="DVR voicemail"
+          id="named_call_group"
+          v-model="namedCallGroup"
+          label="Named call groups"
           type="text"
-          placeholder="Extension pkey for voicemail"
+          placeholder="ALL"
         />
         <FormField
-          id="named_groups"
-          v-model="namedGroups"
+          id="named_pickup_group"
+          v-model="namedPickupGroup"
           label="Named pickup groups"
           type="text"
           placeholder="ALL"
-          hint="Default ALL = whole tenant. Comma-separated department names or digit tokens (e.g. sales or 1,2)."
         />
         <FormSegmentedPill
           id="protocol"
           v-model="protocol"
           label="Protocol (IP version)"
           :options="['IPV4', 'IPV6']"
+        />
+        <FormField
+          id="dvrvmail"
+          v-model="dvrvmail"
+          label="Voicemail box"
+          type="text"
+          placeholder="Extension pkey for voicemail"
         />
         <FormField
           id="vmailfwd"

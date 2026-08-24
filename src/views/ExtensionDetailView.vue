@@ -47,11 +47,10 @@ const editCelltwin = ref('OFF')
 const editDevicerec = ref('None')
 const editDvrvmail = ref('')
 const editExtalert = ref('')
-const editNamedGroups = ref('ALL')
+const editNamedCallGroup = ref('ALL')
+const editNamedPickupGroup = ref('ALL')
 const editMacaddr = ref('')
 const editProtocol = ref('IPV4')
-const editProvision = ref('')
-const editProvisionwith = ref('IP')
 const editTechnology = ref('SIP')
 const editVmailfwd = ref('')
 const editPjsipOverlay = ref('')
@@ -81,6 +80,12 @@ const shortuid = computed(() => route.params.shortuid)
 const isWebRtcExtension = computed(() => {
   const d = extension.value?.device
   return d != null && String(d).trim().toLowerCase() === 'webrtc'
+})
+
+const hasCellphone = computed(() => String(editCellphone.value ?? '').trim() !== '')
+
+watch(editCellphone, (val) => {
+  if (!String(val ?? '').trim()) editCelltwin.value = 'OFF'
 })
 
 /** Masked by default; revealed after Show or a successful regenerate. */
@@ -174,14 +179,20 @@ async function fetchExtension() {
       rawDevicerec === 'OTR' || rawDevicerec === 'OTRR' ? 'Both' : (rawDevicerec ?? 'None')
     editDvrvmail.value = ext?.dvrvmail ?? ''
     editExtalert.value = ext?.extalert ?? ''
-    editNamedGroups.value =
+    const legacyNamed =
       ext?.named_groups != null && String(ext.named_groups).trim() !== ''
         ? String(ext.named_groups).trim()
-        : 'ALL'
+        : null
+    editNamedCallGroup.value =
+      ext?.named_call_group != null && String(ext.named_call_group).trim() !== ''
+        ? String(ext.named_call_group).trim()
+        : legacyNamed ?? 'ALL'
+    editNamedPickupGroup.value =
+      ext?.named_pickup_group != null && String(ext.named_pickup_group).trim() !== ''
+        ? String(ext.named_pickup_group).trim()
+        : legacyNamed ?? 'ALL'
     editMacaddr.value = ext?.macaddr != null ? String(ext.macaddr).trim() : ''
     editProtocol.value = ext?.protocol ?? 'IPV4'
-    editProvision.value = ext?.provision ?? ''
-    editProvisionwith.value = ext?.provisionwith === 'FQDN' ? 'FQDN' : 'IP'
     editTechnology.value = ext?.technology ?? 'SIP'
     editVmailfwd.value = ext?.vmailfwd ?? ''
     editPjsipOverlay.value = ext?.pjsip_overlay ?? ''
@@ -300,11 +311,12 @@ async function saveEdit(e) {
       callbackto: editCallbackto.value,
       callerid: editCallerid.value.trim() || undefined,
       cellphone: editCellphone.value.trim() || undefined,
-      celltwin: editCelltwin.value,
+      celltwin: hasCellphone.value ? editCelltwin.value : 'OFF',
       devicerec: editDevicerec.value,
       dvrvmail: editDvrvmail.value.trim() || undefined,
       extalert: editExtalert.value.trim() || undefined,
-      named_groups: editNamedGroups.value.trim() || 'ALL',
+      named_call_group: editNamedCallGroup.value.trim() || 'ALL',
+      named_pickup_group: editNamedPickupGroup.value.trim() || 'ALL',
       macaddr: isWebRtcExtension.value
         ? null
         : editMacaddr.value.trim()
@@ -315,8 +327,6 @@ async function saveEdit(e) {
       vmailfwd: editVmailfwd.value.trim() || undefined
     }
     if (auth.isAdmin) {
-      body.provision = editProvision.value.trim() || undefined
-      body.provisionwith = editProvisionwith.value
       // Always send so clearing the textarea removes the DB overlay
       body.pjsip_overlay = editPjsipOverlay.value.trim() || null
     }
@@ -751,6 +761,7 @@ const panelTitleTenantSuffix = computed(() => {
               inputmode="numeric"
             />
             <FormToggle
+              v-if="hasCellphone"
               id="edit-celltwin"
               v-model="editCelltwin"
               label="Cell twin"
@@ -764,12 +775,6 @@ const panelTitleTenantSuffix = computed(() => {
               :options="['default', 'None', 'Inbound', 'Outbound', 'Both']"
             />
             <FormField
-              id="edit-dvrvmail"
-              v-model="editDvrvmail"
-              label="DVR voicemail"
-              type="text"
-            />
-            <FormField
               id="edit-callmax"
               v-model="editCallmax"
               label="Call max"
@@ -778,12 +783,18 @@ const panelTitleTenantSuffix = computed(() => {
               placeholder="e.g. 3"
             />
             <FormField
-              id="edit-named-groups"
-              v-model="editNamedGroups"
+              id="edit-named_call_group"
+              v-model="editNamedCallGroup"
+              label="Named call groups"
+              type="text"
+              placeholder="ALL"
+            />
+            <FormField
+              id="edit-named_pickup_group"
+              v-model="editNamedPickupGroup"
               label="Named pickup groups"
               type="text"
               placeholder="ALL"
-              hint="Default ALL = whole tenant. Comma-separated department names or digit tokens (e.g. sales or 1,2). Takes effect on Commit."
             />
             <FormField id="edit-extalert" v-model="editExtalert" label="Ext alert" type="text" />
             <FormSegmentedPill
@@ -793,6 +804,12 @@ const panelTitleTenantSuffix = computed(() => {
               :options="['IPV4', 'IPV6']"
             />
             <FormField
+              id="edit-dvrvmail"
+              v-model="editDvrvmail"
+              label="Voicemail box"
+              type="text"
+            />
+            <FormField
               id="edit-vmailfwd"
               v-model="editVmailfwd"
               label="Voicemail forward (email)"
@@ -800,29 +817,11 @@ const panelTitleTenantSuffix = computed(() => {
             />
             <FormField
               v-if="auth.isAdmin"
-              id="edit-provision"
-              v-model="editProvision"
-              label="Provision"
-              type="text"
-              placeholder="Provisioning string"
-              :multiline="true"
-              :rows="8"
-            />
-            <FormSelect
-              v-if="auth.isAdmin"
-              id="edit-provisionwith"
-              v-model="editProvisionwith"
-              label="Provision with"
-              :options="['IP', 'FQDN']"
-            />
-            <FormField
-              v-if="auth.isAdmin"
-              id="edit-pjsip-overlay"
+              id="edit-pjsip_overlay"
               v-model="editPjsipOverlay"
               label="PJSIP overlay"
               type="text"
               placeholder="Thin overlay fragment (type= + keys)"
-              hint="Thin fragment merged into the stock phone/WebRTC template on Commit (replace/add keys by type=). Leave empty for stock."
               :multiline="true"
               :rows="8"
             />
