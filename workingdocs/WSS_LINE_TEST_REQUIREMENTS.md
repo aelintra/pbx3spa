@@ -109,7 +109,8 @@ After clean or failed hangup to **BYE** (or terminal failure before answer), pre
 
 ## 7. Explicit non-goals
 
-- Softphone product chrome (hold, transfer, multi-call, contacts/directory, presence/BLF, voicemail UI, call history product)  
+- Softphone product chrome (**transfer**, multi-call, contacts/directory, presence/BLF, voicemail UI, call history product)  
+- **Hold** as general desk-phone feature — **except** Phase 2 **diagnostic hold** (§10) to exercise MOH for jitter testing  
 - Fleet console owning SIP credentials catalog-wide  
 - Gatekeeper or directory in the call path  
 - Innovate/Browser-Phone productization  
@@ -140,3 +141,46 @@ Cross-repo: mostly **pbx3spa** (UA + sampling + report UI); **pbx3api** only if 
 Suggested build order: shell dialler → REGISTER/call path → getStats samples → post-call report visuals. **Library:** JsSIP.  
 **Shipped (lab):** 2026-08-03 — register/dial/answer/report OK.  
 **Pre-release residual (TODO):** SPA main-chunk size / lazy-load JsSIP — see **`pbx3/workingdocs/TODO.md`** “Pre-first-release — SPA production bundle diet”.
+
+---
+
+## 10. Phase 2 — Support line test panel (sketch, not scheduled)
+
+**Motivation (2026-08-25):** When a customer reports bad audio, ops wants **jitter / loss / RTT** on a **real call to that extension** — not only on WebRTC extension detail. Phase 1 already supports **WebRTC → dial desk ext → post-call report**; Phase 2 improves **discovery and workflow**.
+
+### Shape (preferred direction)
+
+| Piece | Proposal |
+|-------|----------|
+| **SPA surface** | Separate panel — e.g. **Tools → Line quality test** (or **Support → Test call**) — not buried on WebRTC detail only |
+| **Caller identity** | One **predefined WebRTC extension per tenant** (or per instance) used only for this tool — e.g. `linetest` / hidden pkey |
+| **Dial target** | Operator picks **any extension** (or enters digits); default from extension detail deep-link when opened from there |
+| **Stats** | Reuse Phase 1 engine: JsSIP + `getStats()` post-call report (copy summary for tickets) |
+| **In-call hold** | While **connected**, **Hold** / **Resume** (far end on/off hold) — not full softphone; drives **tenant MOH** so ops can sample jitter/loss on a **sustained media stream** before hangup |
+| **Visibility** | **Product choice:** extension row may be **admin-only / hidden from customer extension list** (schema flag or naming convention + SPA filter) — customer never sees or registers it unless we want them to |
+
+### In-call hold (locked for Phase 2)
+
+| # | Lock |
+|---|------|
+| **H1** | **Hold** and **Resume** buttons enabled only in **connected** state (after answer, before BYE). |
+| **H2** | **Purpose:** put callee on hold → Asterisk **MOH** to far end → continue quiet **`getStats()` sampling** during hold/resume cycles for ticket evidence. |
+| **H3** | **Not** transfer, not multi-call, not park — single session hold/unhold only (JsSIP `hold()` / `unhold()` or equivalent re-INVITE). |
+| **H4** | Post-call report notes **hold intervals** (timestamps) alongside media samples so “bad jitter during MOH” is visible in the summary. |
+
+### Locks to decide at implement time
+
+| # | Open |
+|---|------|
+| **L1** | Auto-create **line-test WebRTC** on tenant create vs manual “enable support test” once per tenant |
+| **L2** | Hide from Extensions list (`hidden` / `system` column vs CoS-style convention) |
+| **L3** | Password: API reveal for admins only; never show in customer-facing UI |
+| **L4** | Stats scope unchanged: **browser WebRTC leg** + bridged call — not desk-phone last-mile RTCP (Homer/AMI = later track) |
+
+### Non-goals (unchanged)
+
+Softphone product, customer self-service quality portal, fleet-wide aggregate dashboards.
+
+### Implement when scheduled
+
+Mostly **pbx3spa** (panel + extension picker + reuse `LineTestPanel` / `lineTestUa` + **hold/resume**); optional **pbx3api** helper to resolve or create the tenant line-test WebRTC row; **Commit** required for new WebRTC endpoint. Tenant must have **MOH** configured (default class OK).

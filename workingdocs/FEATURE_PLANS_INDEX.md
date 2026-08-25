@@ -19,7 +19,7 @@
 | Data-driven list policy | DATA_DRIVEN_LIST_POLICY_PROJECT.md | deferred |
 | SPA bundle / maintainability (lazy routes, list/detail extraction) | PROJECT_PLAN.md § Current state, PBX3SPA_CODEBASE_ANALYSIS.md § Phase H / H2 | **deferred** (after S8, R1) |
 | SPA shell (nav / chrome) | SPA_SHELL_ROADMAP.md, SESSION_HANDOFF.md § Shell / topbar + Latest session | Stage 1 + Stage 2 on **`main`**: context chips (**viewport-centered** top bar, **`--pbx-shell-sidebar-width`**), **PBX3 Admin** title left, **sidebar top spacer** (no rail logo yet), **detail active header**; collapsible sidebar / ⌘K still optional |
-| **WSS line test (in-admin)** | **`WSS_LINE_TEST_REQUIREMENTS.md`** (**JsSIP** + post-call report; lab green 2026-08-03) · **pbx3** `WEBRTC_WSS_LAB.md` § Fleet edge W1 · §6.1 | **done** — **Line test** on **WebRTC extension detail** (side panel): JsSIP dialler; WSS = edge default; after BYE → loss/jitter/RTT report. **Not** softphone chrome. |
+| **WSS line test (in-admin)** | **`WSS_LINE_TEST_REQUIREMENTS.md`** (**JsSIP** + post-call report; lab green 2026-08-03) · **pbx3** `WEBRTC_WSS_LAB.md` § Fleet edge W1 · §6.1 | **Phase 1 done** — **Line test** on **WebRTC extension detail**. **Phase 2 (parked):** support panel + hidden tenant WebRTC caller → dial any ext — §10. |
 | **Incident notify (tenant)** | **pbx3** **`INCIDENT_NOTIFY_REQUIREMENTS.md`** | **parked** — callout teams → ConfBridge + pluggable SMS; SPA CRUD + fire when scheduled |
 
 
