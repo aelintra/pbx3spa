@@ -475,3 +475,23 @@ export function validateHelpCorePkey(value) {
   }
   return null
 }
+
+/**
+ * Blocked caller ID — digits only after normalization (6–32 digits).
+ */
+export function validateClidBlockPkey(value) {
+  if (!value || !String(value).trim()) {
+    return 'Caller ID is required'
+  }
+  const digits = String(value).replace(/\D+/g, '')
+  if (digits.length < 6) {
+    return 'Caller ID must be at least 6 digits'
+  }
+  if (digits.length > 32) {
+    return 'Caller ID is too long (max 32 digits)'
+  }
+  if (/^(anonymous|unknown|private|withheld|unavailable)$/i.test(String(value).trim())) {
+    return 'Cannot block withheld or unknown caller IDs'
+  }
+  return null
+}

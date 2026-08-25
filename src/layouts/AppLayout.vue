@@ -27,7 +27,8 @@ const COMMIT_HIDDEN_PATH_PREFIXES = [
   '/logs',
   '/recordings',
   '/cdr',
-  '/users'
+  '/users',
+  '/clidblocks'
 ]
 
 const showCommitButton = computed(() => {
@@ -68,7 +69,10 @@ const navGroups = computed(() => {
       id: 'inbound',
       heading: 'Inbound',
       icon: 'phone-incoming',
-      links: [{ to: '/inbound-routes', label: 'DID routes', icon: 'phone-incoming' }]
+      links: [
+        { to: '/inbound-routes', label: 'DID routes', icon: 'phone-incoming' },
+        { to: '/clidblocks', label: 'Blocked caller IDs', icon: 'shield' }
+      ]
     })
   }
 

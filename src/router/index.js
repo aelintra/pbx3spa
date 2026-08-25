@@ -70,6 +70,9 @@ import IvrDetailView from '../views/IvrDetailView.vue'
 import InboundRoutesListView from '../views/InboundRoutesListView.vue'
 import InboundRouteCreateView from '../views/InboundRouteCreateView.vue'
 import InboundRouteDetailView from '../views/InboundRouteDetailView.vue'
+import ClidBlocksListView from '../views/ClidBlocksListView.vue'
+import ClidBlockCreateView from '../views/ClidBlockCreateView.vue'
+import ClidBlockDetailView from '../views/ClidBlockDetailView.vue'
 import SysglobalsEditView from '../views/SysglobalsEditView.vue'
 import FirewallView from '../views/FirewallView.vue'
 import BackupView from '../views/BackupView.vue'
@@ -195,6 +198,13 @@ const router = createRouter({
           path: 'inbound-routes/:shortuid',
           name: 'inbound-route-detail',
           component: InboundRouteDetailView
+        },
+        { path: 'clidblocks', name: 'clidblocks', component: ClidBlocksListView },
+        { path: 'clidblocks/new', name: 'clidblock-create', component: ClidBlockCreateView },
+        {
+          path: 'clidblocks/:shortuid',
+          name: 'clidblock-detail',
+          component: ClidBlockDetailView
         },
         { path: 'users', name: 'users', component: UsersListView },
         { path: 'users/new', name: 'user-create', component: UserCreateView },
