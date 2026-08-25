@@ -27,6 +27,58 @@ const applyConfirmBody = computed(
     'Apply the saved allow-list with UFW now? This rewrites pbx3-managed rules (SSH/API/RTP/SIP and any extras). LE :80 rules are left alone.'
 )
 
+/** Ports we warn about when Source is still wide open (F11). */
+const ADMIN_PORTS = new Set(['22', '44300'])
+
+function portTouchesAdmin(port) {
+  const p = String(port || '').trim()
+  if (!p || /^n\/?a$/i.test(p)) return false
+  if (ADMIN_PORTS.has(p)) return true
+  // range e.g. 20:25 that includes 22 — rare; check endpoints only for exact admin ports
+  const m = p.match(/^(\d+):(\d+)$/)
+  if (!m) return false
+  const lo = Number(m[1])
+  const hi = Number(m[2])
+  return [...ADMIN_PORTS].some((ap) => {
+    const n = Number(ap)
+    return n >= lo && n <= hi
+  })
+}
+
+function isWideOpenFrom(from) {
+  const f = String(from || '').trim().toLowerCase()
+  return f === '' || f === 'any'
+}
+
+/** Live: true while :22 or :44300 still allow from any (tcp/all). */
+const showAdminPortWarn = computed(() =>
+  rules.value.some((r) => {
+    const proto = String(r.proto || '').toLowerCase()
+    if (proto !== 'tcp' && proto !== 'all') return false
+    if (!portTouchesAdmin(r.port)) return false
+    return isWideOpenFrom(r.from)
+  })
+)
+
+const adminPortsWideOpen = computed(() => {
+  const found = new Set()
+  for (const r of rules.value) {
+    const proto = String(r.proto || '').toLowerCase()
+    if (proto !== 'tcp' && proto !== 'all') continue
+    if (!isWideOpenFrom(r.from)) continue
+    const p = String(r.port || '').trim()
+    if (ADMIN_PORTS.has(p)) found.add(p)
+    else if (portTouchesAdmin(p)) {
+      for (const ap of ADMIN_PORTS) {
+        const n = Number(ap)
+        const m = p.match(/^(\d+):(\d+)$/)
+        if (m && n >= Number(m[1]) && n <= Number(m[2])) found.add(ap)
+      }
+    }
+  }
+  return [...found].sort((a, b) => Number(a) - Number(b))
+})
+
 function emptyRule() {
   return { action: 'allow', proto: 'tcp', port: '', from: 'any', comment: '' }
 }
@@ -150,8 +202,10 @@ onMounted(load)
   <div class="firewall-view">
     <h1>Firewall</h1>
     <p class="firewall-intro">
-      Host allow-list for <strong>UFW</strong> (IPv4 + IPv6). Columns:
-      <code>proto</code>, <code>port</code>, <code>source</code>, <code>comment</code>.
+      One allow-list drives <strong>UFW</strong> for both <strong>IPv4 and IPv6</strong>
+      (no separate IPv6 panel — UFW is dual-stack).
+      <code>any</code> or an address/CIDR in Source applies on that stack;
+      IPv6 examples: <code>2001:db8::1</code>, <code>2001:db8::/32</code>.
       Save writes <code>/etc/pbx3/firewall.allows.json</code>; Apply runs the UFW baseline.
       Fleet SIP should stay limited to SBC IP(s). Port 80 is managed only by Let’s Encrypt scripts.
     </p>
@@ -160,9 +214,23 @@ onMounted(load)
     <p v-else-if="error" class="error">{{ error }}</p>
 
     <template v-else>
+      <p v-if="showAdminPortWarn" class="firewall-warn" role="status">
+        <strong>Narrow SSH / API while Source is still <code>any</code>.</strong>
+        Port{{ adminPortsWideOpen.length > 1 ? 's' : '' }}
+        <strong>{{ adminPortsWideOpen.map((p) => ':' + p).join(' and ') }}</strong>
+        {{ adminPortsWideOpen.length > 1 ? 'are' : 'is' }} open from anywhere
+        (install default so you are not locked out). Set Source to your ops/VPN
+        CIDR(s), then Save and Apply. On cloud, also tighten the security group
+        for the same ports.
+      </p>
       <p class="firewall-profile">
         Profile: <strong>{{ profile || '—' }}</strong>
       </p>
+
+      <section class="firewall-section" aria-labelledby="firewall-allows-heading">
+        <div class="section-header">
+          <h2 id="firewall-allows-heading">Allow rules (IPv4 + IPv6)</h2>
+        </div>
 
       <div class="rules-table-wrap">
         <div class="rules-table">
@@ -222,7 +290,7 @@ onMounted(load)
                 v-model="row.from"
                 label="Source"
                 hide-label
-                placeholder="any or 192.168.1.85"
+                placeholder="any, 192.168.1.85, or 2001:db8::1"
                 :help-pkey="FIREWALL_FIELD_HELP.source"
                 aria-label="Source"
               />
@@ -280,6 +348,7 @@ onMounted(load)
           {{ applying ? 'Applying…' : 'Apply firewall' }}
         </button>
       </div>
+      </section>
     </template>
 
     <ConfirmModal
@@ -318,8 +387,29 @@ onMounted(load)
   margin-bottom: 1rem;
   line-height: 1.45;
 }
+.firewall-warn {
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 0.375rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  margin: 0 0 1rem;
+}
 .firewall-profile {
   margin-bottom: 0.75rem;
+}
+.firewall-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.section-header h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
 }
 .loading,
 .error {
@@ -337,6 +427,7 @@ onMounted(load)
   flex-direction: column;
   gap: 0.35rem;
   min-width: 640px;
+  font-size: 0.9375rem;
 }
 .rules-row {
   display: grid;
@@ -345,9 +436,11 @@ onMounted(load)
   align-items: start;
 }
 .rules-header {
-  font-size: 0.8rem;
+  font-size: inherit;
   font-weight: 600;
-  color: var(--color-text-muted, #666);
+  font-family: inherit;
+  color: #475569;
+  align-items: center;
 }
 .rule-del {
   text-align: center;
