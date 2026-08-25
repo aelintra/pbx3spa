@@ -19,12 +19,10 @@ export const OBJECT_PKEY_HELP = {
   helpMessage: 'pkey'
 }
 
-/** Firewall table column → tt_help_core (IPv4 uses fw*; IPv6 source uses fwsource6). */
+/** Firewall table column → tt_help_core (UFW allow-list; F5). */
 export const FIREWALL_FIELD_HELP = {
-  source: 'fwsource',
-  source6: 'fwsource6',
   proto: 'fwproto',
-  destports: 'fwdestports',
-  connrate: 'connrate',
-  description: 'fwdesc'
+  port: 'fwdestports',
+  source: 'fwsource',
+  comment: 'fwdesc'
 }
