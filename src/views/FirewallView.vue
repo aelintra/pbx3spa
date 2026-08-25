@@ -5,6 +5,10 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 import { FIREWALL_FIELD_HELP } from '@/constants/helpPkeys'
+import {
+  adminPortsWideOpen as adminPortsWideOpenFromRules,
+  showAdminPortWarn as showAdminPortWarnFromRules
+} from '@/utils/firewallAdminWarn'
 
 const PROTO_OPTIONS = ['tcp', 'udp', 'icmp', 'all']
 
@@ -27,57 +31,9 @@ const applyConfirmBody = computed(
     'Apply the saved allow-list with UFW now? This rewrites pbx3-managed rules (SSH/API/RTP/SIP and any extras). LE :80 rules are left alone.'
 )
 
-/** Ports we warn about when Source is still wide open (F11). */
-const ADMIN_PORTS = new Set(['22', '44300'])
-
-function portTouchesAdmin(port) {
-  const p = String(port || '').trim()
-  if (!p || /^n\/?a$/i.test(p)) return false
-  if (ADMIN_PORTS.has(p)) return true
-  // range e.g. 20:25 that includes 22 — rare; check endpoints only for exact admin ports
-  const m = p.match(/^(\d+):(\d+)$/)
-  if (!m) return false
-  const lo = Number(m[1])
-  const hi = Number(m[2])
-  return [...ADMIN_PORTS].some((ap) => {
-    const n = Number(ap)
-    return n >= lo && n <= hi
-  })
-}
-
-function isWideOpenFrom(from) {
-  const f = String(from || '').trim().toLowerCase()
-  return f === '' || f === 'any'
-}
-
 /** Live: true while :22 or :44300 still allow from any (tcp/all). */
-const showAdminPortWarn = computed(() =>
-  rules.value.some((r) => {
-    const proto = String(r.proto || '').toLowerCase()
-    if (proto !== 'tcp' && proto !== 'all') return false
-    if (!portTouchesAdmin(r.port)) return false
-    return isWideOpenFrom(r.from)
-  })
-)
-
-const adminPortsWideOpen = computed(() => {
-  const found = new Set()
-  for (const r of rules.value) {
-    const proto = String(r.proto || '').toLowerCase()
-    if (proto !== 'tcp' && proto !== 'all') continue
-    if (!isWideOpenFrom(r.from)) continue
-    const p = String(r.port || '').trim()
-    if (ADMIN_PORTS.has(p)) found.add(p)
-    else if (portTouchesAdmin(p)) {
-      for (const ap of ADMIN_PORTS) {
-        const n = Number(ap)
-        const m = p.match(/^(\d+):(\d+)$/)
-        if (m && n >= Number(m[1]) && n <= Number(m[2])) found.add(ap)
-      }
-    }
-  }
-  return [...found].sort((a, b) => Number(a) - Number(b))
-})
+const showAdminPortWarn = computed(() => showAdminPortWarnFromRules(rules.value))
+const adminPortsWideOpen = computed(() => adminPortsWideOpenFromRules(rules.value))
 
 function emptyRule() {
   return { action: 'allow', proto: 'tcp', port: '', from: 'any', comment: '' }
