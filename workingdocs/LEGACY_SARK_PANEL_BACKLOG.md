@@ -57,6 +57,8 @@
 | **sarkpcap** | Packet capture — niche single-screen |
 | **sarkfreset** | Factory reset — guarded single-screen |
 
+**Not a SARK port:** **Tenant CLID blacklist** — SARK stub never used; greenfield with SPA auth. Spec: **`~/GiT/pbx3-master/pbx3/workingdocs/CLID_BLACKLIST_REQUIREMENTS.md`**.
+
 ---
 
 ## Port workflow (summary)
