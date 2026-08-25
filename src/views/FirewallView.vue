@@ -171,7 +171,26 @@ onMounted(load)
             <span class="rule-cell rule-port">Port</span>
             <span class="rule-cell rule-from">Source</span>
             <span class="rule-cell rule-comment">Comment</span>
-            <span class="rule-cell rule-del" title="Delete"><span class="sr-only">Delete</span></span>
+            <span class="rule-cell rule-del" title="Delete">
+              <span class="action-icon" aria-hidden="true"
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  <line x1="10" x2="10" y1="11" y2="17" />
+                  <line x1="14" x2="14" y1="11" y2="17" /></svg
+              ></span>
+            </span>
           </div>
           <div v-for="(row, index) in rules" :key="index" class="rules-row">
             <span class="rule-cell rule-proto">
@@ -222,12 +241,30 @@ onMounted(load)
             <span class="rule-cell rule-del">
               <button
                 type="button"
-                class="btn-icon-del"
-                title="Remove rule"
+                class="cell-link cell-link-delete cell-link-icon"
+                title="Delete rule"
+                :aria-label="'Delete rule ' + (index + 1)"
                 :disabled="rules.length <= 1"
                 @click="removeRule(index)"
               >
-                ×
+                <span class="action-icon" aria-hidden="true"
+                  ><svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="1em"
+                    height="1em"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    <line x1="10" x2="10" y1="11" y2="17" />
+                    <line x1="14" x2="14" y1="11" y2="17" /></svg
+                ></span>
               </button>
             </span>
           </div>
@@ -314,18 +351,39 @@ onMounted(load)
 }
 .rule-del {
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
 }
-.btn-icon-del {
+.action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cell-link-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+}
+.cell-link-icon .action-icon {
+  color: inherit;
+}
+.cell-link-delete {
+  color: #dc2626;
+  background: none;
   border: none;
-  background: transparent;
-  font-size: 1.4rem;
-  line-height: 1;
+  padding: 0;
+  font: inherit;
   cursor: pointer;
-  color: var(--color-danger, #b00020);
-  padding: 0.25rem 0.4rem;
 }
-.btn-icon-del:disabled {
-  opacity: 0.35;
+.cell-link-delete:hover:not(:disabled) {
+  color: #b91c1c;
+  text-decoration: underline;
+}
+.cell-link-delete:disabled {
+  opacity: 0.7;
   cursor: not-allowed;
 }
 .firewall-actions {
@@ -385,15 +443,5 @@ onMounted(load)
 .firewall-modal-actions {
   display: flex;
   justify-content: flex-end;
-}
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
 }
 </style>
