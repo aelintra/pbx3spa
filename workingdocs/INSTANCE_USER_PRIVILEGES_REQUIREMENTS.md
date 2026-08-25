@@ -150,8 +150,8 @@ Tenant users see **only**:
 |------|----------|
 | **Tenants** list | Instance tenant CRUD |
 | **Outbound** | Trunks, Routes |
-| **System** | Asterisk Files, Backup, Snapshots, Certificates, Custom Apps, Firewall, Help messages **panel**, Instance Globals, Logs, Network, **Users** (**Devices** nav removed 2026-08-06 — templates remain in DB for extension create; `/devices` route may still exist break-glass) |
-| Provisioning | Extension provision fields; Device templates are seed data (lean), not a routine admin panel |
+| **System** | Asterisk Files, Backup, Snapshots, Certificates, Custom Apps, Firewall, Help messages **panel**, Instance Globals, Logs, Network, **Users** (**Devices** templates removed 2026-08-25) |
+| Provisioning | Extension MAC / type label only; Device templates **removed** (2026-08-25) |
 
 **Access ≠ ownership:** Route **rows** may still live in tenant mini-DB for export; non-admins have **no** Routes UI/API.
 

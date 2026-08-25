@@ -5,11 +5,11 @@
  * valid; each time we load a non-expired filter we refresh the timestamp, so the
  * filter persists as long as you're active on the panel and dies after 5 minutes away.
  *
- * Usage: const { filterText } = useStickyFilter('devices')
- * Use a stable listId per panel: devices, extensions, tenants, trunks, queues, agents,
+ * Usage: const { filterText } = useStickyFilter('extensions')
+ * Use a stable listId per panel: extensions, tenants, trunks, queues, agents,
  * routes, customapps, ivrs, inbound-routes, users.
  *
- * Rollout: Used on all list panels that have a filter (tenants, extensions, trunks, queues, conferences, agents, routes, customapps, ivrs, inbound-routes, devices, asterisk-files).
+ * Rollout: Used on all list panels that have a filter.
  *
  * **Sticky sort:** `useStickySort(listId, options)` — same sessionStorage + 5‑minute expiry
  * pattern; persists `sortKey` and `sortOrder`. See **workingdocs/STICKY_LIST_UI.md**.
@@ -22,11 +22,7 @@ const STORAGE_PREFIX = 'pbx3spa-list-filter-'
 /** Filter persists for 5 minutes; after that, entering the list shows no filter. */
 const EXPIRY_MS = 5 * 60 * 1000
 
-/** Legacy key used by Devices list before composable; keep for backward compatibility. */
-const LEGACY_DEVICES_KEY = 'pbx3spa-devices-list-filter'
-
 function getStorageKey(listId) {
-  if (listId === 'devices') return LEGACY_DEVICES_KEY
   return STORAGE_PREFIX + listId
 }
 

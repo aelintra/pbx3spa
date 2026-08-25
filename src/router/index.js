@@ -61,9 +61,6 @@ import CustomAppDetailView from '../views/CustomAppDetailView.vue'
 import DialAliasesListView from '../views/DialAliasesListView.vue'
 import DialAliasCreateView from '../views/DialAliasCreateView.vue'
 import DialAliasDetailView from '../views/DialAliasDetailView.vue'
-import DevicesListView from '../views/DevicesListView.vue'
-import DeviceCreateView from '../views/DeviceCreateView.vue'
-import DeviceDetailView from '../views/DeviceDetailView.vue'
 import HelpMessagesListView from '../views/HelpMessagesListView.vue'
 import HelpMessageCreateView from '../views/HelpMessageCreateView.vue'
 import HelpMessageDetailView from '../views/HelpMessageDetailView.vue'
@@ -174,9 +171,6 @@ const router = createRouter({
         { path: 'customapps', name: 'customapps', component: CustomAppsListView },
         { path: 'customapps/new', name: 'customapp-create', component: CustomAppCreateView },
         { path: 'customapps/:shortuid', name: 'customapp-detail', component: CustomAppDetailView },
-        { path: 'devices', name: 'devices', component: DevicesListView },
-        { path: 'devices/new', name: 'device-create', component: DeviceCreateView },
-        { path: 'devices/:pkey', name: 'device-detail', component: DeviceDetailView },
         { path: 'help-messages', name: 'help-messages', component: HelpMessagesListView },
         {
           path: 'help-messages/new',
@@ -322,7 +316,6 @@ router.beforeEach(async (to, from) => {
     '/snapshots',
     '/certificates',
     '/customapps',
-    '/devices',
     '/firewall',
     '/help-messages',
     '/sysglobals',

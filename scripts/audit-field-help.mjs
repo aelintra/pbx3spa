@@ -54,8 +54,6 @@ const VIEW_TIER = {
   GreetingDetailView: 3,
   ConferenceCreateView: 3,
   ConferenceDetailView: 3,
-  DeviceCreateView: 3,
-  DeviceDetailView: 3,
   CustomAppCreateView: 3,
   CustomAppDetailView: 3,
   UserCreateView: 4,

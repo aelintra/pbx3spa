@@ -21,7 +21,6 @@ const COMMIT_HIDDEN_PATH_PREFIXES = [
   '/backup',
   '/snapshots',
   '/certificates',
-  '/devices',
   '/firewall',
   '/help-messages',
   '/ip-settings',

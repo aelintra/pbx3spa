@@ -68,7 +68,7 @@ const tenantOptionsForSelect = computed(() => {
 
 const deviceDisplay = computed(() => {
   const t = extensionType.value
-  if (t === 'SIP') return macaddr.value?.trim() ? 'Provisioned SIP' : 'General SIP'
+  if (t === 'SIP') return macaddr.value?.trim() ? 'SIP (MAC)' : 'General SIP'
   if (t === 'WebRTC') return 'WebRTC'
   return t || '—'
 })
