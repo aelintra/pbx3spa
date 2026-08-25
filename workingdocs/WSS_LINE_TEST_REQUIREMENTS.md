@@ -73,7 +73,9 @@ Library: **JsSIP** (locked 2026-08-03 — operator + agent). Lab-proven path; th
 
 ### 5.1 Dialler (dead simple)
 
-**Placement (locked):** **Extensions detail** → **Line test** button (header actions) when `device=WebRTC` only. Opens a side panel (drawer). No left-nav menu item.
+**Placement (Phase 1 — interim):** **Extensions detail** → **Line test** button (header actions) when `device=WebRTC` only. Opens a side panel (drawer). No left-nav menu item.
+
+**When Phase 2 ships (§10):** remove this per-WebRTC button — the **Support line test** panel subsumes it (hidden tenant WebRTC caller + dial any ext + hold/MOH). Phase 1 engine (`LineTestPanel`, JsSIP, report) moves to that panel; no second dialler product surface.
 
 Actions only: **Register · Dial · Answer · Hangup** + short status log while active.  
 Optional during connected: a compact “sampling…” indicator only — not charts-in-flight.
@@ -176,6 +178,15 @@ Suggested build order: shell dialler → REGISTER/call path → getStats samples
 | **L2** | Hide from Extensions list (`hidden` / `system` column vs CoS-style convention) |
 | **L3** | Password: API reveal for admins only; never show in customer-facing UI |
 | **L4** | Stats scope unchanged: **browser WebRTC leg** + bridged call — not desk-phone last-mile RTCP (Homer/AMI = later track) |
+
+### Supersedes Phase 1 UX (locked)
+
+| # | Lock |
+|---|------|
+| **S1** | Phase 2 is the **single ops line-quality tool** — no separate “WebRTC extension Line test” button once Phase 2 ships. |
+| **S2** | Customers/operators do **not** need a visible WebRTC phone extension for support testing; the **hidden line-test WebRTC** row is system-owned. |
+| **S3** | Deep-link from **any extension detail** → Support panel with dial target pre-filled (replaces opening a WebRTC ext first). |
+| **S4** | Phase 1 per-ext button is **retired on Phase 2 ship** (delete from `ExtensionDetailView`, not two entry points). |
 
 ### Non-goals (unchanged)
 
