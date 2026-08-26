@@ -40,14 +40,14 @@ Optional later: Fleet → open instance / tenant line test with edge defaults �
 
 **WebRTC device type, not client-facing WSS on the instance.**
 
-| Concept | Magrathea / fleet path (default for line test) |
+| Concept | SBC / fleet path (default for line test) |
 |---------|-----------------------------------------------|
 | SPA UI “type” | **WebRTC** extension (device=`WebRTC`) |
 | Home PJSIP signaling | **`transport-udp`** + fleet **`outbound_proxy`** (same as product tmpl after W1) |
 | Home media | **`webrtc=yes`** (ICE / DTLS-SRTP) |
 | Client WSS | **SBC only** — browser talks `wss://sbc…:8089/ws`; OpenSIPS speaks **SIP UDP** to the home |
 
-Magrathea **terminates WSS**. The home extension is **not** “listen on instance TCP 8089.” Instance **public 8089 can stay closed**.
+The **SBC** **terminates WSS**. The home extension is **not** “listen on instance TCP 8089.” Instance **public 8089 can stay closed**.
 
 **Optional lab toggles:** singleton-direct `wss://instance:8089` if the operator is proving pure node WSS (requires instance WSS open + endpoint `transport-wss` path). **Not** the product default once edge is up.
 
@@ -65,7 +65,7 @@ Keep **two separate fields** (desks already separate domain vs next hop):
 | **Password** | From create / admin reveal / operator enter-for-session. No long-term softphone vault. |
 | **Dial target** | Free text (e.g. desk shortuid / dialable / echo). |
 
-Library: **JsSIP** (locked 2026-08-03 — operator + agent). Lab-proven path; thin dialler + easy `session.connection` → **getStats**. Do not introduce SIP.js unless JsSIP fails Magrathea edge.
+Library: **JsSIP** (locked 2026-08-03 — operator + agent). Lab-proven path; thin dialler + easy `session.connection` → **getStats**. Do not introduce SIP.js unless JsSIP fails the SBC edge.
 
 ---
 
@@ -103,7 +103,8 @@ After clean or failed hangup to **BYE** (or terminal failure before answer), pre
 | SIP UA events | Register / invite / ring / answer / hangup timing and outcomes |
 | `RTCPeerConnection.getStats()` | Loss, jitter, RTT, bytes/packets, candidate types, codec |
 
-**Not v1:** Gatekeeper aggregation, Homer/HEP in this UI, AMI channel stats, cross-instance fleet dashboards of line tests.
+**Not v1 (shipped Phase 1–2):** Gatekeeper aggregation, Homer/HEP in this UI, cross-instance fleet dashboards of line tests.  
+**Future:** Asterisk-leg RTCP twin — see **§11** (parked; browser leg is enough for now).
 
 ---
 
@@ -114,7 +115,7 @@ After clean or failed hangup to **BYE** (or terminal failure before answer), pre
 - Fleet console owning SIP credentials catalog-wide  
 - Gatekeeper or directory in the call path  
 - Innovate/Browser-Phone productization  
-- Requiring instance **TCP 8089** for the Magrathea prove-path  
+- Requiring instance **TCP 8089** for the SBC prove-path  
 - Mid-call wall of live charts (sample quietly; report after BYE)
 
 ---
@@ -125,7 +126,7 @@ Operator, logged into instance SPA as admin:
 
 1. Opens line test on a WebRTC extension (or creates one).  
 2. Defaults WSS = edge, domain = tenant.  
-3. Register **401→200** via Magrathea → home.  
+3. Register **401→200** via SBC → home.  
 4. Dial desk / peer on same tenant: ring + bidirectional audio.  
 5. Runs the call to hangup / **BYE**.  
 6. Sees a **Call report** with path verdict + media quality (loss, jitter, RTT / bitrate as available) that is demo- and ticket-useful.  
@@ -194,3 +195,25 @@ Softphone product, customer self-service quality portal, fleet-wide aggregate da
 
 - `POST /api/extensions/line-test/ensure` `{ cluster }` → resolve or create WebRTC; `201` when created (Commit required); passwd visible.
 - Extensions `GET` omits system rows unless `?include_system=1`.
+
+---
+
+## 11. Future — Asterisk-leg RTCP twin (parked 2026-08-26)
+
+**Status:** Enhancement only. Phase 2 **browser `getStats()`** is sufficient for support tickets for now.
+
+**Idea:** Alongside the SPA post-call report, show an **Asterisk POV** quality section for the same call — loss / jitter / RTT (and optionally MES) from **RTCP** via AMI (`RTCPSent` / `RTCPReceived`) or hangup `RTPAUDIOQOS*` / `CHANNEL(rtcp,…)`.
+
+**Why not v1:** A bridged line-test call has **multiple channels** (support WebRTC ↔ Asterisk, Asterisk ↔ callee, and often trunk / SBC / MOH). Browser stats cover one leg; AMI sees several. Correlation (which channel’s RTCP belongs in the report) is the real cost — not reading RTCP.
+
+**Suggested slice when scheduled:**
+
+| Slice | Notes |
+|-------|--------|
+| Spike | Confirm RTCP AMI events / hangup vars on the support WebRTC channel during a Tools line test |
+| Same-panel twin | Correlate AMI channel(s) ↔ active line-test call; add “Asterisk leg(s)” to the report next to browser media quality |
+| Out of scope here | Always-on fleet QoS dashboards, Homer/HEP UI (separate ops track); overlaps parked AMI wallboard only loosely |
+
+**Rough effort:** spike ~0.5–1 d; same-panel twin ~2–4 d (correlation risk). Revisit when ticket workflow needs server-leg evidence browser stats cannot supply.
+
+**L4 unchanged until then:** shipped stats remain **browser WebRTC leg only**.
