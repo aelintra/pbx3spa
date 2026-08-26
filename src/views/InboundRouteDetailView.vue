@@ -518,6 +518,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-swoclip"
               v-model="editSwoclip"
               label="SWOCLIP"
+              help-pkey="swoclip"
               yes-value="YES"
               no-value="NO"
             />

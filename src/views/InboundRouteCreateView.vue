@@ -16,6 +16,7 @@ import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
+import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const router = useRouter()
@@ -27,6 +28,7 @@ const pkey = ref('')
 const openroute = ref('')
 const closeroute = ref('')
 const routeProfile = ref('')
+const swoclip = ref('YES')
 const routeProfiles = ref([])
 const tenants = ref([])
 const destinations = ref(null)
@@ -198,6 +200,7 @@ function resetForm() {
   openroute.value = ''
   closeroute.value = ''
   routeProfile.value = ''
+  swoclip.value = 'YES'
   openrouteError.value = ''
   openrouteTouched.value = false
   pkeyValidation.reset()
@@ -260,7 +263,8 @@ async function onSubmit(e) {
       technology: carrier.value.trim(),
       openroute: open,
       closeroute: closed,
-      route_profile: routeProfile.value || null
+      route_profile: routeProfile.value || null,
+      swoclip: swoclip.value
     }
     await getApiClient().post('inboundroutes', body)
     toast.show(`Inbound route ${pkey.value.trim()} created`)
@@ -415,6 +419,14 @@ function onKeydown(e) {
           label="Route profile"
           :options="routeProfileOptions"
           :loading="destinationsLoading"
+        />
+        <FormToggle
+          id="swoclip"
+          v-model="swoclip"
+          label="SWOCLIP"
+          help-pkey="swoclip"
+          yes-value="YES"
+          no-value="NO"
         />
       </div>
 
