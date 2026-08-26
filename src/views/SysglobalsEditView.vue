@@ -466,7 +466,8 @@ onMounted(fetchSysglobal)
           id="edit-sessiontimout"
           v-model="editSessiontimout"
           type="number"
-          label="Session Timeout"
+          label="Session Timeout (seconds)"
+          help-pkey="sessiontimout"
         />
         <FormField id="edit-emergency" v-model="editEmergency" label="Emergency" />
       </div>

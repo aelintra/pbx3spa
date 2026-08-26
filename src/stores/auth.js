@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia'
 import { defaultInstanceLabelFromBaseUrl } from '@/utils/sessionContext'
 import { tenantContextForShortuid } from '@/utils/tenantAccess'
+import {
+  getFallbackInactivityTimeoutMs,
+  parseSessionTimeoutSeconds,
+  sessionTimeoutSecondsToMs
+} from '@/config/inactivity'
 
 const STORAGE_KEY_BASE = 'pbx3_baseUrl'
 const STORAGE_KEY_TOKEN = 'pbx3_token'
@@ -43,6 +48,8 @@ export const useAuthStore = defineStore('auth', {
     globalsFqdn: '',
     /** `sysglobals.sitename` — on-node friendly label (Home / chips). */
     globalsSitename: '',
+    /** `sysglobals.sessiontimout` (seconds) when loaded; drives idle auto-logout. */
+    sessionTimeoutSeconds: null,
     /** Catalog row for connected instance (session-only; from fleet picker). */
     selectedInstance: null,
     /** Current tenant signpost { pkey, label } or null. */
@@ -116,6 +123,13 @@ export const useAuthStore = defineStore('auth', {
     },
     displayInstanceEnvironment(state) {
       return (state.selectedInstance?.environment ?? '').trim()
+    },
+    /** Idle auto-logout interval: instance globals when loaded, else build fallback. */
+    inactivityTimeoutMs(state) {
+      if (state.sessionTimeoutSeconds != null && state.sessionTimeoutSeconds > 0) {
+        return sessionTimeoutSecondsToMs(state.sessionTimeoutSeconds)
+      }
+      return getFallbackInactivityTimeoutMs()
     }
   },
 
@@ -201,6 +215,12 @@ export const useAuthStore = defineStore('auth', {
       const sn = g?.sitename != null ? String(g.sitename).trim() : ''
       this.globalsFqdn = fq
       this.globalsSitename = sn
+      const raw = g?.sessiontimout
+      if (raw == null || raw === '') {
+        this.sessionTimeoutSeconds = null
+      } else {
+        this.sessionTimeoutSeconds = parseSessionTimeoutSeconds(raw)
+      }
     },
 
     /** Clear cached globals FQDN (e.g. after failed fetch). */
@@ -245,6 +265,7 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.globalsFqdn = ''
       this.globalsSitename = ''
+      this.sessionTimeoutSeconds = null
       this.selectedInstance = null
       this.clearTenantContext()
       try {

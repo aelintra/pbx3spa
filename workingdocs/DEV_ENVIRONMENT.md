@@ -102,19 +102,17 @@ There are two different places that refer to “which PBX3 instance” the app t
 - If the user logs in with **`http://localhost:5173/api`** or an URL matching the proxy target (e.g. `https://08jzwn.pbx3.com:44300/api` when proxy is 08jzwn): requests go through the Vite proxy → **VITE_API_PROXY_TARGET**.
 - If the user logs in with a **different** instance URL (e.g. `https://bzy54n.pbx3.com:44300/api` while proxy is still 08jzwn): the browser calls **that host directly** (no proxy). The API must allow **CORS** from `http://localhost:5173`, or change **VITE_API_PROXY_TARGET** to that node and restart `npm run dev`, then log in with the matching URL (or `localhost:5173/api`).
 
-### 7b. Auto logout in production (don’t forget)
+### 7b. Auto logout (instance globals)
 
-The SPA logs out after **10 minutes of user inactivity** by default. The optional build setting is:
+The SPA logs out after **10 minutes of user inactivity** by default (**600 seconds** in Instance Globals → **Session Timeout**).
+
+- **Runtime (normal):** **`GET sysglobals.sessiontimout`** — seconds; editable under **Network → Instance Globals** without rebuilding the SPA.
+- **Build fallback:** optional `VITE_AUTO_LOGOUT_MINUTES` (used before globals load, or fleet-only shell). If unset, fallback is **600 seconds**.
 
 ```dotenv
-VITE_AUTO_LOGOUT_MINUTES=10
+# Optional dev/build override only — instance globals win once loaded
+# VITE_AUTO_LOGOUT_MINUTES=10
 ```
-
-`VITE_*` values are compiled into the static SPA bundle by Vite:
-
-- **Normal production migration/build:** no setting is required. If the variable is absent, `src/config/inactivity.js` supplies the hardcoded **10-minute default**, so the timeout survives deployment to GitHub Pages or another static host.
-- **Change the production timeout:** set `VITE_AUTO_LOGOUT_MINUTES` in the production build environment (for example `.env.production` or CI) **before** running `npm run build`, then deploy the rebuilt `dist/`.
-- **After deployment:** changing a server environment variable does not alter an already-built SPA bundle. Rebuild and redeploy it.
 
 The SBC admin is configured separately at runtime with `PBX3_ADMIN_INACTIVITY_MINUTES` (also default **10**) in `pbx3sbc-admin`.
 

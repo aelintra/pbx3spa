@@ -1,5 +1,5 @@
 import { onBeforeUnmount, onMounted, unref, watch } from 'vue'
-import { getInactivityTimeoutMs } from '@/config/inactivity'
+import { getFallbackInactivityTimeoutMs } from '@/config/inactivity'
 
 const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'scroll', 'touchstart', 'wheel']
 const ACTIVITY_STORAGE_KEY = 'pbx3.lastActivityAt'
@@ -9,14 +9,22 @@ const ACTIVITY_STORAGE_KEY = 'pbx3.lastActivityAt'
  *
  * @param {() => void | Promise<void>} logout
  * @param {boolean | import('vue').Ref<boolean>} active
+ * @param {number | import('vue').Ref<number> | null} [timeoutMsRef] runtime timeout; fallback when unset
  */
-export function useInactivityLogout(logout, active = true) {
-  const timeoutMs = getInactivityTimeoutMs()
+export function useInactivityLogout(logout, active = true, timeoutMsRef = null) {
   let timerId = null
   let deadline = 0
   let mounted = false
   let loggingOut = false
   let lastBroadcastAt = 0
+
+  function currentTimeoutMs() {
+    if (timeoutMsRef != null) {
+      const ms = Number(unref(timeoutMsRef))
+      if (Number.isFinite(ms) && ms > 0) return ms
+    }
+    return getFallbackInactivityTimeoutMs()
+  }
 
   function clearTimer() {
     if (timerId !== null) {
@@ -41,6 +49,7 @@ export function useInactivityLogout(logout, active = true) {
   function scheduleFrom(activityAt) {
     clearTimer()
     if (!mounted || !enabled() || loggingOut) return
+    const timeoutMs = currentTimeoutMs()
     deadline = activityAt + timeoutMs
     timerId = window.setTimeout(expireIfIdle, Math.max(0, deadline - Date.now()))
   }
@@ -49,6 +58,7 @@ export function useInactivityLogout(logout, active = true) {
     clearTimer()
     if (!enabled() || loggingOut) return
 
+    const timeoutMs = currentTimeoutMs()
     deadline = Math.max(deadline, sharedActivityAt() + timeoutMs)
     const remaining = deadline - Date.now()
     if (remaining > 0) {
@@ -86,7 +96,7 @@ export function useInactivityLogout(logout, active = true) {
     }
   }
 
-  const stopWatching = watch(
+  const stopWatchingActive = watch(
     () => enabled(),
     (isActive) => {
       if (isActive) {
@@ -97,6 +107,16 @@ export function useInactivityLogout(logout, active = true) {
       }
     }
   )
+
+  const stopWatchingTimeout =
+    timeoutMsRef != null
+      ? watch(
+          () => unref(timeoutMsRef),
+          () => {
+            if (enabled()) resetTimer()
+          }
+        )
+      : () => {}
 
   onMounted(() => {
     mounted = true
@@ -111,7 +131,8 @@ export function useInactivityLogout(logout, active = true) {
   onBeforeUnmount(() => {
     mounted = false
     clearTimer()
-    stopWatching()
+    stopWatchingActive()
+    stopWatchingTimeout()
     for (const event of ACTIVITY_EVENTS) {
       window.removeEventListener(event, resetTimer)
     }

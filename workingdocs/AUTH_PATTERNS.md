@@ -56,3 +56,12 @@
 | **Federation** | Keep contract abstract; token + whoami shape is stable. | Assume token is always issued by the instance API. |
 
 When in doubt, preserve the contract and the whoami shape; keep login and public routes easy to extend.
+
+---
+
+## 6. Session idle timeout
+
+- **Primary:** Instance Globals **`sessiontimout`** (integer **seconds**; DB default **600** = 10 minutes idle). Loaded via `GET sysglobals` after login; applied by `useInactivityLogout` in **AppLayout** / **FleetLayout**.
+- **Fallback:** Before globals load, or fleet-only sessions without instance context: **`VITE_AUTO_LOGOUT_MINUTES`** at build time, else **600 seconds**.
+- **Behaviour:** Resets on pointer/keyboard/scroll activity; syncs across tabs via `localStorage`; re-checks on tab visible. Logout revokes Sanctum token (instance) and clears session storage.
+- **Do not** tie idle timeout to Sanctum token expiry (30-day default) — they are separate concerns.

@@ -96,7 +96,11 @@ async function logout() {
   await Promise.allSettled([revokeFleet, revokeInstance])
 }
 
-useInactivityLogout(logout, computed(() => fleetSignedIn.value || auth.isLoggedIn))
+useInactivityLogout(
+  logout,
+  computed(() => fleetSignedIn.value || auth.isLoggedIn),
+  computed(() => auth.inactivityTimeoutMs)
+)
 </script>
 
 <template>
