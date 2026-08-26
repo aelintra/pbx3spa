@@ -159,7 +159,8 @@ export const CALL_CONTROL_FIELDS = [
   { key: 'play_transfer', label: 'Play transfer', type: 'boolean' }
 ]
 
-// LDAP section (rendered last in tenant create/detail).
+// LDAP section — SPA UI parked 2026-08-26 (see workingdocs/LDAP_TENANT_PANEL_PARKED.md).
+// Keep keys/fields/payload helpers so the panel can be rewired without rediscovery.
 export const LDAP_KEYS = [
   'ldapbase',
   'ldaphost',

@@ -9,7 +9,6 @@ import { useFormValidation, validateAll, focusFirstError } from '@/composables/u
 import { validateTenantPkey, validateExtLen } from '@/utils/validation'
 import {
   ADVANCED_FIELDS,
-  LDAP_FIELDS,
   CALL_CONTROL_FIELDS,
   CALL_RECORDING_FIELDS,
   MONITORING_FIELDS,
@@ -20,13 +19,11 @@ import {
   buildCallRecordingPayload,
   buildMonitoringPayload,
   buildTimersPayload,
-  buildLdapPayload,
   buildInitialFormAdvanced,
   buildInitialFormCallControl,
   buildInitialFormCallRecording,
   buildInitialFormMonitoring,
   buildInitialFormTimers,
-  buildInitialFormLdap,
   parseNum
 } from '@/constants/tenantAdvanced'
 import { fieldErrors } from '@/utils/formErrors'
@@ -75,7 +72,6 @@ const formAdvanced = reactive(buildInitialFormAdvanced())
 const formTimers = reactive(buildInitialFormTimers())
 const formCallRecording = reactive(buildInitialFormCallRecording())
 const formCallControl = reactive(buildInitialFormCallControl())
-const formLdap = reactive(buildInitialFormLdap())
 const formMonitoring = reactive(buildInitialFormMonitoring())
 
 function resetForm() {
@@ -92,7 +88,6 @@ function resetForm() {
   Object.assign(formTimers, buildInitialFormTimers())
   Object.assign(formCallRecording, buildInitialFormCallRecording())
   Object.assign(formCallControl, buildInitialFormCallControl())
-  Object.assign(formLdap, buildInitialFormLdap())
   Object.assign(formMonitoring, buildInitialFormMonitoring())
   pkeyValidation.reset()
   extLenValidation.reset()
@@ -135,8 +130,7 @@ async function onSubmit(e) {
       ...buildAdvancedPayload(formAdvanced),
       ...buildCallRecordingPayload(formCallRecording),
       ...buildMonitoringPayload(formMonitoring),
-      ...buildCallControlPayload(formCallControl),
-      ...buildLdapPayload(formLdap)
+      ...buildCallControlPayload(formCallControl)
     }
     const cleaned = Object.fromEntries(
       Object.entries(body).filter(([, v]) => v !== undefined && v !== '')
@@ -574,57 +568,6 @@ onMounted(async () => {
             v-else
             :id="`cc-${f.key}`"
             v-model="formCallControl[f.key]"
-            :label="f.label"
-            :help-pkey="f.helpPkey ?? f.key"
-            type="text"
-            :placeholder="f.placeholder || ''"
-          />
-        </template>
-      </div>
-
-      <h2 class="detail-heading">LDAP</h2>
-      <div class="form-fields">
-        <template v-for="f in LDAP_FIELDS" :key="f.key">
-          <FormToggle
-            v-if="f.type === 'boolean'"
-            :id="`ldap-${f.key}`"
-            v-model="formLdap[f.key]"
-            :label="f.label"
-            :help-pkey="f.helpPkey ?? f.key"
-            yes-value="YES"
-            no-value="NO"
-          />
-          <FormToggle
-            v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
-            :id="`ldap-${f.key}`"
-            v-model="formLdap[f.key]"
-            :label="f.label"
-            :help-pkey="f.helpPkey ?? f.key"
-            :yes-value="f.options[0]"
-            :no-value="f.options[1]"
-          />
-          <FormSelect
-            v-else-if="f.type === 'pill'"
-            :id="`ldap-${f.key}`"
-            v-model="formLdap[f.key]"
-            :label="f.label"
-            :help-pkey="f.helpPkey ?? f.key"
-            :options="f.options"
-            :required="false"
-          />
-          <FormField
-            v-else-if="f.type === 'number'"
-            :id="`ldap-${f.key}`"
-            v-model="formLdap[f.key]"
-            :label="f.label"
-            :help-pkey="f.helpPkey ?? f.key"
-            type="number"
-            :placeholder="f.placeholder || 'number'"
-          />
-          <FormField
-            v-else
-            :id="`ldap-${f.key}`"
-            v-model="formLdap[f.key]"
             :label="f.label"
             :help-pkey="f.helpPkey ?? f.key"
             type="text"

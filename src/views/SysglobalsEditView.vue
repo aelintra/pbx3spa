@@ -268,7 +268,7 @@ onMounted(fetchSysglobal)
       <p class="scope-note">
         These values are stored in the instance <strong>globals</strong> table (one row per server).
         Log retention knobs below are saved separately to an on-node override file.
-        Per-tenant limits, MOH, LDAP, call-control flags, and tenant passwords are on each tenant —
+        Per-tenant limits, MOH, call-control flags, and tenant passwords are on each tenant —
         <router-link :to="{ name: 'tenant-detail', params: { pkey: 'default' } }"
           >Default tenant</router-link
         >

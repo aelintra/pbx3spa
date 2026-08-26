@@ -15,22 +15,16 @@ import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import {
   ADVANCED_KEYS,
   ADVANCED_FIELDS,
-  LDAP_KEYS,
-  LDAP_FIELDS,
   CALL_CONTROL_KEYS,
   CALL_CONTROL_FIELDS,
   CALL_RECORDING_KEYS,
   CALL_RECORDING_FIELDS,
-  MONITORING_KEYS,
-  MONITORING_FIELDS,
   TIMERS_KEYS,
   TIMERS_FIELDS,
   buildAdvancedPayload,
   buildCallControlPayload,
   buildCallRecordingPayload,
-  buildMonitoringPayload,
   buildTimersPayload,
-  buildLdapPayload,
   parseNum,
   apiIntegerToYesNo,
   API_INTEGER_FLAG_KEYS
@@ -94,8 +88,6 @@ const formAdvanced = reactive(Object.fromEntries(ADVANCED_KEYS.map((k) => [k, ''
 const formCallControl = reactive(Object.fromEntries(CALL_CONTROL_KEYS.map((k) => [k, ''])))
 const formCallRecording = reactive(Object.fromEntries(CALL_RECORDING_KEYS.map((k) => [k, ''])))
 const formTimers = reactive(Object.fromEntries(TIMERS_KEYS.map((k) => [k, ''])))
-const formLdap = reactive(Object.fromEntries(LDAP_KEYS.map((k) => [k, ''])))
-const formMonitoring = reactive(Object.fromEntries(MONITORING_KEYS.map((k) => [k, ''])))
 
 async function fetchTenant() {
   if (!pkey.value) return
@@ -148,9 +140,7 @@ function syncEditFromTenant() {
     formAdvanced.usemohcustom = 'NO'
   }
   syncKeysToForm(CALL_RECORDING_KEYS, formCallRecording)
-  syncKeysToForm(MONITORING_KEYS, formMonitoring)
   syncKeysToForm(CALL_CONTROL_KEYS, formCallControl)
-  syncKeysToForm(LDAP_KEYS, formLdap)
   fetchMoh()
 }
 
@@ -303,9 +293,7 @@ async function saveEdit(e) {
       ...buildTimersPayload(formTimers),
       ...buildAdvancedPayload(formAdvanced),
       ...buildCallRecordingPayload(formCallRecording),
-      ...buildMonitoringPayload(formMonitoring),
-      ...buildCallControlPayload(formCallControl),
-      ...buildLdapPayload(formLdap)
+      ...buildCallControlPayload(formCallControl)
     })
     await fetchTenant()
     toast.show(`Tenant ${pkey.value} saved`)
@@ -769,32 +757,6 @@ async function confirmAndDelete() {
             </template>
           </div>
 
-          <h2 class="detail-heading">Monitoring &amp; hot desk</h2>
-          <div class="form-fields monitoring-fields">
-            <template v-for="f in MONITORING_FIELDS" :key="f.key">
-              <FormField
-                v-if="f.type === 'number'"
-                :id="`edit-mon-${f.key}`"
-                v-model="formMonitoring[f.key]"
-                :label="f.label"
-                :help-pkey="f.helpPkey ?? f.key"
-                type="number"
-                :placeholder="f.placeholder || 'number'"
-                :disabled="isReadOnly(f.key)"
-              />
-              <FormField
-                v-else
-                :id="`edit-mon-${f.key}`"
-                v-model="formMonitoring[f.key]"
-                :label="f.label"
-                :help-pkey="f.helpPkey ?? f.key"
-                type="text"
-                :placeholder="f.placeholder || ''"
-                :disabled="isReadOnly(f.key)"
-              />
-            </template>
-          </div>
-
           <h2 class="detail-heading">Call control</h2>
           <div class="form-fields call-control-fields">
             <template v-for="f in CALL_CONTROL_FIELDS" :key="f.key">
@@ -838,57 +800,6 @@ async function confirmAndDelete() {
                 v-else
                 :id="`edit-cc-${f.key}`"
                 v-model="formCallControl[f.key]"
-                :label="f.label"
-                :help-pkey="f.helpPkey ?? f.key"
-                type="text"
-                :placeholder="f.placeholder || ''"
-              />
-            </template>
-          </div>
-
-          <h2 class="detail-heading">LDAP</h2>
-          <div class="form-fields ldap-fields">
-            <template v-for="f in LDAP_FIELDS" :key="f.key">
-              <FormToggle
-                v-if="f.type === 'boolean'"
-                :id="`edit-ldap-${f.key}`"
-                v-model="formLdap[f.key]"
-                :label="f.label"
-                :help-pkey="f.helpPkey ?? f.key"
-                yes-value="YES"
-                no-value="NO"
-              />
-              <FormToggle
-                v-else-if="f.type === 'pill' && f.options && f.options.length === 2"
-                :id="`edit-ldap-${f.key}`"
-                v-model="formLdap[f.key]"
-                :label="f.label"
-                :help-pkey="f.helpPkey ?? f.key"
-                :yes-value="f.options[0]"
-                :no-value="f.options[1]"
-              />
-              <FormSelect
-                v-else-if="f.type === 'pill'"
-                :id="`edit-ldap-${f.key}`"
-                v-model="formLdap[f.key]"
-                :label="f.label"
-                :help-pkey="f.helpPkey ?? f.key"
-                :options="f.options"
-                :required="false"
-              />
-              <FormField
-                v-else-if="f.type === 'number'"
-                :id="`edit-ldap-${f.key}`"
-                v-model="formLdap[f.key]"
-                :label="f.label"
-                :help-pkey="f.helpPkey ?? f.key"
-                type="number"
-                :placeholder="f.placeholder || 'number'"
-              />
-              <FormField
-                v-else
-                :id="`edit-ldap-${f.key}`"
-                v-model="formLdap[f.key]"
                 :label="f.label"
                 :help-pkey="f.helpPkey ?? f.key"
                 type="text"
