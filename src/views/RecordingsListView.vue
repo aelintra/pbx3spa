@@ -2,10 +2,9 @@
   <div class="recordings-view">
     <h1>Recordings</h1>
     <p class="subtitle">
-      Call recordings on this node. Storage:
-      <strong>Spool</strong> (just captured) →
-      <strong>Local</strong> (on-node archive) →
-      <strong>S3</strong> (fleet offload). Times in UTC.
+      One catalog for this node: local archive and S3-backed rows. From / To / Tenant / Search
+      filter that list (UTC). Play fetches the blob (S3 proxy can take a second or two). Storage:
+      <strong>Spool</strong> → <strong>Local</strong> → <strong>S3</strong>.
     </p>
 
     <div class="filters">
@@ -55,23 +54,33 @@
       </button>
     </div>
 
-    <div v-if="nowPlaying" class="player">
+    <div v-if="nowPlaying || fetchStatus" class="player">
       <div class="player-meta">
-        <strong>Playing:</strong> <span class="mono">{{ nowPlaying.filename }}</span>
+        <template v-if="nowPlaying">
+          <strong>Playing:</strong> <span class="mono">{{ nowPlaying.filename }}</span>
+        </template>
+        <span v-else-if="fetchStatus" class="fetch-status">{{ fetchStatus }}</span>
       </div>
-      <audio ref="audioEl" :src="audioSrc" controls autoplay class="player-audio"></audio>
-      <button type="button" class="clear-btn" @click="stopPlaying">Close</button>
+      <audio
+        v-if="audioSrc"
+        ref="audioEl"
+        :src="audioSrc"
+        controls
+        autoplay
+        class="player-audio"
+      ></audio>
+      <button v-if="nowPlaying" type="button" class="clear-btn" @click="stopPlaying">Close</button>
     </div>
 
     <div v-if="loading" class="loading">
-      <span class="spinner"></span>
+      <span class="spinner" aria-hidden="true"></span>
       <span>Loading recordings…</span>
     </div>
     <p v-else-if="error" class="error">{{ error }}</p>
-    <div v-else-if="filteredRecordings.length === 0" class="empty">No recordings found.</div>
+    <div v-else-if="sortedRecordings.length === 0" class="empty">No recordings found.</div>
 
     <div v-else class="recordings-list">
-      <p class="result-count">{{ filteredRecordings.length }} recording(s)</p>
+      <p class="result-count">{{ sortedRecordings.length }} recording(s)</p>
       <table class="table">
         <thead>
           <tr>
@@ -138,9 +147,14 @@
                 class="cell-link"
                 :title="nowPlaying?.id === rec.id ? 'Stop' : 'Play'"
                 :disabled="loadingAudioId === rec.id"
+                :aria-busy="loadingAudioId === rec.id"
                 @click="togglePlay(rec)"
               >
-                <span v-if="loadingAudioId === rec.id">…</span>
+                <span
+                  v-if="loadingAudioId === rec.id"
+                  class="spinner spinner-inline"
+                  aria-hidden="true"
+                ></span>
                 <span v-else-if="nowPlaying?.id === rec.id">■</span>
                 <span v-else>▶</span>
               </button>
@@ -149,9 +163,15 @@
                 class="cell-link"
                 title="Download"
                 :disabled="downloadingId === rec.id"
+                :aria-busy="downloadingId === rec.id"
                 @click="downloadRecording(rec)"
               >
-                {{ downloadingId === rec.id ? '…' : '↓' }}
+                <span
+                  v-if="downloadingId === rec.id"
+                  class="spinner spinner-inline"
+                  aria-hidden="true"
+                ></span>
+                <span v-else>↓</span>
               </button>
             </td>
           </tr>
@@ -162,15 +182,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { loadTenantOptions } from '@/utils/loadTenantOptions'
 
 const toast = useToastStore()
 
 const recordings = ref([])
+const tenants = ref([])
 const loading = ref(true)
 const error = ref('')
 
@@ -183,7 +205,9 @@ const nowPlaying = ref(null)
 const audioSrc = ref('')
 const loadingAudioId = ref(null)
 const downloadingId = ref(null)
+const fetchStatus = ref('')
 let currentObjectUrl = null
+let filterTimer = null
 
 const { sortKey, sortOrder } = useStickySort('recordings-list', {
   defaultKey: 'epoch',
@@ -192,6 +216,12 @@ const { sortKey, sortOrder } = useStickySort('recordings-list', {
 
 const tenantOptions = computed(() => {
   const map = new Map()
+  for (const t of tenants.value) {
+    const shortuid = t.shortuid
+    if (!shortuid || map.has(shortuid)) continue
+    map.set(shortuid, t.pkey || t.name || shortuid)
+  }
+  // Keep any tenants that appear in the current result set (scoped users / drift).
   for (const rec of recordings.value) {
     if (rec.tenant && !map.has(rec.tenant)) {
       map.set(rec.tenant, rec.tenant_name || rec.tenant)
@@ -210,37 +240,8 @@ const hasActiveFilter = computed(
     filterSearch.value.trim() !== ''
 )
 
-const filteredRecordings = computed(() => {
-  const tenant = filterTenant.value
-  const search = filterSearch.value.trim().toLowerCase()
-  const fromEpoch = filterFrom.value ? Date.parse(filterFrom.value + 'T00:00:00Z') / 1000 : null
-  const toEpoch = filterTo.value ? Date.parse(filterTo.value + 'T23:59:59Z') / 1000 : null
-
-  return recordings.value.filter((rec) => {
-    if (tenant && rec.tenant !== tenant) return false
-    if (fromEpoch && rec.epoch > 0 && rec.epoch < fromEpoch) return false
-    if (toEpoch && rec.epoch > 0 && rec.epoch > toEpoch) return false
-    if (search) {
-      const hay = [
-        rec.filename,
-        rec.callerid,
-        rec.dnid,
-        rec.queue,
-        rec.extension,
-        rec.tenant,
-        rec.tenant_name
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
-      if (!hay.includes(search)) return false
-    }
-    return true
-  })
-})
-
 const sortedRecordings = computed(() => {
-  const list = [...filteredRecordings.value]
+  const list = [...recordings.value]
   const key = sortKey.value
   const order = sortOrder.value
   list.sort((a, b) => {
@@ -300,6 +301,11 @@ function storageBadgeClass(rec) {
   return 'storage-local'
 }
 
+function isRemoteArchive(rec) {
+  const loc = rec.location || ''
+  return !!(rec.archived || loc === 's3_only' || (rec.on_s3 && !rec.playable))
+}
+
 function setSort(key) {
   if (sortKey.value === key) {
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
@@ -336,11 +342,24 @@ function formatBytes(bytes) {
   return n + ' B'
 }
 
+function buildListParams() {
+  const params = {}
+  if (filterTenant.value) params.tenant = filterTenant.value
+  if (filterFrom.value) params.from = filterFrom.value
+  if (filterTo.value) params.to = filterTo.value
+  if (filterSearch.value.trim()) params.search = filterSearch.value.trim()
+  return params
+}
+
 async function loadRecordings() {
+  if (filterTimer) {
+    clearTimeout(filterTimer)
+    filterTimer = null
+  }
   loading.value = true
   error.value = ''
   try {
-    const response = await getApiClient().get('recordings')
+    const response = await getApiClient().get('recordings', { params: buildListParams() })
     recordings.value = Array.isArray(response) ? response : []
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load recordings')
@@ -348,6 +367,14 @@ async function loadRecordings() {
   } finally {
     loading.value = false
   }
+}
+
+function scheduleReload() {
+  if (filterTimer) clearTimeout(filterTimer)
+  filterTimer = setTimeout(() => {
+    filterTimer = null
+    loadRecordings()
+  }, 300)
 }
 
 function revokeObjectUrl() {
@@ -363,13 +390,16 @@ async function togglePlay(rec) {
     return
   }
   loadingAudioId.value = rec.id
+  fetchStatus.value = isRemoteArchive(rec) ? 'Fetching from archive…' : 'Loading audio…'
   try {
     const blob = await getApiClient().getBlob(`recordings/${rec.id}/stream`)
     revokeObjectUrl()
     currentObjectUrl = window.URL.createObjectURL(blob)
     audioSrc.value = currentObjectUrl
     nowPlaying.value = rec
+    fetchStatus.value = ''
   } catch (err) {
+    fetchStatus.value = ''
     toast.show(firstErrorMessage(err, 'Failed to play recording'), 'error')
   } finally {
     loadingAudioId.value = null
@@ -379,11 +409,15 @@ async function togglePlay(rec) {
 function stopPlaying() {
   nowPlaying.value = null
   audioSrc.value = ''
+  fetchStatus.value = ''
   revokeObjectUrl()
 }
 
 async function downloadRecording(rec) {
   downloadingId.value = rec.id
+  if (isRemoteArchive(rec)) {
+    fetchStatus.value = 'Fetching from archive…'
+  }
   try {
     const blob = await getApiClient().getBlob(`recordings/${rec.id}/download`)
     const url = window.URL.createObjectURL(blob)
@@ -399,11 +433,28 @@ async function downloadRecording(rec) {
     toast.show(firstErrorMessage(err, 'Failed to download recording'), 'error')
   } finally {
     downloadingId.value = null
+    if (!loadingAudioId.value) fetchStatus.value = ''
   }
 }
 
-onMounted(loadRecordings)
-onBeforeUnmount(revokeObjectUrl)
+async function loadTenants() {
+  try {
+    tenants.value = await loadTenantOptions()
+  } catch {
+    tenants.value = []
+  }
+}
+
+watch([filterTenant, filterFrom, filterTo, filterSearch], scheduleReload)
+
+onMounted(async () => {
+  await loadTenants()
+  await loadRecordings()
+})
+onBeforeUnmount(() => {
+  if (filterTimer) clearTimeout(filterTimer)
+  revokeObjectUrl()
+})
 </script>
 
 <style scoped>
@@ -511,6 +562,11 @@ input[type='date'].filter-input::-webkit-datetime-edit {
   color: #334155;
 }
 
+.fetch-status {
+  color: #64748b;
+  font-style: italic;
+}
+
 .player-audio {
   flex: 1 1 20rem;
   height: 2.25rem;
@@ -577,6 +633,14 @@ input[type='date'].filter-input::-webkit-datetime-edit {
   border-top-color: #3b82f6;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.spinner-inline {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-width: 2px;
+  display: inline-block;
 }
 
 @keyframes spin {

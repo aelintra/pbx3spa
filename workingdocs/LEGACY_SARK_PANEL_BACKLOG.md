@@ -38,7 +38,7 @@
 
 | Legacy panel | PBX3 direction |
 |--------------|----------------|
-| **sarkrecordings** | **Shipped** (R1/R1.5/S7) — SPA **Recordings** under ACD. Next polish: unified From/To → API + play spinner (product TODO **0**). |
+| **sarkrecordings** | **Shipped** (R1/R1.5/S7) — SPA **Recordings** under ACD. Unified From/To → API + play spinner **done (2026-08-26)**. |
 | **sarkreport** | **Done as inline exports (2026-08-23)** — no dedicated Reports nav. **Export PDF/CSV** on these lists only: Greetings, Day timers, Holiday timers, Route profiles, Class of Service. Other lists that already had export keep it; do **not** add export to every remaining panel. |
 
 ### Tenant custom MOH (sarkcluster) — **2026-08-25 lab green**

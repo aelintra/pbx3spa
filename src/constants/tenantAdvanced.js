@@ -48,6 +48,7 @@ export const CLUSTER_CREATE_DEFAULTS = {
   rec_limit: '',
   recmaxage: '60',
   recmaxsize: '0',
+  rec_s3: 'NO',
   recused: '0',
   ringdelay: '20',
   spy_pass: '',
@@ -92,6 +93,7 @@ export const CALL_RECORDING_KEYS = [
   'rec_limit',
   'recmaxage',
   'recmaxsize',
+  'rec_s3',
   'recused'
 ]
 
@@ -118,7 +120,14 @@ export const CALL_RECORDING_FIELDS = [
   { key: 'rec_limit', label: 'Rec limit', type: 'readonly' },
   { key: 'recmaxage', label: 'Rec max age', type: 'number' },
   { key: 'recmaxsize', label: 'Rec max size', type: 'number' },
-  { key: 'recused', label: 'Rec used', type: 'number' }
+  {
+    key: 'rec_s3',
+    label: 'S3 offload',
+    type: 'pill',
+    options: ['NO', 'YES'],
+    helpPkey: 'recs3'
+  },
+  { key: 'recused', label: 'Rec used', type: 'readonly' }
 ]
 
 // Call control (after Advanced, before LDAP).
