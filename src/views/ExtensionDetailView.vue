@@ -16,7 +16,6 @@ import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
-import LineTestPanel from '@/components/LineTestPanel.vue'
 import { useAuthStore } from '@/stores/auth'
 const route = useRoute()
 const auth = useAuthStore()
@@ -72,11 +71,10 @@ const openCos = ref({})
 const closedCos = ref({})
 const cosLoaded = ref(false)
 const cosError = ref('')
-const lineTestOpen = ref(false)
 
 const shortuid = computed(() => route.params.shortuid)
 
-/** Line test is WebRTC-only (real ipphone path; SBC terminates WSS). */
+/** WebRTC device label — used for MAC / provision fields, not line-test entry. */
 const isWebRtcExtension = computed(() => {
   const d = extension.value?.device
   return d != null && String(d).trim().toLowerCase() === 'webrtc'
@@ -384,12 +382,15 @@ async function confirmAndDelete() {
   }
 }
 
-function openLineTest() {
-  lineTestOpen.value = true
-}
-
-function closeLineTest() {
-  lineTestOpen.value = false
+function goLineQualityTest() {
+  const target =
+    extension.value?.pkey != null && String(extension.value.pkey).trim() !== ''
+      ? String(extension.value.pkey).trim()
+      : String(shortuid.value || '')
+  const q = { target }
+  const tenant = extension.value?.tenant_pkey ?? editCluster.value
+  if (tenant) q.cluster = String(tenant)
+  router.push({ name: 'support-line-test', query: q })
 }
 
 function openRegenerateSipModal() {
@@ -522,12 +523,11 @@ const panelTitleTenantSuffix = computed(() => {
               </button>
             </div>
             <button
-              v-if="isWebRtcExtension"
               type="button"
               class="line-test-open-btn"
-              @click="openLineTest"
+              @click="goLineQualityTest"
             >
-              Line test
+              Line quality test
             </button>
           </div>
 
@@ -946,15 +946,6 @@ const panelTitleTenantSuffix = computed(() => {
         </p>
       </template>
     </DeleteConfirmModal>
-
-    <LineTestPanel
-      :show="lineTestOpen"
-      :sip-user="extension?.shortuid ?? ''"
-      :sip-domain="sipRegistrar !== '—' ? sipRegistrar : ''"
-      :dialable-label="extension?.pkey != null ? String(extension.pkey) : ''"
-      :initial-password="extension?.passwd != null ? String(extension.passwd) : ''"
-      @close="closeLineTest"
-    />
   </div>
 </template>
 

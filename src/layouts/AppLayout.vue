@@ -125,6 +125,12 @@ const navGroups = computed(() => {
       icon: 'scroll-text',
       links: [{ to: '/cdr', label: 'Call detail', icon: 'scroll-text' }]
     })
+    groups.push({
+      id: 'tools',
+      heading: 'Tools',
+      icon: 'activity',
+      links: [{ to: '/tools/line-test', label: 'Line quality test', icon: 'activity' }]
+    })
   }
 
   if (isAdmin) {

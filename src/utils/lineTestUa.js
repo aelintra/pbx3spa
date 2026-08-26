@@ -47,6 +47,7 @@ export function createLineTestUa(options) {
   let sessionBound = false
   /** @type {'incoming'|'outgoing'|null} */
   let sessionDirection = null
+  let localHold = false
 
   function log(msg) {
     onLog?.(msg)
@@ -115,6 +116,7 @@ export function createLineTestUa(options) {
     session = null
     sessionBound = false
     sessionDirection = null
+    localHold = false
   }
 
   function bindSession(sess, direction) {
@@ -325,6 +327,34 @@ export function createLineTestUa(options) {
       // no media session — unregister / stop is operator action via stop()
     },
 
+    /**
+     * Diagnostic hold (Phase 2) — puts far end on MOH via re-INVITE.
+     * Only while connected; continues getStats sampling.
+     */
+    hold() {
+      if (!session) throw new Error('No session to hold')
+      if (localHold) return
+      const ok = session.hold()
+      if (ok === false) throw new Error('Hold failed')
+      localHold = true
+      stamp('hold')
+      setState('held')
+    },
+
+    unhold() {
+      if (!session) throw new Error('No session to resume')
+      if (!localHold) return
+      const ok = session.unhold()
+      if (ok === false) throw new Error('Resume failed')
+      localHold = false
+      stamp('unhold')
+      setState('confirmed')
+    },
+
+    isOnHold() {
+      return Boolean(localHold)
+    },
+
     getTimeline() {
       return [...timeline]
     },
@@ -352,5 +382,9 @@ export function createLineTestUa(options) {
   }
 }
 
-/** Default Magrathea / fleet edge WSS (editable in UI). */
-export const DEFAULT_EDGE_WSS_URL = 'wss://sbc.pbx3.com:8089/ws'
+/** Default fleet edge WSS (editable in UI). Override with VITE_LINE_TEST_WSS_URL (lab). */
+export const DEFAULT_EDGE_WSS_URL =
+  (typeof import.meta !== 'undefined' &&
+    import.meta.env &&
+    String(import.meta.env.VITE_LINE_TEST_WSS_URL || '').trim()) ||
+  'wss://sbc.pbx3.com:8089/ws'

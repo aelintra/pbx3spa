@@ -1,11 +1,14 @@
 # Standardized Panel Design Pattern
 
-**Last Updated**: 2026-04-02  
+**Last Updated**: 2026-08-26  
 **Based on**: IVR CRUD panels implementation (refactored with reusable components)  
 **Status**: Pattern established and documented, ready for application to all panels
 
 **Important**: 
 - **You must use the reusable form components** for all form fields: `FormField`, `FormSelect`, `FormToggle`, `FormReadonly` (from `src/components/forms/`). Do not use raw `<label>` + `<input>` / `<select>` for fields that these components can represent. Use them so that layout, accessibility, and behaviour stay consistent across panels.
+- **Dropdown / select height:** Always use **`FormSelect`**. Do **not** invent a panel-local `<select>` or custom `.pick-select` — native selects mis-size on macOS and will not match FormField input height (`min-height` / `height: 2.5rem` is locked in `FormSelect.vue`).
+- **Typography must match the SPA shell:** Page title = list/detail **`h1`** / **`.detail-panel-title`**. Intro / subtitle = **`.list-legend`** (global muted copy). Section titles = **`h2.detail-heading`** (global ~1.25rem / weight 600 — see `main.css`). Field labels and values = **`FormField` / `FormSelect` / `FormReadonly`** label + control styles only — do **not** restyle labels as uppercase microcaps, monospace “SIP USER” blocks, or one-off `.setup-h` / `.pick-label` / `.caller-meta dt` fonts.
+- **Primary action buttons are blue:** Save, Create, Refresh, and other **primary** actions use **white text on `#2563eb`** (hover `#1d4ed8`) — same as `button[type=submit]` in edit panels. **Cancel / secondary** = outline / muted. **Delete** = red filled (`#dc2626`). Do not ship primary actions as grey outline buttons.
 - **Editable fields must match the API:** Create and Edit panels must expose **every** field the API accepts. Do not omit fields. Before building or refactoring a panel, **cross-reference with the API**: list all fields from the backend controller’s create/update validation (e.g. `updateableColumns` in PHP, or request rules) and optionally the resource’s schema (e.g. `full_schema.sql`). For each field, add a corresponding FormField, FormSelect, or FormToggle (editable), or FormReadonly (read-only on Edit). See **API field parity (editable fields)** and **Field parity checklist** below.
 - This pattern also uses the `useFormValidation` composable where validation is needed.
 - **Edit (detail) views must use the `useSchema` composable** for read-only vs editable fields: import `useSchema` from `@/composables/useSchema`, call `ensureFetched()` in onMounted before loading the resource, and use `getSchema(resource)` to decide which fields render as FormReadonly (see Schema composable below). Do **not** hard-code a list of readonly field names in the view.
@@ -1480,13 +1483,13 @@ Same as Create view, but may include additional fields that are only editable (n
 
 ### FormSelect Component
 
-**Purpose**: Dropdown/select fields with validation
+**Purpose**: Dropdown/select fields with validation. **Always use this for dropdowns** — never a raw `<select>` or panel-local `.pick-select`. Control height is locked to match **FormField** inputs (`2.5rem`); custom selects will look shorter/taller than the rest of the SPA.
 
 **Props:**
 - `id` (required): Unique field ID
 - `label` (required): Field label text
 - `v-model`: Two-way binding to selected value
-- `options` (required): Array of option values (strings)
+- `options` (required): Array of option values (strings) or `{ value, label }` objects
 - `option-groups`: Object with group names as keys, arrays of options as values
 - `hint`: Help text shown below field
 - `error`: Error message (from validation composable)
@@ -1495,7 +1498,7 @@ Same as Create view, but may include additional fields that are only editable (n
 - `disabled`: Boolean to disable field
 - `loading`: Boolean to show loading state
 - `loading-text`: Text shown when loading (default: "Loading…")
-- `empty-text`: Text for empty option (default: "—")
+- `empty-text`: Optional empty option text (default `''` — prefer a real default in `options`; do not offer selectable "—")
 - `aria-label`: Accessible label
 
 **Events:**

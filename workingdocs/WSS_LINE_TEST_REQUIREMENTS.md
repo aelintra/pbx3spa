@@ -1,10 +1,10 @@
 # SPA WSS line test — requirements (locked direction)
 
-**Status:** **lab green 2026-08-03** (operator: register / dial / report OK) on branch **`spa-line-test`** → merge to **`main`**.  
+**Status:** **Phase 1 lab green 2026-08-03**. **Phase 2 Support panel shipped 2026-08-26** (Tools → Line quality test; hidden caller; Hold/Resume; retires per-WebRTC button).  
 **Job:** In-admin **diagnostic tool** — a dead-simple dialler over **SIP-over-WSS** that proves the extension path **and**, after **BYE**, leaves a readable **call quality report** (loss, jitter, RTT, path/timing). Demo-able evidence, not a plaything.  
-**Not:** desk softphone, softphone chrome (hold / transfer / BLF / multi-line / directory / call history / presence), Browser-Phone fork, native app, team softphone SPA replacement.
+**Not:** desk softphone, softphone chrome (transfer / BLF / multi-line / directory / call history / presence), Browser-Phone fork, native app, team softphone SPA replacement. **Hold** is Phase 2 **diagnostic only** (§10).
 
-**Related:** **`FEATURE_PLANS_INDEX.md`** · **`pbx3/workingdocs/WEBRTC_WSS_LAB.md`** § Fleet edge W1 · **`FLEET_TRUNK_PEERING_DECISION.md`** §6.1 · Magrathea checklist **`pbx3sbc/workingdocs/WEBRTC_W1_MAGRATHEA.md`**.
+**Related:** **`FEATURE_PLANS_INDEX.md`** · **`pbx3/workingdocs/WEBRTC_WSS_LAB.md`** § Fleet edge W1 · **`FLEET_TRUNK_PEERING_DECISION.md`** §6.1 · SBC W1 checklist **`pbx3sbc/workingdocs/WEBRTC_W1_MAGRATHEA.md`**.
 
 ---
 
@@ -73,9 +73,7 @@ Library: **JsSIP** (locked 2026-08-03 — operator + agent). Lab-proven path; th
 
 ### 5.1 Dialler (dead simple)
 
-**Placement (Phase 1 — interim):** **Extensions detail** → **Line test** button (header actions) when `device=WebRTC` only. Opens a side panel (drawer). No left-nav menu item.
-
-**When Phase 2 ships (§10):** remove this per-WebRTC button — the **Support line test** panel subsumes it (hidden tenant WebRTC caller + dial any ext + hold/MOH). Phase 1 engine (`LineTestPanel`, JsSIP, report) moves to that panel; no second dialler product surface.
+**Placement (Phase 1 — retired 2026-08-26):** ~~Extensions detail → Line test~~ → **Tools → Line quality test** (§10). Deep-link from any extension detail still pre-fills dial target.
 
 Actions only: **Register · Dial · Answer · Hangup** + short status log while active.  
 Optional during connected: a compact “sampling…” indicator only — not charts-in-flight.
@@ -112,7 +110,7 @@ After clean or failed hangup to **BYE** (or terminal failure before answer), pre
 ## 7. Explicit non-goals
 
 - Softphone product chrome (**transfer**, multi-call, contacts/directory, presence/BLF, voicemail UI, call history product)  
-- **Hold** as general desk-phone feature — **except** Phase 2 **diagnostic hold** (§10) to exercise MOH for jitter testing  
+- **Hold** as general desk-phone feature — **except** Phase 2 **diagnostic hold** (§10) to exercise MOH for jitter testing (shipped)  
 - Fleet console owning SIP credentials catalog-wide  
 - Gatekeeper or directory in the call path  
 - Innovate/Browser-Phone productization  
@@ -146,52 +144,53 @@ Suggested build order: shell dialler → REGISTER/call path → getStats samples
 
 ---
 
-## 10. Phase 2 — Support line test panel (sketch, not scheduled)
+## 10. Phase 2 — Support line test panel (**shipped 2026-08-26**)
 
 **Motivation (2026-08-25):** When a customer reports bad audio, ops wants **jitter / loss / RTT** on a **real call to that extension** — not only on WebRTC extension detail. Phase 1 already supports **WebRTC → dial desk ext → post-call report**; Phase 2 improves **discovery and workflow**.
 
-### Shape (preferred direction)
+### Shape (shipped)
 
-| Piece | Proposal |
-|-------|----------|
-| **SPA surface** | Separate panel — e.g. **Tools → Line quality test** (or **Support → Test call**) — not buried on WebRTC detail only |
-| **Caller identity** | One **predefined WebRTC extension per tenant** (or per instance) used only for this tool — e.g. `linetest` / hidden pkey |
-| **Dial target** | Operator picks **any extension** (or enters digits); default from extension detail deep-link when opened from there |
+| Piece | Implementation |
+|-------|----------------|
+| **SPA surface** | **Tools → Line quality test** (`/tools/line-test`) |
+| **Caller identity** | One **hidden WebRTC** per tenant — `description = system:line-test`; dialable prefer **`981` / `9801` / `98001`** by `ext_len` (not all-9s — **999** is emergency in UK/IE/etc.); walk down if taken |
+| **Dial target** | Operator picks **any extension** or types digits; deep-link `?target=` (+ optional `?cluster=`) from any extension detail |
 | **Stats** | Reuse Phase 1 engine: JsSIP + `getStats()` post-call report (copy summary for tickets) |
-| **In-call hold** | While **connected**, **Hold** / **Resume** (far end on/off hold) — not full softphone; drives **tenant MOH** so ops can sample jitter/loss on a **sustained media stream** before hangup |
-| **Visibility** | **Product choice:** extension row may be **admin-only / hidden from customer extension list** (schema flag or naming convention + SPA filter) — customer never sees or registers it unless we want them to |
+| **In-call hold** | **Hold** / **Resume** while connected — Asterisk **MOH**; sampling continues; report lists hold intervals |
+| **Visibility** | Excluded from Extensions index / live / PDF by default (`include_system=1` to include) |
 
-### In-call hold (locked for Phase 2)
+### In-call hold (locked)
 
 | # | Lock |
 |---|------|
 | **H1** | **Hold** and **Resume** buttons enabled only in **connected** state (after answer, before BYE). |
 | **H2** | **Purpose:** put callee on hold → Asterisk **MOH** to far end → continue quiet **`getStats()` sampling** during hold/resume cycles for ticket evidence. |
-| **H3** | **Not** transfer, not multi-call, not park — single session hold/unhold only (JsSIP `hold()` / `unhold()` or equivalent re-INVITE). |
-| **H4** | Post-call report notes **hold intervals** (timestamps) alongside media samples so “bad jitter during MOH” is visible in the summary. |
+| **H3** | **Not** transfer, not multi-call, not park — single session hold/unhold only (JsSIP `hold()` / `unhold()`). |
+| **H4** | Post-call report notes **hold intervals** (timestamps) alongside media samples. |
 
-### Locks to decide at implement time
+### Locks (decided at implement 2026-08-26)
 
-| # | Open |
-|---|------|
-| **L1** | Auto-create **line-test WebRTC** on tenant create vs manual “enable support test” once per tenant |
-| **L2** | Hide from Extensions list (`hidden` / `system` column vs CoS-style convention) |
-| **L3** | Password: API reveal for admins only; never show in customer-facing UI |
-| **L4** | Stats scope unchanged: **browser WebRTC leg** + bridged call — not desk-phone last-mile RTCP (Homer/AMI = later track) |
+| # | Decision |
+|---|----------|
+| **L1** | **Ensure on demand** — `POST extensions/line-test/ensure` when opening the Tools panel (not auto on tenant create). |
+| **L2** | Hide via **`description = system:line-test`** (+ API list filter). No new schema column. |
+| **L3** | Password: ensure response includes `passwd` for admins; session-only in SPA. |
+| **L4** | Stats scope unchanged: **browser WebRTC leg** + bridged call. |
 
-### Supersedes Phase 1 UX (locked)
+### Supersedes Phase 1 UX (locked — done)
 
 | # | Lock |
 |---|------|
-| **S1** | Phase 2 is the **single ops line-quality tool** — no separate “WebRTC extension Line test” button once Phase 2 ships. |
-| **S2** | Customers/operators do **not** need a visible WebRTC phone extension for support testing; the **hidden line-test WebRTC** row is system-owned. |
-| **S3** | Deep-link from **any extension detail** → Support panel with dial target pre-filled (replaces opening a WebRTC ext first). |
-| **S4** | Phase 1 per-ext button is **retired on Phase 2 ship** (delete from `ExtensionDetailView`, not two entry points). |
+| **S1** | Phase 2 is the **single ops line-quality tool**. |
+| **S2** | Customers do **not** need a visible WebRTC phone for support testing. |
+| **S3** | Deep-link from **any extension detail** → Tools panel with dial target pre-filled. |
+| **S4** | Phase 1 per-WebRTC **Line test** button **retired** (replaced by **Line quality test** deep-link). |
 
 ### Non-goals (unchanged)
 
 Softphone product, customer self-service quality portal, fleet-wide aggregate dashboards.
 
-### Implement when scheduled
+### API
 
-Mostly **pbx3spa** (panel + extension picker + reuse `LineTestPanel` / `lineTestUa` + **hold/resume**); optional **pbx3api** helper to resolve or create the tenant line-test WebRTC row; **Commit** required for new WebRTC endpoint. Tenant must have **MOH** configured (default class OK).
+- `POST /api/extensions/line-test/ensure` `{ cluster }` → resolve or create WebRTC; `201` when created (Commit required); passwd visible.
+- Extensions `GET` omits system rows unless `?include_system=1`.

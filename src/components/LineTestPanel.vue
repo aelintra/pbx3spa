@@ -1,7 +1,7 @@
 <script setup>
 /**
- * Extension line test — dead-simple dialler + post-call quality report (JsSIP).
- * WebRTC extensions only; WSS host ≠ SIP domain (Magrathea path).
+ * Line test panel — JsSIP dialler + post-call quality report.
+ * Phase 2: also used embedded on Support line quality test (hold/resume + hidden caller).
  */
 import { ref, computed, watch, onBeforeUnmount, nextTick } from 'vue'
 import FormField from '@/components/forms/FormField.vue'
@@ -20,7 +20,15 @@ const props = defineProps({
   /** Dialable label for UI only */
   dialableLabel: { type: String, default: '' },
   /** Plain SIP password when known (create/regen); session only */
-  initialPassword: { type: String, default: '' }
+  initialPassword: { type: String, default: '' },
+  /** Prefill dial target (deep-link from extension detail) */
+  initialDialTarget: { type: String, default: '' },
+  /** When true, render inline (no drawer Teleport) */
+  embedded: { type: Boolean, default: false },
+  /** Panel heading */
+  title: { type: String, default: 'Line test' },
+  /** Support mode: password field still shown but hint says auto from system WebRTC */
+  supportMode: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['close'])
@@ -38,6 +46,8 @@ const errorMsg = ref('')
 const remoteAudioEl = ref(null)
 /** Reactive flag — underlying UA instance is non-reactive. */
 const uaRunning = ref(false)
+/** Local hold (Phase 2 diagnostic MOH). */
+const onHold = ref(false)
 /** Brief click feedback (which action, for CSS flash). */
 const pressedAction = ref('')
 /** @type {ReturnType<typeof setTimeout> | null} */
@@ -65,6 +75,7 @@ const isRegistered = computed(() =>
     'calling',
     'ringing',
     'confirmed',
+    'held',
     'incoming',
     'answering',
     'ended',
@@ -83,7 +94,7 @@ const canAnswer = computed(
 const canAnswerActive = computed(
   () =>
     canAnswer.value &&
-    !['confirmed', 'ended', 'failed', 'registered', 'calling', 'ringing', 'answering'].includes(
+    !['confirmed', 'held', 'ended', 'failed', 'registered', 'calling', 'ringing', 'answering'].includes(
       uaState.value
     )
 )
@@ -91,18 +102,43 @@ const canHangup = computed(
   () =>
     uaRunning.value &&
     (Boolean(ua?.hasSession()) ||
-      ['calling', 'ringing', 'confirmed', 'incoming', 'answering'].includes(uaState.value))
+      ['calling', 'ringing', 'confirmed', 'held', 'incoming', 'answering'].includes(uaState.value))
 )
 const canDial = computed(
   () =>
     uaRunning.value &&
     isRegistered.value &&
-    !['calling', 'ringing', 'confirmed', 'incoming', 'answering'].includes(uaState.value)
+    !['calling', 'ringing', 'confirmed', 'held', 'incoming', 'answering'].includes(uaState.value)
+)
+const canHold = computed(
+  () => uaRunning.value && uaState.value === 'confirmed' && Boolean(ua?.hasSession())
+)
+const canResume = computed(
+  () => uaRunning.value && (uaState.value === 'held' || onHold.value) && Boolean(ua?.hasSession())
 )
 
 const mediaSummary = computed(() => summarizeSamples(samples.value))
 const verdict = computed(() => buildVerdict(timeline.value))
 const timelineRows = computed(() => formatTimelineDeltas(timeline.value))
+
+/** Hold intervals from timeline (H4) — for report copy. */
+const holdIntervals = computed(() => {
+  const rows = timeline.value || []
+  const out = []
+  let holdAt = null
+  for (const e of rows) {
+    if (e.event === 'hold') holdAt = e.t
+    if (e.event === 'unhold' && holdAt != null) {
+      out.push({ start: holdAt, end: e.t, ms: e.t - holdAt })
+      holdAt = null
+    }
+  }
+  if (holdAt != null) {
+    const end = Date.now()
+    out.push({ start: holdAt, end, ms: end - holdAt, open: true })
+  }
+  return out
+})
 
 const pathCopy = computed(() => ({
   wss: wssUrl.value.trim(),
@@ -112,6 +148,8 @@ const pathCopy = computed(() => ({
   localIce: mediaSummary.value.localCandidateType || '—',
   remoteIce: mediaSummary.value.remoteCandidateType || '—'
 }))
+
+const panelVisible = computed(() => props.embedded || props.show)
 
 function appendLog(msg) {
   const ts = new Date().toLocaleTimeString()
@@ -129,6 +167,7 @@ function stopUa() {
   }
   uaRunning.value = false
   uaState.value = 'idle'
+  onHold.value = false
   busy.value = false
 }
 
@@ -137,12 +176,12 @@ function resetSessionData() {
   samples.value = []
   logLines.value = []
   errorMsg.value = ''
+  onHold.value = false
   phase.value = 'setup'
 }
 
-function onClose() {
-  stopUa()
-  emit('close')
+function onBackdropClick() {
+  if (!props.embedded) onClose()
 }
 
 function openReport() {
@@ -153,8 +192,10 @@ function openReport() {
 watch(
   () => props.show,
   (open) => {
+    if (props.embedded) return
     if (open) {
       password.value = props.initialPassword ? String(props.initialPassword) : password.value
+      if (props.initialDialTarget) dialTarget.value = String(props.initialDialTarget)
       if (!wssUrl.value) wssUrl.value = DEFAULT_EDGE_WSS_URL
       errorMsg.value = ''
       if (phase.value !== 'report') {
@@ -167,9 +208,28 @@ watch(
 )
 
 watch(
+  () => props.embedded,
+  (emb) => {
+    if (emb) {
+      password.value = props.initialPassword ? String(props.initialPassword) : password.value
+      if (props.initialDialTarget) dialTarget.value = String(props.initialDialTarget)
+      if (!wssUrl.value) wssUrl.value = DEFAULT_EDGE_WSS_URL
+    }
+  },
+  { immediate: true }
+)
+
+watch(
   () => props.initialPassword,
   (v) => {
-    if (v && props.show) password.value = String(v)
+    if (v && (props.show || props.embedded)) password.value = String(v)
+  }
+)
+
+watch(
+  () => props.initialDialTarget,
+  (v) => {
+    if (v != null && String(v).trim() !== '') dialTarget.value = String(v)
   }
 )
 
@@ -215,9 +275,12 @@ async function register() {
     onLog: appendLog,
     onState: (s) => {
       uaState.value = s
+      if (s === 'held') onHold.value = true
+      if (s === 'confirmed') onHold.value = false
       if (s === 'registered') busy.value = false
       if (s === 'register_failed' || s === 'disconnected') busy.value = false
       if (s === 'ended' || s === 'failed') {
+        onHold.value = false
         // auto-open report after media session finishes
         nextTick(() => {
           if (timeline.value.some((e) => e.event === 'invite' || e.event === 'incoming')) {
@@ -279,6 +342,28 @@ function hangup() {
   }
 }
 
+function hold() {
+  markPressed('hold')
+  errorMsg.value = ''
+  try {
+    ua?.hold()
+    onHold.value = true
+  } catch (err) {
+    errorMsg.value = err?.message || 'Hold failed'
+  }
+}
+
+function resume() {
+  markPressed('resume')
+  errorMsg.value = ''
+  try {
+    ua?.unhold()
+    onHold.value = false
+  } catch (err) {
+    errorMsg.value = err?.message || 'Resume failed'
+  }
+}
+
 function finishWithoutCall() {
   markPressed('end-report')
   openReport()
@@ -295,6 +380,16 @@ function copyReport() {
   markPressed('copy')
   const m = mediaSummary.value
   const v = verdict.value
+  const holdLines =
+    holdIntervals.value.length > 0
+      ? [
+          'Hold intervals:',
+          ...holdIntervals.value.map((h, i) => {
+            const sec = (h.ms / 1000).toFixed(1)
+            return `  #${i + 1}: ${sec}s${h.open ? ' (open)' : ''}`
+          })
+        ]
+      : []
   const lines = [
     `Line test report — ${v.label}`,
     `WSS: ${pathCopy.value.wss}`,
@@ -305,6 +400,7 @@ function copyReport() {
     `Loss in: ${fmt(m.finalLossPctIn, '%')}  Jitter avg: ${fmt(m.avgJitterMsIn, ' ms')}  RTT avg: ${fmt(m.avgRttMs, ' ms')}`,
     `Bitrate in/out: ${fmt(m.avgBitrateInKbps, ' kbps')} / ${fmt(m.avgBitrateOutKbps, ' kbps')}`,
     `Codec: ${m.codec || '—'}  Samples: ${m.sampleCount}`,
+    ...holdLines,
     'Timeline:',
     ...timelineRows.value.map((r) => `  +${r.msFromStart}ms  ${r.event}${r.message ? ' ' + r.message : ''}${r.target ? ' ' + r.target : ''}`)
   ]
@@ -356,29 +452,44 @@ function metricTone(kind, value) {
 </script>
 
 <template>
-  <Teleport to="body">
-    <div v-if="show" class="line-test-backdrop" @click.self="onClose">
+  <Teleport to="body" :disabled="embedded">
+    <div
+      v-if="panelVisible"
+      :class="embedded ? 'line-test-embedded-root' : 'line-test-backdrop'"
+      @click.self="onBackdropClick"
+    >
       <aside
         class="line-test-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="line-test-title"
+        :class="{ 'line-test-panel--embedded': embedded }"
+        :role="embedded ? undefined : 'dialog'"
+        :aria-modal="embedded ? undefined : 'true'"
+        :aria-labelledby="embedded ? undefined : 'line-test-title'"
+        :aria-label="embedded ? title : undefined"
       >
-        <header class="line-test-header">
+        <header v-if="!embedded" class="line-test-header">
           <div>
-            <h2 id="line-test-title" class="line-test-title">Line test</h2>
+            <h2 id="line-test-title" class="line-test-title">{{ title }}</h2>
             <p class="line-test-sub">
-              Diagnostic dialler — real WebRTC path, post-call quality report.
+              <template v-if="supportMode">
+                Hidden support WebRTC · dial any extension · Hold for MOH jitter sampling.
+              </template>
+              <template v-else>
+                Diagnostic dialler — real WebRTC path, post-call quality report.
+              </template>
             </p>
           </div>
-          <button type="button" class="line-test-close" aria-label="Close line test" @click="onClose">
+          <button
+            type="button"
+            class="line-test-close"
+            aria-label="Close line test"
+            @click="onClose"
+          >
             ×
           </button>
         </header>
 
         <audio ref="remoteAudioEl" autoplay playsinline class="line-test-audio" />
 
-        <!-- Setup / active dialler -->
         <div v-if="phase !== 'report'" class="line-test-body">
           <div class="line-test-fields">
             <FormField
@@ -386,8 +497,8 @@ function metricTone(kind, value) {
               v-model="wssUrl"
               label="WSS URL"
               type="text"
-              placeholder="wss://sbc.pbx3.com:8089/ws"
-              hint="Edge WSS (default Magrathea). Editable for singleton lab wss://instance:8089/ws."
+              placeholder="wss://192.168.1.85:8089/ws"
+              hint="Lab edge: wss://192.168.1.85:8089/ws · cloud: wss://sbc.pbx3.com:8089/ws. If TLS warns, open https://host:8089/ once and accept the cert."
               :disabled="uaRunning"
             />
             <FormReadonly
@@ -403,7 +514,7 @@ function metricTone(kind, value) {
               hide-help
             />
             <p v-if="dialableLabel" class="line-test-dialable">
-              Dialable: <strong>{{ dialableLabel }}</strong>
+              Caller dialable: <strong>{{ dialableLabel }}</strong>
             </p>
             <FormField
               id="line-test-pass"
@@ -411,7 +522,11 @@ function metricTone(kind, value) {
               label="SIP password"
               type="password"
               autocomplete="off"
-              hint="Session only — paste known secret, or Regen on the extension then open line test."
+              :hint="
+                supportMode
+                  ? 'Filled from the hidden support WebRTC (admin only; session use).'
+                  : 'Session only — paste known secret, or Regen on the extension then open line test.'
+              "
               :disabled="uaRunning"
             />
             <FormField
@@ -419,8 +534,8 @@ function metricTone(kind, value) {
               v-model="dialTarget"
               label="Dial target"
               type="text"
-              placeholder="desk shortuid or dialable"
-              hint="Free text; same-tenant peer for path prove."
+              placeholder="extension dialable or shortuid"
+              hint="Any same-tenant extension for path / quality prove."
             />
           </div>
 
@@ -457,6 +572,24 @@ function metricTone(kind, value) {
             <button
               type="button"
               class="lt-btn"
+              :class="{ 'lt-btn--flash': pressedAction === 'hold' }"
+              :disabled="!canHold"
+              @click="hold"
+            >
+              Hold
+            </button>
+            <button
+              type="button"
+              class="lt-btn"
+              :class="{ 'lt-btn--flash': pressedAction === 'resume' }"
+              :disabled="!canResume"
+              @click="resume"
+            >
+              Resume
+            </button>
+            <button
+              type="button"
+              class="lt-btn"
               :class="{ 'lt-btn--flash': pressedAction === 'hangup' }"
               :disabled="!canHangup"
               @click="hangup"
@@ -479,6 +612,8 @@ function metricTone(kind, value) {
                 register: 'Register — requested',
                 dial: 'Dial — requested',
                 answer: 'Answer — requested',
+                hold: 'Hold — requested',
+                resume: 'Resume — requested',
                 hangup: 'Hangup — requested',
                 'end-report': 'End & report — requested',
                 'new-test': 'New test',
@@ -489,6 +624,7 @@ function metricTone(kind, value) {
 
           <p class="line-test-state">
             State: <strong>{{ uaState }}</strong>
+            <span v-if="onHold"> · on hold (MOH)</span>
             <span v-if="samples.length" class="line-test-sampling"> · sampling media…</span>
           </p>
 
@@ -498,7 +634,6 @@ function metricTone(kind, value) {
           </div>
         </div>
 
-        <!-- Post-call report -->
         <div v-else class="line-test-body line-test-report">
           <div class="verdict" :class="verdict.ok ? 'verdict--ok' : 'verdict--bad'">
             {{ verdict.label }}
@@ -591,6 +726,16 @@ function metricTone(kind, value) {
             </p>
           </section>
 
+          <section v-if="holdIntervals.length" class="report-section">
+            <h3 class="report-h">Hold intervals</h3>
+            <ul class="hold-list">
+              <li v-for="(h, i) in holdIntervals" :key="i">
+                #{{ i + 1 }}: {{ (h.ms / 1000).toFixed(1) }}s
+                <span v-if="h.open">(still open at hangup)</span>
+              </li>
+            </ul>
+          </section>
+
           <section class="report-section">
             <h3 class="report-h">Timeline</h3>
             <ol class="timeline">
@@ -622,7 +767,9 @@ function metricTone(kind, value) {
             >
               New test
             </button>
-            <button type="button" class="lt-btn lt-btn-quiet" @click="onClose">Close</button>
+            <button v-if="!embedded" type="button" class="lt-btn lt-btn-quiet" @click="onClose">
+              Close
+            </button>
           </div>
         </div>
       </aside>
@@ -639,6 +786,11 @@ function metricTone(kind, value) {
   display: flex;
   justify-content: flex-end;
 }
+.line-test-embedded-root {
+  display: block;
+  width: 100%;
+  max-width: 32rem;
+}
 .line-test-panel {
   width: min(28rem, 100%);
   height: 100%;
@@ -649,6 +801,29 @@ function metricTone(kind, value) {
   flex-direction: column;
   overflow: auto;
   color: #0f172a;
+}
+.line-test-panel--embedded {
+  width: 100%;
+  height: auto;
+  max-height: none;
+  border: 1px solid var(--pbx-border, #e2e8f0);
+  border-radius: 0.375rem;
+  box-shadow: none;
+  background: var(--pbx-panel, #fff);
+}
+/* Embedded: form controls come from FormField/FormSelect/FormReadonly — do not restyle labels. */
+.line-test-panel--embedded :deep(.form-field-label) {
+  font-weight: 500;
+  color: #475569;
+  font-size: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.line-test-panel--embedded :deep(.form-readonly),
+.line-test-panel--embedded :deep(.form-input),
+.line-test-panel--embedded :deep(input.form-input) {
+  font-family: inherit;
+  font-size: 0.9375rem;
 }
 .line-test-header {
   display: flex;
@@ -749,18 +924,18 @@ function metricTone(kind, value) {
   box-shadow: none;
 }
 .lt-btn-primary {
-  background: #0f172a;
-  border-color: #0f172a;
+  background: #2563eb;
+  border-color: #2563eb;
   color: #fff;
-  box-shadow: 0 1px 0 #020617;
+  box-shadow: 0 1px 0 #1e40af;
 }
 .lt-btn-primary:hover:not(:disabled) {
-  background: #1e293b;
-  border-color: #1e293b;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
 }
 .lt-btn-primary:active:not(:disabled) {
-  background: #020617;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+  background: #1e40af;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
   color: #fff;
 }
 .lt-btn-quiet {
@@ -783,8 +958,8 @@ function metricTone(kind, value) {
   filter: brightness(1.06);
 }
 .lt-btn-primary.lt-btn--flash:not(:disabled) {
-  outline-color: #a5b4fc;
-  filter: brightness(1.12);
+  outline-color: #93c5fd;
+  filter: brightness(1.06);
 }
 .line-test-click-ack {
   margin: -0.15rem 0 0;
@@ -820,6 +995,12 @@ function metricTone(kind, value) {
 }
 .line-test-audio {
   display: none;
+}
+.hold-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  color: #0f172a;
 }
 
 /* Report */

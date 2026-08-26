@@ -73,6 +73,7 @@ import InboundRouteDetailView from '../views/InboundRouteDetailView.vue'
 import ClidBlocksListView from '../views/ClidBlocksListView.vue'
 import ClidBlockCreateView from '../views/ClidBlockCreateView.vue'
 import ClidBlockDetailView from '../views/ClidBlockDetailView.vue'
+import SupportLineTestView from '../views/SupportLineTestView.vue'
 import SysglobalsEditView from '../views/SysglobalsEditView.vue'
 import FirewallView from '../views/FirewallView.vue'
 import BackupView from '../views/BackupView.vue'
@@ -206,6 +207,7 @@ const router = createRouter({
           name: 'clidblock-detail',
           component: ClidBlockDetailView
         },
+        { path: 'tools/line-test', name: 'support-line-test', component: SupportLineTestView },
         { path: 'users', name: 'users', component: UsersListView },
         { path: 'users/new', name: 'user-create', component: UserCreateView },
         { path: 'users/:id', name: 'user-edit', component: UserEditView },
