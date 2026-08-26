@@ -20,7 +20,7 @@
 
 - **`cosrules`** list/create/detail — `ClassOfService*View`, `ClassOfServiceController`.
 - CoS rule **`defaultopen`** / **`defaultclosed`** editable on create/edit; list columns; new extensions seeded via `ExtensionController::create_default_cos_instances()`.
-- Extension edit: daytime / nighttime COS matrix (`ipphonecosopen` / `ipphonecosclosed`) — `ExtensionDetailView` + **`GET/PUT extensions/{extension}/cos`**.
+- Extension edit: **Standard** / **After-hours** COS matrix (`ipphonecosopen` / `ipphonecosclosed`) — `ExtensionDetailView` + **`GET/PUT extensions/{extension}/cos`**.
 - Instance **`globals.cosstart`** on Instance Globals — `SysglobalsEditView`.
 - CoS rule **`orideopen`** / **`orideclosed`** (Override) — create/detail/list + API; GenAst forces rule onto **all** extensions on Commit (no junction backfill).
 - SPA create: **no operator CoS key** — API sets **`pkey = shortuid`**; seeds may still use stable names (`HR_UK070`, `HR_OFFSHORE`). Extension matrix labels prefer **cname**.

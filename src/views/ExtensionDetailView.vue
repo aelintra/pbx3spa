@@ -828,7 +828,7 @@ const panelTitleTenantSuffix = computed(() => {
           </div>
 
           <h2 class="detail-heading detail-heading-with-help">
-            <span>Day time Class of Service</span>
+            <span>Standard Class of Service</span>
             <FieldHelpIcon pkey="cosday" />
           </h2>
           <p v-if="cosError" class="error">{{ cosError }}</p>
@@ -850,7 +850,7 @@ const panelTitleTenantSuffix = computed(() => {
           </div>
 
           <h2 class="detail-heading detail-heading-with-help">
-            <span>Night time Class of Service</span>
+            <span>After-hours Class of Service</span>
             <FieldHelpIcon pkey="cosnight" />
           </h2>
           <p v-if="cosError" class="error">{{ cosError }}</p>
