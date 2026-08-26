@@ -38,12 +38,12 @@
 
 | Legacy panel | PBX3 direction |
 |--------------|----------------|
-| **sarkrecordings** | Read-only list + play/download; may tie to **`RECORDINGS_STORAGE_DESIGN.md`** |
+| **sarkrecordings** | **Shipped** (R1/R1.5/S7) — SPA **Recordings** under ACD. Next polish: unified From/To → API + play spinner (product TODO **0**). |
 | **sarkreport** | **Done as inline exports (2026-08-23)** — no dedicated Reports nav. **Export PDF/CSV** on these lists only: Greetings, Day timers, Holiday timers, Route profiles, Class of Service. Other lists that already had export keep it; do **not** add export to every remaining panel. |
 
-### Tenant custom MOH (sarkcluster) — **2026-08-23**
+### Tenant custom MOH (sarkcluster) — **2026-08-25 lab green**
 
-**Status:** Engineering on tip — Tenant edit **Music-on-Hold** section: list / upload / play / delete under `/usr/share/asterisk/moh-{shortuid}/`; **Custom MOH Active** (`usemohcustom`); GenAst class name aligned with CAGI (`[moh-{shortuid}]`). Commit after upload/toggle for dialplan pick-up.
+**Status:** Upload / play / delete + Custom MOH Active on tip. File changes **`moh reload`** immediately (no Commit). Enable Custom MOH + **Save** for CAGI; Commit only if tenant MOH class never generated.
 
 ---
 
