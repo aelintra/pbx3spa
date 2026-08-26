@@ -592,13 +592,15 @@ async function confirmAndDelete() {
           <div class="form-fields moh-fields">
             <p class="moh-hint">
               Custom MOH files for this tenant (8 kHz mono WAV preferred). With no files, Asterisk
-              uses the system default. Enable Custom MOH after uploading, then Commit.
+              uses the system default. Upload/delete reloads MOH immediately. Enable Custom MOH
+              Active and Save so calls use this class (Commit only if the tenant MOH class was
+              never generated yet).
             </p>
             <p v-if="mohError" class="error" role="alert">{{ mohError }}</p>
             <div class="moh-toolbar">
               <button
                 type="button"
-                class="secondary"
+                class="moh-upload-btn"
                 :disabled="mohUploading"
                 @click="pickMohFile"
               >
@@ -981,8 +983,28 @@ async function confirmAndDelete() {
 }
 .moh-toolbar {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
+}
+.moh-toolbar button {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+.moh-toolbar button.moh-upload-btn {
+  color: #fff;
+  background: #2563eb;
+  border: none;
+}
+.moh-toolbar button.moh-upload-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+.moh-toolbar button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 .moh-file-input {
   display: none;

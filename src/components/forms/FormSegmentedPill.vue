@@ -162,15 +162,18 @@ const hintId = computed(() => `${props.id}-hint`)
   border-radius: 0.375rem;
   padding: 2px;
   background: #f1f5f9;
+  overflow: hidden;
 }
 
 .pill {
   padding: 0.375rem 0.75rem;
   font-size: 0.9375rem;
   font-weight: 500;
+  line-height: 1.25;
   color: #64748b;
   background: transparent;
   border: none;
+  border-radius: 0;
   cursor: pointer;
   transition:
     background 0.15s ease,
@@ -199,14 +202,15 @@ const hintId = computed(() => `${props.id}-hint`)
   background: #1d4ed8;
   color: #fff;
 }
+/* Match form inputs / action buttons (0.375rem); inset by group padding */
 .pill-first {
-  border-radius: 0.25rem 0 0 0.25rem;
+  border-radius: calc(0.375rem - 2px) 0 0 calc(0.375rem - 2px);
 }
 .pill-last {
-  border-radius: 0 0.25rem 0.25rem 0;
+  border-radius: 0 calc(0.375rem - 2px) calc(0.375rem - 2px) 0;
 }
 .pill-first.pill-last {
-  border-radius: 0.25rem;
+  border-radius: calc(0.375rem - 2px);
 }
 
 .form-field-error {
