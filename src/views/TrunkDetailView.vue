@@ -39,7 +39,6 @@ const editInprefix = ref('')
 const editMatch = ref('')
 const editPrivileged = ref('NO')
 const editTechnology = ref('SIP')
-const editIaxreg = ref('')
 const editPjsipreg = ref('')
 const devicerecOptions = ['None', 'Inbound', 'Outbound', 'Both']
 
@@ -103,7 +102,6 @@ async function fetchTrunk() {
     editMatch.value = trunk.value?.match ?? ''
     editPrivileged.value = normalizeYesNo(trunk.value?.privileged)
     editTechnology.value = trunk.value?.technology ?? 'SIP'
-    editIaxreg.value = trunk.value?.iaxreg ?? ''
     editPjsipreg.value = normalizePjsipregForSelect(trunk.value?.pjsipreg)
     editDevicerec.value = normalizeDevicerec(trunk.value?.devicerec)
     editTransform.value = trunk.value?.transform ?? ''
@@ -123,7 +121,6 @@ onMounted(async () => {
 watch(shortuid, fetchTrunk)
 
 watch(editTechnology, (t) => {
-  if (t !== 'IAX2') editIaxreg.value = ''
   if (t !== 'SIP') editPjsipreg.value = ''
 })
 
@@ -162,11 +159,7 @@ async function saveEdit(e) {
       inprefix: editInprefix.value.trim() || undefined,
       match: editMatch.value.trim() || undefined,
       privileged: editPrivileged.value,
-      technology: editTechnology.value || undefined,
-      iaxreg:
-        editTechnology.value === 'IAX2'
-          ? editIaxreg.value.trim() || null
-          : null,
+      technology: editTechnology.value === 'IAX2' ? 'IAX2' : 'SIP',
       pjsipreg:
         editTechnology.value === 'SIP'
           ? editPjsipreg.value
@@ -324,10 +317,10 @@ async function confirmAndDelete() {
               class="readonly-identity"
             />
             <FormReadonly
-              v-if="isReadOnly('technology')"
+              v-if="isReadOnly('technology') || editTechnology === 'IAX2'"
               id="edit-identity-technology"
               label="Technology"
-              :value="editTechnology || '—'"
+              :value="editTechnology === 'IAX2' ? 'IAX2 (legacy — not supported)' : editTechnology || 'SIP'"
               class="readonly-identity"
             />
             <FormSelect
@@ -335,7 +328,7 @@ async function confirmAndDelete() {
               id="edit-technology"
               v-model="editTechnology"
               label="Technology"
-              :options="['SIP', 'IAX2']"
+              :options="['SIP']"
             />
             <FormField
               id="edit-description"
@@ -359,14 +352,8 @@ async function confirmAndDelete() {
               id="edit-pjsipreg"
               v-model="editPjsipreg"
               label="SIP registration"
+              help-pkey="pjsipreg"
               :options="sipPjsipregOptions"
-            />
-            <FormField
-              v-if="editTechnology === 'IAX2'"
-              id="edit-iaxreg"
-              v-model="editIaxreg"
-              label="IAX reg"
-              type="text"
             />
             <FormField
               id="edit-host"
@@ -423,7 +410,7 @@ async function confirmAndDelete() {
 
           <h2 class="detail-heading">Advanced</h2>
           <div class="form-fields">
-            <FormField id="edit-callerid" v-model="editCallerid" label="Caller ID" type="text" />
+            <FormField id="edit-callerid" v-model="editCallerid" label="Caller ID" type="text" hide-help />
             <FormField id="edit-inprefix" v-model="editInprefix" label="In prefix" type="text" />
             <FormField id="edit-match" v-model="editMatch" label="Match" type="text" />
             <FormSelect

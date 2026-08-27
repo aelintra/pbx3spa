@@ -328,6 +328,7 @@ function onKeydown(e) {
           label="Caller ID"
           type="text"
           inputmode="numeric"
+          hide-help
         />
         <FormField
           id="cellphone"

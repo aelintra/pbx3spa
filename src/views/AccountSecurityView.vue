@@ -193,6 +193,7 @@ onMounted(() => {
         label="Current password"
         type="password"
         autocomplete="current-password"
+        hide-help
       />
       <p v-if="error" class="form-error">{{ error }}</p>
       <div class="form-actions">
@@ -219,6 +220,7 @@ onMounted(() => {
         v-model="code"
         label="Authentication code from your app"
         autocomplete="one-time-code"
+        hide-help
       />
       <p v-if="error" class="form-error">{{ error }}</p>
       <div class="form-actions">
@@ -249,12 +251,14 @@ onMounted(() => {
         label="Current password"
         type="password"
         autocomplete="current-password"
+        hide-help
       />
       <FormField
         id="disableCode"
         v-model="code"
         label="Authenticator or recovery code"
         autocomplete="one-time-code"
+        hide-help
       />
       <p v-if="error" class="form-error">{{ error }}</p>
       <div class="form-actions">

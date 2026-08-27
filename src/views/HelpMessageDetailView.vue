@@ -175,6 +175,7 @@ async function confirmDelete() {
             label="Help text"
             multiline
             :rows="16"
+            hide-help
           />
           <FormReadonly v-else id="htext" label="Help text" :value="messageRow?.htext ?? ''" />
         </div>

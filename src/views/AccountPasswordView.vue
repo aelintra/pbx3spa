@@ -64,6 +64,7 @@ async function onSubmit(e) {
         type="password"
         required
         autocomplete="current-password"
+        hide-help
       />
       <FormField
         id="password"
@@ -80,6 +81,7 @@ async function onSubmit(e) {
         type="password"
         required
         autocomplete="new-password"
+        hide-help
       />
       <p v-if="error" class="form-error">{{ error }}</p>
       <div class="form-actions">

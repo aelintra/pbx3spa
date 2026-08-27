@@ -2,6 +2,7 @@
 /**
  * Audit SPA form fields against tt_help_core (sqlite_message.sql).
  * Run from pbx3spa: node scripts/audit-field-help.mjs
+ * Final-pass empty-htext worklist: node scripts/list-empty-help-htext.mjs [--exposed-only] [--write]
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -18,7 +19,8 @@ const FORM_COMPONENTS = new Set([
   'FormSelect',
   'FormToggle',
   'FormReadonly',
-  'FormSegmentedPill'
+  'FormSegmentedPill',
+  'FormTimezoneSelect'
 ])
 
 /** Track B panel tiers (view basename → tier). */

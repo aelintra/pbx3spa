@@ -417,6 +417,7 @@ function onKeydown(e) {
           id="route-profile"
           v-model="routeProfile"
           label="Route profile"
+          help-pkey="route_profile"
           :options="routeProfileOptions"
           :loading="destinationsLoading"
         />

@@ -463,6 +463,7 @@ async function confirmAndDelete() {
               type="number"
               min="2"
               max="5"
+              help-pkey="ext_len"
               placeholder="3"
               hint="All extension numbers in this tenant must be exactly this many digits (2–5)."
             />
@@ -475,9 +476,9 @@ async function confirmAndDelete() {
               id="edit-park-overlay"
               v-model="editParkOverlay"
               label="Parking overlay"
+              help-pkey="park_overlay"
               type="text"
               placeholder="Thin overlay fragment ([park-$clstshortuid] + keys)"
-              hint="Thin fragment merged into the stock parking lot template on Commit. Leave empty for stock."
               :multiline="true"
               :rows="8"
             />

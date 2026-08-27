@@ -27,7 +27,6 @@ import {
   parseNum
 } from '@/constants/tenantAdvanced'
 import { fieldErrors } from '@/utils/formErrors'
-import { OBJECT_PKEY_HELP } from '@/constants/helpPkeys'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
@@ -235,7 +234,7 @@ onMounted(async () => {
           ref="pkeyInput"
           v-model="pkey"
           label="Name"
-          :help-pkey="OBJECT_PKEY_HELP.tenant"
+          help-pkey="tenantname"
           type="text"
           placeholder="e.g. mycluster"
           :error="pkeyValidation.error.value"
@@ -283,6 +282,7 @@ onMounted(async () => {
           type="number"
           min="2"
           max="5"
+          help-pkey="ext_len"
           placeholder="3"
           hint="Digits per extension (2–5). All extensions in this tenant must match."
           :error="extLenValidation.error.value"

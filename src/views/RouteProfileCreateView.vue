@@ -276,6 +276,7 @@ async function onSubmit(e) {
           :options="destPickOptions"
           :option-groups="destinationGroups"
           :loading="destinationsLoading"
+          hide-help
         />
       </div>
 

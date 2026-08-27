@@ -30,7 +30,11 @@ const error = ref('')
 const editName = ref('')
 const editCluster = ref('default')
 const editDescription = ref('')
-const lines = ref([])
+const openDest = ref('')
+const closedDest = ref('')
+const extraLines = ref([])
+const openError = ref('')
+const openTouched = ref(false)
 const saveError = ref('')
 const saving = ref(false)
 const deleteError = ref('')
@@ -96,7 +100,44 @@ const destinationGroups = computed(() => {
   }
 })
 
+const destPickOptions = computed(() => ['', 'Operator'])
+
 const destBaseOptions = computed(() => ['None', 'Operator'])
+
+function isNoneDest(v) {
+  const t = String(v ?? '').trim()
+  return !t || t.toLowerCase() === 'none'
+}
+
+function normalizeDestPick(v) {
+  const t = String(v ?? '').trim()
+  if (!t || t.toLowerCase() === 'none') return ''
+  return t
+}
+
+function syncLinesFromProfile(rawLines) {
+  const arr = (Array.isArray(rawLines) ? rawLines : []).map((l) => ({
+    mode: String(l.mode || '').toLowerCase(),
+    destination: l.destination || 'None'
+  }))
+  const open = arr.find((l) => l.mode === 'open')
+  const closed = arr.find((l) => l.mode === 'closed')
+  openDest.value = normalizeDestPick(open?.destination)
+  closedDest.value = normalizeDestPick(closed?.destination)
+  extraLines.value = arr
+    .filter((l) => l.mode && l.mode !== 'open' && l.mode !== 'closed')
+    .map((l) => ({ mode: l.mode, destination: l.destination || 'None' }))
+}
+
+function validateOpen() {
+  openTouched.value = true
+  if (isNoneDest(openDest.value)) {
+    openError.value = 'Open destination is required'
+    return false
+  }
+  openError.value = ''
+  return true
+}
 
 async function loadDestinations() {
   const c = editCluster.value
@@ -142,13 +183,9 @@ async function fetchProfile() {
     editCluster.value = tenantShortuidToPkey.value[clusterRaw] ?? clusterRaw
     editName.value = p?.name ?? ''
     editDescription.value = p?.description ?? ''
-    lines.value = (Array.isArray(p?.lines) ? p.lines : []).map((l) => ({
-      mode: (l.mode || '').toLowerCase(),
-      destination: l.destination || 'None'
-    }))
-    if (!lines.value.length) {
-      lines.value = [{ mode: 'open', destination: '' }]
-    }
+    syncLinesFromProfile(p?.lines)
+    openTouched.value = false
+    openError.value = ''
     await loadDestinations()
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load Route profile')
@@ -164,28 +201,24 @@ onMounted(async () => {
 })
 watch(shortuid, fetchProfile)
 watch(editCluster, () => {
+  openDest.value = ''
+  closedDest.value = ''
   loadDestinations()
 })
 
+watch(openDest, (v) => {
+  if (!isNoneDest(v) && isNoneDest(closedDest.value)) {
+    closedDest.value = v
+  }
+  if (openTouched.value) validateOpen()
+})
+
 function addLine() {
-  lines.value.push({ mode: '', destination: 'None' })
+  extraLines.value.push({ mode: '', destination: 'None' })
 }
 
 function removeLine(i) {
-  const line = lines.value[i]
-  const mode = String(line?.mode || '')
-    .trim()
-    .toLowerCase()
-  if (mode === 'open') {
-    const openCount = lines.value.filter(
-      (l) => String(l.mode || '').trim().toLowerCase() === 'open'
-    ).length
-    if (openCount <= 1) {
-      saveError.value = 'Cannot remove the open mode line — inbound needs an open destination'
-      return
-    }
-  }
-  lines.value.splice(i, 1)
+  extraLines.value.splice(i, 1)
 }
 
 function goBack() {
@@ -206,9 +239,16 @@ async function saveEdit(e) {
     saveError.value = 'Name is required'
     return
   }
-  const bodyLines = []
-  const seen = new Set()
-  for (const l of lines.value) {
+  if (!validateOpen()) return
+
+  const open = openDest.value.trim()
+  const closed = isNoneDest(closedDest.value) ? open : closedDest.value.trim()
+  const bodyLines = [
+    { mode: 'open', destination: open },
+    { mode: 'closed', destination: closed }
+  ]
+  const seen = new Set(['open', 'closed'])
+  for (const l of extraLines.value) {
     const mode = String(l.mode || '').trim().toLowerCase()
     if (!mode) continue
     const mErr = validateScheduleMode(mode)
@@ -222,19 +262,11 @@ async function saveEdit(e) {
     }
     seen.add(mode)
     const dest = String(l.destination || '').trim() || 'None'
+    if (!dest || dest.toLowerCase() === 'none') {
+      saveError.value = 'Each additional mode line needs a real destination (not None)'
+      return
+    }
     bodyLines.push({ mode, destination: dest })
-  }
-  if (!bodyLines.length) {
-    saveError.value = 'At least one mode line is required'
-    return
-  }
-  if (!bodyLines.some((l) => l.mode === 'open')) {
-    saveError.value = 'Profile must include an open mode destination'
-    return
-  }
-  if (bodyLines.some((l) => !l.destination || l.destination.toLowerCase() === 'none')) {
-    saveError.value = 'Each mode line needs a real destination (not None)'
-    return
   }
   saving.value = true
   try {
@@ -308,31 +340,59 @@ async function confirmAndDelete() {
           <FormField id="description" v-model="editDescription" label="Description" type="text" />
         </div>
 
-        <h2 class="detail-heading">Mode → destination</h2>
-        <p class="hint">Maps schedule modes to destinations (same vocabulary as open/closed routes).</p>
-        <div v-for="(line, i) in lines" :key="i" class="line-row">
-          <FormField
-            :id="`line-mode-${i}`"
-            v-model="line.mode"
-            label="Mode"
-            type="text"
-            placeholder="e.g. lunch"
-            list="schedule-mode-suggestions"
-          />
+        <h2 class="detail-heading">Destinations</h2>
+        <p class="hint">Where calls go when this profile's schedule is open or closed.</p>
+        <div class="form-fields dest-fields">
           <FormSelect
-            :id="`line-dest-${i}`"
-            v-model="line.destination"
-            label="Destination"
-            :options="destBaseOptions"
+            id="open-dest"
+            v-model="openDest"
+            label="Open destination"
+            :options="destPickOptions"
             :option-groups="destinationGroups"
             :loading="destinationsLoading"
+            :required="true"
+            :error="openError"
+            :touched="openTouched"
+            @blur="validateOpen"
           />
-          <button type="button" class="secondary line-remove" @click="removeLine(i)">Remove</button>
+          <FormSelect
+            id="closed-dest"
+            v-model="closedDest"
+            label="Closed destination"
+            :options="destPickOptions"
+            :option-groups="destinationGroups"
+            :loading="destinationsLoading"
+            hide-help
+          />
         </div>
+
+        <template v-if="extraLines.length">
+          <h2 class="detail-heading">Additional schedule modes</h2>
+          <p class="hint">Optional — e.g. lunch or night when day timers use those modes.</p>
+          <div v-for="(line, i) in extraLines" :key="i" class="line-row">
+            <FormField
+              :id="`line-mode-${i}`"
+              v-model="line.mode"
+              label="Mode"
+              type="text"
+              placeholder="e.g. lunch"
+              list="schedule-mode-suggestions"
+            />
+            <FormSelect
+              :id="`line-dest-${i}`"
+              v-model="line.destination"
+              label="Destination"
+              :options="destBaseOptions"
+              :option-groups="destinationGroups"
+              :loading="destinationsLoading"
+            />
+            <button type="button" class="secondary line-remove" @click="removeLine(i)">Remove</button>
+          </div>
+        </template>
         <datalist id="schedule-mode-suggestions">
           <option v-for="m in COMMON_SCHEDULE_MODES" :key="m" :value="m" />
         </datalist>
-        <button type="button" class="secondary" @click="addLine">Add mode line</button>
+        <button type="button" class="secondary" @click="addLine">Add schedule mode</button>
 
         <div class="edit-actions">
           <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
@@ -366,6 +426,12 @@ async function confirmAndDelete() {
   display: grid;
   gap: 0.75rem;
   max-width: 28rem;
+}
+.dest-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: none;
 }
 .line-row {
   display: grid;

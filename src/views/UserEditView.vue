@@ -253,6 +253,7 @@ onMounted(async () => {
             required
             placeholder="user@example.com"
             autocomplete="email"
+            hide-help
           />
         </section>
 
@@ -321,6 +322,7 @@ onMounted(async () => {
             type="password"
             required
             autocomplete="new-password"
+            hide-help
           />
           <FormField
             id="newPasswordConfirm"
@@ -329,6 +331,7 @@ onMounted(async () => {
             type="password"
             required
             autocomplete="new-password"
+            hide-help
           />
         </section>
 

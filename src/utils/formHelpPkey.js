@@ -51,6 +51,15 @@ const COLUMN_TO_HELP_PKEY = {
   allow_hash_xfer: 'allow_hash_transfer',
   masteroclo: 'masterclose',
   operator: 'clustersysop',
+  name: 'cname',
+  'open-dest': 'openroute',
+  'closed-dest': 'closeroute',
+  'park-overlay': 'park_overlay',
+  'queue-overlay': 'queue_overlay',
+  'route-profile': 'route_profile',
+  'start-datetime': 'start_datetime',
+  'end-datetime': 'end_datetime',
+  'ext-len': 'ext_len',
   queue1: 'q1',
   queue2: 'q2',
   queue3: 'q3',
@@ -58,6 +67,7 @@ const COLUMN_TO_HELP_PKEY = {
   queue5: 'q5',
   queue6: 'q6',
   'trunk-technology': 'chooser',
+  'trunk-sip-reg-mode': 'pjsipreg',
   disa: 'disapass',
   timeout: 'queuetimeout',
   'dest-timeout': 'outcome',
@@ -82,6 +92,16 @@ function mapColumnToHelpPkey(columnOrSuffix) {
  * @param {string|null|undefined} id
  * @returns {string|null}
  */
+/** All tt_help_core pkeys reachable via id→pkey maps (for help seed audits). */
+export function collectImplicitHelpPkeys() {
+  return new Set([
+    ...Object.values(COLUMN_TO_HELP_PKEY),
+    ...Object.values(IP_ID_TO_HELP_PKEY),
+    ...Object.values(FIREWALL_FIELD_TO_PKEY),
+    ...Object.values(FIREWALL6_FIELD_TO_PKEY)
+  ])
+}
+
 export function deriveHelpPkeyFromFieldId(id) {
   if (id == null || id === '') return null
 

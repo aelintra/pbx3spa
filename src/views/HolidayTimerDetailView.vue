@@ -12,7 +12,11 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
-import { COMMON_SCHEDULE_MODES, validateScheduleMode } from '@/utils/validation'
+const HOLIDAY_FORCE_MODE_OPTIONS = [
+  { value: 'open', label: 'Open' },
+  { value: 'closed', label: 'Closed' }
+]
+
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -26,8 +30,8 @@ const loading = ref(true)
 const error = ref('')
 const editCluster = ref('default')
 const editDescription = ref('')
-const editRoute = ref('')
-const editForceMode = ref('')
+const editRoute = ref('Operator')
+const editForceMode = ref('closed')
 const startLocal = ref('')
 const endLocal = ref('')
 const saveError = ref('')
@@ -151,9 +155,10 @@ async function fetchHolidaytimer() {
     const dest =
       (h?.force_dest && String(h.force_dest).trim()) ||
       (h?.route && String(h.route).trim()) ||
-      ''
-    editRoute.value = dest
-    editForceMode.value = h?.force_mode ? String(h.force_mode).toLowerCase() : ''
+      'Operator'
+    editRoute.value = dest || 'Operator'
+    const mode = h?.force_mode ? String(h.force_mode).toLowerCase() : 'closed'
+    editForceMode.value = mode === 'open' ? 'open' : 'closed'
     startLocal.value = epochToDatetimeLocal(h?.stime)
     endLocal.value = epochToDatetimeLocal(h?.etime)
   } catch (err) {
@@ -207,22 +212,21 @@ async function saveEdit(e) {
     saveError.value = err
     return
   }
-  if (editForceMode.value) {
-    const modeErr = validateScheduleMode(editForceMode.value)
-    if (modeErr) {
-      saveError.value = modeErr
-      return
-    }
-  }
   saving.value = true
   try {
     const stime = datetimeLocalToEpoch(startLocal.value)
     const etime = datetimeLocalToEpoch(endLocal.value)
-    const dest = editRoute.value && editRoute.value.trim() !== '' ? editRoute.value.trim() : null
+    const dest = (editRoute.value && String(editRoute.value).trim()) || 'Operator'
+    const mode =
+      String(editForceMode.value || 'closed')
+        .trim()
+        .toLowerCase() === 'open'
+        ? 'open'
+        : 'closed'
     const body = {
       cluster: editCluster.value.trim(),
       description: editDescription.value.trim() || null,
-      force_mode: editForceMode.value ? String(editForceMode.value).trim().toLowerCase() : null,
+      force_mode: mode,
       force_dest: dest,
       route: dest,
       stime: stime ?? undefined,
@@ -341,36 +345,34 @@ const panelTitleTenantSuffix = computed(() => {
               :required="true"
             />
             <FormField
-              id="edit-description"
+              id="edit-holiday-description"
               v-model="editDescription"
               label="Description"
+              help-pkey="description"
               type="text"
-              placeholder="e.g. Christmas"
+              placeholder="e.g. Xmas"
+              autocomplete="off"
             />
-            <FormField
+            <FormSelect
               id="edit-force-mode"
               v-model="editForceMode"
-              label="Force mode (optional)"
-              type="text"
-              placeholder="e.g. closed"
-              list="holiday-mode-suggestions"
+              label="Force mode"
+              :options="HOLIDAY_FORCE_MODE_OPTIONS"
+              hide-help
             />
-            <datalist id="holiday-mode-suggestions">
-              <option v-for="m in COMMON_SCHEDULE_MODES" :key="m" :value="m" />
-            </datalist>
             <FormSelect
               id="edit-route"
               v-model="editRoute"
-              label="Force destination (optional)"
+              label="Force destination"
               :options="['Operator']"
               :option-groups="destinationGroups"
               :loading="destinationsLoading"
-              empty-text="None"
             />
             <FormField
               id="edit-start-datetime"
               v-model="startLocal"
               label="Start"
+              help-pkey="start_datetime"
               type="datetime-local"
               :step="60"
             />
@@ -378,6 +380,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-end-datetime"
               v-model="endLocal"
               label="End"
+              help-pkey="end_datetime"
               type="datetime-local"
               :step="60"
             />

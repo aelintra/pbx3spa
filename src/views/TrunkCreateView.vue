@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
@@ -33,14 +33,12 @@ const pkeyInput = ref(null)
 
 const pkeyValidation = useFormValidation(pkey, validateTrunkPkey)
 
-const technologyOptions = ['SIP', 'IAX2']
 const sipRegModeOptions = [
   { value: 'SND', label: 'Send registration to provider' },
   { value: 'RCV', label: 'Accept registration from provider' },
   { value: 'TRUSTED', label: 'Trusted peer (no outbound registration)' }
 ]
 const isSIP = computed(() => technology.value === 'SIP')
-const typeChosen = computed(() => !!technology.value)
 const isSipSendReg = computed(() => isSIP.value && sipRegMode.value === 'SND')
 const isSipAcceptReg = computed(() => isSIP.value && sipRegMode.value === 'RCV')
 const isSipTrusted = computed(() => isSIP.value && sipRegMode.value === 'TRUSTED')
@@ -58,12 +56,6 @@ function resetForm() {
   pkeyValidation.reset()
   error.value = ''
 }
-
-watch(technology, (t) => {
-  if (t !== 'SIP') {
-    sipRegMode.value = 'TRUSTED'
-  }
-})
 
 onMounted(async () => {
   await loadFleetPosture()
@@ -85,8 +77,8 @@ async function onSubmit(e) {
       'Fleet mode: carriers live on the SBC. Edit Egress (e.g. mangle) here; do not create new trunks on the node.'
     return
   }
-  if (!typeChosen.value) {
-    error.value = 'Please choose a technology'
+  if (!isSIP.value) {
+    error.value = 'Only SIP trunks are supported.'
     return
   }
   const validations = [{ ...pkeyValidation, fieldId: 'pkey' }]
@@ -118,9 +110,6 @@ async function onSubmit(e) {
       error.value = 'Password is required for SIP registration (send or accept).'
       return
     }
-  } else if (!host.value.trim()) {
-    error.value = 'Host is required.'
-    return
   }
   loading.value = true
   try {
@@ -189,103 +178,87 @@ function onKeydown(e) {
 
       <template v-if="!fleetBlocked">
       <div class="actions actions-top">
-        <button type="submit" :disabled="loading || !typeChosen">
+        <button type="submit" :disabled="loading">
           {{ loading ? 'Creating…' : 'Create' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>
       </div>
 
-      <h2 class="detail-heading">Technology</h2>
+      <h2 class="detail-heading">SIP registration</h2>
       <div class="form-fields">
         <FormSelect
-          id="trunk-technology"
-          v-model="technology"
-          label="Technology"
-          :options="technologyOptions"
-          aria-label="Choose technology"
+          id="trunk-sip-reg-mode"
+          v-model="sipRegMode"
+          label="How this trunk registers"
+          help-pkey="pjsipreg"
+          :options="sipRegModeOptions"
+          required
+          aria-label="SIP registration mode"
         />
       </div>
 
-      <template v-if="typeChosen">
-        <template v-if="isSIP">
-          <h2 class="detail-heading">SIP registration</h2>
-          <div class="form-fields">
-            <FormSelect
-              id="trunk-sip-reg-mode"
-              v-model="sipRegMode"
-              label="How this trunk registers"
-              :options="sipRegModeOptions"
-              required
-              aria-label="SIP registration mode"
-            />
-          </div>
-        </template>
+      <h2 class="detail-heading">Identity</h2>
+      <div class="form-fields">
+        <FormField
+          id="pkey"
+          ref="pkeyInput"
+          v-model="pkey"
+          label="Trunk name"
+          help-pkey="trunkname"
+          type="text"
+          placeholder="e.g. mytrunk"
+          :error="pkeyValidation.error.value"
+          :touched="pkeyValidation.touched.value"
+          :required="true"
+          @blur="pkeyValidation.onBlur"
+        />
+        <FormField
+          id="cname"
+          v-model="cname"
+          label="Common name"
+          type="text"
+          placeholder="Display name"
+        />
+        <FormField
+          id="description"
+          v-model="description"
+          label="Description"
+          type="text"
+          placeholder="Optional description"
+        />
+      </div>
 
-        <h2 class="detail-heading">Identity</h2>
-        <div class="form-fields">
-          <FormField
-            id="pkey"
-            ref="pkeyInput"
-            v-model="pkey"
-            label="Trunk name"
-            help-pkey="trunkname"
-            type="text"
-            placeholder="e.g. mytrunk"
-            :error="pkeyValidation.error.value"
-            :touched="pkeyValidation.touched.value"
-            :required="true"
-            @blur="pkeyValidation.onBlur"
-          />
-          <FormField
-            id="cname"
-            v-model="cname"
-            label="Common name"
-            type="text"
-            placeholder="Display name"
-          />
-          <FormField
-            id="description"
-            v-model="description"
-            label="Description"
-            type="text"
-            placeholder="Optional description"
-          />
-        </div>
-
-        <h2 class="detail-heading">Connection</h2>
-        <div class="form-fields">
-          <FormField
-            v-if="!isSipAcceptReg"
-            id="host"
-            v-model="host"
-            label="Host"
-            type="text"
-            placeholder="e.g. sip.example.com, IP, or FQDN"
-            :required="true"
-          />
-          <FormSelect
-            v-if="isSIP"
-            id="transport"
-            v-model="transport"
-            label="Transport"
-            :options="['udp', 'tcp', 'tls', 'wss']"
-          />
-          <FormField
-            v-if="isSIP"
-            id="password-sip"
-            v-model="password"
-            label="Password"
-            type="password"
-            :placeholder="
-              isSipTrusted ? 'Optional for trusted peer' : 'Required for send/accept registration'
-            "
-            autocomplete="new-password"
-          />
-        </div>
-      </template>
+      <h2 class="detail-heading">Connection</h2>
+      <div class="form-fields">
+        <FormField
+          v-if="!isSipAcceptReg"
+          id="host"
+          v-model="host"
+          label="Host"
+          type="text"
+          placeholder="e.g. sip.example.com, IP, or FQDN"
+          :required="true"
+        />
+        <FormSelect
+          id="transport"
+          v-model="transport"
+          label="Transport"
+          :options="['udp', 'tcp', 'tls', 'wss']"
+        />
+        <FormField
+          id="password-sip"
+          v-model="password"
+          label="Password"
+          type="password"
+          :placeholder="
+            isSipTrusted ? 'Optional for trusted peer' : 'Required for send/accept registration'
+          "
+          autocomplete="new-password"
+        />
+      </div>
 
       <div class="actions">
-        <button type="submit" :disabled="loading || !typeChosen">
+        <button type="submit" :disabled="loading">
           {{ loading ? 'Creating…' : 'Create' }}
         </button>
         <button type="button" class="secondary" @click="goBack">Cancel</button>

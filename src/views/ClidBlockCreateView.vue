@@ -160,6 +160,7 @@ async function onSubmit(e) {
         v-model="pkey"
         label="Caller ID"
         help="Digits only after save (e.g. +44 1924… → 441924…). Match the form you see in CDR."
+        hide-help
         :error="pkeyValidation.error.value"
         required
         autocomplete="off"

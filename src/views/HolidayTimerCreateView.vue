@@ -1,41 +1,101 @@
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation } from '@/composables/useFormValidation'
 import { validateTenant } from '@/utils/validation'
-import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 
+const HOLIDAY_FORCE_MODE_OPTIONS = [
+  { value: 'open', label: 'Open' },
+  { value: 'closed', label: 'Closed' }
+]
+
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
 const description = ref('')
 const cluster = ref('default')
+const forceMode = ref('closed')
+const route = ref('Operator')
 const tenants = ref([])
+const destinations = ref(null)
+const destinationsLoading = ref(false)
 const tenantsLoading = ref(true)
 const error = ref('')
 const loading = ref(false)
 
 const clusterValidation = useFormValidation(cluster, validateTenant)
+/** Bumps after mount so description input remounts empty (avoids browser autofill on id=description). */
+const descriptionInputKey = ref(0)
 
-const tenantOptions = computed(() => {
-  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
-  return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
-})
+/** Epoch seconds → datetime-local (local browser timezone). */
+function epochToDatetimeLocal(epoch) {
+  if (epoch == null || epoch === '') return ''
+  const d = new Date(Number(epoch) * 1000)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const h = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  return `${y}-${m}-${day}T${h}:${min}`
+}
+
+function datetimeLocalToEpoch(s) {
+  if (s == null || String(s).trim() === '') return null
+  const d = new Date(String(s).trim())
+  if (Number.isNaN(d.getTime())) return null
+  return Math.floor(d.getTime() / 1000)
+}
+
+function defaultHolidayStartLocal() {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return epochToDatetimeLocal(Math.floor(d.getTime() / 1000))
+}
+
+function defaultHolidayEndLocal() {
+  const d = new Date()
+  d.setHours(23, 59, 0, 0)
+  return epochToDatetimeLocal(Math.floor(d.getTime() / 1000))
+}
+
+const startLocal = ref(defaultHolidayStartLocal())
+const endLocal = ref(defaultHolidayEndLocal())
+
+function toDestArrays(d) {
+  if (!d || typeof d !== 'object') return {}
+  return {
+    Queues: Array.isArray(d.Queues) ? d.Queues : Array.isArray(d.queues) ? d.queues : [],
+    Extensions: Array.isArray(d.Extensions)
+      ? d.Extensions
+      : Array.isArray(d.extensions)
+        ? d.extensions
+        : [],
+    IVRs: Array.isArray(d.IVRs) ? d.IVRs : Array.isArray(d.ivrs) ? d.ivrs : [],
+    CustomApps: Array.isArray(d.CustomApps)
+      ? d.CustomApps
+      : Array.isArray(d.customApps)
+        ? d.customApps
+        : []
+  }
+}
+
+const destinationGroups = computed(() => toDestArrays(destinations.value))
 
 const tenantOptionsForSelect = computed(() => {
-  const list = tenantOptions.value
+  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
+  const unique = [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
   const cur = cluster.value
-  if (cur && !list.includes(cur))
-    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
-  return list
+  if (cur && !unique.includes(cur))
+    return [cur, ...unique].sort((a, b) => String(a).localeCompare(String(b)))
+  return unique
 })
 
 async function loadTenants() {
@@ -53,21 +113,40 @@ async function loadTenants() {
   }
 }
 
+async function loadDestinations() {
+  const c = cluster.value
+  if (!c) {
+    destinations.value = null
+    return
+  }
+  destinationsLoading.value = true
+  try {
+    const response = await getApiClient().get('destinations', { params: { cluster: c } })
+    const body = response && typeof response === 'object' ? (response.data ?? response) : null
+    destinations.value = body && typeof body === 'object' ? body : null
+  } catch {
+    destinations.value = null
+  } finally {
+    destinationsLoading.value = false
+  }
+}
+
 onMounted(async () => {
+  description.value = ''
   await ensureFetched()
   applySchemaDefaults('holidaytimers', {
-    cluster,
-    description
+    cluster
   })
+  description.value = ''
   await loadTenants()
+  if (cluster.value) await loadDestinations()
+  description.value = ''
+  descriptionInputKey.value += 1
 })
 
-function resetForm() {
-  description.value = ''
-  cluster.value = 'default'
-  clusterValidation.reset()
-  error.value = ''
-}
+watch(cluster, () => {
+  loadDestinations()
+})
 
 function goBack() {
   router.push({ name: 'holidaytimers' })
@@ -78,6 +157,15 @@ function onKeydown(e) {
     e.preventDefault()
     goBack()
   }
+}
+
+function validateDateTime() {
+  const stime = datetimeLocalToEpoch(startLocal.value)
+  const etime = datetimeLocalToEpoch(endLocal.value)
+  if (stime == null) return 'Start date/time is required'
+  if (etime == null) return 'End date/time is required'
+  if (etime < stime) return 'End date/time must be after start date/time.'
+  return null
 }
 
 async function onSubmit(e) {
@@ -91,17 +179,39 @@ async function onSubmit(e) {
     return
   }
 
+  const dtErr = validateDateTime()
+  if (dtErr) {
+    error.value = dtErr
+    return
+  }
+
   loading.value = true
   try {
+    const stime = datetimeLocalToEpoch(startLocal.value)
+    const etime = datetimeLocalToEpoch(endLocal.value)
+    const dest = (route.value && String(route.value).trim()) || 'Operator'
+    const mode =
+      String(forceMode.value || 'closed')
+        .trim()
+        .toLowerCase() === 'open'
+        ? 'open'
+        : 'closed'
     const body = {
       description: description.value.trim() || null,
-      cluster: cluster.value.trim()
+      cluster: cluster.value.trim(),
+      force_mode: mode,
+      force_dest: dest,
+      route: dest,
+      stime,
+      etime
     }
-    await getApiClient().post('holidaytimers', body)
+    const created = await getApiClient().post('holidaytimers', body)
     toast.show('Holiday timer created')
-    resetForm()
-    await nextTick()
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (created?.shortuid) {
+      router.push({ name: 'holidaytimer-detail', params: { shortuid: created.shortuid } })
+    } else {
+      goBack()
+    }
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
@@ -128,7 +238,7 @@ async function onSubmit(e) {
       <h1>Create Holiday timer</h1>
     </PanelBackLink>
 
-    <form class="form" @submit="onSubmit">
+    <form class="form" autocomplete="off" @submit="onSubmit">
       <p v-if="error" id="holidaytimer-create-error" class="error" role="alert">{{ error }}</p>
 
       <div class="actions actions-top">
@@ -140,13 +250,6 @@ async function onSubmit(e) {
 
       <h2 class="detail-heading">Holiday</h2>
       <div class="form-fields">
-        <FormField
-          id="description"
-          v-model="description"
-          label="Description"
-          type="text"
-          placeholder="e.g. Christmas"
-        />
         <FormSelect
           id="cluster"
           v-model="cluster"
@@ -157,6 +260,49 @@ async function onSubmit(e) {
           :required="true"
           :loading="tenantsLoading"
           @blur="clusterValidation.onBlur"
+        />
+        <FormField
+          id="holiday-description"
+          v-model="description"
+          label="Description"
+          help-pkey="description"
+          :input-key="descriptionInputKey"
+          type="text"
+          placeholder="e.g. Xmas"
+          autocomplete="off"
+        />
+        <FormSelect
+          id="force-mode"
+          v-model="forceMode"
+          label="Force mode"
+          :options="HOLIDAY_FORCE_MODE_OPTIONS"
+          hide-help
+        />
+        <FormSelect
+          id="route"
+          v-model="route"
+          label="Force destination"
+          :options="['Operator']"
+          :option-groups="destinationGroups"
+          :loading="destinationsLoading"
+        />
+        <FormField
+          id="start-datetime"
+          v-model="startLocal"
+          label="Start"
+          help-pkey="start_datetime"
+          type="datetime-local"
+          :step="60"
+          required
+        />
+        <FormField
+          id="end-datetime"
+          v-model="endLocal"
+          label="End"
+          help-pkey="end_datetime"
+          type="datetime-local"
+          :step="60"
+          required
         />
       </div>
 

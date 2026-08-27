@@ -5,12 +5,21 @@ import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation } from '@/composables/useFormValidation'
-import { validateTenant } from '@/utils/validation'
+import {
+  validateTenant,
+  COMMON_SCHEDULE_MODES,
+  validateScheduleMode,
+  validateSchedulePriority,
+  validateDayOfWeek,
+  normalizeDayOfWeek,
+  dayOfWeekLabel
+} from '@/utils/validation'
 import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 
 const router = useRouter()
@@ -18,25 +27,141 @@ const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
 const description = ref('')
 const cluster = ref('default')
+const mode = ref('closed')
+const priority = ref(0)
+const dayofweek = ref('*')
+const allday = ref('NO')
+const startTime = ref('09:00')
+const endTime = ref('17:00')
 const tenants = ref([])
+const routeProfiles = ref([])
+const daytimersForSuggest = ref([])
 const tenantsLoading = ref(true)
 const error = ref('')
 const loading = ref(false)
 
 const clusterValidation = useFormValidation(cluster, validateTenant)
 
-const tenantOptions = computed(() => {
-  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
-  return [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
+const dayOfWeekOptions = [
+  { value: '*', label: 'Every day' },
+  { value: 'mon-fri', label: 'Mon–Fri' },
+  { value: 'mon-thu', label: 'Mon–Thu' },
+  { value: 'tue-fri', label: 'Tue–Fri' },
+  { value: 'sat-sun', label: 'Sat–Sun' },
+  { value: 'mon', label: 'mon' },
+  { value: 'tue', label: 'tue' },
+  { value: 'wed', label: 'wed' },
+  { value: 'thu', label: 'thu' },
+  { value: 'fri', label: 'fri' },
+  { value: 'sat', label: 'sat' },
+  { value: 'sun', label: 'sun' }
+]
+
+const tenantShortuidToPkey = computed(() => {
+  const map = {}
+  for (const t of tenants.value) {
+    if (t.shortuid) map[String(t.shortuid)] = t.pkey
+    if (t.pkey) map[String(t.pkey)] = t.pkey
+  }
+  return map
+})
+
+const tenantPkeyToShortuid = computed(() => {
+  const map = {}
+  for (const t of tenants.value) {
+    if (t.shortuid == null) continue
+    const su = String(t.shortuid)
+    map[su] = su
+    if (t.pkey != null) map[String(t.pkey)] = su
+  }
+  return map
+})
+
+const dayOfWeekOptionsForSelect = computed(() => {
+  const cur = normalizeDayOfWeek(dayofweek.value)
+  const opts = [...dayOfWeekOptions]
+  if (cur && !opts.some((o) => o.value === cur)) {
+    opts.push({ value: cur, label: dayOfWeekLabel(cur) })
+  }
+  return opts
+})
+
+const modeSuggestions = computed(() => {
+  const seen = new Set(COMMON_SCHEDULE_MODES)
+  const clusterVal = cluster.value
+  const clusterSu = tenantPkeyToShortuid.value[String(clusterVal)] ?? String(clusterVal)
+  for (const p of routeProfiles.value) {
+    const pTenant = tenantShortuidToPkey.value[String(p.cluster)] ?? p.cluster
+    if (
+      String(p.cluster) !== String(clusterVal) &&
+      String(p.cluster) !== String(clusterSu) &&
+      String(pTenant) !== String(clusterVal)
+    ) {
+      continue
+    }
+    for (const l of Array.isArray(p.lines) ? p.lines : []) {
+      const m = String(l?.mode ?? '')
+        .trim()
+        .toLowerCase()
+      if (m) seen.add(m)
+    }
+  }
+  for (const d of daytimersForSuggest.value) {
+    const dTenant = tenantShortuidToPkey.value[String(d.cluster)] ?? d.cluster
+    if (
+      String(d.cluster) !== String(clusterVal) &&
+      String(d.cluster) !== String(clusterSu) &&
+      String(dTenant) !== String(clusterVal)
+    ) {
+      continue
+    }
+    const m = String(d?.mode ?? '')
+      .trim()
+      .toLowerCase()
+    if (m) seen.add(m)
+  }
+  const cur = String(mode.value || '')
+    .trim()
+    .toLowerCase()
+  if (cur) seen.add(cur)
+  return [...seen].sort((a, b) => a.localeCompare(b))
 })
 
 const tenantOptionsForSelect = computed(() => {
-  const list = tenantOptions.value
+  const list = tenants.value.map((t) => t.pkey).filter(Boolean)
+  const unique = [...new Set(list)].sort((a, b) => String(a).localeCompare(String(b)))
   const cur = cluster.value
-  if (cur && !list.includes(cur))
-    return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
-  return list
+  if (cur && !unique.includes(cur))
+    return [cur, ...unique].sort((a, b) => String(a).localeCompare(String(b)))
+  return unique
 })
+
+const HHMM_REGEX = /^(2[0-3]|[01][0-9]):([0-5][0-9])$/
+
+function normalizeMode() {
+  mode.value = String(mode.value || '')
+    .trim()
+    .toLowerCase()
+}
+
+function buildTimespan() {
+  if (allday.value === 'YES') return '*'
+  const s = (startTime.value || '').trim()
+  const e = (endTime.value || '').trim()
+  if (!s && !e) return '*'
+  return `${s || '*'}-${e || '*'}`
+}
+
+function validateTimespan() {
+  if (allday.value === 'YES') return null
+  const s = (startTime.value || '').trim()
+  const e = (endTime.value || '').trim()
+  if (!s) return 'Start time is required when not all day'
+  if (!e) return 'End time is required when not all day'
+  if (!HHMM_REGEX.test(s)) return 'Start time must be HH:MM (e.g. 09:00)'
+  if (!HHMM_REGEX.test(e)) return 'End time must be HH:MM (e.g. 17:00)'
+  return null
+}
 
 async function loadTenants() {
   tenantsLoading.value = true
@@ -53,6 +178,22 @@ async function loadTenants() {
   }
 }
 
+async function fetchModeSuggestionSources() {
+  try {
+    const [profileResponse, daytimerResponse] = await Promise.all([
+      getApiClient().get('routeprofiles'),
+      getApiClient().get('daytimers')
+    ])
+    routeProfiles.value =
+      normalizeList(profileResponse, 'routeprofiles') || normalizeList(profileResponse) || []
+    daytimersForSuggest.value =
+      normalizeList(daytimerResponse, 'daytimers') || normalizeList(daytimerResponse) || []
+  } catch {
+    routeProfiles.value = []
+    daytimersForSuggest.value = []
+  }
+}
+
 onMounted(async () => {
   await ensureFetched()
   applySchemaDefaults('daytimers', {
@@ -60,14 +201,8 @@ onMounted(async () => {
     description
   })
   await loadTenants()
+  await fetchModeSuggestionSources()
 })
-
-function resetForm() {
-  description.value = ''
-  cluster.value = 'default'
-  clusterValidation.reset()
-  error.value = ''
-}
 
 function goBack() {
   router.push({ name: 'daytimers' })
@@ -91,17 +226,47 @@ async function onSubmit(e) {
     return
   }
 
+  const tsErr = validateTimespan()
+  if (tsErr) {
+    error.value = tsErr
+    return
+  }
+
+  normalizeMode()
+  dayofweek.value = normalizeDayOfWeek(dayofweek.value)
+  const dowErr = validateDayOfWeek(dayofweek.value)
+  if (dowErr) {
+    error.value = dowErr
+    return
+  }
+  const modeErr = validateScheduleMode(mode.value)
+  if (modeErr) {
+    error.value = modeErr
+    return
+  }
+  const priErr = validateSchedulePriority(priority.value, { allowEmpty: false })
+  if (priErr) {
+    error.value = priErr
+    return
+  }
+
   loading.value = true
   try {
     const body = {
       description: description.value.trim() || null,
-      cluster: cluster.value.trim()
+      cluster: cluster.value.trim(),
+      dayofweek: normalizeDayOfWeek(dayofweek.value),
+      timespan: buildTimespan(),
+      mode: mode.value,
+      priority: Number(priority.value)
     }
-    await getApiClient().post('daytimers', body)
+    const created = await getApiClient().post('daytimers', body)
     toast.show('Day timer created')
-    resetForm()
-    await nextTick()
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (created?.shortuid) {
+      router.push({ name: 'daytimer-detail', params: { shortuid: created.shortuid } })
+    } else {
+      goBack()
+    }
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
@@ -140,13 +305,6 @@ async function onSubmit(e) {
 
       <h2 class="detail-heading">Rule</h2>
       <div class="form-fields">
-        <FormField
-          id="description"
-          v-model="description"
-          label="Description"
-          type="text"
-          placeholder="e.g. Office hours"
-        />
         <FormSelect
           id="cluster"
           v-model="cluster"
@@ -158,6 +316,69 @@ async function onSubmit(e) {
           :loading="tenantsLoading"
           @blur="clusterValidation.onBlur"
         />
+        <FormField
+          id="description"
+          v-model="description"
+          label="Description"
+          type="text"
+          placeholder="e.g. Office hours"
+        />
+        <FormField
+          id="mode"
+          v-model="mode"
+          label="Mode when matched"
+          help-pkey="mode"
+          type="text"
+          placeholder="e.g. lunch or evening"
+          list="daytimer-mode-suggestions"
+          hint="Presets and modes already used on this tenant. Type a new mode anytime (same string on the route profile)."
+          @blur="normalizeMode"
+        />
+        <datalist id="daytimer-mode-suggestions">
+          <option v-for="m in modeSuggestions" :key="m" :value="m" />
+        </datalist>
+        <FormField
+          id="priority"
+          v-model="priority"
+          label="Priority (higher wins)"
+          help-pkey="priority"
+          type="number"
+          min="0"
+          max="9999"
+        />
+        <FormSelect
+          id="dayofweek"
+          v-model="dayofweek"
+          label="Day of week"
+          help-pkey="dayofweek"
+          :options="dayOfWeekOptionsForSelect"
+        />
+        <FormToggle
+          id="allday"
+          v-model="allday"
+          label="All day"
+          help-pkey="allday"
+          yes-value="YES"
+          no-value="NO"
+        />
+        <template v-if="allday === 'NO'">
+          <FormField
+            id="start"
+            v-model="startTime"
+            label="Start time"
+            help-pkey="start"
+            type="text"
+            placeholder="HH:MM e.g. 09:00"
+          />
+          <FormField
+            id="end"
+            v-model="endTime"
+            label="End time"
+            help-pkey="end"
+            type="text"
+            placeholder="HH:MM e.g. 17:00"
+          />
+        </template>
       </div>
 
       <div class="actions">

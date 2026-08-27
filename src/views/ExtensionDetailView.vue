@@ -752,6 +752,7 @@ const panelTitleTenantSuffix = computed(() => {
               label="Caller ID"
               type="text"
               inputmode="numeric"
+              hide-help
             />
             <FormField
               id="edit-cellphone"

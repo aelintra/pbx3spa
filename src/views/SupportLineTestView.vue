@@ -201,6 +201,7 @@ function clearTargetQuery() {
           label="Tenant"
           :options="tenantSelectOptions"
           hint="One hidden WebRTC per tenant (not shown on Extensions)."
+          hide-help
           :disabled="ensuring"
         />
         <div class="form-field form-field-actions">
@@ -253,6 +254,7 @@ function clearTargetQuery() {
           :options="extensionSelectOptions"
           :loading="loadingExt"
           hint="Pick an extension, or type a dialable / shortuid below."
+          hide-help
         />
         <FormField
           id="slt-target"
@@ -260,6 +262,7 @@ function clearTargetQuery() {
           label="Or type dialable"
           type="text"
           placeholder="e.g. 101"
+          hide-help
         />
       </div>
       <button

@@ -149,6 +149,7 @@ onMounted(() => {
           required
           placeholder="user@example.com"
           autocomplete="email"
+          hide-help
         />
       </section>
 
@@ -162,6 +163,7 @@ onMounted(() => {
           required
           placeholder="Password"
           autocomplete="new-password"
+          hide-help
         />
         <FormField
           id="passwordConfirm"
@@ -171,6 +173,7 @@ onMounted(() => {
           required
           placeholder="Confirm password"
           autocomplete="new-password"
+          hide-help
         />
       </section>
 

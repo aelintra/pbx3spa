@@ -526,9 +526,9 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-queue-overlay"
               v-model="editQueueOverlay"
               label="Queue overlay"
+              help-pkey="queue_overlay"
               type="text"
               placeholder="Thin overlay fragment (key=value lines)"
-              hint="Thin fragment merged into the stock queue template on Commit (replace/add keys). Leave empty for stock."
               :multiline="true"
               :rows="8"
             />

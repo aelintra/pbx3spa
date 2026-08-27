@@ -124,6 +124,7 @@ onMounted(async () => {
           ref="pkeyInput"
           v-model="pkey"
           label="Message key"
+          help-pkey="help_message_key"
           required
           :error="pkeyValidation.error.value"
           :touched="pkeyValidation.touched.value"
@@ -149,6 +150,7 @@ onMounted(async () => {
             multiline
             :rows="16"
             placeholder="Help / UI message content"
+            hide-help
           />
         </div>
       </div>

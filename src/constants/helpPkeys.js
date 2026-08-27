@@ -16,7 +16,7 @@ export const OBJECT_PKEY_HELP = {
   cos: 'cosname',
   customApp: 'customappname',
   device: 'devtech',
-  helpMessage: 'pkey'
+  helpMessage: 'help_message_key'
 }
 
 /** Firewall table column → tt_help_core (UFW allow-list; F5). */

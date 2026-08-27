@@ -447,6 +447,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-priority"
               v-model="editPriority"
               label="Priority (higher wins)"
+              help-pkey="priority"
               type="number"
               min="0"
               max="9999"
@@ -469,6 +470,7 @@ const panelTitleTenantSuffix = computed(() => {
                 id="edit-start"
                 v-model="startTime"
                 label="Start time"
+                help-pkey="start"
                 type="text"
                 placeholder="HH:MM e.g. 09:00"
               />
@@ -476,6 +478,7 @@ const panelTitleTenantSuffix = computed(() => {
                 id="edit-end"
                 v-model="endTime"
                 label="End time"
+                help-pkey="end"
                 type="text"
                 placeholder="HH:MM e.g. 17:00"
               />

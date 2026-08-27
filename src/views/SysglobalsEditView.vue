@@ -50,7 +50,6 @@ const editSendedomain = ref('YES')
 const editSipflood = ref('')
 const editSysop = ref('')
 const editVoipmax = ref('')
-const editFqdninspect = ref('NO')
 const editCosstart = ref('ON')
 
 const globalsHeading = computed(() => {
@@ -87,9 +86,6 @@ function syncEditFromSysglobal() {
   editSipflood.value = g.sipflood ?? ''
   editSysop.value = g.sysop != null ? String(g.sysop) : ''
   editVoipmax.value = g.voipmax != null ? String(g.voipmax) : ''
-  const fi = g.fqdninspect
-  editFqdninspect.value =
-    fi === true || fi === 1 || fi === 'YES' || fi === 'yes' ? 'YES' : 'NO'
   const cs = g.cosstart
   editCosstart.value =
     cs === false || cs === 0 || cs === 'OFF' || cs === 'off' || cs === 'NO' || cs === 'no'
@@ -210,7 +206,6 @@ async function saveEdit(e) {
       editSysop.value !== '' && editSysop.value != null ? parseInt(editSysop.value, 10) : null
     body.voipmax =
       editVoipmax.value !== '' && editVoipmax.value != null ? parseInt(editVoipmax.value, 10) : null
-    body.fqdninspect = editFqdninspect.value === 'YES' ? 'YES' : 'NO'
     body.cosstart = editCosstart.value === 'OFF' ? 'OFF' : 'ON'
 
     await getApiClient().put('sysglobals', body)
@@ -330,12 +325,6 @@ onMounted(fetchSysglobal)
           "
           class="readonly-identity"
           hide-help
-        />
-        <FormSegmentedPill
-          id="edit-fqdninspect"
-          v-model="editFqdninspect"
-          label="FQDN inspect (SIP / Shorewall)"
-          :options="YESNO_OPTIONS"
         />
       </div>
 
