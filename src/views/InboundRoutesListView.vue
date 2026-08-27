@@ -55,8 +55,10 @@ const filteredRoutes = computed(() => {
       .toString()
       .toLowerCase()
     const trunkname = (r.trunkname ?? '').toString().toLowerCase()
+    const cname = (r.cname ?? '').toString().toLowerCase()
     const openroute = (r.openroute ?? '').toString().toLowerCase()
     const closeroute = (r.closeroute ?? '').toString().toLowerCase()
+    const entryDest = (r.entry_dest ?? '').toString().toLowerCase()
     const routeProfile = routeProfileLabel(r.route_profile).toLowerCase()
     const technology = (r.technology ?? '').toString().toLowerCase()
     const desc = (r.desc ?? r.description ?? '').toString().toLowerCase()
@@ -65,8 +67,10 @@ const filteredRoutes = computed(() => {
       pkey.includes(q) ||
       tenantPkey.includes(q) ||
       trunkname.includes(q) ||
+      cname.includes(q) ||
       openroute.includes(q) ||
       closeroute.includes(q) ||
+      entryDest.includes(q) ||
       routeProfile.includes(q) ||
       String(r.route_profile ?? '')
         .toLowerCase()
@@ -103,8 +107,10 @@ function routeProfileLabel(shortuid) {
   return su
 }
 
-/** Profile label or legacy open/closed pair for list display. */
+/** Always route wins; else profile label; else open/closed pair. */
 function routingDisplay(r) {
+  const ed = String(r.entry_dest ?? '').trim()
+  if (ed && ed.toLowerCase() !== 'none') return `Always → ${ed}`
   const rp = r.route_profile
   if (rp != null && String(rp).trim() !== '') return routeProfileLabel(rp)
   const o = r.openroute ?? '—'
@@ -147,7 +153,7 @@ const inboundRouteExportColumns = computed(() => [
   { key: 'pkey', label: 'DiD/CLiD' },
   { key: 'cluster', label: 'Tenant', getValue: (r) => tenantPkeyDisplay(r) },
   { key: 'active', label: 'Active' },
-  { key: 'trunkname', label: 'Name' },
+  { key: 'cname', label: 'Name' },
   { key: 'routing', label: 'Routing', getValue: (r) => routingDisplay(r) },
   { key: 'technology', label: 'Type' }
 ])
@@ -307,8 +313,8 @@ onMounted(loadInboundRoutes)
             <th
               class="th-sortable"
               title="Click to sort"
-              :class="sortClass('trunkname')"
-              @click="setSort('trunkname')"
+              :class="sortClass('cname')"
+              @click="setSort('cname')"
             >
               Name
             </th>
@@ -374,7 +380,7 @@ onMounted(loadInboundRoutes)
             <td>{{ r.pkey }}</td>
             <td>{{ tenantPkeyDisplay(r) }}</td>
             <ListActiveChip :active="r.active" />
-            <td>{{ r.trunkname ?? '—' }}</td>
+            <td>{{ r.cname ?? '—' }}</td>
             <td :title="r.route_profile ? 'Route profile' : 'Legacy open/closed'">
               {{ routingDisplay(r) }}
             </td>

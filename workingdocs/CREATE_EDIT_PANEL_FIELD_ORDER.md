@@ -200,8 +200,8 @@ Detail views only. Section names are headings **inside the form** (not the page 
 
 ### `InboundRouteDetailView.vue`
 
-1. **Identity** — Number (DiD/CLiD), DiD/CLiD (ro), UID, KSUID, Description (optional)  
-2. **Settings** — Tenant, Active?, Open route, Closed route, Alert info (optional), MOH, SWOCLIP, DISA, DISA pass (optional), In prefix (optional), Tag (optional), CNAME, Device recording  
+1. **Identity** — UID, KSUID, Number (DiD/CLiD), DiD Type, Name (`cname`), Description (optional)  
+2. **Settings** — Tenant, Always route, Route profile, Legacy open/closed, Alert info, MOH, SWOCLIP, DISA, DISA pass, In prefix, Tag, Device recording  
 
 ---
 

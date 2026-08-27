@@ -62,8 +62,12 @@ export function useFormValidation(fieldRef, validator, options = {}) {
  */
 export function validateAll(validations) {
   let allValid = true
-  validations.forEach(({ validate }) => {
-    if (!validate()) {
+  validations.forEach((v) => {
+    // Mark touched so field errors render (FormSelect/FormSegmentedPill gate on touched).
+    if (v.touched) {
+      v.touched.value = true
+    }
+    if (!v.validate()) {
       allValid = false
     }
   })

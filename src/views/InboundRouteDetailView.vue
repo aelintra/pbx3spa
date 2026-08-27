@@ -144,7 +144,7 @@ function routeProfileOptionLabel(p) {
 }
 
 const routeProfileOptions = computed(() => {
-  const opts = [{ value: '', label: '' }]
+  const opts = [{ value: '', label: 'None' }]
   const clusterVal = editCluster.value
   const map = clusterToTenantPkey.value
   const seen = new Set([''])
@@ -458,6 +458,14 @@ const panelTitleTenantSuffix = computed(() => {
               :options="technologyOptions"
             />
             <FormField
+              id="edit-cname"
+              v-model="editCname"
+              label="Name"
+              help-pkey="cname"
+              type="text"
+              placeholder="Friendly name"
+            />
+            <FormField
               id="edit-description"
               v-model="editDescription"
               label="Description (optional)"
@@ -476,20 +484,20 @@ const panelTitleTenantSuffix = computed(() => {
               :required="true"
             />
             <FormSelect
-              id="edit-route-profile"
-              v-model="editRouteProfile"
-              label="Route profile"
-              help-pkey="route_profile"
-              :options="routeProfileOptions"
-              :loading="destinationsLoading"
-            />
-            <FormSelect
               id="edit-entry-dest"
               v-model="editEntryDest"
               label="Always route"
               help-pkey="entry_dest"
               :options="entryDestOptions"
               :option-groups="destinationGroups"
+              :loading="destinationsLoading"
+            />
+            <FormSelect
+              id="edit-route-profile"
+              v-model="editRouteProfile"
+              label="Route profile"
+              help-pkey="route_profile"
+              :options="routeProfileOptions"
               :loading="destinationsLoading"
             />
             <FormSelect
@@ -545,7 +553,6 @@ const panelTitleTenantSuffix = computed(() => {
               step="1"
             />
             <FormField id="edit-tag" v-model="editTag" label="Tag (optional)" type="text" />
-            <FormField id="edit-cname" v-model="editCname" label="CNAME" type="text" />
             <FormSelect
               id="edit-devicerec"
               v-model="editDevicerec"

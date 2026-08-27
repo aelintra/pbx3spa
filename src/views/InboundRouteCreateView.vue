@@ -23,10 +23,11 @@ const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
 const cluster = ref('')
-const carrier = ref('')
+const carrier = ref('DiD')
 const pkey = ref('')
-const openroute = ref('')
-const closeroute = ref('')
+const openroute = ref('None')
+const closeroute = ref('None')
+const entryDest = ref('None')
 const routeProfile = ref('')
 const swoclip = ref('YES')
 const routeProfiles = ref([])
@@ -94,16 +95,26 @@ const destinationGroups = computed(() => {
   }
 })
 
-/** Empty placeholder + Operator; real dests come from option-groups. */
-const destPickOptions = computed(() => ['', 'Operator'])
+/** None + Operator; real dests come from option-groups. */
+const destPickOptions = computed(() => ['None', 'Operator'])
+const entryDestOptions = computed(() => ['None', 'Operator'])
 
 function isNoneDest(v) {
   const t = String(v ?? '').trim()
   return !t || t.toLowerCase() === 'none'
 }
 
+function hasAlwaysRoute() {
+  return !isNoneDest(entryDest.value)
+}
+
 function validateOpenroute() {
   openrouteTouched.value = true
+  // Always route overrides schedule — open is still stored for dual-read/baseline.
+  if (hasAlwaysRoute()) {
+    openrouteError.value = ''
+    return true
+  }
   if (isNoneDest(openroute.value)) {
     openrouteError.value = 'Open destination is required'
     return false
@@ -121,7 +132,7 @@ function routeProfileOptionLabel(p) {
 
 const routeProfileOptions = computed(() => {
   const clusterVal = cluster.value
-  const filtered = [{ value: '', label: 'Create new from open/closed' }]
+  const filtered = [{ value: '', label: 'None' }]
   if (!clusterVal) return filtered
   const map = new Map()
   for (const t of tenants.value) {
@@ -195,10 +206,11 @@ async function loadDestinations() {
 
 function resetForm() {
   cluster.value = ''
-  carrier.value = ''
+  carrier.value = 'DiD'
   pkey.value = ''
-  openroute.value = ''
-  closeroute.value = ''
+  openroute.value = 'None'
+  closeroute.value = 'None'
+  entryDest.value = 'None'
   routeProfile.value = ''
   swoclip.value = 'YES'
   openrouteError.value = ''
@@ -212,8 +224,9 @@ function resetForm() {
 
 watch(cluster, () => {
   loadDestinations()
-  openroute.value = ''
-  closeroute.value = ''
+  openroute.value = 'None'
+  closeroute.value = 'None'
+  entryDest.value = 'None'
   routeProfile.value = ''
   openrouteError.value = ''
   openrouteTouched.value = false
@@ -255,7 +268,12 @@ async function onSubmit(e) {
   }
   loading.value = true
   try {
-    const open = openroute.value.trim()
+    const always = hasAlwaysRoute() ? entryDest.value.trim() : null
+    const open = always
+      ? isNoneDest(openroute.value)
+        ? always
+        : openroute.value.trim()
+      : openroute.value.trim()
     const closed = isNoneDest(closeroute.value) ? open : closeroute.value.trim()
     const body = {
       pkey: pkey.value.trim(),
@@ -264,6 +282,7 @@ async function onSubmit(e) {
       openroute: open,
       closeroute: closed,
       route_profile: routeProfile.value || null,
+      entry_dest: always,
       swoclip: swoclip.value
     }
     await getApiClient().post('inboundroutes', body)
@@ -388,11 +407,21 @@ function onKeydown(e) {
 
       <h2 class="detail-heading">Routing</h2>
       <p class="hint">
-        Open destination is required (calendar / BLF baseline). Closed defaults to the same
-        destination — change it for after-hours or leave matching for toggle-only sites. Leave
-        profile empty to auto-create one with open and closed lines.
+        <strong>Always route</strong> (optional) sends every call to that destination and skips
+        schedule / route profile. Leave it <strong>None</strong> to use open/closed and an optional
+        profile. Open destination is required when Always route is None (calendar / BLF baseline);
+        Closed defaults to the same destination.
       </p>
       <div class="form-fields">
+        <FormSelect
+          id="entry-dest"
+          v-model="entryDest"
+          label="Always route"
+          help-pkey="entry_dest"
+          :options="entryDestOptions"
+          :option-groups="destinationGroups"
+          :loading="destinationsLoading"
+        />
         <FormSelect
           id="openroute"
           v-model="openroute"
@@ -400,7 +429,7 @@ function onKeydown(e) {
           :options="destPickOptions"
           :option-groups="destinationGroups"
           :loading="destinationsLoading"
-          :required="true"
+          :required="!hasAlwaysRoute()"
           :error="openrouteError"
           :touched="openrouteTouched"
           @blur="validateOpenroute"
