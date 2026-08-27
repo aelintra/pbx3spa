@@ -114,7 +114,7 @@ No departures.
 
 | View | Notes |
 |------|--------|
-| ExtensionDetailView | Uses labels "Ext", "SIP Identity" instead of "Primary identifier", "UID" — acceptable resource-specific labels. Shows MAC address, Device as readonly identity (API-specific). |
+| ExtensionDetailView | Uses labels "Ext", "SIP Identity" instead of "Primary identifier", "UID" — acceptable. Identity: readonly **Device** (type) before editable **MAC** (best-effort inventory). |
 | IvrDetailView | Identity FormReadonly components do not use class `readonly-identity` on pkey/shortuid/id in snippet checked; verify all immutable identity fields have the class. |
 | Others | Compliant or resource-specific (e.g. Queue "Queue name", Agent "Agent number") |
 

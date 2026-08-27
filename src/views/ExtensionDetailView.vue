@@ -644,6 +644,35 @@ const panelTitleTenantSuffix = computed(() => {
               class="readonly-identity"
               hide-help
             />
+            <FormReadonly
+              v-if="isReadOnly('device')"
+              id="edit-identity-device"
+              label="Device"
+              :value="extension.device ?? '—'"
+              class="readonly-identity"
+            />
+            <FormField
+              v-else
+              id="edit-identity-device"
+              :model-value="extension.device ?? '—'"
+              label="Device"
+              disabled
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="!isWebRtcExtension"
+              id="edit-identity-handset"
+              label="Handset"
+              :value="extension.handset_label || '—'"
+              class="readonly-identity"
+            />
+            <FormReadonly
+              v-if="!isWebRtcExtension && extension.lastseen"
+              id="edit-identity-lastseen"
+              label="Last seen"
+              :value="extension.lastseen"
+              class="readonly-identity"
+            />
             <template v-if="!isWebRtcExtension">
               <FormReadonly
                 v-if="isReadOnly('macaddr')"
@@ -661,21 +690,6 @@ const panelTitleTenantSuffix = computed(() => {
                 placeholder="12 hex digits or 00:11:22:33:44:55"
               />
             </template>
-            <FormReadonly
-              v-if="isReadOnly('device')"
-              id="edit-identity-device"
-              label="Device"
-              :value="extension.device ?? '—'"
-              class="readonly-identity"
-            />
-            <FormField
-              v-else
-              id="edit-identity-device"
-              :model-value="extension.device ?? '—'"
-              label="Device"
-              disabled
-              class="readonly-identity"
-            />
             <FormSelect
               id="edit-cluster"
               v-model="editCluster"

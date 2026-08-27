@@ -184,6 +184,7 @@ const extensionExportColumns = computed(() => [
   { key: 'desc', label: 'User', getValue: (e) => userDisplay(e) },
   { key: 'extension_type', label: 'Type' },
   { key: 'device', label: 'Device', getValue: (e) => e.device ?? e.technology ?? '—' },
+  { key: 'handset_label', label: 'Handset', getValue: (e) => e.handset_label || '—' },
   { key: 'macaddr', label: 'MAC', getValue: (e) => (e.macaddr ? e.macaddr : 'N/A') },
   { key: 'ip', label: 'IP', getValue: (e) => ipDisplay(e) },
   { key: 'status', label: 'Latency', getValue: (e) => statusDisplay(e) },
@@ -396,6 +397,14 @@ onMounted(loadExtensions)
             </th>
             <th
               class="th-sortable"
+              title="Harvested from SIP User-Agent"
+              :class="sortClass('handset_label')"
+              @click="setSort('handset_label')"
+            >
+              Handset
+            </th>
+            <th
+              class="th-sortable"
               title="Click to sort"
               :class="sortClass('macaddr')"
               @click="setSort('macaddr')"
@@ -466,7 +475,13 @@ onMounted(loadExtensions)
             <td :title="e.desc ?? e.cname ?? e.description ?? ''">{{ userDisplay(e) }}</td>
             <td>{{ e.extension_type ?? '—' }}</td>
             <td class="cell-immutable" title="Immutable">{{ e.device ?? e.technology ?? '—' }}</td>
-            <td class="cell-immutable" :title="e.macaddr ? 'Immutable' : undefined">
+            <td
+              class="cell-immutable"
+              :title="e.lastseen ? `As of ${e.lastseen}` : 'From SIP UA harvest when registered'"
+            >
+              {{ e.handset_label || '—' }}
+            </td>
+            <td class="cell-immutable" :title="e.macaddr ? 'Best-effort inventory' : undefined">
               {{ e.macaddr ? e.macaddr : 'N/A' }}
             </td>
             <td>{{ ipDisplay(e) }}</td>
