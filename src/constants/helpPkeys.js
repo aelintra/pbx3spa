@@ -26,3 +26,6 @@ export const FIREWALL_FIELD_HELP = {
   source: 'fwsource',
   comment: 'fwdesc'
 }
+
+/** IVR create/edit — Keystroke options matrix (one ? on section heading, not per cell). */
+export const IVR_KEYSTROKE_OPTIONS_HELP = 'ivr_keystroke_options'

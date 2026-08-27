@@ -16,6 +16,8 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { OPTION_ENTRIES, buildIvrPayload } from '@/constants/ivrDestinations'
+import { IVR_KEYSTROKE_OPTIONS_HELP } from '@/constants/helpPkeys'
+import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 
 const route = useRoute()
@@ -509,8 +511,9 @@ const panelTitleTenantSuffix = computed(() => {
           </div>
 
           <section class="destinations-section" aria-labelledby="ivr-edit-destinations-heading">
-            <h2 id="ivr-edit-destinations-heading" class="destinations-heading">
-              Keystroke options
+            <h2 id="ivr-edit-destinations-heading" class="destinations-heading destinations-heading-with-help">
+              <span>Keystroke options</span>
+              <FieldHelpIcon :pkey="IVR_KEYSTROKE_OPTIONS_HELP" />
             </h2>
             <div class="destinations-table">
               <div class="destinations-row destinations-header">
@@ -746,6 +749,11 @@ const panelTitleTenantSuffix = computed(() => {
   font-weight: 600;
   margin: 0 0 1rem 0;
   color: #0f172a;
+}
+.destinations-heading-with-help {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 .timeout-select {
   min-width: 0;

@@ -12,6 +12,8 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { OPTION_ENTRIES, buildIvrPayload } from '@/constants/ivrDestinations'
+import { IVR_KEYSTROKE_OPTIONS_HELP } from '@/constants/helpPkeys'
+import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 
@@ -431,7 +433,10 @@ onMounted(async () => {
       </div>
 
       <section class="destinations-section" aria-labelledby="ivr-destinations-heading">
-        <h2 id="ivr-destinations-heading" class="destinations-heading">Keystroke options</h2>
+        <h2 id="ivr-destinations-heading" class="destinations-heading destinations-heading-with-help">
+          <span>Keystroke options</span>
+          <FieldHelpIcon :pkey="IVR_KEYSTROKE_OPTIONS_HELP" />
+        </h2>
         <div class="destinations-table">
           <div class="destinations-row destinations-header">
             <span class="dest-cell dest-key">Key</span>
@@ -538,6 +543,11 @@ onMounted(async () => {
   font-weight: 600;
   margin: 0 0 1rem 0;
   color: #0f172a;
+}
+.destinations-heading-with-help {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 .destinations-table {
   display: flex;
