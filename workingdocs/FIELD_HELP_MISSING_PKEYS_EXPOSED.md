@@ -10,7 +10,7 @@ Regenerate: `node scripts/list-missing-help-pkeys.mjs --write` · exposed only: 
 | Metric | Count |
 |--------|------:|
 | Unique missing pkeys (actionable) | **0** |
-| Dynamic / audit-noise (fix wiring, not DB) | 23 |
+| Dynamic / audit-noise (fix wiring, not DB) | 15 |
 
 ## Exposed in SPA — editable fields needing help
 
@@ -33,18 +33,10 @@ Dynamic `:id` / `:help-pkey` on exposed panels — add static `help-pkey` (or al
 | `'tag-' + item.key` | Tag | ACD → IVRs → Create (`/ivrs/new`) |
 | ``adv-${f.key}`` | f.label | Tenants → Create (`/tenants/new`) |
 | ``cc-${f.key}`` | f.label | Tenants → Create (`/tenants/new`) |
-| ``cos-closed-${rule.pkey}`` | ruleKey(rule) | Extensions → Edit (`/extensions/:shortuid`) |
-| ``cos-open-${rule.pkey}`` | ruleKey(rule) | Extensions → Edit (`/extensions/:shortuid`) |
 | ``edit-adv-${f.key}`` | f.label | Tenants → Edit (`/tenants/:pkey`) |
 | ``edit-cc-${f.key}`` | f.label | Tenants → Edit (`/tenants/:pkey`) |
 | ``edit-rec-${f.key}`` | f.label | Tenants → Edit (`/tenants/:pkey`) |
 | ``edit-timers-${f.key}`` | f.label | Tenants → Edit (`/tenants/:pkey`) |
-| ``fw-comment-${index}`` | Comment | System → Firewall (`/firewall`) |
-| ``fw-from-${index}`` | Source | System → Firewall (`/firewall`) |
-| ``fw-port-${index}`` | Port | System → Firewall (`/firewall`) |
-| ``fw-proto-${index}`` | Proto | System → Firewall (`/firewall`) |
-| ``line-dest-${i}`` | Destination | Routing → Route profiles → Edit (`/routeprofiles/:shortuid`) |
-| ``line-mode-${i}`` | Mode | Routing → Route profiles → Edit (`/routeprofiles/:shortuid`) |
 | ``mon-${f.key}`` | f.label | Tenants → Create (`/tenants/new`) |
 | ``rec-${f.key}`` | f.label | Tenants → Create (`/tenants/new`) |
 | ``timers-${f.key}`` | f.label | Tenants → Create (`/tenants/new`) |

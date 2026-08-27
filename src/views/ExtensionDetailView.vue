@@ -847,6 +847,7 @@ const panelTitleTenantSuffix = computed(() => {
               :hint="ruleDescription(rule)"
               yes-value="YES"
               no-value="NO"
+              hide-help
             />
           </div>
 
@@ -869,6 +870,7 @@ const panelTitleTenantSuffix = computed(() => {
               :hint="ruleDescription(rule)"
               yes-value="YES"
               no-value="NO"
+              hide-help
             />
           </div>
 

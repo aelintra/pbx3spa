@@ -10,7 +10,9 @@ import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
+import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { ROUTE_PROFILE_DESTINATIONS_HELP } from '@/constants/helpPkeys'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -257,6 +259,10 @@ async function onSubmit(e) {
           label="Description (optional)"
           type="text"
         />
+        <h2 class="detail-heading detail-heading-with-help">
+          <span>Destinations</span>
+          <FieldHelpIcon :pkey="ROUTE_PROFILE_DESTINATIONS_HELP" />
+        </h2>
         <FormSelect
           id="open-dest"
           v-model="openDest"
@@ -267,6 +273,7 @@ async function onSubmit(e) {
           :required="true"
           :error="openError"
           :touched="openTouched"
+          hide-help
           @blur="validateOpen"
         />
         <FormSelect
@@ -304,6 +311,15 @@ async function onSubmit(e) {
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+.detail-heading {
+  margin: 0.75rem 0 0;
+  font-size: 1rem;
+}
+.detail-heading-with-help {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 .error {
   color: #dc2626;

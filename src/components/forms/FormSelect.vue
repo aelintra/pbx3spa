@@ -76,13 +76,20 @@ const props = defineProps({
   hideLabel: {
     type: Boolean,
     default: false
+  },
+  /** When true, do not show contextual help (e.g. table rows covered by section-head help). */
+  hideHelp: {
+    type: Boolean,
+    default: false
   }
 })
 
 const emit = defineEmits(['update:modelValue', 'blur'])
 
 /** When helpPkey is not set, derive from id; see formHelpPkey.js. */
-const effectiveHelpPkey = computed(() => props.helpPkey ?? deriveHelpPkeyFromFieldId(props.id))
+const effectiveHelpPkey = computed(() =>
+  props.hideHelp ? null : (props.helpPkey ?? deriveHelpPkeyFromFieldId(props.id))
+)
 
 const selectValue = computed({
   get: () => {

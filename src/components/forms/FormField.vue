@@ -89,6 +89,11 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  /** When true, do not show contextual help (e.g. table rows covered by section-head help). */
+  hideHelp: {
+    type: Boolean,
+    default: false
+  },
   ariaLabel: {
     type: String,
     default: null
@@ -103,7 +108,9 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'blur'])
 
 /** When helpPkey is not set, derive from id (edit-*, ip-*, etc.); see formHelpPkey.js. */
-const effectiveHelpPkey = computed(() => props.helpPkey ?? deriveHelpPkeyFromFieldId(props.id))
+const effectiveHelpPkey = computed(() =>
+  props.hideHelp ? null : (props.helpPkey ?? deriveHelpPkeyFromFieldId(props.id))
+)
 
 const inputValue = computed({
   get: () => props.modelValue,

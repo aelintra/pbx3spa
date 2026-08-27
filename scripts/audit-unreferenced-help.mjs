@@ -15,7 +15,14 @@ const SPA_ROOT = path.resolve(__dirname, '..')
 const PBX3_SQL = path.resolve(SPA_ROOT, '../pbx3/pbx3-1/opt/pbx3/db/db_sql/sqlite_message.sql')
 
 const { deriveHelpPkeyFromFieldId } = await import('../src/utils/formHelpPkey.js')
-const { FIREWALL_FIELD_HELP, OBJECT_PKEY_HELP } = await import('../src/constants/helpPkeys.js')
+const {
+  FIREWALL_FIELD_HELP,
+  FIREWALL_ALLOW_RULES_HELP,
+  IVR_KEYSTROKE_OPTIONS_HELP,
+  ROUTE_PROFILE_DESTINATIONS_HELP,
+  ROUTE_PROFILE_EXTRA_MODES_HELP,
+  OBJECT_PKEY_HELP
+} = await import('../src/constants/helpPkeys.js')
 
 const FORM_COMPONENTS = new Set([
   'FormField',
@@ -143,7 +150,11 @@ function loadTenantAdvancedFields() {
 function loadConstantHelpPkeys() {
   return [
     ...Object.values(OBJECT_PKEY_HELP),
-    ...Object.values(FIREWALL_FIELD_HELP)
+    ...Object.values(FIREWALL_FIELD_HELP),
+    FIREWALL_ALLOW_RULES_HELP,
+    IVR_KEYSTROKE_OPTIONS_HELP,
+    ROUTE_PROFILE_DESTINATIONS_HELP,
+    ROUTE_PROFILE_EXTRA_MODES_HELP
   ]
 }
 

@@ -4,7 +4,8 @@ import { getApiClient } from '@/api/client'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
-import { FIREWALL_FIELD_HELP } from '@/constants/helpPkeys'
+import { FIREWALL_ALLOW_RULES_HELP } from '@/constants/helpPkeys'
+import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import {
   adminPortsWideOpen as adminPortsWideOpenFromRules,
   showAdminPortWarn as showAdminPortWarnFromRules
@@ -185,7 +186,10 @@ onMounted(load)
 
       <section class="firewall-section" aria-labelledby="firewall-allows-heading">
         <div class="section-header">
-          <h2 id="firewall-allows-heading">Allow rules (IPv4 + IPv6)</h2>
+          <h2 id="firewall-allows-heading" class="section-heading-with-help">
+            <span>Allow rules (IPv4 + IPv6)</span>
+            <FieldHelpIcon :pkey="FIREWALL_ALLOW_RULES_HELP" />
+          </h2>
         </div>
 
       <div class="rules-table-wrap">
@@ -223,8 +227,8 @@ onMounted(load)
                 v-model="row.proto"
                 label="Proto"
                 hide-label
+                hide-help
                 :options="PROTO_OPTIONS"
-                :help-pkey="FIREWALL_FIELD_HELP.proto"
                 aria-label="Proto"
               />
             </span>
@@ -234,9 +238,9 @@ onMounted(load)
                 v-model="row.port"
                 label="Port"
                 hide-label
+                hide-help
                 :disabled="portDisabled(row)"
                 :placeholder="portDisabled(row) ? 'N/A' : '5060 or 10000:20000'"
-                :help-pkey="FIREWALL_FIELD_HELP.port"
                 aria-label="Port"
               />
             </span>
@@ -246,8 +250,8 @@ onMounted(load)
                 v-model="row.from"
                 label="Source"
                 hide-label
+                hide-help
                 placeholder="any, 192.168.1.85, or 2001:db8::1"
-                :help-pkey="FIREWALL_FIELD_HELP.source"
                 aria-label="Source"
               />
             </span>
@@ -257,8 +261,8 @@ onMounted(load)
                 v-model="row.comment"
                 label="Comment"
                 hide-label
+                hide-help
                 placeholder="optional"
-                :help-pkey="FIREWALL_FIELD_HELP.comment"
                 aria-label="Comment"
               />
             </span>
@@ -366,6 +370,11 @@ onMounted(load)
   font-size: 1.5rem;
   font-weight: 700;
   color: #0f172a;
+}
+.section-heading-with-help {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 .loading,
 .error {

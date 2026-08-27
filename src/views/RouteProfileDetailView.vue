@@ -13,8 +13,13 @@ import {
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
+import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import {
+  ROUTE_PROFILE_DESTINATIONS_HELP,
+  ROUTE_PROFILE_EXTRA_MODES_HELP
+} from '@/constants/helpPkeys'
 
 const route = useRoute()
 const router = useRouter()
@@ -214,7 +219,7 @@ watch(openDest, (v) => {
 })
 
 function addLine() {
-  extraLines.value.push({ mode: '', destination: 'None' })
+  extraLines.value.push({ mode: '', destination: 'None', draft: true })
 }
 
 function removeLine(i) {
@@ -225,11 +230,14 @@ function goBack() {
   router.push({ name: 'routeprofiles' })
 }
 
-function onKeydown(e) {
-  if (e.key === 'Escape') {
-    e.preventDefault()
-    goBack()
+/** Drop unfinished Add Destination rows and stay; otherwise leave to list. */
+function cancelEdit() {
+  const hadDraft = extraLines.value.some((l) => l.draft)
+  if (hadDraft) {
+    extraLines.value = extraLines.value.filter((l) => !l.draft)
+    return
   }
+  goBack()
 }
 
 async function saveEdit(e) {
@@ -307,7 +315,7 @@ async function confirmAndDelete() {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view">
     <PanelBackLink :to="{ name: 'routeprofiles' }" label="Route Profiles">
       <h1>Edit Route profile{{ editName ? ` — ${editName}` : '' }}</h1>
     </PanelBackLink>
@@ -320,7 +328,7 @@ async function confirmAndDelete() {
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
         <div class="edit-actions">
           <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
-          <button type="button" class="secondary" @click="goBack">Cancel</button>
+          <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
           <button type="button" class="action-delete" :disabled="deleting" @click="askConfirmDelete">
             {{ deleting ? 'Deleting…' : 'Delete' }}
           </button>
@@ -340,8 +348,10 @@ async function confirmAndDelete() {
           <FormField id="description" v-model="editDescription" label="Description" type="text" />
         </div>
 
-        <h2 class="detail-heading">Destinations</h2>
-        <p class="hint">Where calls go when this profile's schedule is open or closed.</p>
+        <h2 class="detail-heading detail-heading-with-help">
+          <span>Destinations</span>
+          <FieldHelpIcon :pkey="ROUTE_PROFILE_DESTINATIONS_HELP" />
+        </h2>
         <div class="form-fields dest-fields">
           <FormSelect
             id="open-dest"
@@ -353,6 +363,7 @@ async function confirmAndDelete() {
             :required="true"
             :error="openError"
             :touched="openTouched"
+            hide-help
             @blur="validateOpen"
           />
           <FormSelect
@@ -367,8 +378,10 @@ async function confirmAndDelete() {
         </div>
 
         <template v-if="extraLines.length">
-          <h2 class="detail-heading">Additional schedule modes</h2>
-          <p class="hint">Optional — e.g. lunch or night when day timers use those modes.</p>
+          <h2 class="detail-heading detail-heading-with-help">
+            <span>Additional schedule modes</span>
+            <FieldHelpIcon :pkey="ROUTE_PROFILE_EXTRA_MODES_HELP" />
+          </h2>
           <div v-for="(line, i) in extraLines" :key="i" class="line-row">
             <FormField
               :id="`line-mode-${i}`"
@@ -377,6 +390,7 @@ async function confirmAndDelete() {
               type="text"
               placeholder="e.g. lunch"
               list="schedule-mode-suggestions"
+              hide-help
             />
             <FormSelect
               :id="`line-dest-${i}`"
@@ -385,6 +399,7 @@ async function confirmAndDelete() {
               :options="destBaseOptions"
               :option-groups="destinationGroups"
               :loading="destinationsLoading"
+              hide-help
             />
             <button type="button" class="secondary line-remove" @click="removeLine(i)">Remove</button>
           </div>
@@ -392,11 +407,11 @@ async function confirmAndDelete() {
         <datalist id="schedule-mode-suggestions">
           <option v-for="m in COMMON_SCHEDULE_MODES" :key="m" :value="m" />
         </datalist>
-        <button type="button" class="secondary" @click="addLine">Add schedule mode</button>
+        <button type="button" class="primary add-destination" @click="addLine">Add Destination</button>
 
         <div class="edit-actions">
           <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
-          <button type="button" class="secondary" @click="goBack">Cancel</button>
+          <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
         </div>
       </form>
     </template>
@@ -437,20 +452,27 @@ async function confirmAndDelete() {
   display: grid;
   grid-template-columns: 1fr 1fr auto;
   gap: 0.75rem;
-  align-items: end;
+  align-items: center;
   max-width: 40rem;
 }
+.line-row :deep(.form-field) {
+  margin-bottom: 0;
+}
 .line-remove {
-  margin-bottom: 0.15rem;
+  align-self: center;
+}
+.add-destination {
+  margin-top: 0.75rem;
+  align-self: flex-start;
 }
 .detail-heading {
   margin: 0.75rem 0 0;
   font-size: 1rem;
 }
-.hint {
-  font-size: 0.85rem;
-  opacity: 0.8;
-  margin: 0;
+.detail-heading-with-help {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 .edit-actions {
   display: flex;
@@ -458,14 +480,16 @@ async function confirmAndDelete() {
   flex-wrap: wrap;
 }
 .edit-actions button,
-.secondary {
+.secondary,
+.primary {
   padding: 0.4rem 0.85rem;
   border-radius: 0.35rem;
   border: 1px solid var(--color-border, #ccc);
   cursor: pointer;
   font: inherit;
 }
-.edit-actions button[type='submit'] {
+.edit-actions button[type='submit'],
+.primary {
   background: var(--color-accent, #2563eb);
   color: #fff;
   border-color: transparent;
