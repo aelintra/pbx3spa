@@ -32,6 +32,11 @@ defineProps({
   inputTitle: {
     type: String,
     default: 'Immutable'
+  },
+  /** Keep off so Safari/Chrome do not treat SIP creds as site login AutoFill. */
+  autocomplete: {
+    type: String,
+    default: 'off'
   }
 })
 
@@ -46,6 +51,7 @@ defineEmits(['copy'])
       :type="type"
       :value="value"
       :placeholder="placeholder"
+      :autocomplete="autocomplete"
       readonly
       :title="inputTitle"
     />

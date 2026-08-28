@@ -94,7 +94,7 @@ watch(editCellphone, (val) => {
   if (!String(val ?? '').trim()) editCelltwin.value = 'OFF'
 })
 
-/** Masked by default; revealed after Show or a successful regenerate. */
+/** Bullet-masked by default; cleartext after Show/Copy/regen (never type=password). */
 const sipPasswordField = computed(() =>
   maskSipPassword(extension.value?.passwd, sipPasswordRevealed.value)
 )
@@ -550,7 +550,7 @@ const panelTitleTenantSuffix = computed(() => {
       <div class="detail-content">
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
 
-        <form class="edit-form" @submit="saveEdit">
+        <form class="edit-form" autocomplete="off" @submit="saveEdit">
           <p v-if="saveError" id="extension-edit-error" class="error" role="alert">
             {{ saveError }}
           </p>
