@@ -231,6 +231,10 @@ onMounted(loadHolidaytimers)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by tenant, description, route, state, dates"
           aria-label="Filter Holiday timers"

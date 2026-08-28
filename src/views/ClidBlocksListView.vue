@@ -153,6 +153,10 @@ onMounted(loadRows)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by caller ID, tenant, name, or note"
           aria-label="Filter blocked caller IDs"

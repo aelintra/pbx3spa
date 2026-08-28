@@ -251,6 +251,10 @@ onMounted(loadRoutes)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by name, tenant, description, dialplan, path 1, or active"
           aria-label="Filter routes"

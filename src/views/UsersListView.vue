@@ -135,6 +135,10 @@ onMounted(loadUsers)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by name, email, abilities, or id"
           aria-label="Filter users"

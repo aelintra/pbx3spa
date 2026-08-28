@@ -203,6 +203,10 @@ onMounted(loadCosrules)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by key, tenant, name, or dialplan"
           aria-label="Filter Class of Service rules"

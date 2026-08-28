@@ -135,13 +135,26 @@ onMounted(loadCdr)
           v-model="filterSearch"
           type="text"
           class="filter-input"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           placeholder="clid, src, dst, uniqueid, account"
           @keydown.enter="applyFilters"
         />
       </label>
       <label class="filter">
         <span class="filter-label">Account</span>
-        <input v-model="filterAccount" type="text" class="filter-input" @keydown.enter="applyFilters" />
+        <input
+          v-model="filterAccount"
+          type="text"
+          class="filter-input"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          @keydown.enter="applyFilters"
+        />
       </label>
       <label class="filter">
         <span class="filter-label">Disposition</span>

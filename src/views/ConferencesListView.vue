@@ -196,6 +196,10 @@ onMounted(loadConferences)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by room, tenant, or name"
           aria-label="Filter conferences"

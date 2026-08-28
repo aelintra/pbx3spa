@@ -208,6 +208,10 @@ onMounted(loadIvrs)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by IVR, UID, tenant, Description, or active"
           aria-label="Filter IVRs"

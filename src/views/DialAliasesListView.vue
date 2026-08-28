@@ -195,6 +195,10 @@ onMounted(loadRows)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by prefix, tenant, target, description"
           aria-label="Filter dial prefixes"

@@ -231,6 +231,10 @@ onMounted(loadDaytimers)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by tenant, active, description, time, day, state"
           aria-label="Filter Day timers"

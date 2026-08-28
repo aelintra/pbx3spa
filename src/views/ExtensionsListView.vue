@@ -302,6 +302,10 @@ onMounted(loadExtensions)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by pkey, tenant, or description"
           aria-label="Filter extensions"

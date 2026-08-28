@@ -165,6 +165,10 @@ onMounted(loadApps)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by app name, tenant, description, span, or active"
           aria-label="Filter custom apps"

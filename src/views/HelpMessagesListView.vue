@@ -121,6 +121,10 @@ onMounted(loadMessages)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by key or display name"
           aria-label="Filter help messages"

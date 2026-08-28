@@ -193,6 +193,10 @@ onMounted(load)
       <input
         v-model="filterText"
         type="search"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
         class="filter-input"
         placeholder="Filter…"
         aria-label="Filter Route profiles"

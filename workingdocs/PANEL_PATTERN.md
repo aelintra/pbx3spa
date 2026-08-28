@@ -811,6 +811,10 @@ const filteredItems = computed(() => {
 <input
   v-model="filterText"
   type="search"
+  autocomplete="off"
+  autocapitalize="off"
+  autocorrect="off"
+  spellcheck="false"
   class="filter-input"
   placeholder="Filter by name, UID, tenant, or description"
   aria-label="Filter {Resources}"
@@ -1073,6 +1077,7 @@ function syncEditFromResource() {
 
 **Filter:**
 - Type: `type="search"`
+- Disable browser spelling/autocorrect: `autocomplete="off"` `autocapitalize="off"` `autocorrect="off"` `spellcheck="false"` (filter boxes are not prose)
 - Position: Right side of toolbar, same line as Create button
 - Placeholder: Describes what can be filtered
 
@@ -2448,6 +2453,10 @@ onMounted(loadResources)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by name, UID, tenant, or description"
           aria-label="Filter {Resources}"

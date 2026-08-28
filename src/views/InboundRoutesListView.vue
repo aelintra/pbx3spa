@@ -254,6 +254,10 @@ onMounted(loadInboundRoutes)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by DiD/CLiD, tenant, name, Open, Closed, Type, description, active"
           aria-label="Filter inbound routes"

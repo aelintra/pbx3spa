@@ -222,6 +222,10 @@ onMounted(loadQueues)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by queue dial, UID, tenant, description, common name, or cluster"
           aria-label="Filter queues"

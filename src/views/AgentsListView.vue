@@ -204,6 +204,10 @@ onMounted(loadAgents)
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by number, tenant, or name"
           aria-label="Filter agents"

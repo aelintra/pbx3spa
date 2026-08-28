@@ -31,6 +31,10 @@
           v-model="filterSearch"
           type="text"
           class="filter-input"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           placeholder="Caller, callee, queue, extension, filename"
         />
       </label>

@@ -219,6 +219,10 @@ onMounted(async () => {
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by name, active, description, CLID, Abstime, ChanMax, or timer"
           aria-label="Filter tenants"

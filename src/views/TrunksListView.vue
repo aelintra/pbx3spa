@@ -302,6 +302,10 @@ onMounted(async () => {
         <input
           v-model="filterText"
           type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
           class="filter-input"
           placeholder="Filter by name, tenant, description, host, or active"
           aria-label="Filter trunks"
