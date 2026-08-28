@@ -347,7 +347,7 @@ async function confirmAndDelete() {
       <div class="detail-content">
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
 
-        <form class="edit-form" @submit="saveEdit">
+        <form class="edit-form" autocomplete="off" @submit="saveEdit">
           <p v-if="saveError" id="tenant-edit-error" class="error" role="alert">{{ saveError }}</p>
 
           <div class="edit-actions edit-actions-top">
@@ -690,7 +690,9 @@ async function confirmAndDelete() {
                 v-model="formAdvanced[f.key]"
                 :label="f.label"
                 :help-pkey="f.helpPkey ?? f.key"
-                :type="f.type === 'password' ? 'password' : 'text'"
+                type="text"
+                :obscure="f.type === 'password'"
+                autocomplete="off"
                 :placeholder="f.placeholder || ''"
               />
             </template>

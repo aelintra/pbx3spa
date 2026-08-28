@@ -200,10 +200,10 @@ export const ADVANCED_FIELDS = [
   { key: 'countrycode', label: 'Country code', type: 'number' },
   { key: 'emergency', label: 'Emergency numbers', type: 'text' },
   { key: 'language', label: 'Language', type: 'text' },
-  { key: 'spy_pass', label: 'Spy pass', type: 'password', helpPkey: 'spypass' },
+  { key: 'spy_pass', label: 'Spy pass', type: 'password', helpPkey: 'spypass' }, // type=password → FormField obscure (not input type=password)
   { key: 'operator', label: 'Operator', type: 'number', helpPkey: 'clustersysop' },
   { key: 'sysop', label: 'Sysop', type: 'number' },
-  { key: 'syspass', label: 'Sys pass', type: 'password' },
+  { key: 'syspass', label: 'Sys pass', type: 'password' }, // obscure via FormField; avoids Keychain
   { key: 'vmail_age', label: 'Vmail age', type: 'number' },
   { key: 'voice_instr', label: 'Voice instr', type: 'boolean' }
 ]

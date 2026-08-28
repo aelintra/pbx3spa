@@ -217,7 +217,7 @@ onMounted(async () => {
     </PanelBackLink>
 
     <p v-if="fleetBlocked" class="error" role="alert">{{ error }}</p>
-    <form v-else class="form create-form" @submit="onSubmit" @keydown="onKeydown">
+    <form v-else class="form create-form" autocomplete="off" @submit="onSubmit" @keydown="onKeydown">
       <p v-if="error" id="tenant-create-error" class="error" role="alert">{{ error }}</p>
 
       <div class="actions actions-top">
@@ -433,7 +433,9 @@ onMounted(async () => {
             v-model="formAdvanced[f.key]"
             :label="f.label"
             :help-pkey="f.helpPkey ?? f.key"
-            :type="f.type === 'password' ? 'password' : 'text'"
+            type="text"
+            :obscure="f.type === 'password'"
+            autocomplete="off"
             :placeholder="f.placeholder || ''"
           />
         </template>

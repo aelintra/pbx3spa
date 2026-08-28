@@ -64,6 +64,14 @@ const props = defineProps({
     type: String,
     default: 'off'
   },
+  /**
+   * Device/SIP/SMTP secrets: render as text with disc glyphs, never type=password.
+   * Avoids Safari/Chrome Keychain treating admin secrets as site logins.
+   */
+  obscure: {
+    type: Boolean,
+    default: false
+  },
   /** For type="time" or "datetime-local": step in seconds (e.g. 60 for whole minutes). */
   step: {
     type: [String, Number],
@@ -123,6 +131,9 @@ const isValid = computed(
 )
 const errorId = computed(() => `${props.id}-error`)
 const hintId = computed(() => `${props.id}-hint`)
+/** Never emit type=password when obscure — password managers key off that. */
+const inputType = computed(() => (props.obscure ? 'text' : props.type))
+const inputAutocomplete = computed(() => (props.obscure ? 'off' : props.autocomplete))
 
 function handleBlur() {
   emit('blur')
@@ -143,10 +154,11 @@ function handleBlur() {
         :key="inputKey ?? id"
         ref="inputRef"
         v-model="inputValue"
-        :type="type"
+        :type="inputType"
         :placeholder="placeholder"
         :class="{
           'form-input': true,
+          'form-input-obscure': obscure,
           'form-input-error': hasError,
           'form-input-valid': isValid
         }"
@@ -158,7 +170,7 @@ function handleBlur() {
         :disabled="disabled"
         :inputmode="inputmode"
         :pattern="pattern"
-        :autocomplete="autocomplete"
+        :autocomplete="inputAutocomplete"
         :list="list || undefined"
         :step="step != null && step !== '' ? step : undefined"
         @blur="handleBlur"
@@ -232,6 +244,12 @@ function handleBlur() {
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
+}
+
+/* Disc glyphs without type=password (Keychain / AutoFill safe). */
+.form-input-obscure {
+  -webkit-text-security: disc;
+  text-security: disc;
 }
 
 .form-input-textarea {

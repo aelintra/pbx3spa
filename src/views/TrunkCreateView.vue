@@ -169,7 +169,7 @@ function onKeydown(e) {
       <h1>Create trunk</h1>
     </PanelBackLink>
 
-    <form class="form" @submit="onSubmit">
+    <form class="form" autocomplete="off" @submit="onSubmit">
       <p v-if="error" id="trunk-create-error" class="error" role="alert">{{ error }}</p>
 
       <div v-if="fleetBlocked" class="actions actions-top">
@@ -249,11 +249,12 @@ function onKeydown(e) {
           id="password-sip"
           v-model="password"
           label="Password"
-          type="password"
+          type="text"
+          obscure
           :placeholder="
             isSipTrusted ? 'Optional for trusted peer' : 'Required for send/accept registration'
           "
-          autocomplete="new-password"
+          autocomplete="off"
         />
       </div>
 

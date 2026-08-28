@@ -229,7 +229,7 @@ async function confirmAndDelete() {
       <div class="detail-content">
         <p v-if="deleteError" class="error">{{ deleteError }}</p>
 
-        <form class="edit-form" @submit="saveEdit">
+        <form class="edit-form" autocomplete="off" @submit="saveEdit">
           <p v-if="saveError" id="trunk-edit-error" class="error" role="alert">{{ saveError }}</p>
 
           <div class="edit-actions edit-actions-top">
@@ -388,9 +388,10 @@ async function confirmAndDelete() {
               id="edit-password"
               v-model="editPassword"
               label="Password"
-              type="password"
+              type="text"
+              obscure
               placeholder="Leave blank to keep current"
-              autocomplete="new-password"
+              autocomplete="off"
             />
             <FormToggle
               id="edit-callprogress"

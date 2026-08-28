@@ -208,7 +208,7 @@ onMounted(async () => {
       <button type="button" class="btn btn-primary" @click="fetchData">Retry</button>
     </section>
 
-    <form v-else class="edit-form" @submit="saveEdit">
+    <form v-else class="edit-form" autocomplete="off" @submit="saveEdit">
       <p v-if="saveError" class="form-error">{{ saveError }}</p>
 
       <div class="edit-actions edit-actions-top">
@@ -261,13 +261,15 @@ onMounted(async () => {
       <template v-if="sysnotes?.smtp">
         <h2 class="detail-heading">SMTP</h2>
         <div class="form-fields">
-          <FormField id="ip-smtp-mailhub" v-model="editSmtpMailhub" label="Mail hub" />
-          <FormField id="ip-smtp-user" v-model="editSmtpUser" label="Auth user" />
+          <FormField id="ip-smtp-mailhub" v-model="editSmtpMailhub" label="Mail hub" autocomplete="off" />
+          <FormField id="ip-smtp-user" v-model="editSmtpUser" label="Auth user" autocomplete="off" />
           <FormField
             id="ip-smtp-pass"
             v-model="editSmtpPass"
-            type="password"
+            type="text"
+            obscure
             label="Auth password"
+            autocomplete="off"
           />
           <FormSegmentedPill
             id="ip-smtp-usetls"

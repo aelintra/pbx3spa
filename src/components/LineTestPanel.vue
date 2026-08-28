@@ -520,7 +520,8 @@ function metricTone(kind, value) {
               id="line-test-pass"
               v-model="password"
               label="SIP password"
-              type="password"
+              type="text"
+              obscure
               autocomplete="off"
               :hint="
                 supportMode
