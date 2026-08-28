@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
@@ -12,6 +12,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
+import InlineCopyInput from '@/components/forms/InlineCopyInput.vue'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
@@ -66,11 +67,18 @@ const regeneratingSip = ref(false)
 const regenerateSipError = ref('')
 /** Cleared on every (re)load; set after regenerate or when operator clicks Show. */
 const sipPasswordRevealed = ref(false)
+/** Which SIP credential just copied (`user` | `passwd` | `registrar`) — drives in-field checkmark. */
+const copiedSipKey = ref('')
+let copiedSipTimer = null
 const cosRules = ref([])
 const openCos = ref({})
 const closedCos = ref({})
 const cosLoaded = ref(false)
 const cosError = ref('')
+
+onUnmounted(() => {
+  if (copiedSipTimer) window.clearTimeout(copiedSipTimer)
+})
 
 const shortuid = computed(() => route.params.shortuid)
 
@@ -141,6 +149,17 @@ const sipRegistrar = computed(() => {
     return fqdn || '—'
   }
   return '—'
+})
+
+const sipUserValue = computed(() => {
+  const v = extension.value?.shortuid
+  return v != null && String(v).trim() !== '' ? String(v).trim() : ''
+})
+
+const hasSipUser = computed(() => !!sipUserValue.value)
+const hasSipRegistrar = computed(() => {
+  const v = sipRegistrar.value
+  return !!v && v !== '—'
 })
 
 async function fetchTenants() {
@@ -408,20 +427,47 @@ function toggleSipPasswordReveal() {
   sipPasswordRevealed.value = !sipPasswordRevealed.value
 }
 
-async function copySipPassword() {
-  const secret = sipPasswordFieldValue(extension.value?.passwd)
-  if (!secret) {
-    toast.show('No SIP password to copy')
+async function copyText(text, { empty, revealPassword = false, key } = {}) {
+  if (!text) {
+    toast.show(empty || 'Nothing to copy')
     return
   }
   try {
-    await navigator.clipboard.writeText(secret)
-    sipPasswordRevealed.value = true
-    toast.show('SIP password copied')
+    await navigator.clipboard.writeText(text)
+    if (revealPassword) sipPasswordRevealed.value = true
+    if (key) {
+      copiedSipKey.value = key
+      if (copiedSipTimer) window.clearTimeout(copiedSipTimer)
+      copiedSipTimer = window.setTimeout(() => {
+        if (copiedSipKey.value === key) copiedSipKey.value = ''
+      }, 1500)
+    }
   } catch {
-    sipPasswordRevealed.value = true
-    toast.show('Could not copy — select and copy the password field')
+    if (revealPassword) sipPasswordRevealed.value = true
+    toast.show('Could not copy — select and copy the field')
   }
+}
+
+async function copySipPassword() {
+  await copyText(sipPasswordFieldValue(extension.value?.passwd), {
+    empty: 'No SIP password to copy',
+    revealPassword: true,
+    key: 'passwd'
+  })
+}
+
+async function copySipUser() {
+  await copyText(sipUserValue.value, {
+    empty: 'No SIP User to copy',
+    key: 'user'
+  })
+}
+
+async function copySipRegistrar() {
+  await copyText(hasSipRegistrar.value ? sipRegistrar.value : '', {
+    empty: 'No SIP Registrar to copy',
+    key: 'registrar'
+  })
 }
 
 async function confirmRegenerateSip() {
@@ -580,35 +626,35 @@ const panelTitleTenantSuffix = computed(() => {
               disabled
               class="readonly-identity"
             />
-            <FormReadonly
-              v-if="isReadOnly('shortuid')"
-              id="edit-identity-sip-user"
-              label="SIP User"
-              help-pkey="shortuid"
-              :value="extension.shortuid ?? '—'"
-              class="readonly-identity"
-            />
-            <FormField
-              v-else
-              id="edit-identity-sip-user"
-              :model-value="extension.shortuid ?? '—'"
-              label="SIP User"
-              help-pkey="shortuid"
-              disabled
-              class="readonly-identity"
-            />
+            <div class="form-field sip-passwd-field readonly-identity">
+              <label for="edit-identity-sip-user" class="form-field-label">
+                SIP User
+                <FieldHelpIcon pkey="shortuid" />
+              </label>
+              <div class="form-field-input-wrapper">
+                <InlineCopyInput
+                  id="edit-identity-sip-user"
+                  :value="sipUserValue || '—'"
+                  :disabled="!hasSipUser || saving"
+                  :copied="copiedSipKey === 'user'"
+                  copy-label="Copy SIP User"
+                  @copy="copySipUser"
+                />
+              </div>
+            </div>
             <div class="form-field sip-passwd-field readonly-identity">
               <label for="edit-identity-passwd" class="form-field-label">SIP Password</label>
               <div class="form-field-input-wrapper">
                 <div class="sip-passwd-inline">
-                  <input
+                  <InlineCopyInput
                     id="edit-identity-passwd"
-                    class="sip-passwd-value value-immutable"
                     :type="sipPasswordField.type"
                     :value="sipPasswordField.value"
                     :placeholder="sipPasswordField.placeholder"
-                    readonly
-                    title="Immutable"
+                    :disabled="!hasSipPassword || saving || regeneratingSip"
+                    :copied="copiedSipKey === 'passwd'"
+                    copy-label="Copy SIP Password"
+                    @copy="copySipPassword"
                   />
                   <button
                     type="button"
@@ -617,14 +663,6 @@ const panelTitleTenantSuffix = computed(() => {
                     @click="toggleSipPasswordReveal"
                   >
                     {{ sipPasswordRevealed ? 'Hide' : 'Show' }}
-                  </button>
-                  <button
-                    type="button"
-                    class="sip-action-btn"
-                    :disabled="!hasSipPassword || saving || regeneratingSip"
-                    @click="copySipPassword"
-                  >
-                    Copy
                   </button>
                   <button
                     type="button"
@@ -637,13 +675,19 @@ const panelTitleTenantSuffix = computed(() => {
                 </div>
               </div>
             </div>
-            <FormReadonly
-              id="edit-identity-sip-registrar"
-              label="SIP Registrar"
-              :value="sipRegistrar"
-              class="readonly-identity"
-              hide-help
-            />
+            <div class="form-field sip-passwd-field readonly-identity">
+              <label for="edit-identity-sip-registrar" class="form-field-label">SIP Registrar</label>
+              <div class="form-field-input-wrapper">
+                <InlineCopyInput
+                  id="edit-identity-sip-registrar"
+                  :value="sipRegistrar"
+                  :disabled="!hasSipRegistrar || saving"
+                  :copied="copiedSipKey === 'registrar'"
+                  copy-label="Copy SIP Registrar"
+                  @copy="copySipRegistrar"
+                />
+              </div>
+            </div>
             <FormReadonly
               v-if="isReadOnly('device')"
               id="edit-identity-device"
@@ -1136,7 +1180,7 @@ const panelTitleTenantSuffix = computed(() => {
   outline-offset: 2px;
 }
 
-/* SIP password row: same grid as FormField / FormReadonly (label | value+button) */
+/* SIP credential rows: label | InlineCopyInput (+ Show/Regen for password) */
 .sip-passwd-field.form-field {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 2fr;
@@ -1163,29 +1207,8 @@ const panelTitleTenantSuffix = computed(() => {
   width: 100%;
   min-width: 0;
 }
-.sip-passwd-value {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.9375rem;
-  font-family: inherit;
-  line-height: 1.5;
-  border-radius: 0.375rem;
-  word-break: break-all;
-  box-sizing: border-box;
-  width: 100%;
-}
-.sip-passwd-value:focus {
-  outline: none;
-}
-.readonly-identity.sip-passwd-field .form-field-label,
-.readonly-identity.sip-passwd-field .sip-passwd-value {
+.readonly-identity.sip-passwd-field .form-field-label {
   color: #94a3b8;
-}
-.readonly-identity.sip-passwd-field .sip-passwd-value {
-  background-color: #f1f5f9;
-  border: 1px solid #e2e8f0;
 }
 .sip-regenerate-btn {
   flex-shrink: 0;
