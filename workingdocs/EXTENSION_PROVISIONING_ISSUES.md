@@ -96,7 +96,7 @@
 
 ### 13. **Password generation handled**
 **Location:** Extension.php constructor line 74
-**Status:** ✅ Good - password auto-generated via `ret_password(12)`
+**Status:** ✅ Good - password auto-generated via `ret_password()` (8 lowercase a–z)
 
 ### 14. **Location handling**
 **Location:** Old system uses `get_location()` helper
