@@ -199,24 +199,23 @@ export function validateAgentName(value) {
 /**
  * Validate Route dialplan
  * Required; route will not work without it (e.g. _0XXX.)
- * Optional extLen: each pattern min match must be > extLen (#4c).
+ * SARK-aligned floor: each pattern min match ≥ 3 (larger than two chars).
+ * Exact extensions always outrank patterns in Asterisk.
  * @param {string} value
- * @param {number} [extLen]
+ * @param {number} [extLen] unused (kept for call-site compat)
  */
 export function validateDialplan(value, extLen) {
   if (!value || !value.trim()) {
     return 'Dialplan is required (e.g. _0XXX. _00XX.)'
   }
-  if (extLen == null || extLen === '') return null
-  const n = Number(extLen)
-  const len = Number.isInteger(n) && n >= 2 && n <= 5 ? n : null
-  if (len == null) return null
+  void extLen
+  const floor = 3
   const tokens = value.trim().split(/\s+/).filter(Boolean)
   for (const token of tokens) {
     const min = minDialplanMatchLength(token)
     if (min == null) continue
-    if (min <= len) {
-      return `Pattern ${token} is too short for extension length ${len} (min match must be greater than ${len})`
+    if (min < floor) {
+      return `Pattern ${token} is too short (min match must be at least ${floor})`
     }
   }
   return null
