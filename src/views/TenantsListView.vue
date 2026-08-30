@@ -105,6 +105,7 @@ function sortClass(key) {
 
 const tenantExportColumns = computed(() => [
   { key: 'pkey', label: 'Pkey' },
+  { key: 'shortuid', label: 'UID' },
   { key: 'active', label: 'Active' },
   { key: 'description', label: 'Description' },
   { key: 'clusterclid', label: 'CLID' },
@@ -263,6 +264,14 @@ onMounted(async () => {
             <th
               class="th-sortable"
               title="Click to sort"
+              :class="sortClass('shortuid')"
+              @click="setSort('shortuid')"
+            >
+              UID
+            </th>
+            <th
+              class="th-sortable"
+              title="Click to sort"
               :class="sortClass('active')"
               @click="setSort('active')"
             >
@@ -349,6 +358,7 @@ onMounted(async () => {
         <tbody>
           <tr v-for="t in sortedTenants" :key="t.pkey">
             <td>{{ t.pkey }}</td>
+            <td class="mono">{{ t.shortuid != null && t.shortuid !== '' ? t.shortuid : '—' }}</td>
             <ListActiveChip :active="t.active" />
             <td>{{ t.description ?? '—' }}</td>
             <td>{{ t.clusterclid != null && t.clusterclid !== '' ? t.clusterclid : '—' }}</td>
@@ -641,5 +651,8 @@ onMounted(async () => {
 .filter-input:focus {
   outline: none;
   border-color: #2563eb;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 </style>

@@ -13,6 +13,10 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useAuthStore } from '@/stores/auth'
+
+/** Phase-1 UK habit → +E.164 (EGRESS_PLUS_E164_WIRE). Never leave fleet Egress empty. */
+const UK_EGRESS_TRANSFORM = '00:+ 0:+44'
+
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -104,7 +108,10 @@ async function fetchTrunk() {
     editTechnology.value = trunk.value?.technology ?? 'SIP'
     editPjsipreg.value = normalizePjsipregForSelect(trunk.value?.pjsipreg)
     editDevicerec.value = normalizeDevicerec(trunk.value?.devicerec)
-    editTransform.value = trunk.value?.transform ?? ''
+    const rawTransform = (trunk.value?.transform ?? '').toString().trim()
+    editTransform.value =
+      rawTransform ||
+      (trunk.value?.pkey === 'Egress' ? UK_EGRESS_TRANSFORM : '')
     editPjsipOverlay.value = trunk.value?.pjsip_overlay ?? ''
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load trunk')
@@ -167,7 +174,13 @@ async function saveEdit(e) {
             : null
           : null,
       devicerec: editDevicerec.value || 'None',
-      transform: editTransform.value.trim() || undefined
+      transform: (() => {
+        const t = editTransform.value.trim()
+        if (t) return t
+        // Heal empty fleet Egress — national face must not reach Brindley strip=2 raw.
+        if (trunk.value?.pkey === 'Egress') return UK_EGRESS_TRANSFORM
+        return undefined
+      })()
     }
     if (auth.isAdmin) {
       body.pjsip_overlay = editPjsipOverlay.value.trim() || null
