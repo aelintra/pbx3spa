@@ -40,9 +40,58 @@ const form = ref({
   tenant_shortuid: '',
   status: 'active',
   carrier: '',
-  notes: '',
-  reassign: false
+  notes: ''
 })
+
+const OWNING = new Set(['active', 'reserved', 'porting'])
+
+function digitsOnly(value) {
+  return String(value || '').replace(/\D+/g, '')
+}
+
+function tenantLabel(shortuid) {
+  const t = tenants.value.find((row) => row.shortuid === shortuid)
+  if (t?.name) return t.name
+  return shortuid || 'another tenant'
+}
+
+/** Simple collide check — almost always an input error, not a real move. */
+function overlapWarning() {
+  const lead = digitsOnly(form.value.e164)
+  if (!lead) return ''
+  const tenant = form.value.tenant_shortuid
+  const wantPrefix =
+    form.value.delivery === 'block' ? digitsOnly(form.value.sip_prefix) : lead
+  const editingLead = formMode.value !== 'create'
+  const already = (ownerUid) =>
+    `DID number/block already allocated to ${tenantLabel(ownerUid)}.`
+
+  for (const row of dids.value) {
+    if (!OWNING.has(String(row.status || ''))) continue
+    const rowLead = digitsOnly(row.e164 || row.e164_key)
+    const rowPrefix = digitsOnly(row.match_prefix || row.sip_prefix || row.e164_key)
+    if (!rowLead) continue
+    if (editingLead && rowLead === lead) {
+      if (row.tenant_shortuid !== tenant) return already(row.tenant_shortuid)
+      continue
+    }
+    if (rowLead === lead && row.tenant_shortuid !== tenant) {
+      return already(row.tenant_shortuid)
+    }
+    if (wantPrefix && rowPrefix === wantPrefix && rowLead !== lead) {
+      return already(row.tenant_shortuid)
+    }
+    if (
+      wantPrefix &&
+      rowPrefix &&
+      wantPrefix !== rowPrefix &&
+      (wantPrefix.startsWith(rowPrefix) || rowPrefix.startsWith(wantPrefix))
+    ) {
+      return already(row.tenant_shortuid)
+    }
+  }
+  return ''
+}
 
 const didReport = ref(null)
 const checkingDrift = ref(false)
@@ -125,8 +174,7 @@ function blankForm() {
     tenant_shortuid: '',
     status: 'active',
     carrier: '',
-    notes: '',
-    reassign: false
+    notes: ''
   }
 }
 
@@ -148,27 +196,29 @@ function startCreate() {
   actionMsg.value = ''
 }
 
-function fillFormFromRow(row, { reassign = false } = {}) {
+function fillFormFromRow(row) {
+  const rawPrefix =
+    row.sip_prefix ||
+    (row.match_prefix && row.match_prefix !== row.e164_key ? row.match_prefix : '') ||
+    ''
+  const digits = digitsOnly(rawPrefix)
   form.value = {
     e164: row.e164 || '',
     delivery: row.delivery === 'block' ? 'block' : 'singleton',
-    sip_prefix:
-      row.sip_prefix ||
-      (row.match_prefix && row.match_prefix !== row.e164_key ? row.match_prefix : '') ||
-      '',
+    // Show +E.164 face in the form (API stores digit match).
+    sip_prefix: digits ? `+${digits}` : '',
     tenant_shortuid: row.tenant_shortuid || '',
     status: row.status === 'released' ? 'active' : row.status || 'active',
     carrier: row.carrier || '',
-    notes: row.notes || '',
-    reassign
+    notes: row.notes || ''
   }
 }
 
-/** Change SIP prefix / tenant / delivery on an existing catalog row. */
+/** Change block prefix / tenant / delivery on an existing catalog row. */
 function startEdit(row) {
   if (!canEdge.value) return
   formMode.value = 'edit'
-  fillFormFromRow(row, { reassign: false })
+  fillFormFromRow(row)
   showAssign.value = true
   error.value = ''
   actionMsg.value = `Editing ${row.e164} — same catalog row; change fields and Update + project.`
@@ -177,7 +227,7 @@ function startEdit(row) {
 function startReallocate(row) {
   if (!canEdge.value) return
   formMode.value = 'reallocate'
-  fillFormFromRow(row, { reassign: true })
+  fillFormFromRow(row)
   showAssign.value = true
   error.value = ''
   actionMsg.value = `Re-allocate ${row.e164} — pick tenant and save (was released).`
@@ -186,7 +236,13 @@ function startReallocate(row) {
 async function submitAssign() {
   if (!canEdge.value) return
   if (form.value.delivery === 'block' && !form.value.sip_prefix.trim()) {
-    error.value = 'Block delivery requires a SIP prefix (OpenSIPS match digits shorter than the E.164).'
+    error.value =
+      'Block delivery requires a block prefix (E.164 stem, e.g. +4419249180 — shorter than the lead number).'
+    return
+  }
+  const overlap = overlapWarning()
+  if (overlap) {
+    error.value = overlap
     return
   }
   busy.value = true
@@ -197,8 +253,7 @@ async function submitAssign() {
       e164: form.value.e164.trim(),
       tenant_shortuid: form.value.tenant_shortuid,
       status: form.value.status,
-      delivery: form.value.delivery,
-      reassign: form.value.reassign || formMode.value !== 'create'
+      delivery: form.value.delivery
     }
     if (form.value.sip_prefix.trim()) body.sip_prefix = form.value.sip_prefix.trim()
     if (form.value.carrier.trim()) body.carrier = form.value.carrier.trim()
@@ -351,12 +406,17 @@ onMounted(load)
     <p class="hint">
       <strong>Catalog is home of record</strong> (<code>tenants/*/dids.json</code>) — this list is
       <strong>catalog intent</strong>, not a live SBC scrape.
-      Allocate / reassign writes the catalog, then projects inbound <code>dr_rules</code>
+      Allocate writes the catalog, then projects inbound <code>dr_rules</code>
       (fleet-owned rows). Retarget hop-1 delivery here only — the SBC admin UI must not edit
-      <code>fleet=did</code> routes. Choose <strong>singleton</strong> or <strong>block</strong>:
-      SIP prefix is the digit string OpenSIPS matches (e.g. block <code>019249264</code> vs
-      E.164 <code>+441924918076</code>).       Allocate writes a <strong>new</strong> catalog row; use <strong>Edit</strong> on a row to
-      change SIP prefix / tenant (same object). Soft <em>released</em> rows stay grey —
+      <code>fleet=did</code> routes.       Choose <strong>singleton</strong> or <strong>block</strong>.
+      For a block, <strong>Block prefix (E.164)</strong> is the shared stem in the same
+      <code>+CC…</code> shape as the lead number (e.g. lead <code>+441924918000</code>,
+      prefix <code>+4419249180</code> for a 100-block). The SBC stores match digits
+      (<code>+</code> stripped); leave prefix empty for singleton.
+      If the number or block is already in the catalog, you get a simple warning naming the
+      owner (usually an input error — moves between tenants are rare).
+      Allocate writes a <strong>new</strong> catalog row; use <strong>Edit</strong> on a row to
+      change prefix or status (same object). Soft <em>released</em> rows stay grey —
       <strong>Re-allocate</strong> or <strong>Remove</strong>.
     </p>
 
@@ -397,10 +457,10 @@ onMounted(load)
     <form v-if="showAssign && canEdge" class="assign-form" @submit.prevent="submitAssign">
       <h2 class="form-title">{{ formTitle }}</h2>
       <p v-if="formMode === 'edit'" class="form-note">
-        Same catalog row — change SIP prefix or tenant, then update. Not a new DID.
+        Same catalog row — change block prefix or tenant, then update. Not a new DID.
       </p>
       <label>
-        E.164
+        Lead number (E.164)
         <input
           v-model="form.e164"
           type="text"
@@ -413,20 +473,21 @@ onMounted(load)
       <label>
         Delivery
         <select v-model="form.delivery">
-          <option value="singleton">singleton (one number)</option>
-          <option value="block">block (prefix → tenant)</option>
+          <option value="singleton">Singleton</option>
+          <option value="block">Block</option>
         </select>
       </label>
       <label>
-        SIP prefix
+        Block prefix (E.164)
         <input
           v-model="form.sip_prefix"
           type="text"
           :required="form.delivery === 'block'"
+          :disabled="form.delivery === 'singleton'"
           :placeholder="
             form.delivery === 'block'
-              ? 'required block digits (e.g. 019249264)'
-              : 'as carrier sends (e.g. 01924918076)'
+              ? '+4419249180 (same +E.164 shape as lead stem)'
+              : 'leave empty for singleton'
           "
           autocomplete="off"
         />
@@ -455,10 +516,6 @@ onMounted(load)
       <label class="notes">
         Notes
         <input v-model="form.notes" type="text" placeholder="optional" />
-      </label>
-      <label v-if="formMode === 'create'" class="check">
-        <input v-model="form.reassign" type="checkbox" />
-        Take over if already owned by another tenant
       </label>
       <button type="submit" class="primary" :disabled="busy || !form.tenant_shortuid">
         {{ formSubmitLabel }}
@@ -515,10 +572,10 @@ onMounted(load)
       </table>
     </template>
 
-    <table v-if="dids.length" class="data-table">
+      <table v-if="dids.length" class="data-table">
       <thead>
         <tr>
-          <th>E.164</th>
+          <th>Lead number (E.164)</th>
           <th>Delivery</th>
           <th>Match prefix</th>
           <th>Status</th>
@@ -638,10 +695,6 @@ onMounted(load)
   font-size: 0.85rem;
   color: var(--pbx-text-muted);
 }
-.assign-form input[readonly] {
-  background: #e2e8f0;
-  color: var(--pbx-text, #0f172a);
-}
 .assign-form label {
   display: flex;
   flex-direction: column;
@@ -649,21 +702,51 @@ onMounted(load)
   font-size: 0.8rem;
   color: var(--pbx-text-muted);
 }
+/* Match FormField / FormSelect heights (native controls otherwise mis-size on macOS). */
 .assign-form input,
 .assign-form select {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
   font: inherit;
-  padding: 0.35rem 0.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.25;
+  color: var(--pbx-text, #0f172a);
+  background-color: var(--pbx-panel, #ffffff);
   border: 1px solid var(--pbx-border);
-  border-radius: 4px;
+  border-radius: 0.375rem;
+}
+.assign-form select {
+  height: 2.5rem;
+  appearance: auto;
+  cursor: pointer;
+}
+.assign-form input:focus,
+.assign-form select:focus {
+  outline: none;
+  border-color: var(--pbx-accent-bright, #3b82f6);
+  box-shadow: 0 0 0 3px var(--pbx-focus-ring, rgba(59, 130, 246, 0.1));
+}
+.assign-form input:disabled,
+.assign-form select:disabled {
+  background-color: var(--pbx-surface-subtle, #f8fafc);
+  color: var(--pbx-text-muted, #64748b);
+  cursor: not-allowed;
+}
+.assign-form input[readonly] {
+  background: #e2e8f0;
+  color: var(--pbx-text, #0f172a);
 }
 .assign-form .notes {
   grid-column: 1 / -1;
 }
-.assign-form .check {
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
+.assign-form > .primary {
   grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 0.5rem;
 }
 .muted {
   color: var(--pbx-text-muted);
