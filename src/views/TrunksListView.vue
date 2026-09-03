@@ -17,8 +17,19 @@ import ListActiveChip from '@/components/ListActiveChip.vue'
 import ListLiveLatencyChip from '@/components/ListLiveLatencyChip.vue'
 import { isLiveStatusOnline } from '@/utils/liveLatencyChip'
 
-const { loadFleetPosture, isFleetNode } = useFleetPosture()
+const { loadFleetPosture, isFleetNode, posture } = useFleetPosture()
 const fleetReady = ref(false)
+
+/** Seeded Egress / EgressFailover — Delete blocked on fleet (§4.3.1). */
+function isManufacturedFleetEgressTrunk(tr) {
+  if (!fleetReady.value || !isFleetNode()) return false
+  const pkey = String(tr?.pkey || '')
+  const primary = String(posture.value?.egress_trunk || 'Egress')
+  return (
+    pkey.localeCompare(primary, undefined, { sensitivity: 'accent' }) === 0 ||
+    pkey.localeCompare('EgressFailover', undefined, { sensitivity: 'accent' }) === 0
+  )
+}
 
 const { filterText } = useStickyFilter('trunks')
 const toast = useToastStore()
@@ -281,7 +292,7 @@ onMounted(async () => {
           class="add-btn"
         >Create</router-link>
         <span v-else-if="fleetReady && isFleetNode()" class="fleet-hint">
-          Fleet: edit Egress (mangle) here — create carriers on the SBC
+          Fleet: edit Egress transform here — create carriers on the SBC
         </span>
         <button
           type="button"
@@ -468,7 +479,7 @@ onMounted(async () => {
             </td>
             <td>
               <button
-                v-if="tr.shortuid"
+                v-if="tr.shortuid && !isManufacturedFleetEgressTrunk(tr)"
                 type="button"
                 class="cell-link cell-link-delete cell-link-icon"
                 :title="deletingPkey === tr.shortuid ? 'Deleting…' : 'Delete'"
@@ -515,6 +526,13 @@ onMounted(async () => {
                     <line x1="14" x2="14" y1="11" y2="17" /></svg
                 ></span>
               </button>
+              <span
+                v-else-if="tr.shortuid && isManufacturedFleetEgressTrunk(tr)"
+                class="cell-link cell-link-icon"
+                title="Fleet Egress is a system peer — cannot delete"
+                style="opacity: 0.5"
+                >—</span
+              >
               <span
                 v-else
                 class="cell-link cell-link-icon"

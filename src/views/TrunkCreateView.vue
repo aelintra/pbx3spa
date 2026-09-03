@@ -62,7 +62,7 @@ onMounted(async () => {
   if (isFleetNode()) {
     fleetBlocked.value = true
     error.value =
-      'Fleet mode: carriers live on the SBC. Edit Egress (e.g. mangle) here; do not create new trunks on the node.'
+      'Fleet mode: carriers live on the SBC. Edit Egress transform here; do not create new trunks on the node.'
     return
   }
   await ensureFetched()
@@ -74,7 +74,7 @@ async function onSubmit(e) {
   error.value = ''
   if (fleetBlocked.value || isFleetNode()) {
     error.value =
-      'Fleet mode: carriers live on the SBC. Edit Egress (e.g. mangle) here; do not create new trunks on the node.'
+      'Fleet mode: carriers live on the SBC. Edit Egress transform here; do not create new trunks on the node.'
     return
   }
   if (!isSIP.value) {

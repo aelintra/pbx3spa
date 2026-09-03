@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
+import { useFleetPosture } from '@/composables/useFleetPosture'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
@@ -22,12 +23,14 @@ const router = useRouter()
 const toast = useToastStore()
 const auth = useAuthStore()
 const { getSchema, ensureFetched } = useSchema()
+const { loadFleetPosture, isFleetNode, posture } = useFleetPosture()
 function isReadOnly(field) {
   return getSchema('trunks')?.read_only?.includes(field) ?? false
 }
 const trunk = ref(null)
 const loading = ref(true)
 const error = ref('')
+const fleetReady = ref(false)
 const editPkey = ref('')
 const editCname = ref('')
 const editDescription = ref('')
@@ -51,6 +54,17 @@ const sipPjsipregOptions = [
   { value: 'RCV', label: 'Accept registration from provider' },
   { value: 'SND', label: 'Send registration to provider' }
 ]
+
+/** Fleet seeded Egress / EgressFailover — narrow edit surface (§4.3.1). */
+const isManufacturedFleetEgress = computed(() => {
+  if (!fleetReady.value || !isFleetNode() || !trunk.value) return false
+  const pkey = String(trunk.value.pkey || '')
+  const primary = String(posture.value?.egress_trunk || 'Egress')
+  return (
+    pkey.localeCompare(primary, undefined, { sensitivity: 'accent' }) === 0 ||
+    pkey.localeCompare('EgressFailover', undefined, { sensitivity: 'accent' }) === 0
+  )
+})
 
 function normalizePjsipregForSelect(v) {
   if (v == null || v === '') return ''
@@ -109,10 +123,13 @@ async function fetchTrunk() {
     editPjsipreg.value = normalizePjsipregForSelect(trunk.value?.pjsipreg)
     editDevicerec.value = normalizeDevicerec(trunk.value?.devicerec)
     const rawTransform = (trunk.value?.transform ?? '').toString().trim()
-    editTransform.value =
-      rawTransform ||
-      (trunk.value?.pkey === 'Egress' ? UK_EGRESS_TRANSFORM : '')
+    const isEgressPkey =
+      trunk.value?.pkey === 'Egress' || trunk.value?.pkey === 'EgressFailover'
+    editTransform.value = rawTransform || (isEgressPkey ? UK_EGRESS_TRANSFORM : '')
     editPjsipOverlay.value = trunk.value?.pjsip_overlay ?? ''
+    if (isManufacturedFleetEgress.value) {
+      editActive.value = 'YES'
+    }
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load trunk')
     trunk.value = null
@@ -123,6 +140,8 @@ async function fetchTrunk() {
 
 onMounted(async () => {
   await ensureFetched()
+  await loadFleetPosture()
+  fleetReady.value = true
   await fetchTrunk()
 })
 watch(shortuid, fetchTrunk)
@@ -151,41 +170,58 @@ async function saveEdit(e) {
   saveError.value = ''
   saving.value = true
   try {
-    const body = {
-      pkey: editPkey.value.trim() || undefined,
-      cname: editCname.value.trim() || undefined,
-      description: editDescription.value.trim() || undefined,
-      active: editActive.value,
-      cluster: 'default', // TRUNK_ROUTE_MULTITENANCY: trunks are default-tenant only, not changeable
-      host: editHost.value.trim(),
-      username: editUsername.value.trim() || undefined,
-      peername: editPeername.value.trim() || undefined,
-      trunkname: editTrunkname.value.trim() || undefined,
-      callprogress: editCallprogress.value,
-      callerid: editCallerid.value.trim() || undefined,
-      inprefix: editInprefix.value.trim() || undefined,
-      match: editMatch.value.trim() || undefined,
-      privileged: editPrivileged.value,
-      technology: editTechnology.value === 'IAX2' ? 'IAX2' : 'SIP',
-      pjsipreg:
-        editTechnology.value === 'SIP'
-          ? editPjsipreg.value
-            ? editPjsipreg.value.trim().toUpperCase()
-            : null
-          : null,
-      devicerec: editDevicerec.value || 'None',
-      transform: (() => {
-        const t = editTransform.value.trim()
-        if (t) return t
-        // Heal empty fleet Egress — national face must not reach Brindley strip=2 raw.
-        if (trunk.value?.pkey === 'Egress') return UK_EGRESS_TRANSFORM
-        return undefined
-      })()
-    }
-    if (auth.isAdmin) {
+    const manufactured = isManufacturedFleetEgress.value
+    const body = manufactured
+      ? {
+          description: editDescription.value.trim() || undefined,
+          cname: editCname.value.trim() || undefined,
+          active: 'YES',
+          cluster: 'default',
+          callprogress: editCallprogress.value,
+          callerid: editCallerid.value.trim() || undefined,
+          inprefix: editInprefix.value.trim() || undefined,
+          devicerec: editDevicerec.value || 'None',
+          transform: (() => {
+            const t = editTransform.value.trim()
+            if (t) return t
+            return UK_EGRESS_TRANSFORM
+          })()
+        }
+      : {
+          pkey: editPkey.value.trim() || undefined,
+          cname: editCname.value.trim() || undefined,
+          description: editDescription.value.trim() || undefined,
+          active: editActive.value,
+          cluster: 'default', // TRUNK_ROUTE_MULTITENANCY: trunks are default-tenant only, not changeable
+          host: editHost.value.trim(),
+          username: editUsername.value.trim() || undefined,
+          peername: editPeername.value.trim() || undefined,
+          trunkname: editTrunkname.value.trim() || undefined,
+          callprogress: editCallprogress.value,
+          callerid: editCallerid.value.trim() || undefined,
+          inprefix: editInprefix.value.trim() || undefined,
+          match: editMatch.value.trim() || undefined,
+          privileged: editPrivileged.value,
+          technology: editTechnology.value === 'IAX2' ? 'IAX2' : 'SIP',
+          pjsipreg:
+            editTechnology.value === 'SIP'
+              ? editPjsipreg.value
+                ? editPjsipreg.value.trim().toUpperCase()
+                : null
+              : null,
+          devicerec: editDevicerec.value || 'None',
+          transform: (() => {
+            const t = editTransform.value.trim()
+            if (t) return t
+            // Heal empty fleet Egress — national face must not reach Brindley strip=2 raw.
+            if (trunk.value?.pkey === 'Egress') return UK_EGRESS_TRANSFORM
+            return undefined
+          })()
+        }
+    if (!manufactured && auth.isAdmin) {
       body.pjsip_overlay = editPjsipOverlay.value.trim() || null
     }
-    if (editPassword.value.trim()) body.password = editPassword.value.trim()
+    if (!manufactured && editPassword.value.trim()) body.password = editPassword.value.trim()
     await getApiClient().put(`trunks/${encodeURIComponent(shortuid.value)}`, body)
     await fetchTrunk()
     toast.show(`Trunk saved`)
@@ -227,11 +263,22 @@ async function confirmAndDelete() {
       <div class="detail-panel-head">
         <div class="detail-title-status-row">
           <h1 class="detail-panel-title">Edit Trunk {{ trunk?.pkey ?? '…' }}</h1>
-          <DetailActiveStatusBar v-if="trunk" v-model="editActive" toggle-id="edit-trunk-active" />
+          <DetailActiveStatusBar
+            v-if="trunk && !isManufacturedFleetEgress"
+            v-model="editActive"
+            toggle-id="edit-trunk-active"
+          />
+          <span v-else-if="trunk && isManufacturedFleetEgress" class="fleet-active-chip" role="status"
+            >Active</span
+          >
         </div>
-        <p v-if="trunk && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
+        <p v-if="trunk && !isManufacturedFleetEgress && editActive === 'NO'" class="detail-active-inactive-hint" role="status">
           Inactive trunks are not used for calling until you activate this record and commit the
           change.
+        </p>
+        <p v-if="trunk && isManufacturedFleetEgress" class="fleet-egress-hint" role="status">
+          Fleet system peer to the SBC — edit transform and dialplan knobs only. Host changes use
+          reseed / onboard, not this form.
         </p>
       </div>
     </PanelBackLink>
@@ -249,6 +296,7 @@ async function confirmAndDelete() {
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
             <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
             <button
+              v-if="!isManufacturedFleetEgress"
               type="button"
               class="action-delete"
               :disabled="deleting"
@@ -291,7 +339,7 @@ async function confirmAndDelete() {
               class="readonly-identity"
             />
             <FormReadonly
-              v-if="isReadOnly('pkey')"
+              v-if="isReadOnly('pkey') || isManufacturedFleetEgress"
               id="edit-identity-pkey"
               label="Name"
               help-pkey="trunkname"
@@ -330,7 +378,7 @@ async function confirmAndDelete() {
               class="readonly-identity"
             />
             <FormReadonly
-              v-if="isReadOnly('technology') || editTechnology === 'IAX2'"
+              v-if="isReadOnly('technology') || editTechnology === 'IAX2' || isManufacturedFleetEgress"
               id="edit-identity-technology"
               label="Technology"
               :value="editTechnology === 'IAX2' ? 'IAX2 (legacy — not supported)' : editTechnology || 'SIP'"
@@ -349,11 +397,19 @@ async function confirmAndDelete() {
               label="Description (optional)"
               type="text"
             />
+            <FormReadonly
+              v-if="isManufacturedFleetEgress"
+              id="edit-host-readonly"
+              label="Host"
+              :value="editHost || '—'"
+              class="readonly-identity"
+            />
           </div>
 
           <h2 class="detail-heading">Settings</h2>
           <div class="form-fields">
             <FormToggle
+              v-if="!isManufacturedFleetEgress"
               id="edit-active"
               v-model="editActive"
               label="Active?"
@@ -361,7 +417,7 @@ async function confirmAndDelete() {
               no-value="NO"
             />
             <FormSelect
-              v-if="editTechnology === 'SIP'"
+              v-if="editTechnology === 'SIP' && !isManufacturedFleetEgress"
               id="edit-pjsipreg"
               v-model="editPjsipreg"
               label="SIP registration"
@@ -369,6 +425,7 @@ async function confirmAndDelete() {
               :options="sipPjsipregOptions"
             />
             <FormField
+              v-if="!isManufacturedFleetEgress"
               id="edit-host"
               v-model="editHost"
               label="Host"
@@ -377,6 +434,7 @@ async function confirmAndDelete() {
               placeholder="e.g. sip.example.com, IP, or dynamic (accept-reg)"
             />
             <FormField
+              v-if="!isManufacturedFleetEgress"
               id="edit-username"
               v-model="editUsername"
               label="Username"
@@ -384,6 +442,7 @@ async function confirmAndDelete() {
               autocomplete="off"
             />
             <FormField
+              v-if="!isManufacturedFleetEgress"
               id="edit-peername"
               v-model="editPeername"
               label="Peername"
@@ -391,6 +450,7 @@ async function confirmAndDelete() {
               autocomplete="off"
             />
             <FormField
+              v-if="!isManufacturedFleetEgress"
               id="edit-trunkname"
               v-model="editTrunkname"
               label="Trunkname"
@@ -398,6 +458,7 @@ async function confirmAndDelete() {
               autocomplete="off"
             />
             <FormField
+              v-if="!isManufacturedFleetEgress"
               id="edit-password"
               v-model="editPassword"
               label="Password"
@@ -414,42 +475,58 @@ async function confirmAndDelete() {
               no-value="NO"
             />
             <FormToggle
+              v-if="!isManufacturedFleetEgress"
               id="edit-privileged"
               v-model="editPrivileged"
               label="Privileged"
               yes-value="YES"
               no-value="NO"
             />
+            <!-- Fleet Egress: keep dialplan knobs under Settings (no Advanced demotion). -->
+            <template v-if="isManufacturedFleetEgress">
+              <FormField id="edit-callerid" v-model="editCallerid" label="Caller ID" type="text" hide-help />
+              <FormField id="edit-inprefix" v-model="editInprefix" label="In prefix" type="text" />
+              <FormSelect
+                id="edit-devicerec"
+                v-model="editDevicerec"
+                label="Device recording"
+                :options="devicerecOptions"
+              />
+              <FormField id="edit-transform" v-model="editTransform" label="Transform" type="text" />
+            </template>
           </div>
 
-          <h2 class="detail-heading">Advanced</h2>
-          <div class="form-fields">
-            <FormField id="edit-callerid" v-model="editCallerid" label="Caller ID" type="text" hide-help />
-            <FormField id="edit-inprefix" v-model="editInprefix" label="In prefix" type="text" />
-            <FormField id="edit-match" v-model="editMatch" label="Match" type="text" />
-            <FormSelect
-              id="edit-devicerec"
-              v-model="editDevicerec"
-              label="Device recording"
-              :options="devicerecOptions"
-            />
-            <FormField id="edit-transform" v-model="editTransform" label="Transform" type="text" />
-            <FormField
-              v-if="auth.isAdmin"
-              id="edit-pjsip_overlay"
-              v-model="editPjsipOverlay"
-              label="PJSIP overlay"
-              type="text"
-              placeholder="Thin overlay fragment (type= + keys)"
-              :multiline="true"
-              :rows="8"
-            />
-          </div>
+          <template v-if="!isManufacturedFleetEgress">
+            <h2 class="detail-heading">Advanced</h2>
+            <div class="form-fields">
+              <FormField id="edit-callerid" v-model="editCallerid" label="Caller ID" type="text" hide-help />
+              <FormField id="edit-inprefix" v-model="editInprefix" label="In prefix" type="text" />
+              <FormField id="edit-match" v-model="editMatch" label="Match" type="text" />
+              <FormSelect
+                id="edit-devicerec"
+                v-model="editDevicerec"
+                label="Device recording"
+                :options="devicerecOptions"
+              />
+              <FormField id="edit-transform" v-model="editTransform" label="Transform" type="text" />
+              <FormField
+                v-if="auth.isAdmin"
+                id="edit-pjsip_overlay"
+                v-model="editPjsipOverlay"
+                label="PJSIP overlay"
+                type="text"
+                placeholder="Thin overlay fragment (type= + keys)"
+                :multiline="true"
+                :rows="8"
+              />
+            </div>
+          </template>
 
           <div class="edit-actions">
             <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
             <button type="button" class="secondary" @click="cancelEdit">Cancel</button>
             <button
+              v-if="!isManufacturedFleetEgress"
               type="button"
               class="action-delete"
               :disabled="deleting"
@@ -516,6 +593,22 @@ async function confirmAndDelete() {
 .readonly-identity :deep(.form-readonly) {
   background-color: #f1f5f9;
   border-color: #e2e8f0;
+}
+.fleet-egress-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: #475569;
+  max-width: 40rem;
+}
+.fleet-active-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #166534;
+  background: #dcfce7;
+  border-radius: 0.375rem;
 }
 .edit-form {
   margin-bottom: 1rem;
