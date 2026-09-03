@@ -14,7 +14,7 @@
 
 **Implementation (pbx3api):**
 
-- **Helper:** `pjsip_endpoint_live($amiHandle, $pkey)` in `app/Helpers/Helper.php` — sends AMI `PJSIPShowEndpoint`, parses response for Contact/URI/Match (IP) and RoundtripUsec (latency). Returns `['ip' => '...', 'latency' => '...']`; uses **"Unknown"** when no value (not "—").
+- **Helper:** `pjsip_endpoint_live($amiHandle, $pkey)` in `app/Helpers/Helper.php` — sends AMI `PJSIPShowEndpoint`, parses response for Contact/URI/Match (IP) and RoundtripUsec (latency). Returns `['ip' => '...', 'latency' => '...']`; uses **"Unknown"** when no value (not "—"). Contact hosts ending **`.invalid`** (browser ICE mDNS) display as **`WebRTC`**. AMI **NonQualified** (WebRTC, no OPTIONS RTT) → latency **`OK`**.
 - **Ami class:** `amiQueryUntilBlankLine($query)` in `app/CustomClasses/Ami.php` — reads AMI response until a blank line. **Critical:** without this, each AMI read would block for the socket timeout (~3s), so N extensions would cause gateway timeout. Use this for any AMI command that returns a single response block ending with a blank line.
 - **ExtensionController::indexLive()** — gets all SIP extensions (no active filter), calls `get_ami_handle()`, loops with `pjsip_endpoint_live()` per pkey, returns JSON object. Uses `set_time_limit(30)` and `.limit(200)`.
 
@@ -43,6 +43,7 @@
 2. **Live keys are pkey strings.** The list can have duplicate pkeys (same extension number in different tenants); each row still looks up by `e.pkey` and gets the same live entry (Asterisk doesn’t distinguish by tenant for PJSIP endpoint name).
 3. **indexLive skips `active = NO`** (legacy SARK parity). Inactive SIP rows have no live entry → **Unknown** for IP/Status.
 4. **PJSIPShowEndpoints** (plural) returns a high-level list without Contact/RoundtripUsec; we must use **PJSIPShowEndpoint** (singular) per extension to get IP and RTT. See legacy SARK `srkAmiHelperClass` for the original pattern.
+5. **WebRTC IP column:** browsers advertise ICE host candidates as `{random}.invalid`. Asterisk stores that as the PJSIP Contact host. API maps `.invalid` → **`WebRTC`** (`pbx_live_ip_display`). Contact status **NonQualified** (no OPTIONS RTT; `qualify_frequency=0`) still counts as registered → latency **`OK`** (SPA chip **Online**). Do not OPTIONS-qualify ICE `.invalid` hosts.
 
 ---
 
