@@ -599,7 +599,9 @@ async function onSubmit(e) {
 <template>
   <div class="login">
     <form class="login-form" @submit="onSubmit">
-      <h1>PBX3 Admin</h1>
+      <h1 class="login-title">
+        PBX<sup class="login-title-3">3</sup> Admin
+      </h1>
 
       <p v-if="step === 'chooser'" class="subtitle">How do you want to work?</p>
       <p v-else-if="step === 'loading'" class="subtitle">Loading instance catalog…</p>
@@ -905,9 +907,23 @@ async function onSubmit(e) {
   flex-direction: column;
   gap: 0.75rem;
 }
-.login-form h1 {
+.login-form h1,
+.login-title {
   font-size: 1.5rem;
+  font-weight: 600;
   margin-bottom: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: #0f172a;
+}
+.login-title-3 {
+  font-size: 0.72em;
+  font-weight: 800;
+  line-height: 1;
+  vertical-align: baseline;
+  position: relative;
+  top: -0.52em;
+  color: #3b82f6; /* --pbx-accent-bright */
 }
 .subtitle {
   color: #64748b;

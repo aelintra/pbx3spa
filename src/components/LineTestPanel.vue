@@ -399,6 +399,7 @@ function copyReport() {
     `ICE local/remote: ${pathCopy.value.localIce} / ${pathCopy.value.remoteIce}`,
     `Loss in: ${fmt(m.finalLossPctIn, '%')}  Jitter avg: ${fmt(m.avgJitterMsIn, ' ms')}  RTT avg: ${fmt(m.avgRttMs, ' ms')}`,
     `Bitrate in/out: ${fmt(m.avgBitrateInKbps, ' kbps')} / ${fmt(m.avgBitrateOutKbps, ' kbps')}`,
+    `Bytes in/out: ${fmt(m.finalBytesReceived, '')} / ${fmt(m.finalBytesSent, '')}`,
     `Codec: ${m.codec || '—'}  Samples: ${m.sampleCount}`,
     ...holdLines,
     'Timeline:',
@@ -715,6 +716,22 @@ function metricTone(kind, value) {
                   {{ fmt(mediaSummary.avgBitrateOutKbps, ' kbps') }}
                 </span>
               </div>
+              <div
+                class="metric"
+                :class="
+                  mediaSummary.finalBytesReceived > 0 && mediaSummary.finalBytesSent > 0
+                    ? 'metric--ok'
+                    : mediaSummary.sampleCount
+                      ? 'metric--bad'
+                      : 'metric--muted'
+                "
+              >
+                <span class="metric-label">Bytes in / out</span>
+                <span class="metric-value metric-value--sm">
+                  {{ fmt(mediaSummary.finalBytesReceived, '') }} /
+                  {{ fmt(mediaSummary.finalBytesSent, '') }}
+                </span>
+              </div>
               <div class="metric metric--muted">
                 <span class="metric-label">Codec · samples</span>
                 <span class="metric-value metric-value--sm">
@@ -722,6 +739,19 @@ function metricTone(kind, value) {
                 </span>
               </div>
             </div>
+            <p
+              v-if="mediaSummary.sampleCount && !(mediaSummary.finalBytesReceived > 0)"
+              class="report-hint report-hint--warn"
+            >
+              No inbound RTP bytes — path/ICE issue (not just speaker). Check WebRTC endpoint
+              <code>direct_media=no</code> and ICE candidates above.
+            </p>
+            <p
+              v-else-if="mediaSummary.sampleCount && mediaSummary.finalBytesReceived > 0"
+              class="report-hint"
+            >
+              Inbound bytes present — if you heard silence, it was browser playback (now hardened).
+            </p>
             <p v-if="!mediaSummary.sampleCount" class="report-hint">
               No media samples (register-only or call ended before RTP). Timeline still useful.
             </p>
@@ -793,6 +823,7 @@ function metricTone(kind, value) {
   max-width: 32rem;
 }
 .line-test-panel {
+  position: relative;
   width: min(28rem, 100%);
   height: 100%;
   background: #f8fafc;
@@ -995,7 +1026,17 @@ function metricTone(kind, value) {
   color: #64748b;
 }
 .line-test-audio {
-  display: none;
+  /* Keep in layout for playback — display:none can mute WebRTC in some browsers */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  pointer-events: none;
 }
 .hold-list {
   margin: 0;
@@ -1113,6 +1154,16 @@ function metricTone(kind, value) {
   margin: 0.5rem 0 0;
   font-size: 0.78rem;
   color: #64748b;
+}
+.report-hint--warn {
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 0.375rem;
+  padding: 0.45rem 0.65rem;
+}
+.report-hint code {
+  font-size: 0.85em;
 }
 .timeline {
   list-style: none;

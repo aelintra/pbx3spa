@@ -52,6 +52,8 @@ describe('summarizeSamples', () => {
     expect(s.finalLossPctIn).toBe(1.5)
     expect(s.avgBitrateInKbps).toBe(100)
     expect(s.avgBitrateOutKbps).toBe(200)
+    expect(s.finalBytesReceived).toBe(26000)
+    expect(s.finalBytesSent).toBe(52000)
     expect(s.codec).toBe('opus')
     expect(s.localCandidateType).toBe('srflx')
   })

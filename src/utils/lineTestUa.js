@@ -48,6 +48,8 @@ export function createLineTestUa(options) {
   /** @type {'incoming'|'outgoing'|null} */
   let sessionDirection = null
   let localHold = false
+  /** One `track` listener per RTCPeerConnection (CloudSIP kinship). */
+  const pcsWithTrackHandler = new WeakSet()
 
   function log(msg) {
     onLog?.(msg)
@@ -65,25 +67,110 @@ export function createLineTestUa(options) {
     onState?.(state)
   }
 
+  function clearRemoteAudioEl() {
+    const el = getRemoteAudioEl?.()
+    if (!el) return
+    try {
+      el.pause?.()
+    } catch {
+      /* ignore */
+    }
+    el.srcObject = null
+  }
+
+  /** @param {MediaStreamTrack[]} tracks */
+  function trackIdKey(tracks) {
+    return tracks
+      .filter((t) => t && t.kind === 'audio')
+      .map((t) => t.id)
+      .sort()
+      .join(',')
+  }
+
+  /**
+   * play() is often aborted when we briefly re-set srcObject on confirmed.
+   * Retry once; only log non-abort failures.
+   */
+  function playRemoteAudio(el) {
+    if (!el) return
+    el.muted = false
+    el.volume = 1
+    const attempt = () =>
+      el.play().catch((err) => {
+        const name = err?.name ? String(err.name) : ''
+        const msg = err?.message ? String(err.message) : 'play() failed'
+        if (name === 'AbortError' || /aborted/i.test(msg)) {
+          // Superseded by a second attach — retry once after the race settles.
+          setTimeout(() => {
+            el.play().catch((err2) => {
+              const n2 = err2?.name ? String(err2.name) : ''
+              const m2 = err2?.message ? String(err2.message) : 'play() failed'
+              if (n2 === 'AbortError' || /aborted/i.test(m2)) return
+              stamp('remote_audio_play_blocked', { message: m2 })
+            })
+          }, 0)
+          return
+        }
+        stamp('remote_audio_play_blocked', { message: msg })
+      })
+    attempt()
+  }
+
+  /**
+   * Set srcObject only when audio track set changes (avoid aborting in-flight play).
+   * @param {HTMLAudioElement} el
+   * @param {MediaStream} stream
+   * @param {string} reason
+   */
+  function setRemoteStream(el, stream, reason) {
+    if (!el || !stream) return
+    const nextKey = trackIdKey(stream.getAudioTracks())
+    if (!nextKey) return
+    const cur = el.srcObject
+    const curKey =
+      cur && typeof cur.getAudioTracks === 'function'
+        ? trackIdKey(cur.getAudioTracks())
+        : ''
+    if (curKey === nextKey) {
+      playRemoteAudio(el)
+      return
+    }
+    el.srcObject = stream
+    playRemoteAudio(el)
+    log(`remote audio: ${stream.getAudioTracks().length} track(s) (${reason})`)
+  }
+
+  /**
+   * Wire remote audio into the hidden <audio> element.
+   * Single MediaStream from audio receivers (avoid per-track overwrite).
+   */
+  function wireRemoteFromPc(pc, reason = 'receivers') {
+    const el = getRemoteAudioEl?.()
+    if (!el || !pc) return
+    const remoteStream = new MediaStream()
+    pc.getReceivers?.().forEach((r) => {
+      if (r.track && r.track.kind === 'audio') {
+        remoteStream.addTrack(r.track)
+      }
+    })
+    setRemoteStream(el, remoteStream, reason)
+  }
+
   function attachRemoteTracks(sess) {
     const pc = sess.connection
     if (!pc) return
-    const wireStream = (stream) => {
-      const el = getRemoteAudioEl?.()
-      if (!el || !stream) return
-      el.srcObject = stream
-      el.play().catch(() => {
-        /* autoplay may need user gesture; dial/answer clicks count */
-      })
-    }
-    pc.getReceivers?.().forEach((r) => {
-      if (r.track) {
-        wireStream(new MediaStream([r.track]))
-      }
-    })
+    wireRemoteFromPc(pc, 'attach')
+    if (pcsWithTrackHandler.has(pc)) return
+    pcsWithTrackHandler.add(pc)
     pc.addEventListener('track', (ev) => {
-      if (ev.streams?.[0]) wireStream(ev.streams[0])
-      else if (ev.track) wireStream(new MediaStream([ev.track]))
+      if (ev.track && ev.track.kind !== 'audio') return
+      const el = getRemoteAudioEl?.()
+      if (!el) return
+      if (ev.streams?.[0]) {
+        setRemoteStream(el, ev.streams[0], 'track-event')
+        return
+      }
+      wireRemoteFromPc(pc, 'track-receivers')
     })
   }
 
@@ -157,11 +244,13 @@ export function createLineTestUa(options) {
       stamp('answered')
       setState('confirmed')
       startStats(sess.connection)
+      // Idempotent — same tracks as track-event must not re-set srcObject (aborts play).
       attachRemoteTracks(sess)
     })
 
     sess.on('ended', () => {
       stopStats()
+      clearRemoteAudioEl()
       stamp('bye')
       setState('ended')
       clearSession()
@@ -169,6 +258,7 @@ export function createLineTestUa(options) {
 
     sess.on('failed', (e) => {
       stopStats()
+      clearRemoteAudioEl()
       stamp('failed', { message: e?.cause ? String(e.cause) : 'failed' })
       setState('failed')
       clearSession()
@@ -261,6 +351,7 @@ export function createLineTestUa(options) {
 
     stop() {
       stopStats()
+      clearRemoteAudioEl()
       try {
         if (session) session.terminate()
       } catch {
