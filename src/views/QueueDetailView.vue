@@ -112,7 +112,8 @@ const destinationGroups = computed(() => {
     Queues: Array.isArray(d.Queues) ? d.Queues : [],
     Extensions: Array.isArray(d.Extensions) ? d.Extensions : [],
     IVRs: Array.isArray(d.IVRs) ? d.IVRs : [],
-    CustomApps: Array.isArray(d.CustomApps) ? d.CustomApps : []
+    CustomApps: Array.isArray(d.CustomApps) ? d.CustomApps : [],
+    Voicemail: Array.isArray(d.Voicemail) ? d.Voicemail : []
   }
 })
 

@@ -111,6 +111,11 @@ function toDestArrays(d) {
       ? d.CustomApps
       : Array.isArray(d.customApps)
         ? d.customApps
+        : [],
+    Voicemail: Array.isArray(d.Voicemail)
+      ? d.Voicemail
+      : Array.isArray(d.voicemail)
+        ? d.voicemail
         : []
   }
 }
