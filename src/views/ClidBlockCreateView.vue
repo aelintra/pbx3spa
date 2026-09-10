@@ -12,10 +12,12 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 
 const pkey = ref('')
 const cluster = ref('default')
@@ -62,9 +64,11 @@ async function loadTenants() {
 }
 
 onMounted(async () => {
+  beginHydrate()
   await ensureFetched()
   applySchemaDefaults('clidblocks', { cluster, cname, description, active })
   await loadTenants()
+  await markClean()
 })
 
 function goBack() {
@@ -129,7 +133,7 @@ async function onSubmit(e) {
 </script>
 
 <template>
-  <div class="create-view" @keydown="onKeydown">
+  <div class="create-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'clidblocks' }" label="Blocked caller IDs">
       <h1>Block caller ID</h1>
     </PanelBackLink>

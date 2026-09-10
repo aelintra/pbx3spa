@@ -10,10 +10,12 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { HELP_TEXT_FORMAT_NOTE } from '@/utils/helpTextFormat'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const { getSchema, ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 
 function isReadOnly(field) {
   return getSchema('helpcore')?.read_only?.includes(field) ?? false
@@ -34,6 +36,7 @@ const editHtext = ref('')
 
 async function fetchMessage() {
   if (!pkey.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   saveError.value = ''
@@ -47,6 +50,7 @@ async function fetchMessage() {
     messageRow.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -113,7 +117,7 @@ async function confirmDelete() {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'help-messages' }" label="Help Messages">
       <h1>Edit help message {{ pkey }}</h1>
     </PanelBackLink>

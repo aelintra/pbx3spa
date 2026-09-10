@@ -20,11 +20,13 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const auth = useAuthStore()
 const { getSchema, ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 function isReadOnly(field) {
   return getSchema('queues')?.read_only?.includes(field) ?? false
 }
@@ -163,6 +165,7 @@ async function fetchTenants() {
 
 async function fetchQueue() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   try {
@@ -194,7 +197,8 @@ async function fetchQueue() {
   } finally {
     loading.value = false
   }
-  if (editCluster.value) loadDestinations()
+  if (editCluster.value) await loadDestinations()
+  await markClean()
 }
 
 onMounted(async () => {
@@ -308,7 +312,7 @@ const panelTitleTenantSuffix = computed(() => {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'queues' }" label="Queues">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">

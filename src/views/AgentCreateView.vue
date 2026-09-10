@@ -12,10 +12,12 @@ import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const pkey = ref('')
 const cluster = ref('default')
 const passwd = ref('')
@@ -113,10 +115,12 @@ async function loadQueues() {
 }
 
 onMounted(async () => {
+  beginHydrate()
   await ensureFetched()
   applySchemaDefaults('agents', { cluster, cname, description })
   await loadTenants()
   await loadQueues()
+  await markClean()
 })
 
 watch(cluster, () => {
@@ -231,7 +235,7 @@ async function onSubmit(e) {
 </script>
 
 <template>
-  <div class="create-view" @keydown="onKeydown">
+  <div class="create-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'agents' }" label="Agents">
       <h1>Create agent</h1>
     </PanelBackLink>

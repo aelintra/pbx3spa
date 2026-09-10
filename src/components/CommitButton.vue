@@ -3,14 +3,17 @@ import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useUnsavedFormStore } from '@/stores/unsavedForm'
 import { firstErrorMessage } from '@/utils/formErrors'
 import ConfirmModal from '@/components/ConfirmModal.vue'
 
 const route = useRoute()
 const toast = useToastStore()
+const unsavedForm = useUnsavedFormStore()
 
 const commitDirty = ref(false)
 const actionBusy = ref(false)
+const showUnsavedWarn = ref(false)
 const showCommitConfirm = ref(false)
 
 async function fetchCommitStatus() {
@@ -23,6 +26,19 @@ async function fetchCommitStatus() {
 }
 
 function openCommitConfirm() {
+  if (unsavedForm.dirty) {
+    showUnsavedWarn.value = true
+    return
+  }
+  showCommitConfirm.value = true
+}
+
+function cancelUnsavedWarn() {
+  showUnsavedWarn.value = false
+}
+
+function proceedWithoutSaving() {
+  showUnsavedWarn.value = false
   showCommitConfirm.value = true
 }
 
@@ -69,6 +85,17 @@ defineExpose({ refreshCommitStatus: fetchCommitStatus })
   >
     {{ actionBusy ? 'Running…' : commitDirty ? 'Commit (pending)' : 'Commit' }}
   </button>
+
+  <ConfirmModal
+    :show="showUnsavedWarn"
+    title="Unsaved changes"
+    body-text="You have unsaved changes. You may commit without them or save your changes first."
+    confirm-label="Proceed without saving"
+    cancel-label="Cancel"
+    variant="primary"
+    @confirm="proceedWithoutSaving"
+    @cancel="cancelUnsavedWarn"
+  />
 
   <ConfirmModal
     :show="showCommitConfirm"

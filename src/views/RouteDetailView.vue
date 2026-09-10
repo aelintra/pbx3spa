@@ -17,10 +17,12 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useFleetPosture } from '@/composables/useFleetPosture'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const { getSchema, ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const { loadFleetPosture, hideRoutePaths, posture } = useFleetPosture()
 
 const egressQualifyState = computed(() => String(posture.value?.egress_qualify?.state || 'Unknown'))
@@ -151,6 +153,7 @@ function syncEditFromRoute() {
 
 async function fetchRoute() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   try {
@@ -161,6 +164,7 @@ async function fetchRoute() {
     routeData.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -264,7 +268,7 @@ const panelTitleTenantSuffix = computed(() => {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'routes' }" label="Routes">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">

@@ -16,6 +16,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 import {
   ROUTE_PROFILE_DESTINATIONS_HELP,
   ROUTE_PROFILE_EXTRA_MODES_HELP
@@ -24,6 +25,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 
 const profile = ref(null)
 const tenants = ref([])
@@ -184,6 +186,7 @@ async function fetchTenants() {
 
 async function fetchProfile() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   try {
@@ -202,6 +205,7 @@ async function fetchProfile() {
     profile.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -320,7 +324,7 @@ async function confirmAndDelete() {
 </script>
 
 <template>
-  <div class="detail-view">
+  <div class="detail-view" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'routeprofiles' }" label="Route Profiles">
       <h1>Edit Route profile{{ editName ? ` — ${editName}` : '' }}</h1>
     </PanelBackLink>

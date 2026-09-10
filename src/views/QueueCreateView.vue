@@ -14,10 +14,12 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const pkey = ref('')
 const cluster = ref('default')
 const active = ref('YES')
@@ -136,6 +138,7 @@ async function loadTenants() {
 }
 
 onMounted(async () => {
+  beginHydrate()
   await ensureFetched()
   applySchemaDefaults('queues', {
     cluster,
@@ -153,6 +156,7 @@ onMounted(async () => {
   await loadTenants()
   await loadGreetingRecords()
   loadDestinations()
+  await markClean()
 })
 
 watch(cluster, () => {
@@ -277,7 +281,7 @@ async function onSubmit(e) {
 </script>
 
 <template>
-  <div class="create-view" @keydown="onKeydown">
+  <div class="create-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'queues' }" label="Queues">
       <h1>Create queue</h1>
     </PanelBackLink>

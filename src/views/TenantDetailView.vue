@@ -33,6 +33,7 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import { useSessionContext } from '@/composables/useSessionContext'
 import { useAuthStore } from '@/stores/auth'
 import { useFleetPosture } from '@/composables/useFleetPosture'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const route = useRoute()
 const router = useRouter()
@@ -41,6 +42,7 @@ const auth = useAuthStore()
 const { clearTenantContext } = useSessionContext()
 const { loadFleetPosture, isFleetNode } = useFleetPosture()
 const { getSchema, ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 function isReadOnly(field) {
   return getSchema('tenants')?.read_only?.includes(field) ?? false
 }
@@ -91,6 +93,7 @@ const formTimers = reactive(Object.fromEntries(TIMERS_KEYS.map((k) => [k, ''])))
 
 async function fetchTenant() {
   if (!pkey.value) return
+  beginHydrate()
   clearTenantContext()
   loading.value = true
   error.value = ''
@@ -102,6 +105,7 @@ async function fetchTenant() {
     tenant.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -336,7 +340,7 @@ async function confirmAndDelete() {
 </script>
 
 <template>
-  <div class="detail-view">
+  <div class="detail-view" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'tenants' }" label="Tenants">
       <h1>{{ tenantHeading }}</h1>
     </PanelBackLink>

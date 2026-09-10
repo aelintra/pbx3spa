@@ -74,7 +74,7 @@ function onConfirm() {
   border-radius: 0.5rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   padding: 1.5rem;
-  max-width: 24rem;
+  max-width: 28rem;
   width: 100%;
 }
 .modal-title {

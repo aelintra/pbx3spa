@@ -13,9 +13,11 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { ROUTE_PROFILE_DESTINATIONS_HELP } from '@/constants/helpPkeys'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const name = ref('')
 const cluster = ref('default')
 const description = ref('')
@@ -157,8 +159,10 @@ watch(openDest, (v) => {
 })
 
 onMounted(async () => {
+  beginHydrate()
   await loadTenants()
   await loadDestinations()
+  await markClean()
 })
 
 function goBack() {
@@ -224,7 +228,7 @@ async function onSubmit(e) {
 </script>
 
 <template>
-  <div class="create-view" @keydown="onKeydown">
+  <div class="create-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'routeprofiles' }" label="Route Profiles">
       <h1>Create Route profile</h1>
     </PanelBackLink>

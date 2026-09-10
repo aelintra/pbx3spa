@@ -13,10 +13,12 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const cosrule = ref(null)
 const tenants = ref([])
 const loading = ref(true)
@@ -70,6 +72,7 @@ async function fetchTenants() {
 
 async function fetchCosrule() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   try {
@@ -90,6 +93,7 @@ async function fetchCosrule() {
     cosrule.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -201,7 +205,7 @@ const showUid = computed(() => {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'cosrules' }" label="Class of Service">
       <div class="detail-panel-head detail-panel-head--compact">
         <div class="detail-title-status-row">

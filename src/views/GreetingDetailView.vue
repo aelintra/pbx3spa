@@ -12,10 +12,12 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const { getSchema, ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 function isReadOnly(field) {
   return getSchema('greetingrecords')?.read_only?.includes(field) ?? false
 }
@@ -70,6 +72,7 @@ async function fetchTenants() {
 
 async function fetchGreeting() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   try {
@@ -86,6 +89,7 @@ async function fetchGreeting() {
     greeting.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -183,7 +187,7 @@ const panelTitleTenantSuffix = computed(() => {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'greetings' }" label="Greetings">
       <h1>Edit Greeting {{ displayName }}{{ panelTitleTenantSuffix }}</h1>
     </PanelBackLink>

@@ -11,6 +11,7 @@ import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const HOLIDAY_FORCE_MODE_OPTIONS = [
   { value: 'open', label: 'Open' },
@@ -20,6 +21,7 @@ const HOLIDAY_FORCE_MODE_OPTIONS = [
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const description = ref('')
 const cluster = ref('default')
 const forceMode = ref('closed')
@@ -137,6 +139,7 @@ async function loadDestinations() {
 }
 
 onMounted(async () => {
+  beginHydrate()
   description.value = ''
   await ensureFetched()
   applySchemaDefaults('holidaytimers', {
@@ -147,6 +150,7 @@ onMounted(async () => {
   if (cluster.value) await loadDestinations()
   description.value = ''
   descriptionInputKey.value += 1
+  await markClean()
 })
 
 watch(cluster, () => {
@@ -238,7 +242,7 @@ async function onSubmit(e) {
 </script>
 
 <template>
-  <div class="create-view" @keydown="onKeydown">
+  <div class="create-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'holidaytimers' }" label="Holiday Timers">
       <h1>Create Holiday timer</h1>
     </PanelBackLink>

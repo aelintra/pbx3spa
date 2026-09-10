@@ -13,10 +13,12 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const pkey = ref('')
 const cluster = ref('default')
 const active = ref('YES')
@@ -65,6 +67,7 @@ async function loadTenants() {
 }
 
 onMounted(async () => {
+  beginHydrate()
   await ensureFetched()
   applySchemaDefaults('conferences', {
     cluster,
@@ -76,6 +79,7 @@ onMounted(async () => {
     adminpin
   })
   await loadTenants()
+  await markClean()
 })
 
 function resetForm() {
@@ -171,7 +175,7 @@ async function onSubmit(e) {
 </script>
 
 <template>
-  <div class="create-view" @keydown="onKeydown">
+  <div class="create-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'conferences' }" label="Conferences">
       <h1>Create conference</h1>
     </PanelBackLink>

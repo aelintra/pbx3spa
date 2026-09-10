@@ -13,10 +13,12 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 
 const pkey = ref('')
 const cluster = ref('')
@@ -165,6 +167,7 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
+  beginHydrate()
   await ensureFetched()
   await loadTenants()
   applySchemaDefaults('customapps', {
@@ -178,11 +181,12 @@ onMounted(async () => {
     extcode
   })
   nextTick().then(() => pkeyInput.value?.focus())
+  await markClean()
 })
 </script>
 
 <template>
-  <div class="create-view">
+  <div class="create-view" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'customapps' }" label="Custom Apps">
       <h1>Create custom app</h1>
     </PanelBackLink>

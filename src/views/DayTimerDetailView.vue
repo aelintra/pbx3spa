@@ -15,10 +15,12 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { COMMON_SCHEDULE_MODES, validateScheduleMode, validateSchedulePriority, validateDayOfWeek, normalizeDayOfWeek, dayOfWeekLabel } from '@/utils/validation'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const { getSchema, ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 function isReadOnly(field) {
   return getSchema('daytimers')?.read_only?.includes(field) ?? false
 }
@@ -191,6 +193,7 @@ async function fetchModeSuggestionSources() {
 
 async function fetchDaytimer() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   try {
@@ -212,6 +215,7 @@ async function fetchDaytimer() {
     daytimer.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -341,7 +345,7 @@ const panelTitleTenantSuffix = computed(() => {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'daytimers' }" label="Day Timers">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">

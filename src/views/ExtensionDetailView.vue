@@ -18,9 +18,11 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 const route = useRoute()
 const auth = useAuthStore()
 const { getSchema, ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 
 /** True if field is read-only per schema (extensions). */
 function isReadOnly(field) {
@@ -172,6 +174,7 @@ async function fetchTenants() {
 
 async function fetchExtension() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   runtime.value = null
@@ -218,6 +221,7 @@ async function fetchExtension() {
     extension.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -502,7 +506,7 @@ const panelTitleTenantSuffix = computed(() => {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'extensions' }" label="Extensions">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">

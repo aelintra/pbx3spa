@@ -12,6 +12,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 const HOLIDAY_FORCE_MODE_OPTIONS = [
   { value: 'open', label: 'Open' },
   { value: 'closed', label: 'Closed' }
@@ -21,6 +22,7 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 
 const holidaytimer = ref(null)
 const tenants = ref([])
@@ -147,6 +149,7 @@ async function fetchTenants() {
 
 async function fetchHolidaytimer() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   try {
@@ -171,6 +174,7 @@ async function fetchHolidaytimer() {
     holidaytimer.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -284,7 +288,7 @@ const panelTitleTenantSuffix = computed(() => {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'holidaytimers' }" label="Holiday Timers">
       <h1>
         Edit Holiday timer{{ displayName ? ` — ${displayName}` : '' }}{{ panelTitleTenantSuffix }}

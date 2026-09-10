@@ -15,10 +15,12 @@ import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useFleetPosture } from '@/composables/useFleetPosture'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const { loadFleetPosture, hideRoutePaths, posture } = useFleetPosture()
 
 const egressQualifyState = computed(() => String(posture.value?.egress_qualify?.state || 'Unknown'))
@@ -222,6 +224,7 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
+  beginHydrate()
   await ensureFetched()
   applySchemaDefaults('routes', { cluster, description, cname, active, strategy })
   await loadFleetPosture({ force: true })
@@ -230,11 +233,12 @@ onMounted(async () => {
   if (hideRoutePaths()) {
     path1.value = posture.value?.egress_trunk || 'Egress'
   }
+  await markClean()
 })
 </script>
 
 <template>
-  <div class="create-view" @keydown="onKeydown">
+  <div class="create-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'routes' }" label="Routes">
       <h1>Create route</h1>
     </PanelBackLink>

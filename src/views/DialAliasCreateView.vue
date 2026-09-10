@@ -18,10 +18,12 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const { loadFleetPosture, isFleetNode, dialCohortFeatureOn } = useFleetPosture()
 
 const pkey = ref('')
@@ -191,6 +193,7 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
+  beginHydrate()
   await loadFleetPosture()
   if (!isFleetNode()) {
     fleetBlocked.value = true
@@ -208,11 +211,12 @@ onMounted(async () => {
     description
   })
   nextTick().then(() => pkeyInput.value?.focus())
+  await markClean()
 })
 </script>
 
 <template>
-  <div class="create-view">
+  <div class="create-view" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'dialaliases' }" label="Dial prefixes">
       <h1>Create dial prefix</h1>
     </PanelBackLink>

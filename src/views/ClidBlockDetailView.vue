@@ -13,11 +13,13 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const { getSchema, ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 
 function isReadOnly(field) {
   return getSchema('clidblocks')?.read_only?.includes(field) ?? false
@@ -72,6 +74,7 @@ async function fetchTenants() {
 
 async function fetchRow() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   try {
@@ -86,6 +89,7 @@ async function fetchRow() {
     row.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -148,7 +152,7 @@ async function confirmAndDelete() {
 </script>
 
 <template>
-  <div class="detail-view">
+  <div class="detail-view" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'clidblocks' }" label="Blocked caller IDs">
       <h1>Blocked caller ID</h1>
     </PanelBackLink>

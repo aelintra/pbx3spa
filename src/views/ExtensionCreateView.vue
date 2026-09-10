@@ -15,10 +15,12 @@ import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults, getSchema } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const extensionType = ref('SIP')
 const pkey = ref('')
 const cluster = ref('default')
@@ -122,6 +124,7 @@ async function loadTenants() {
 }
 
 onMounted(async () => {
+  beginHydrate()
   await ensureFetched()
   applySchemaDefaults('extensions', {
     cluster,
@@ -144,6 +147,7 @@ onMounted(async () => {
   }
   await loadTenants()
   nextTick().then(() => pkeyInput.value?.focus())
+  await markClean()
 })
 
 async function onSubmit(e) {
@@ -231,7 +235,7 @@ function onKeydown(e) {
 </script>
 
 <template>
-  <div class="create-view">
+  <div class="create-view" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'extensions' }" label="Extensions">
       <h1>Create extension</h1>
     </PanelBackLink>

@@ -19,11 +19,13 @@ import { OPTION_ENTRIES, buildIvrPayload } from '@/constants/ivrDestinations'
 import { IVR_KEYSTROKE_OPTIONS_HELP } from '@/constants/helpPkeys'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const { getSchema, ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 function isReadOnly(field) {
   return getSchema('ivrs')?.read_only?.includes(field) ?? false
 }
@@ -214,6 +216,7 @@ function syncEditFromIvr() {
 
 async function fetchIvr() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   try {
@@ -227,6 +230,7 @@ async function fetchIvr() {
     ivr.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -369,7 +373,7 @@ const panelTitleTenantSuffix = computed(() => {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'ivrs' }" label="IVRs">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">

@@ -14,6 +14,7 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 /** Phase-1 UK habit → +E.164 (EGRESS_PLUS_E164_WIRE). Never leave fleet Egress empty. */
 const UK_EGRESS_TRANSFORM = '00:+ 0:+44'
@@ -23,6 +24,7 @@ const router = useRouter()
 const toast = useToastStore()
 const auth = useAuthStore()
 const { getSchema, ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const { loadFleetPosture, isFleetNode, posture } = useFleetPosture()
 function isReadOnly(field) {
   return getSchema('trunks')?.read_only?.includes(field) ?? false
@@ -101,6 +103,7 @@ const shortuid = computed(() => route.params.shortuid)
 
 async function fetchTrunk() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   try {
@@ -135,6 +138,7 @@ async function fetchTrunk() {
     trunk.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -258,7 +262,7 @@ async function confirmAndDelete() {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'trunks' }" label="Trunks">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">

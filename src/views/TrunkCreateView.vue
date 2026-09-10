@@ -11,11 +11,13 @@ import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const { loadFleetPosture, isFleetNode } = useFleetPosture()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const fleetBlocked = ref(false)
 const technology = ref('SIP')
 /** SIP only: matches PBX pjsipreg (SND / RCV) or trusted peer (null in API). */
@@ -58,6 +60,8 @@ function resetForm() {
 }
 
 onMounted(async () => {
+  beginHydrate()
+
   await loadFleetPosture()
   if (isFleetNode()) {
     fleetBlocked.value = true
@@ -67,6 +71,7 @@ onMounted(async () => {
   }
   await ensureFetched()
   applySchemaDefaults('trunks', { cluster, transport, cname, description })
+  await markClean()
 })
 
 async function onSubmit(e) {
@@ -164,7 +169,7 @@ function onKeydown(e) {
 </script>
 
 <template>
-  <div class="create-view" @keydown="onKeydown">
+  <div class="create-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'trunks' }" label="Trunks">
       <h1>Create trunk</h1>
     </PanelBackLink>

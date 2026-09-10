@@ -14,10 +14,12 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const { getSchema, ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 function isReadOnly(field) {
   return getSchema('conferences')?.read_only?.includes(field) ?? false
 }
@@ -81,6 +83,7 @@ function normalisePin(v) {
 
 async function fetchConference() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   try {
@@ -100,6 +103,7 @@ async function fetchConference() {
     conference.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -197,7 +201,7 @@ const panelTitleTenantSuffix = computed(() => {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'conferences' }" label="Conferences">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">

@@ -21,10 +21,12 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const description = ref('')
 const cluster = ref('default')
 const mode = ref('closed')
@@ -195,6 +197,7 @@ async function fetchModeSuggestionSources() {
 }
 
 onMounted(async () => {
+  beginHydrate()
   await ensureFetched()
   applySchemaDefaults('daytimers', {
     cluster,
@@ -202,6 +205,7 @@ onMounted(async () => {
   })
   await loadTenants()
   await fetchModeSuggestionSources()
+  await markClean()
 })
 
 function goBack() {
@@ -288,7 +292,7 @@ async function onSubmit(e) {
 </script>
 
 <template>
-  <div class="create-view" @keydown="onKeydown">
+  <div class="create-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'daytimers' }" label="Day Timers">
       <h1>Create Day timer</h1>
     </PanelBackLink>

@@ -15,10 +15,12 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const { getSchema, ensureFetched } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 function isReadOnly(field) {
   return getSchema('inroutes')?.read_only?.includes(field) ?? false
 }
@@ -241,6 +243,7 @@ function syncEditFromRoute() {
 
 async function fetchInboundRoute() {
   if (!shortuid.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   try {
@@ -254,6 +257,7 @@ async function fetchInboundRoute() {
     inboundRoute.value = null
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -358,7 +362,7 @@ const panelTitleTenantSuffix = computed(() => {
 </script>
 
 <template>
-  <div class="detail-view" @keydown="onKeydown">
+  <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'inbound-routes' }" label="Inbound Routes">
       <div class="detail-panel-head">
         <div class="detail-title-status-row">

@@ -7,9 +7,11 @@ import { fieldErrors } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const name = ref('')
 const email = ref('')
 const password = ref('')
@@ -118,14 +120,16 @@ function toggleCluster(id) {
   else selectedClusters.value.push(s)
 }
 
-onMounted(() => {
+onMounted(async () => {
+  beginHydrate()
   resetForm()
   loadTenants()
+  await markClean()
 })
 </script>
 
 <template>
-  <div class="create-view">
+  <div class="create-view" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'users' }" label="Users" class="create-header">
       <h1>Create user</h1>
     </PanelBackLink>

@@ -18,10 +18,12 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const cluster = ref('')
 const carrier = ref('DiD')
 const pkey = ref('')
@@ -245,9 +247,11 @@ watch(openroute, (v) => {
 })
 
 onMounted(async () => {
+  beginHydrate()
   await ensureFetched()
   applySchemaDefaults('inroutes', { cluster })
   await loadTenants()
+  await markClean()
 })
 
 async function onSubmit(e) {
@@ -355,7 +359,7 @@ function onKeydown(e) {
 </script>
 
 <template>
-  <div class="create-view" @keydown="onKeydown">
+  <div class="create-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'inbound-routes' }" label="Inbound Routes">
       <h1>Create inbound route</h1>
     </PanelBackLink>

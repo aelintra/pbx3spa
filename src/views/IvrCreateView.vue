@@ -16,10 +16,12 @@ import { IVR_KEYSTROKE_OPTIONS_HELP } from '@/constants/helpPkeys'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const pkey = ref('')
 const cluster = ref('default')
 const active = ref('YES')
@@ -320,6 +322,7 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
+  beginHydrate()
   await ensureFetched()
   applySchemaDefaults('ivrs', {
     cluster,
@@ -335,11 +338,12 @@ onMounted(async () => {
   await loadGreetings()
   await nextTick()
   pkeyInput.value?.focus()
+  await markClean()
 })
 </script>
 
 <template>
-  <div class="create-view">
+  <div class="create-view" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'ivrs' }" label="IVRs">
       <h1>Create IVR</h1>
     </PanelBackLink>

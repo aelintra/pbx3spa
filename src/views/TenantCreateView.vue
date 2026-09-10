@@ -34,11 +34,13 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useFleetPosture } from '@/composables/useFleetPosture'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 
 const router = useRouter()
 const toast = useToastStore()
 const auth = useAuthStore()
 const { ensureFetched, applySchemaDefaults } = useSchema()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 const { loadFleetPosture, isFleetNode, error: fleetPostureError } = useFleetPosture()
 const pkey = ref('')
 const description = ref('')
@@ -174,6 +176,8 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
+  beginHydrate()
+
   await loadFleetPosture()
   if (isFleetNode() || Boolean(fleetPostureError.value)) {
     fleetBlocked.value = true
@@ -207,11 +211,12 @@ onMounted(async () => {
   })
 
   nextTick().then(() => pkeyInput.value?.focus())
+  await markClean()
 })
 </script>
 
 <template>
-  <div class="create-view">
+  <div class="create-view" @input="markDirty" @change="markDirty">
     <PanelBackLink :to="{ name: 'tenants' }" label="Tenants">
       <h1>Create tenant</h1>
     </PanelBackLink>

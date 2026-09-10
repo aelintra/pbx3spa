@@ -5,9 +5,11 @@ import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { useUnsavedForm } from '@/composables/useUnsavedForm'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const { markDirty, beginHydrate, markClean } = useUnsavedForm()
 
 const filename = computed(() => route.params.filename)
 const content = ref('')
@@ -20,6 +22,7 @@ const editContent = ref('')
 
 async function loadFile() {
   if (!filename.value) return
+  beginHydrate()
   loading.value = true
   error.value = ''
   saveError.value = ''
@@ -34,6 +37,7 @@ async function loadFile() {
     editContent.value = ''
   } finally {
     loading.value = false
+    await markClean()
   }
 }
 
@@ -77,7 +81,7 @@ watch(filename, loadFile)
 
     <template v-else>
       <p v-if="readonly" class="readonly-badge">Read-only (view only)</p>
-      <form v-if="!readonly" class="edit-form" @submit="saveEdit">
+      <form v-if="!readonly" class="edit-form" @submit="saveEdit" @input="markDirty" @change="markDirty">
         <div class="edit-actions edit-actions-top">
           <button type="submit" :disabled="saving">
             {{ saving ? 'Saving…' : 'Save' }}
