@@ -424,6 +424,15 @@ async function onSubmit(e) {
           placeholder="0 = unlimited"
         />
         <FormSelect
+          id="outcome"
+          v-model="outcome"
+          label="Outcome"
+          :options="['None', 'operator']"
+          :option-groups="destinationGroups"
+          :loading="destinationsLoading"
+          aria-label="Queue timeout outcome"
+        />
+        <FormSelect
           id="divert"
           v-model="divert"
           label="Divert"
@@ -441,15 +450,6 @@ async function onSubmit(e) {
           v-model="alertinfo"
           label="Alert info"
           type="text"
-        />
-        <FormSelect
-          id="outcome"
-          v-model="outcome"
-          label="Outcome"
-          :options="['None', 'operator']"
-          :option-groups="destinationGroups"
-          :loading="destinationsLoading"
-          aria-label="Queue timeout outcome"
         />
       </div>
 

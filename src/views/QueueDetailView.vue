@@ -504,6 +504,15 @@ const panelTitleTenantSuffix = computed(() => {
               placeholder="0 = unlimited"
             />
             <FormSelect
+              id="edit-outcome"
+              v-model="editOutcome"
+              label="Outcome"
+              :options="['None', 'operator']"
+              :option-groups="destinationGroups"
+              :loading="destinationsLoading"
+              aria-label="Queue timeout outcome"
+            />
+            <FormSelect
               id="edit-divert"
               v-model="editDivert"
               label="Divert"
@@ -517,15 +526,6 @@ const panelTitleTenantSuffix = computed(() => {
           <h2 class="detail-heading">Advanced</h2>
           <div class="form-fields">
             <FormField id="edit-alertinfo" v-model="editAlertinfo" label="Alert info" type="text" />
-            <FormSelect
-              id="edit-outcome"
-              v-model="editOutcome"
-              label="Outcome"
-              :options="['None', 'operator']"
-              :option-groups="destinationGroups"
-              :loading="destinationsLoading"
-              aria-label="Queue timeout outcome"
-            />
             <FormField
               v-if="auth.isAdmin"
               id="edit-queue-overlay"
