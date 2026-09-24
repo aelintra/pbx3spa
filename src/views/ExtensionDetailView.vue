@@ -656,10 +656,17 @@ const panelTitleTenantSuffix = computed(() => {
                     :value="sipPasswordField.value"
                     :placeholder="sipPasswordField.placeholder"
                     :disabled="!hasSipPassword || saving || regeneratingSip"
-                    :copied="copiedSipKey === 'passwd'"
-                    copy-label="Copy SIP Password"
-                    @copy="copySipPassword"
+                    :show-copy="false"
                   />
+                  <button
+                    type="button"
+                    class="sip-action-btn"
+                    :disabled="!hasSipPassword || saving || regeneratingSip"
+                    :aria-label="copiedSipKey === 'passwd' ? 'Copied' : 'Copy SIP Password'"
+                    @click="copySipPassword"
+                  >
+                    {{ copiedSipKey === 'passwd' ? 'Copied' : 'Copy' }}
+                  </button>
                   <button
                     type="button"
                     class="sip-action-btn"
@@ -1184,7 +1191,7 @@ const panelTitleTenantSuffix = computed(() => {
   outline-offset: 2px;
 }
 
-/* SIP credential rows: label | InlineCopyInput (+ Show/Regen for password) */
+/* SIP credential rows: label | InlineCopyInput (+ Copy/Show/Regen for password) */
 .sip-passwd-field.form-field {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 2fr;

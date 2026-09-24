@@ -25,6 +25,11 @@ defineProps({
     type: Boolean,
     default: false
   },
+  /** When false, omit the in-field icon (caller supplies an external Copy control). */
+  showCopy: {
+    type: Boolean,
+    default: true
+  },
   copyLabel: {
     type: String,
     default: 'Copy'
@@ -44,7 +49,13 @@ defineEmits(['copy'])
 </script>
 
 <template>
-  <div class="inline-copy" :class="{ 'inline-copy--copied': copied }">
+  <div
+    class="inline-copy"
+    :class="{
+      'inline-copy--copied': copied,
+      'inline-copy--no-btn': !showCopy
+    }"
+  >
     <input
       :id="id"
       class="inline-copy-input value-immutable"
@@ -56,6 +67,7 @@ defineEmits(['copy'])
       :title="inputTitle"
     />
     <button
+      v-if="showCopy"
       type="button"
       class="inline-copy-btn"
       :disabled="disabled"
@@ -139,6 +151,10 @@ defineEmits(['copy'])
 
 .inline-copy-input:focus {
   outline: none;
+}
+
+.inline-copy--no-btn .inline-copy-input {
+  padding-right: 0.75rem;
 }
 
 .inline-copy-btn {
