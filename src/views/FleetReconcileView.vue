@@ -26,7 +26,11 @@ const canEdge = computed(() => canFleet(FLEET_ABILITY.EDGE))
 
 const projectableCount = computed(() =>
   (report.value?.drifts || []).filter(
-    (d) => d.kind === 'setid_mismatch' || d.kind === 'missing_fleet_tag'
+    (d) =>
+      d.kind === 'setid_mismatch' ||
+      d.kind === 'missing_fleet_tag' ||
+      d.kind === 'domain_label_mismatch' ||
+      d.kind === 'dispatcher_label_mismatch'
   ).length
 )
 
@@ -64,11 +68,12 @@ async function load() {
 async function forceProject() {
   if (!canEdge.value || projectableCount.value < 1) return
   const ok = window.confirm(
-    `Apply catalog → SBC for ${projectableCount.value} tenant domain(s)?\n\n` +
-      'This UPDATES THE SBC to match the catalog (home of record).\n' +
+    `Apply catalog → SBC for ${projectableCount.value} drift(s)?\n\n` +
+      'This UPDATES THE SBC to match the catalog (home of record):\n' +
+      'setid / fleet tag / domain label / dispatcher Name.\n' +
       'It does NOT change the catalog, and it is NOT “undo my Instances edit”.\n\n' +
       'If you mistyped an instance SBC setid on Instances, fix that first — then re-check.\n' +
-      'Only project when the catalog setid is correct and the SBC has drifted (or you intentionally want the SBC to follow a new valid setid).'
+      'Only project when the catalog is correct and the SBC has drifted.'
   )
   if (!ok) return
 
