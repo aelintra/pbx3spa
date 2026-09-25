@@ -11,6 +11,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
+import { buildGreetnumSelectOptions, filterGreetingsForTenant } from '@/utils/greetingSelectOptions'
 import { OPTION_ENTRIES, buildIvrPayload } from '@/constants/ivrDestinations'
 import { IVR_KEYSTROKE_OPTIONS_HELP } from '@/constants/helpPkeys'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
@@ -86,25 +87,15 @@ const alerts = ref({
   alert10: '',
   alert11: ''
 })
-const greetings = ref([])
+const greetingRecords = ref([])
 const greetingsLoading = ref(false)
 
-const greetingOptions = computed(() => {
-  const list = greetings.value
-  if (!Array.isArray(list)) return []
-  const nums = list
-    .map((name) => {
-      const m = String(name).match(/usergreeting(\d+)/i)
-      return m ? parseInt(m[1], 10) : null
-    })
-    .filter((n) => n != null)
-  return [...new Set(nums)].sort((a, b) => a - b)
-})
-
-const greetingOptionsWithNone = computed(() => [
-  'None',
-  ...greetingOptions.value.map((n) => String(n))
-])
+const greetnumOptions = computed(() =>
+  buildGreetnumSelectOptions(
+    filterGreetingsForTenant(greetingRecords.value, tenants.value, cluster.value),
+    greetnum.value
+  )
+)
 
 const tenantOptions = computed(() => {
   const list = tenants.value.map((t) => t.pkey).filter(Boolean)
@@ -163,13 +154,13 @@ async function loadTenants() {
   }
 }
 
-async function loadGreetings() {
+async function loadGreetingRecords() {
   greetingsLoading.value = true
   try {
-    const response = await getApiClient().get('greetings')
-    greetings.value = Array.isArray(response) ? response : (response?.data ?? [])
+    const response = await getApiClient().get('greetingrecords')
+    greetingRecords.value = normalizeList(response, 'greetingrecords') || normalizeList(response)
   } catch {
-    greetings.value = []
+    greetingRecords.value = []
   } finally {
     greetingsLoading.value = false
   }
@@ -335,7 +326,7 @@ onMounted(async () => {
   })
   await loadTenants()
   await loadDestinations()
-  await loadGreetings()
+  await loadGreetingRecords()
   await nextTick()
   pkeyInput.value?.focus()
   await markClean()
@@ -416,7 +407,7 @@ onMounted(async () => {
           id="greetnum"
           v-model="greetnum"
           label="Greeting Number"
-          :options="greetingOptionsWithNone"
+          :options="greetnumOptions"
           :error="greetnumValidation.error.value"
           :touched="greetnumValidation.touched.value"
           :loading="greetingsLoading"

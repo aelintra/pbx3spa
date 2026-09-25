@@ -12,6 +12,11 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
+import {
+  buildGreetnumSelectOptions,
+  filterGreetingsForTenant,
+  greetingNumberFromStored
+} from '@/utils/greetingSelectOptions'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
@@ -86,7 +91,7 @@ const alerts = ref({
 })
 const destinations = ref(null)
 const destinationsLoading = ref(false)
-const greetings = ref([])
+const greetingRecords = ref([])
 const greetingsLoading = ref(false)
 const saveError = ref('')
 const saving = ref(false)
@@ -135,24 +140,12 @@ const destinationGroups = computed(() => {
   }
 })
 
-const greetingOptions = computed(() => {
-  const list = greetings.value
-  if (!Array.isArray(list)) return []
-  const nums = list
-    .map((name) => {
-      const m = String(name).match(/usergreeting(\d+)/i)
-      return m ? parseInt(m[1], 10) : null
-    })
-    .filter((n) => n != null)
-  return [...new Set(nums)].sort((a, b) => a - b)
-})
-
-function greetingOptionsWithNone(currentValue) {
-  const base = ['None', ...greetingOptions.value.map((n) => String(n))]
-  if (!currentValue || currentValue === 'None') return base
-  if (base.includes(currentValue)) return base
-  return [currentValue, ...base]
-}
+const greetnumOptions = computed(() =>
+  buildGreetnumSelectOptions(
+    filterGreetingsForTenant(greetingRecords.value, tenants.value, editCluster.value),
+    editGreetnum.value
+  )
+)
 
 async function loadTenants() {
   try {
@@ -179,13 +172,13 @@ async function loadDestinations() {
   }
 }
 
-async function loadGreetings() {
+async function loadGreetingRecords() {
   greetingsLoading.value = true
   try {
-    const response = await getApiClient().get('greetings')
-    greetings.value = Array.isArray(response) ? response : (response?.data ?? [])
+    const response = await getApiClient().get('greetingrecords')
+    greetingRecords.value = normalizeList(response, 'greetingrecords') || normalizeList(response)
   } catch {
-    greetings.value = []
+    greetingRecords.value = []
   } finally {
     greetingsLoading.value = false
   }
@@ -201,7 +194,7 @@ function syncEditFromIvr() {
   editActive.value = r.active ?? 'YES'
   editCname.value = r.cname ?? ''
   editDescription.value = r.description ?? ''
-  editGreetnum.value = r.greetnum != null ? String(r.greetnum) : 'None'
+  editGreetnum.value = greetingNumberFromStored(r.greetnum)
   editListenforext.value = r.listenforext ?? 'NO'
   editTimeout.value = r.timeout ?? 'operator'
   for (let i = 0; i <= 11; i++) {
@@ -237,7 +230,7 @@ async function fetchIvr() {
 onMounted(async () => {
   await ensureFetched()
   loadTenants()
-  loadGreetings()
+  loadGreetingRecords()
   fetchIvr()
 })
 watch(shortuid, fetchIvr)
@@ -494,7 +487,7 @@ const panelTitleTenantSuffix = computed(() => {
               id="edit-greetnum"
               v-model="editGreetnum"
               label="Greeting Number"
-              :options="greetingOptionsWithNone(editGreetnum)"
+              :options="greetnumOptions"
               :error="greetnumValidation.error.value"
               :touched="greetnumValidation.touched.value"
               :loading="greetingsLoading"
