@@ -12,6 +12,7 @@ import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import { countActiveRows } from '@/utils/listActive'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('inbound-routes')
 const toast = useToastStore()
@@ -218,6 +219,7 @@ async function confirmAndDelete(shortuid) {
     await getApiClient().delete(`inboundroutes/${encodeURIComponent(shortuid)}`)
     await loadInboundRoutes()
     toast.show(`Inbound route deleted`)
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete inbound route')
   } finally {

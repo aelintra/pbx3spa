@@ -6,6 +6,7 @@ import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -55,6 +56,7 @@ async function saveEdit(e) {
       content: editContent.value
     })
     toast.show('File updated')
+    refreshCommitStatusUi()
     content.value = editContent.value
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to save file')

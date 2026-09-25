@@ -18,6 +18,7 @@ import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -266,6 +267,7 @@ async function onSubmit(e) {
     if (greetnum.value && greetnum.value !== 'None') body.greetnum = String(greetnum.value).trim()
     await getApiClient().post('ivrs', body)
     toast.show(`IVR ${pkey.value.trim()} created`, 'success')
+    refreshCommitStatusUi()
     resetForm()
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'smooth' })

@@ -21,6 +21,7 @@ import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -55,6 +56,7 @@ const editWrapuptime = ref('')
 const editMaxlen = ref('')
 const editStrategy = ref('ringall')
 const editTimeout = ref('')
+const editCallerTimeout = ref('')
 const editAlertinfo = ref('')
 const editQueueOverlay = ref('')
 const saveError = ref('')
@@ -191,6 +193,8 @@ async function fetchQueue() {
     editMaxlen.value = q?.maxlen != null && q?.maxlen !== '' ? String(q.maxlen) : ''
     editStrategy.value = strategyOptions.includes(q?.strategy) ? q.strategy : 'ringall'
     editTimeout.value = q?.timeout != null && q?.timeout !== '' ? String(q.timeout) : ''
+    editCallerTimeout.value =
+      q?.caller_timeout != null && q?.caller_timeout !== '' ? String(q.caller_timeout) : ''
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load queue')
     queue.value = null
@@ -264,11 +268,19 @@ async function saveEdit(e) {
     if (Number.isNaN(body.retry)) delete body.retry
     if (Number.isNaN(body.timeout)) delete body.timeout
     if (Number.isNaN(body.wrapuptime)) delete body.wrapuptime
+    const callerRaw = String(editCallerTimeout.value ?? '').trim()
+    if (callerRaw === '') {
+      body.caller_timeout = null
+    } else {
+      const callerNum = parseInt(callerRaw, 10)
+      body.caller_timeout = Number.isNaN(callerNum) || callerNum <= 0 ? null : callerNum
+    }
     if (auth.isAdmin) {
       body.queue_overlay = editQueueOverlay.value.trim() || null
     }
     await getApiClient().put(`queues/${encodeURIComponent(shortuid.value)}`, body)
     await fetchQueue()
+    refreshCommitStatusUi()
     toast.show(`Queue ${queue.value?.pkey ?? ''} saved`)
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update queue')
@@ -474,15 +486,24 @@ const panelTitleTenantSuffix = computed(() => {
             <FormField
               id="edit-timeout"
               v-model="editTimeout"
-              label="Timeout (seconds)"
+              label="Agent Ring Timeout (seconds)"
               type="text"
               inputmode="numeric"
               placeholder="e.g. 30"
             />
             <FormField
+              id="edit-caller-timeout"
+              v-model="editCallerTimeout"
+              label="Caller Max Wait (seconds)"
+              help-pkey="caller_timeout"
+              type="text"
+              inputmode="numeric"
+              placeholder="blank = unlimited"
+            />
+            <FormField
               id="edit-retry"
               v-model="editRetry"
-              label="Retry"
+              label="Retry delay (seconds)"
               type="text"
               inputmode="numeric"
               placeholder="e.g. 1"

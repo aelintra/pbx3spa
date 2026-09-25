@@ -10,6 +10,7 @@ import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('agents')
 const toast = useToastStore()
@@ -168,6 +169,7 @@ async function confirmAndDelete(shortuid) {
     await getApiClient().delete(`agents/${encodeURIComponent(shortuid)}`)
     await loadAgents()
     toast.show(`Agent deleted`)
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete agent')
   } finally {

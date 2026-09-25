@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getApiClient } from '@/api/client'
 import { useToastStore } from '@/stores/toast'
 import { useUnsavedFormStore } from '@/stores/unsavedForm'
 import { firstErrorMessage } from '@/utils/formErrors'
 import ConfirmModal from '@/components/ConfirmModal.vue'
+import { COMMIT_STATUS_REFRESH_EVENT } from '@/utils/commitStatus'
 
 const route = useRoute()
 const toast = useToastStore()
@@ -62,6 +63,11 @@ async function runCommit() {
 
 onMounted(() => {
   fetchCommitStatus()
+  window.addEventListener(COMMIT_STATUS_REFRESH_EVENT, fetchCommitStatus)
+})
+
+onUnmounted(() => {
+  window.removeEventListener(COMMIT_STATUS_REFRESH_EVENT, fetchCommitStatus)
 })
 
 watch(

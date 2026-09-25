@@ -15,6 +15,7 @@ import ListActiveChip from '@/components/ListActiveChip.vue'
 import ListLiveLatencyChip from '@/components/ListLiveLatencyChip.vue'
 import { countActiveRows } from '@/utils/listActive'
 import { isLiveStatusOnline } from '@/utils/liveLatencyChip'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('extensions')
 const toast = useToastStore()
@@ -266,6 +267,7 @@ async function confirmAndDeleteExtension(shortuid) {
     await getApiClient().delete(`extensions/${encodeURIComponent(shortuid)}`)
     await loadExtensions()
     toast.show(`Extension deleted`)
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete extension')
   } finally {

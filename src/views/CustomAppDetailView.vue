@@ -15,6 +15,7 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const route = useRoute()
 const router = useRouter()
@@ -169,6 +170,7 @@ async function saveEdit(e) {
     }
     await getApiClient().put(`customapps/${encodeURIComponent(shortuid.value)}`, body)
     toast.show('Custom app saved')
+    refreshCommitStatusUi()
     await fetchApp()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to save custom app')
@@ -188,6 +190,7 @@ async function confirmDelete() {
   try {
     await getApiClient().delete(`customapps/${encodeURIComponent(shortuid.value)}`)
     toast.show('Custom app deleted')
+    refreshCommitStatusUi()
     confirmDeleteOpen.value = false
     goBack()
   } catch (err) {

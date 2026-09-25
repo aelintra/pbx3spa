@@ -13,6 +13,7 @@ import ListActiveChip from '@/components/ListActiveChip.vue'
 import { countActiveRows } from '@/utils/listActive'
 import { useSessionContext } from '@/composables/useSessionContext'
 import { useFleetPosture } from '@/composables/useFleetPosture'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('tenants')
 const { clearTenantContext } = useSessionContext()
@@ -170,6 +171,7 @@ async function confirmAndDeleteTenant(pkey) {
     await getApiClient().delete(`tenants/${encodeURIComponent(pkey)}`)
     await loadTenants()
     toast.show(`Tenant ${pkey} deleted`)
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = err.data?.message || err.message || 'Failed to delete tenant'
   } finally {

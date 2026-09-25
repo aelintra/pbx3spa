@@ -16,6 +16,7 @@ import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { COMMON_SCHEDULE_MODES, validateScheduleMode, validateSchedulePriority, validateDayOfWeek, normalizeDayOfWeek, dayOfWeekLabel } from '@/utils/validation'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -303,6 +304,7 @@ async function saveEdit(e) {
     await fetchDaytimer()
     await fetchModeSuggestionSources()
     toast.show('Day timer saved')
+    refreshCommitStatusUi()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update Day timer')
   } finally {
@@ -325,6 +327,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`daytimers/${encodeURIComponent(shortuid.value)}`)
     toast.show('Day timer deleted')
+    refreshCommitStatusUi()
     router.push({ name: 'daytimers' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete Day timer')

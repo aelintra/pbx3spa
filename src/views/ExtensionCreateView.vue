@@ -16,6 +16,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -191,6 +192,7 @@ async function onSubmit(e) {
     body.named_pickup_group = namedPickupGroup.value.trim() || 'ALL'
     await getApiClient().post('extensions', body)
     toast.show(`Extension ${pkey.value.trim()} created`)
+    refreshCommitStatusUi()
     resetForm()
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'smooth' })

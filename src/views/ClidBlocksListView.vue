@@ -6,6 +6,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { useStickyFilter, useStickySort } from '@/composables/useStickyFilter'
 import { firstErrorMessage } from '@/utils/formErrors'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
@@ -129,6 +130,7 @@ async function confirmAndDelete(shortuid) {
     await getApiClient().delete(`clidblocks/${encodeURIComponent(shortuid)}`)
     await loadRows()
     toast.show('Blocked caller ID removed')
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete')
   } finally {

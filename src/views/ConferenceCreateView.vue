@@ -14,6 +14,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -145,6 +146,7 @@ async function onSubmit(e) {
     }
     await getApiClient().post('conferences', body)
     toast.show(`Conference room ${pkey.value} created`)
+    refreshCommitStatusUi()
     resetForm()
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'smooth' })

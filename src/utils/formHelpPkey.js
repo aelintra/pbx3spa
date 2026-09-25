@@ -70,6 +70,8 @@ const COLUMN_TO_HELP_PKEY = {
   'trunk-sip-reg-mode': 'pjsipreg',
   disa: 'disapass',
   timeout: 'queuetimeout',
+  'caller-timeout': 'caller_timeout',
+  caller_timeout: 'caller_timeout',
   'dest-timeout': 'outcome',
   'edit-timeout': 'outcome',
   'edit-greetnum': 'greeting',

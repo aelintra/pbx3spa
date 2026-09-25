@@ -10,6 +10,7 @@ import { useFleetPosture } from '@/composables/useFleetPosture'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('dialaliases')
 const toast = useToastStore()
@@ -160,6 +161,7 @@ async function confirmDelete() {
   try {
     await getApiClient().delete(`dialaliases/${encodeURIComponent(shortuid)}`)
     toast.show('Dial prefix deleted')
+    refreshCommitStatusUi()
     confirmDeleteShortuid.value = null
     await loadRows()
   } catch (err) {

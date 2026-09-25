@@ -11,6 +11,7 @@ import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import FormTimezoneSelect from '@/components/forms/FormTimezoneSelect.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { buildTimezoneOptions } from '@/utils/timezoneLabels'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const YESNO_OPTIONS = ['YES', 'NO']
 const ICMP_OPTIONS = ['YES', 'NO'] // YES = allow ping
@@ -176,6 +177,7 @@ async function saveEdit(e) {
     }
     await getApiClient().put('sysglobals', body)
     toast.show('Network saved')
+    refreshCommitStatusUi()
     await fetchData()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to save network')

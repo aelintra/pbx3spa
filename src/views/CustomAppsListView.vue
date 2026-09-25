@@ -9,6 +9,7 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('customapps')
 const toast = useToastStore()
@@ -144,6 +145,7 @@ async function confirmAndDelete(shortuid) {
   try {
     await getApiClient().delete(`customapps/${encodeURIComponent(shortuid)}`)
     toast.show('Custom app deleted')
+    refreshCommitStatusUi()
     await loadApps()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete custom app')

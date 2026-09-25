@@ -15,6 +15,7 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -159,6 +160,7 @@ async function saveEdit(e) {
     await getApiClient().put(`conferences/${encodeURIComponent(shortuid.value)}`, body)
     await fetchConference()
     toast.show(`Conference ${conference.value?.pkey ?? ''} saved`)
+    refreshCommitStatusUi()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update conference')
   } finally {
@@ -181,6 +183,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`conferences/${encodeURIComponent(shortuid.value)}`)
     toast.show(`Conference deleted`)
+    refreshCommitStatusUi()
     router.push({ name: 'conferences' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete conference')

@@ -13,6 +13,7 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import {
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
   ADVANCED_KEYS,
   ADVANCED_FIELDS,
   CALL_CONTROL_KEYS,
@@ -181,6 +182,7 @@ async function onMohFileSelected(e) {
     fd.append('file', file)
     await getApiClient().postFile(`tenants/${encodeURIComponent(pkey.value)}/moh`, fd)
     toast.show(`MOH file ${file.name} uploaded`)
+    refreshCommitStatusUi()
     await fetchMoh()
   } catch (err) {
     mohError.value = firstErrorMessage(err, 'Failed to upload MOH file')
@@ -247,6 +249,7 @@ async function deleteMoh(name) {
       `tenants/${encodeURIComponent(pkey.value)}/moh/${encodeURIComponent(name)}`
     )
     toast.show(`Deleted ${name}`)
+    refreshCommitStatusUi()
     await fetchMoh()
   } catch (err) {
     mohError.value = firstErrorMessage(err, 'Failed to delete MOH file')
@@ -328,6 +331,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`tenants/${encodeURIComponent(pkey.value)}`)
     toast.show(`Tenant ${pkey.value} deleted`)
+    refreshCommitStatusUi()
     router.push({ name: 'tenants' })
   } catch (err) {
     deleteError.value =

@@ -12,6 +12,7 @@ import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import { countActiveRows } from '@/utils/listActive'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('ivrs')
 const toast = useToastStore()
@@ -172,6 +173,7 @@ async function confirmAndDeleteIvr(shortuid) {
     await getApiClient().delete(`ivrs/${encodeURIComponent(shortuid)}`)
     await loadIvrs()
     toast.show(`IVR deleted`)
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = err.data?.message ?? err.message ?? 'Failed to delete IVR'
   } finally {

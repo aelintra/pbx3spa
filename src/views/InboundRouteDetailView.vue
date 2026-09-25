@@ -16,6 +16,7 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -322,6 +323,7 @@ async function saveEdit(e) {
     await getApiClient().put(`inboundroutes/${encodeURIComponent(shortuid.value)}`, body)
     await fetchInboundRoute()
     toast.show(`Inbound route saved`)
+    refreshCommitStatusUi()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update inbound route')
   } finally {
@@ -344,6 +346,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`inboundroutes/${encodeURIComponent(shortuid.value)}`)
     toast.show(`Inbound route deleted`)
+    refreshCommitStatusUi()
     router.push({ name: 'inbound-routes' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete inbound route')

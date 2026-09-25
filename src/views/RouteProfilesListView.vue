@@ -9,6 +9,7 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import { exportListToCsv } from '@/utils/exportCsv'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('routeprofiles')
 const toast = useToastStore()
@@ -154,6 +155,7 @@ async function confirmAndDelete(shortuid) {
     await getApiClient().delete(`routeprofiles/${encodeURIComponent(shortuid)}`)
     await load()
     toast.show('Route profile deleted')
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete Route profile')
   } finally {

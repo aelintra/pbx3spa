@@ -14,6 +14,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -199,10 +200,14 @@ async function saveEdit(e) {
     saveError.value = pkeyErr
     return
   }
-  const passwdNum = editPasswd.value.trim() !== '' ? parseInt(editPasswd.value, 10) : undefined
-  if (passwdNum !== undefined && (isNaN(passwdNum) || passwdNum < 1001 || passwdNum > 9999)) {
-    saveError.value = 'Password must be 1001–9999'
-    return
+  const passwdRaw = String(editPasswd.value ?? '').trim()
+  let passwdNum
+  if (passwdRaw !== '') {
+    passwdNum = parseInt(passwdRaw, 10)
+    if (isNaN(passwdNum) || passwdNum < 1001 || passwdNum > 9999) {
+      saveError.value = 'PIN must be 1001–9999'
+      return
+    }
   }
   saving.value = true
   try {
@@ -210,8 +215,12 @@ async function saveEdit(e) {
       pkey: parseInt(editPkey.value, 10),
       cluster: editCluster.value.trim(),
       cname: editCname.value.trim() || null,
-      description: editDescription.value.trim() || null,
-      passwd: passwdNum ?? (agent.value?.passwd != null ? parseInt(agent.value.passwd, 10) : 1001)
+      description: editDescription.value.trim() || null
+    }
+    // Omit passwd when blank so we do not clobber the stored PIN (API hides it on list;
+    // detail may still omit if an older API tip is running).
+    if (passwdNum !== undefined) {
+      body.passwd = passwdNum
     }
     body.queue1 = normalizeQueueForSave(editQueue1.value)
     body.queue2 = normalizeQueueForSave(editQueue2.value)
@@ -222,6 +231,7 @@ async function saveEdit(e) {
     await getApiClient().put(`agents/${encodeURIComponent(shortuid.value)}`, body)
     await fetchAgent()
     toast.show(`Agent saved`)
+    refreshCommitStatusUi()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update agent')
   } finally {
@@ -244,6 +254,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`agents/${encodeURIComponent(shortuid.value)}`)
     toast.show(`Agent deleted`)
+    refreshCommitStatusUi()
     router.push({ name: 'agents' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete agent')
@@ -341,12 +352,12 @@ async function confirmAndDelete() {
             <FormField
               id="edit-passwd"
               v-model="editPasswd"
-              label="Password"
+              label="PIN"
               type="number"
               min="1001"
               max="9999"
               placeholder="1001–9999"
-              :required="true"
+              hint="Queue login PIN (Authenticate). Leave blank to keep current."
             />
           </div>
 

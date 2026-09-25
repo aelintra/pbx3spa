@@ -13,6 +13,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -112,6 +113,7 @@ async function onSubmit(e) {
 
     await getApiClient().post('clidblocks', body)
     toast.show(`Blocked caller ID added`)
+    refreshCommitStatusUi()
     router.push({ name: 'clidblocks' })
   } catch (err) {
     const errors = fieldErrors(err)

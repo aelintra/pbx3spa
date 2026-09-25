@@ -7,6 +7,7 @@ import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { validateDialPrefixPkey } from '@/utils/validation'
 import {
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
   loadTargetTenantFqdnCatalog,
   callingTenantPkeys,
   callingTenantFqdn,
@@ -225,6 +226,7 @@ async function saveEdit(e) {
     }
     await getApiClient().put(`dialaliases/${encodeURIComponent(shortuid.value)}`, body)
     toast.show('Dial prefix saved')
+    refreshCommitStatusUi()
     await fetchRow()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to save dial prefix')
@@ -245,6 +247,7 @@ async function confirmDelete() {
   try {
     await getApiClient().delete(`dialaliases/${encodeURIComponent(shortuid.value)}`)
     toast.show('Dial prefix deleted')
+    refreshCommitStatusUi()
     confirmDeleteOpen.value = false
     goBack()
   } catch (err) {

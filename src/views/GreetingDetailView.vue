@@ -13,6 +13,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -144,6 +145,7 @@ async function saveEdit(e) {
     replaceFile.value = null
     await fetchGreeting()
     toast.show(`Greeting saved`)
+    refreshCommitStatusUi()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update greeting')
   } finally {
@@ -167,6 +169,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`greetingrecords/${encodeURIComponent(shortuid.value)}`)
     toast.show('Greeting deleted')
+    refreshCommitStatusUi()
     router.push({ name: 'greetings' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete greeting')

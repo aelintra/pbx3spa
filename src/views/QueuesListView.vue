@@ -12,6 +12,7 @@ import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListViewMeta from '@/components/ListViewMeta.vue'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import { countActiveRows } from '@/utils/listActive'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('queues')
 const toast = useToastStore()
@@ -124,7 +125,7 @@ const queueExportColumns = computed(() => [
   { key: 'strategy', label: 'Strategy' },
   {
     key: 'timeout',
-    label: 'Timeout',
+    label: 'Agent ring',
     getValue: (q) => (q.timeout != null && q.timeout !== '' ? q.timeout : '—')
   }
 ])
@@ -186,6 +187,7 @@ async function confirmAndDelete(shortuid) {
     await getApiClient().delete(`queues/${encodeURIComponent(shortuid)}`)
     await loadQueues()
     toast.show(`Queue deleted`)
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete queue')
   } finally {
@@ -307,7 +309,7 @@ onMounted(loadQueues)
               :class="sortClass('timeout')"
               @click="setSort('timeout')"
             >
-              Timeout
+              Agent ring
             </th>
             <th class="th-actions" title="Edit">
               <span class="action-icon" aria-hidden="true"

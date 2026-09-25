@@ -11,6 +11,7 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import { exportListToCsv } from '@/utils/exportCsv'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('daytimers')
 const toast = useToastStore()
@@ -195,6 +196,7 @@ async function confirmAndDelete(shortuid) {
     await getApiClient().delete(`daytimers/${encodeURIComponent(shortuid)}`)
     await loadDaytimers()
     toast.show('Day timer deleted')
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete Day timer')
   } finally {

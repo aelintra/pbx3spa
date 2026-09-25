@@ -15,6 +15,7 @@ import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 /** Phase-1 UK habit → +E.164 (EGRESS_PLUS_E164_WIRE). Never leave fleet Egress empty. */
 const UK_EGRESS_TRANSFORM = '00:+ 0:+44'
@@ -229,6 +230,7 @@ async function saveEdit(e) {
     await getApiClient().put(`trunks/${encodeURIComponent(shortuid.value)}`, body)
     await fetchTrunk()
     toast.show(`Trunk saved`)
+    refreshCommitStatusUi()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update trunk')
   } finally {
@@ -251,6 +253,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`trunks/${encodeURIComponent(shortuid.value)}`)
     toast.show(`Trunk deleted`)
+    refreshCommitStatusUi()
     router.push({ name: 'trunks' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete trunk')

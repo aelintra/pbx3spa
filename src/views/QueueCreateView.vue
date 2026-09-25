@@ -15,6 +15,7 @@ import FormSelect from '@/components/forms/FormSelect.vue'
 import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -33,6 +34,7 @@ const options = ref('CiIknrtT')
 const musicclass = ref('')
 const members = ref('')
 const timeout = ref('30')
+const callerTimeout = ref('60')
 const retry = ref('1')
 const wrapuptime = ref('0')
 const maxlen = ref('0')
@@ -179,6 +181,7 @@ function resetForm() {
   musicclass.value = ''
   members.value = ''
   timeout.value = '30'
+  callerTimeout.value = '60'
   retry.value = '1'
   wrapuptime.value = '0'
   maxlen.value = '0'
@@ -242,6 +245,14 @@ async function onSubmit(e) {
     if (alertinfo.value.trim()) body.alertinfo = alertinfo.value.trim()
     const timeoutNum = parseNum(timeout.value)
     if (timeoutNum !== undefined) body.timeout = timeoutNum
+    const callerRaw = String(callerTimeout.value ?? '').trim()
+    if (callerRaw === '') {
+      body.caller_timeout = null
+    } else {
+      const callerNum = parseNum(callerRaw)
+      body.caller_timeout =
+        callerNum !== undefined && callerNum > 0 ? callerNum : null
+    }
     const retryNum = parseNum(retry.value)
     if (retryNum !== undefined) body.retry = retryNum
     const wrapuptimeNum = parseNum(wrapuptime.value)
@@ -251,6 +262,7 @@ async function onSubmit(e) {
 
     await getApiClient().post('queues', body)
     toast.show(`Queue ${pkey.value.trim()} created`)
+    refreshCommitStatusUi()
     resetForm()
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -394,15 +406,24 @@ async function onSubmit(e) {
         <FormField
           id="timeout"
           v-model="timeout"
-          label="Timeout (seconds)"
+          label="Agent Ring Timeout (seconds)"
           type="text"
           inputmode="numeric"
           placeholder="e.g. 30"
         />
         <FormField
+          id="caller_timeout"
+          v-model="callerTimeout"
+          label="Caller Max Wait (seconds)"
+          help-pkey="caller_timeout"
+          type="text"
+          inputmode="numeric"
+          placeholder="blank = unlimited"
+        />
+        <FormField
           id="retry"
           v-model="retry"
-          label="Retry"
+          label="Retry delay (seconds)"
           type="text"
           inputmode="numeric"
           placeholder="e.g. 1"

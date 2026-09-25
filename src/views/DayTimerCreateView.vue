@@ -6,6 +6,7 @@ import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation } from '@/composables/useFormValidation'
 import {
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
   validateTenant,
   COMMON_SCHEDULE_MODES,
   validateScheduleMode,
@@ -266,6 +267,7 @@ async function onSubmit(e) {
     }
     const created = await getApiClient().post('daytimers', body)
     toast.show('Day timer created')
+    refreshCommitStatusUi()
     if (created?.shortuid) {
       router.push({ name: 'daytimer-detail', params: { shortuid: created.shortuid } })
     } else {

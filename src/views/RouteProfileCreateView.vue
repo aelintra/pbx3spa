@@ -14,6 +14,7 @@ import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { ROUTE_PROFILE_DESTINATIONS_HELP } from '@/constants/helpPkeys'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -201,6 +202,7 @@ async function onSubmit(e) {
     }
     const created = await getApiClient().post('routeprofiles', body)
     toast.show('Route profile created')
+    refreshCommitStatusUi()
     const su = created?.shortuid
     if (su) {
       router.push({ name: 'routeprofile-detail', params: { shortuid: su } })

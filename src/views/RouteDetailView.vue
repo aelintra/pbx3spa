@@ -18,6 +18,7 @@ import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useFleetPosture } from '@/composables/useFleetPosture'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -228,6 +229,7 @@ async function saveEdit(e) {
     await getApiClient().put(`routes/${encodeURIComponent(shortuid.value)}`, payload)
     await fetchRoute()
     toast.show(`Route saved`)
+    refreshCommitStatusUi()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update route')
   } finally {
@@ -250,6 +252,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`routes/${encodeURIComponent(shortuid.value)}`)
     toast.show(`Route deleted`)
+    refreshCommitStatusUi()
     router.push({ name: 'routes' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete route')

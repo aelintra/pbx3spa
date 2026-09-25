@@ -12,6 +12,7 @@ import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const HOLIDAY_FORCE_MODE_OPTIONS = [
   { value: 'open', label: 'Open' },
@@ -216,6 +217,7 @@ async function onSubmit(e) {
     }
     const created = await getApiClient().post('holidaytimers', body)
     toast.show('Holiday timer created')
+    refreshCommitStatusUi()
     if (created?.shortuid) {
       router.push({ name: 'holidaytimer-detail', params: { shortuid: created.shortuid } })
     } else {

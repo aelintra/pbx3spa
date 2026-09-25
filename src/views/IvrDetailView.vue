@@ -13,6 +13,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import {
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
   buildGreetnumSelectOptions,
   filterGreetingsForTenant,
   greetingNumberFromStored
@@ -309,6 +310,7 @@ async function saveEdit(e) {
     await fetchIvr()
     editing.value = false
     toast.show(`IVR saved`)
+    refreshCommitStatusUi()
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
@@ -348,6 +350,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`ivrs/${encodeURIComponent(shortuid.value)}`)
     toast.show(`IVR deleted`)
+    refreshCommitStatusUi()
     router.push({ name: 'ivrs' })
   } catch (err) {
     deleteError.value = err.data?.message ?? err.message ?? 'Failed to delete IVR'

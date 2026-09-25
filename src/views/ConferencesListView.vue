@@ -10,6 +10,7 @@ import ListActiveChip from '@/components/ListActiveChip.vue'
 import { exportListToCsv } from '@/utils/exportCsv'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('conferences')
 const toast = useToastStore()
@@ -160,6 +161,7 @@ async function confirmAndDelete(shortuid) {
     await getApiClient().delete(`conferences/${encodeURIComponent(shortuid)}`)
     await loadConferences()
     toast.show(`Conference deleted`)
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete conference')
   } finally {

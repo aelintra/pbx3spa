@@ -8,6 +8,7 @@ import { useFormValidation, validateAll, focusFirstError } from '@/composables/u
 import { validateDialPrefixPkey, validateTenant } from '@/utils/validation'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import {
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
   loadTargetTenantFqdnCatalog,
   callingTenantPkeys,
   callingTenantFqdn,
@@ -150,6 +151,7 @@ async function onSubmit(e) {
     const created = pkey.value.trim()
     await getApiClient().post('dialaliases', body)
     toast.show(`Dial prefix ${created} created`)
+    refreshCommitStatusUi()
     resetForm()
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'smooth' })

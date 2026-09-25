@@ -16,6 +16,7 @@ import FormToggle from '@/components/forms/FormToggle.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useFleetPosture } from '@/composables/useFleetPosture'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -174,6 +175,7 @@ async function onSubmit(e) {
     }
     await getApiClient().post('routes', body)
     toast.show(`Route ${pkey.value.trim()} created`)
+    refreshCommitStatusUi()
     resetForm()
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'smooth' })

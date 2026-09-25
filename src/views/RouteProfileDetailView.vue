@@ -7,6 +7,7 @@ import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { firstErrorMessage } from '@/utils/formErrors'
 import {
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
   COMMON_SCHEDULE_MODES,
   validateScheduleMode
 } from '@/utils/validation'
@@ -295,6 +296,7 @@ async function saveEdit(e) {
     })
     await fetchProfile()
     toast.show('Route profile saved')
+    refreshCommitStatusUi()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update Route profile')
   } finally {
@@ -313,6 +315,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`routeprofiles/${encodeURIComponent(shortuid.value)}`)
     toast.show('Route profile deleted')
+    refreshCommitStatusUi()
     router.push({ name: 'routeprofiles' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete Route profile')

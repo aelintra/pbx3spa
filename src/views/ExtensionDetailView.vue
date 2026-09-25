@@ -19,6 +19,7 @@ import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 const route = useRoute()
 const auth = useAuthStore()
 const { getSchema, ensureFetched } = useSchema()
@@ -374,6 +375,7 @@ async function saveEdit(e) {
     if (cosLoaded.value) await fetchCos()
     await fetchRuntime()
     toast.show(`Extension saved`)
+    refreshCommitStatusUi()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update extension')
   } finally {
@@ -396,6 +398,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`extensions/${encodeURIComponent(shortuid.value)}`)
     toast.show(`Extension deleted`)
+    refreshCommitStatusUi()
     router.push({ name: 'extensions' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete extension')

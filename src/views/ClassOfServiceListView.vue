@@ -10,6 +10,7 @@ import ListActiveChip from '@/components/ListActiveChip.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import { exportListToCsv } from '@/utils/exportCsv'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('cosrules')
 const toast = useToastStore()
@@ -167,6 +168,7 @@ async function confirmAndDelete(shortuid) {
     await getApiClient().delete(`cosrules/${encodeURIComponent(shortuid)}`)
     await loadCosrules()
     toast.show('Class of Service rule deleted')
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete Class of Service rule')
   } finally {

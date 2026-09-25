@@ -16,6 +16,7 @@ import LiveDataFetchNotice from '@/components/LiveDataFetchNotice.vue'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import ListLiveLatencyChip from '@/components/ListLiveLatencyChip.vue'
 import { isLiveStatusOnline } from '@/utils/liveLatencyChip'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { loadFleetPosture, isFleetNode, posture } = useFleetPosture()
 const fleetReady = ref(false)
@@ -266,6 +267,7 @@ async function confirmAndDeleteTrunk(shortuid) {
     await getApiClient().delete(`trunks/${encodeURIComponent(shortuid)}`)
     await loadTrunks()
     toast.show(`Trunk deleted`)
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete trunk')
   } finally {

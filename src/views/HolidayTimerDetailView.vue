@@ -13,6 +13,7 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 const HOLIDAY_FORCE_MODE_OPTIONS = [
   { value: 'open', label: 'Open' },
   { value: 'closed', label: 'Closed' }
@@ -244,6 +245,7 @@ async function saveEdit(e) {
     await getApiClient().put(`holidaytimers/${encodeURIComponent(shortuid.value)}`, body)
     await fetchHolidaytimer()
     toast.show('Holiday timer saved')
+    refreshCommitStatusUi()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update Holiday timer')
   } finally {
@@ -266,6 +268,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`holidaytimers/${encodeURIComponent(shortuid.value)}`)
     toast.show('Holiday timer deleted')
+    refreshCommitStatusUi()
     router.push({ name: 'holidaytimers' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete Holiday timer')

@@ -14,6 +14,7 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
@@ -144,6 +145,7 @@ async function saveEdit(e) {
     toast.show(
       `Class of Service rule ${cosrule.value?.cname || cosrule.value?.pkey || ''} saved`
     )
+    refreshCommitStatusUi()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update Class of Service rule')
   } finally {
@@ -166,6 +168,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`cosrules/${encodeURIComponent(shortuid.value)}`)
     toast.show('Class of Service rule deleted')
+    refreshCommitStatusUi()
     router.push({ name: 'cosrules' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete Class of Service rule')

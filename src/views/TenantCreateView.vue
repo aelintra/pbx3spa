@@ -8,6 +8,7 @@ import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateTenantPkey, validateExtLen } from '@/utils/validation'
 import {
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
   ADVANCED_FIELDS,
   CALL_CONTROL_FIELDS,
   CALL_RECORDING_FIELDS,
@@ -139,6 +140,7 @@ async function onSubmit(e) {
     const createdPkey = pkey.value.trim()
     await getApiClient().post('tenants', cleaned)
     toast.show(`Tenant ${createdPkey} created (MainOut seeded from instance default dialplan when set)`)
+    refreshCommitStatusUi()
     resetForm()
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'smooth' })

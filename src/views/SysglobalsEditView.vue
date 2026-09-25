@@ -9,6 +9,7 @@ import FormField from '@/components/forms/FormField.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'
 import FormSegmentedPill from '@/components/forms/FormSegmentedPill.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const YESNO_OPTIONS = ['YES', 'NO']
 const ONOFF_OPTIONS = ['ON', 'OFF']
@@ -227,10 +228,12 @@ async function saveEdit(e) {
         firstErrorMessage(retErr, 'Globals saved; log retention update failed'),
         'error'
       )
+      refreshCommitStatusUi()
       await fetchSysglobal()
       return
     }
     toast.show('Instance globals saved')
+    refreshCommitStatusUi()
     await fetchSysglobal()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to save instance globals')

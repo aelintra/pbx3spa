@@ -9,6 +9,7 @@ import { firstErrorMessage } from '@/utils/formErrors'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import ListLoadingState from '@/components/ListLoadingState.vue'
 import { exportListToCsv } from '@/utils/exportCsv'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('greetings')
 const toast = useToastStore()
@@ -191,6 +192,7 @@ async function confirmAndDelete(shortuid) {
     await getApiClient().delete(`greetingrecords/${encodeURIComponent(shortuid)}`)
     await loadGreetings()
     toast.show('Greeting deleted')
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete greeting')
   } finally {

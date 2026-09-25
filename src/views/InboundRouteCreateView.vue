@@ -6,6 +6,7 @@ import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import {
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
   validateInboundRoutePkey,
   validateTenant,
   validateInboundCarrier
@@ -296,6 +297,7 @@ async function onSubmit(e) {
     }
     await getApiClient().post('inboundroutes', body)
     toast.show(`Inbound route ${pkey.value.trim()} created`)
+    refreshCommitStatusUi()
     resetForm()
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'smooth' })

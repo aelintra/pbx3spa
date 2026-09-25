@@ -14,6 +14,7 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'
 import { useUnsavedForm } from '@/composables/useUnsavedForm'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const route = useRoute()
 const router = useRouter()
@@ -118,6 +119,7 @@ async function saveEdit(e) {
     }
     await getApiClient().put(`clidblocks/${encodeURIComponent(shortuid.value)}`, body)
     toast.show('Blocked caller ID updated')
+    refreshCommitStatusUi()
     await fetchRow()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to save')
@@ -141,6 +143,7 @@ async function confirmAndDelete() {
   try {
     await getApiClient().delete(`clidblocks/${encodeURIComponent(shortuid.value)}`)
     toast.show('Blocked caller ID deleted')
+    refreshCommitStatusUi()
     router.push({ name: 'clidblocks' })
   } catch (err) {
     deleteError.value = firstErrorMessage(err, 'Failed to delete')

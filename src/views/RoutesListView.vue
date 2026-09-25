@@ -13,6 +13,7 @@ import ListViewMeta from '@/components/ListViewMeta.vue'
 import ListActiveChip from '@/components/ListActiveChip.vue'
 import { countActiveRows } from '@/utils/listActive'
 import { useFleetPosture } from '@/composables/useFleetPosture'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 
 const { filterText } = useStickyFilter('routes')
 const toast = useToastStore()
@@ -207,6 +208,7 @@ async function confirmAndDeleteRoute(shortuid) {
     await getApiClient().delete(`routes/${encodeURIComponent(shortuid)}`)
     await loadRoutes()
     toast.show(`Route deleted`)
+    refreshCommitStatusUi()
   } catch (err) {
     deleteError.value = err.data?.message || err.message || 'Failed to delete route'
   } finally {
