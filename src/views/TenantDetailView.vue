@@ -66,8 +66,9 @@ const deleting = ref(false)
 const confirmDeleteOpen = ref(false)
 const fleetLocked = ref(false)
 
-/** Custom MOH files under /usr/share/asterisk/moh-{shortuid}/ */
+/** Custom MOH under /usr/share/asterisk/moh-{shortuid}/; default may list system moh/. */
 const mohFiles = ref([])
+const mohReadonly = ref(false)
 const mohLoading = ref(false)
 const mohError = ref('')
 const mohUploading = ref(false)
@@ -156,12 +157,14 @@ async function fetchMoh() {
   try {
     const data = await getApiClient().get(`tenants/${encodeURIComponent(pkey.value)}/moh`)
     mohFiles.value = Array.isArray(data?.files) ? data.files : []
+    mohReadonly.value = data?.readonly === true || data?.source === 'system'
     if (data?.usemohcustom === 'YES' || data?.usemohcustom === 'NO') {
       formAdvanced.usemohcustom = data.usemohcustom
     }
   } catch (err) {
     mohError.value = firstErrorMessage(err, 'Failed to load Music-on-Hold files')
     mohFiles.value = []
+    mohReadonly.value = false
   } finally {
     mohLoading.value = false
   }
@@ -594,6 +597,9 @@ async function confirmAndDelete() {
               Custom MOH Active On requires Save, then Commit — call-path CAGI reads the Commit
               snapshot (`sqlite.rdonly.db`), not the live SPA database.
             </p>
+            <p v-if="mohReadonly" class="moh-hint">
+              Showing system Music-on-Hold. Upload creates a custom folder for this tenant.
+            </p>
             <p v-if="mohError" class="error" role="alert">{{ mohError }}</p>
             <div class="moh-toolbar">
               <button
@@ -618,7 +624,7 @@ async function confirmAndDelete() {
                 <tr>
                   <th>File</th>
                   <th>Play</th>
-                  <th>Delete</th>
+                  <th v-if="!mohReadonly">Delete</th>
                 </tr>
               </thead>
               <tbody>
@@ -629,7 +635,7 @@ async function confirmAndDelete() {
                       {{ mohPlaybackName === f.name ? 'Pause' : 'Play' }}
                     </button>
                   </td>
-                  <td>
+                  <td v-if="!mohReadonly">
                     <button
                       type="button"
                       class="action-delete moh-row-btn"
@@ -645,6 +651,7 @@ async function confirmAndDelete() {
             <p v-else class="moh-hint">No sound files loaded for this tenant. Defaults will be used.</p>
             <audio ref="mohAudioEl" class="moh-audio" preload="none" @ended="stopMohPlayback" />
             <FormToggle
+              v-if="!isDefault"
               id="edit-usemohcustom"
               v-model="formAdvanced.usemohcustom"
               label="Custom MOH Active"
