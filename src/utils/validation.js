@@ -287,7 +287,7 @@ export function validateInboundCarrier(value) {
 /** Day-parts mode: lowercase letter then alnum/underscore/hyphen, max 32. Empty OK when allowEmpty. */
 export const SCHEDULE_MODE_REGEX = /^[a-z][a-z0-9_-]{0,31}$/
 
-export const COMMON_SCHEDULE_MODES = ['open', 'closed', 'lunch', 'night', 'break']
+export const COMMON_SCHEDULE_MODES = ['open', 'closed', 'lunch', 'evening', 'night', 'break']
 
 /** Day-of-week order Mon→Sun (matches Asterisk / pbx3-schedule). */
 export const DOW_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']

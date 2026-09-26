@@ -6,10 +6,7 @@ import { useToastStore } from '@/stores/toast'
 import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { firstErrorMessage } from '@/utils/formErrors'
-import {
-  COMMON_SCHEDULE_MODES,
-  validateScheduleMode
-} from '@/utils/validation'
+import { validateScheduleMode } from '@/utils/validation'
 import { refreshCommitStatusUi } from '@/utils/commitStatus'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
@@ -32,6 +29,8 @@ const profile = ref(null)
 const tenants = ref([])
 const destinations = ref(null)
 const routes = ref([])
+const routeProfilesForSuggest = ref([])
+const daytimersForSuggest = ref([])
 const destinationsLoading = ref(false)
 const loading = ref(true)
 const error = ref('')
@@ -59,6 +58,56 @@ const tenantShortuidToPkey = computed(() => {
   }
   return map
 })
+
+/** pkey or shortuid → shortuid (profiles/daytimers store cluster as shortuid). */
+const tenantPkeyToShortuid = computed(() => {
+  const map = {}
+  for (const t of tenants.value) {
+    if (t.shortuid == null) continue
+    const su = String(t.shortuid)
+    map[su] = su
+    if (t.pkey != null) map[String(t.pkey)] = su
+  }
+  return map
+})
+
+function clusterMatchesTenant(rowCluster, clusterVal, clusterSu) {
+  const pkey = tenantShortuidToPkey.value[String(rowCluster)] ?? rowCluster
+  return (
+    String(rowCluster) === String(clusterVal) ||
+    String(rowCluster) === String(clusterSu) ||
+    String(pkey) === String(clusterVal)
+  )
+}
+
+/** Extra-mode dropdown: modes already on this tenant (day timers + profiles).
+ * open/closed are omitted — those are the dedicated fields above. */
+function extraModeOptions(line) {
+  const seen = new Set()
+  const clusterVal = editCluster.value
+  const clusterSu = tenantPkeyToShortuid.value[String(clusterVal)] ?? String(clusterVal)
+  for (const p of routeProfilesForSuggest.value) {
+    if (!clusterMatchesTenant(p.cluster, clusterVal, clusterSu)) continue
+    for (const l of Array.isArray(p.lines) ? p.lines : []) {
+      const m = String(l?.mode ?? '')
+        .trim()
+        .toLowerCase()
+      if (m && m !== 'open' && m !== 'closed') seen.add(m)
+    }
+  }
+  for (const d of daytimersForSuggest.value) {
+    if (!clusterMatchesTenant(d.cluster, clusterVal, clusterSu)) continue
+    const m = String(d?.mode ?? '')
+      .trim()
+      .toLowerCase()
+    if (m && m !== 'open' && m !== 'closed') seen.add(m)
+  }
+  const cur = String(line?.mode ?? '')
+    .trim()
+    .toLowerCase()
+  if (cur && cur !== 'open' && cur !== 'closed') seen.add(cur)
+  return [...seen].sort((a, b) => a.localeCompare(b))
+}
 
 const tenantOptions = computed(() => {
   const list = tenants.value.map((t) => t.pkey).filter(Boolean)
@@ -185,6 +234,22 @@ async function fetchTenants() {
   }
 }
 
+async function fetchModeSuggestionSources() {
+  try {
+    const [profileResponse, daytimerResponse] = await Promise.all([
+      getApiClient().get('routeprofiles'),
+      getApiClient().get('daytimers')
+    ])
+    routeProfilesForSuggest.value =
+      normalizeList(profileResponse, 'routeprofiles') || normalizeList(profileResponse) || []
+    daytimersForSuggest.value =
+      normalizeList(daytimerResponse, 'daytimers') || normalizeList(daytimerResponse) || []
+  } catch {
+    routeProfilesForSuggest.value = []
+    daytimersForSuggest.value = []
+  }
+}
+
 async function fetchProfile() {
   if (!shortuid.value) return
   beginHydrate()
@@ -200,7 +265,7 @@ async function fetchProfile() {
     syncLinesFromProfile(p?.lines)
     openTouched.value = false
     openError.value = ''
-    await loadDestinations()
+    await Promise.all([loadDestinations(), fetchModeSuggestionSources()])
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load Route profile')
     profile.value = null
@@ -216,9 +281,13 @@ onMounted(async () => {
 })
 watch(shortuid, fetchProfile)
 watch(editCluster, () => {
+  // fetchProfile sets cluster while loading=true; wiping here would clear
+  // destinations just synced from the API (Save then looked like a no-op).
+  if (loading.value) return
   openDest.value = ''
   closedDest.value = ''
   loadDestinations()
+  fetchModeSuggestionSources()
 })
 
 watch(openDest, (v) => {
@@ -395,13 +464,12 @@ async function confirmAndDelete() {
             <FieldHelpIcon :pkey="ROUTE_PROFILE_EXTRA_MODES_HELP" />
           </h2>
           <div v-for="(line, i) in extraLines" :key="i" class="line-row">
-            <FormField
+            <FormSelect
               :id="`line-mode-${i}`"
               v-model="line.mode"
               label="Mode"
-              type="text"
-              placeholder="e.g. lunch"
-              list="schedule-mode-suggestions"
+              :options="extraModeOptions(line)"
+              empty-text="Select mode…"
               hide-help
             />
             <FormSelect
@@ -416,9 +484,6 @@ async function confirmAndDelete() {
             <button type="button" class="secondary line-remove" @click="removeLine(i)">Remove</button>
           </div>
         </template>
-        <datalist id="schedule-mode-suggestions">
-          <option v-for="m in COMMON_SCHEDULE_MODES" :key="m" :value="m" />
-        </datalist>
         <button type="button" class="primary add-destination" @click="addLine">Add Destination</button>
 
         <div class="edit-actions">
