@@ -7,10 +7,10 @@ import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { firstErrorMessage } from '@/utils/formErrors'
 import {
-import { refreshCommitStatusUi } from '@/utils/commitStatus'
   COMMON_SCHEDULE_MODES,
   validateScheduleMode
 } from '@/utils/validation'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
 import FormReadonly from '@/components/forms/FormReadonly.vue'

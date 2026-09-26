@@ -60,41 +60,41 @@ export const CLUSTER_CREATE_DEFAULTS = {
   voip_max: '30'
 }
 
-// Timers (after Settings, before Advanced).
+// Timers (after Settings, before Advanced). Alphabetical by label.
 export const TIMERS_KEYS = [
   'abstimeout',
-  'ringdelay',
-  'ivr_key_wait',
   'ivr_digit_wait',
-  'masteroclo'
+  'ivr_key_wait',
+  'masteroclo',
+  'ringdelay'
 ]
 
 export const TIMERS_FIELDS = [
   { key: 'abstimeout', label: 'Abstime', type: 'number' },
-  { key: 'ringdelay', label: 'Ring delay', type: 'number' },
-  { key: 'ivr_key_wait', label: 'IVR key wait', type: 'number' },
   { key: 'ivr_digit_wait', label: 'IVR digit wait', type: 'number' },
-    {
+  { key: 'ivr_key_wait', label: 'IVR key wait', type: 'number' },
+  {
     key: 'masteroclo',
     label: 'Master force',
     type: 'segmented',
     options: ['AUTO', 'CLOSED'],
     helpPkey: 'masterclose'
-  }
+  },
+  { key: 'ringdelay', label: 'Ring delay', type: 'number' }
 ]
 
-// Call recording (after Advanced, before Call control).
+// Call recording (after Advanced, before Call control). Alphabetical by label.
 export const CALL_RECORDING_KEYS = [
   'callrecord_1',
   'rec_age',
-  'rec_final_dest',
   'rec_file_dlim',
+  'rec_final_dest',
   'rec_grace',
   'rec_limit',
   'recmaxage',
   'recmaxsize',
-  'rec_s3',
-  'recused'
+  'recused',
+  'rec_s3'
 ]
 
 // Monitor paths and hot-desk lease (cluster columns). mixmonitor column remains in DB but is not edited in SPA.
@@ -114,20 +114,20 @@ export const CALL_RECORDING_FIELDS = [
     options: ['None', 'In', 'Out', 'Both']
   },
   { key: 'rec_age', label: 'Rec age', type: 'number' },
-  { key: 'rec_final_dest', label: 'Rec final dest', type: 'text' },
   { key: 'rec_file_dlim', label: 'Rec file dlim', type: 'text' },
+  { key: 'rec_final_dest', label: 'Rec final dest', type: 'text' },
   { key: 'rec_grace', label: 'Rec grace', type: 'number' },
   { key: 'rec_limit', label: 'Rec limit', type: 'readonly' },
   { key: 'recmaxage', label: 'Rec max age', type: 'number' },
   { key: 'recmaxsize', label: 'Rec max size', type: 'number' },
+  { key: 'recused', label: 'Rec used', type: 'readonly' },
   {
     key: 'rec_s3',
     label: 'S3 offload',
     type: 'pill',
     options: ['NO', 'YES'],
     helpPkey: 'recs3'
-  },
-  { key: 'recused', label: 'Rec used', type: 'readonly' }
+  }
 ]
 
 // Call control (after Advanced, before LDAP).
@@ -181,15 +181,15 @@ export const LDAP_FIELDS = [
   { key: 'ldapanonbind', label: 'LDAP anon bind', type: 'pill', options: ['YES', 'NO'] }
 ]
 
-// Advanced field keys (same order as API updateableColumns for advanced section).
+// Advanced field keys (alphabetical by label; usemohcustom lives in Music-on-Hold UI).
 export const ADVANCED_KEYS = [
   'countrycode',
   'emergency',
   'language',
   'operator',
   'spy_pass',
-  'sysop',
   'syspass',
+  'sysop',
   'usemohcustom',
   'vmail_age',
   'voice_instr'
@@ -200,10 +200,10 @@ export const ADVANCED_FIELDS = [
   { key: 'countrycode', label: 'Country code', type: 'number' },
   { key: 'emergency', label: 'Emergency numbers', type: 'text' },
   { key: 'language', label: 'Language', type: 'text' },
-  { key: 'spy_pass', label: 'Spy pass', type: 'password', helpPkey: 'spypass' }, // type=password → FormField obscure (not input type=password)
   { key: 'operator', label: 'Operator', type: 'number', helpPkey: 'clustersysop' },
-  { key: 'sysop', label: 'Sysop', type: 'number' },
+  { key: 'spy_pass', label: 'Spy pass', type: 'password', helpPkey: 'spypass' }, // type=password → FormField obscure (not input type=password)
   { key: 'syspass', label: 'Sys pass', type: 'password' }, // obscure via FormField; avoids Keychain
+  { key: 'sysop', label: 'Sysop', type: 'number' },
   { key: 'vmail_age', label: 'Vmail age', type: 'number' },
   { key: 'voice_instr', label: 'Voice instr', type: 'boolean' }
 ]

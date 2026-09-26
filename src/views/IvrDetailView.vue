@@ -13,11 +13,11 @@ import FormReadonly from '@/components/forms/FormReadonly.vue'
 import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import {
-import { refreshCommitStatusUi } from '@/utils/commitStatus'
   buildGreetnumSelectOptions,
   filterGreetingsForTenant,
   greetingNumberFromStored
 } from '@/utils/greetingSelectOptions'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import DetailActiveStatusBar from '@/components/DetailActiveStatusBar.vue'

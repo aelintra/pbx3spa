@@ -43,7 +43,7 @@
 
 ### Tenant custom MOH (sarkcluster) — **2026-08-25 lab green**
 
-**Status:** Upload / play / delete + Custom MOH Active on tip. File changes **`moh reload`** immediately (no Commit). Enable Custom MOH + **Save** for CAGI; Commit only if tenant MOH class never generated.
+**Status:** Upload / play / delete + Custom MOH Active on tip. File changes **`moh reload`** immediately (no Commit). **Custom MOH Active** needs **Save + Commit** (CAGI reads `sqlite.rdonly.db`). GenAst emits `moh-{shortuid}` class on Commit when the class folder is created.
 
 ---
 

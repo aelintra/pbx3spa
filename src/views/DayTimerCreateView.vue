@@ -6,7 +6,6 @@ import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation } from '@/composables/useFormValidation'
 import {
-import { refreshCommitStatusUi } from '@/utils/commitStatus'
   validateTenant,
   COMMON_SCHEDULE_MODES,
   validateScheduleMode,
@@ -15,6 +14,7 @@ import { refreshCommitStatusUi } from '@/utils/commitStatus'
   normalizeDayOfWeek,
   dayOfWeekLabel
 } from '@/utils/validation'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 import { normalizeList } from '@/utils/listResponse'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'

@@ -13,7 +13,6 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import PanelBackLink from '@/components/PanelBackLink.vue'
 import FieldHelpIcon from '@/components/FieldHelpIcon.vue'
 import {
-import { refreshCommitStatusUi } from '@/utils/commitStatus'
   ADVANCED_KEYS,
   ADVANCED_FIELDS,
   CALL_CONTROL_KEYS,
@@ -30,6 +29,7 @@ import { refreshCommitStatusUi } from '@/utils/commitStatus'
   apiIntegerToYesNo,
   API_INTEGER_FLAG_KEYS
 } from '@/constants/tenantAdvanced'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { useSessionContext } from '@/composables/useSessionContext'
 import { useAuthStore } from '@/stores/auth'
@@ -304,6 +304,7 @@ async function saveEdit(e) {
     })
     await fetchTenant()
     toast.show(`Tenant ${pkey.value} saved`)
+    refreshCommitStatusUi()
   } catch (err) {
     saveError.value = firstErrorMessage(err, 'Failed to update tenant')
   } finally {
@@ -589,9 +590,9 @@ async function confirmAndDelete() {
           <div class="form-fields moh-fields">
             <p class="moh-hint">
               Custom MOH files for this tenant (8 kHz mono WAV preferred). With no files, Asterisk
-              uses the system default. Upload/delete reloads MOH immediately. Enable Custom MOH
-              Active and Save so calls use this class (Commit only if the tenant MOH class was
-              never generated yet).
+              uses the system default. Upload/delete reloads the sound folder immediately. Turning
+              Custom MOH Active On requires Save, then Commit — call-path CAGI reads the Commit
+              snapshot (`sqlite.rdonly.db`), not the live SPA database.
             </p>
             <p v-if="mohError" class="error" role="alert">{{ mohError }}</p>
             <div class="moh-toolbar">

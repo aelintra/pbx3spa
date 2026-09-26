@@ -7,12 +7,12 @@ import { useToastStore } from '@/stores/toast'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { validateDialPrefixPkey } from '@/utils/validation'
 import {
-import { refreshCommitStatusUi } from '@/utils/commitStatus'
   loadTargetTenantFqdnCatalog,
   callingTenantPkeys,
   callingTenantFqdn,
   targetFqdnSelectOptions
 } from '@/utils/loadTargetTenantFqdnCatalog'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 import { useFleetPosture } from '@/composables/useFleetPosture'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'

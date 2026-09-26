@@ -8,12 +8,12 @@ import { useFormValidation, validateAll, focusFirstError } from '@/composables/u
 import { validateDialPrefixPkey, validateTenant } from '@/utils/validation'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import {
-import { refreshCommitStatusUi } from '@/utils/commitStatus'
   loadTargetTenantFqdnCatalog,
   callingTenantPkeys,
   callingTenantFqdn,
   targetFqdnSelectOptions
 } from '@/utils/loadTargetTenantFqdnCatalog'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 import { useFleetPosture } from '@/composables/useFleetPosture'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'

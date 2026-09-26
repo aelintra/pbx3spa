@@ -8,7 +8,6 @@ import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
 import { validateTenantPkey, validateExtLen } from '@/utils/validation'
 import {
-import { refreshCommitStatusUi } from '@/utils/commitStatus'
   ADVANCED_FIELDS,
   CALL_CONTROL_FIELDS,
   CALL_RECORDING_FIELDS,
@@ -27,6 +26,7 @@ import { refreshCommitStatusUi } from '@/utils/commitStatus'
   buildInitialFormTimers,
   parseNum
 } from '@/constants/tenantAdvanced'
+import { refreshCommitStatusUi } from '@/utils/commitStatus'
 import { fieldErrors } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
 import FormSelect from '@/components/forms/FormSelect.vue'
