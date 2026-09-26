@@ -282,16 +282,12 @@ onMounted(async () => {
           type="text"
           placeholder="e.g. _X."
         />
-        <FormField
+        <FormSelect
           id="ext_len"
           v-model="extLen"
           label="Extension length"
-          type="number"
-          min="2"
-          max="5"
+          :options="['3', '4', '5']"
           help-pkey="ext_len"
-          placeholder="3"
-          hint="Digits per extension (2–5). All extensions in this tenant must match."
           :error="extLenValidation.error.value"
           :touched="extLenValidation.touched.value"
           @blur="extLenValidation.onBlur"

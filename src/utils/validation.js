@@ -145,7 +145,7 @@ export function validateExtensionPkey(value, extLen = 3) {
     return 'Extension number is required'
   }
   const n = Number(extLen)
-  const len = Number.isInteger(n) && n >= 2 && n <= 5 ? n : 3
+  const len = Number.isInteger(n) && n >= 3 && n <= 5 ? n : 3
   const trimmed = value.trim()
   if (!new RegExp(`^\\d{${len}}$`).test(trimmed)) {
     return `Must be exactly ${len} digits (tenant extension length)`
@@ -154,13 +154,13 @@ export function validateExtensionPkey(value, extLen = 3) {
 }
 
 /**
- * Tenant extension length (cluster.ext_len): 2–5, default 3.
+ * Tenant extension length (cluster.ext_len): 3–5, default 3.
  */
 export function validateExtLen(value) {
   if (value === '' || value == null) return null
   const n = Number(value)
-  if (!Number.isInteger(n) || n < 2 || n > 5) {
-    return 'Extension length must be 2–5'
+  if (!Number.isInteger(n) || n < 3 || n > 5) {
+    return 'Extension length must be 3–5'
   }
   return null
 }

@@ -81,6 +81,16 @@ const mohAudioEl = ref(null)
 const pkey = computed(() => route.params.pkey)
 const isDefault = computed(() => tenant.value?.pkey === 'default')
 
+/** Allowed cluster.ext_len values (product lock: 3–5 only). */
+const EXT_LEN_OPTIONS = ['3', '4', '5']
+const extLenOptionsForSelect = computed(() => {
+  const cur = String(editExtLen.value || '').trim()
+  if (cur && !EXT_LEN_OPTIONS.includes(cur)) {
+    return [cur, ...EXT_LEN_OPTIONS]
+  }
+  return EXT_LEN_OPTIONS
+})
+
 const tenantHeading = computed(() => {
   const pk = pkey.value ?? ''
   const base = `Edit Tenant ${pk}`
@@ -468,16 +478,12 @@ async function confirmAndDelete() {
               type="text"
               placeholder="e.g. _X."
             />
-            <FormField
+            <FormSelect
               id="edit-identity-ext-len"
               v-model="editExtLen"
               label="Extension length"
-              type="number"
-              min="2"
-              max="5"
+              :options="extLenOptionsForSelect"
               help-pkey="ext_len"
-              placeholder="3"
-              hint="All extension numbers in this tenant must be exactly this many digits (2–5)."
             />
           </div>
 
