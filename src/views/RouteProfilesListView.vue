@@ -279,12 +279,15 @@ onMounted(load)
     </template>
 
     <DeleteConfirmModal
-      :open="!!confirmDeleteShortuid"
+      :show="!!confirmDeleteShortuid"
       title="Delete Route profile?"
+      :loading="deletingShortuid === confirmDeleteShortuid"
       @cancel="cancelConfirmDelete"
-      @confirm="confirmAndDelete(confirmDeleteShortuid)"
+      @confirm="confirmDeleteShortuid && confirmAndDelete(confirmDeleteShortuid)"
     >
-      <p>This profile and its mode lines will be permanently deleted.</p>
+      <template #body>
+        <p>This profile and its mode lines will be permanently deleted.</p>
+      </template>
     </DeleteConfirmModal>
   </div>
 </template>

@@ -494,12 +494,15 @@ async function confirmAndDelete() {
     </template>
 
     <DeleteConfirmModal
-      :open="confirmDeleteOpen"
+      :show="confirmDeleteOpen"
       title="Delete Route profile?"
+      :loading="deleting"
       @cancel="confirmDeleteOpen = false"
       @confirm="confirmAndDelete"
     >
-      <p>This profile and its mode lines will be permanently deleted.</p>
+      <template #body>
+        <p>This profile and its mode lines will be permanently deleted.</p>
+      </template>
     </DeleteConfirmModal>
   </div>
 </template>
