@@ -82,9 +82,9 @@ const navGroups = computed(() => {
       heading: 'Outbound',
       icon: 'link',
       links: [
+        // Dial prefixes: route `/dialaliases` kept for lab/deep-link; not in nav — HoR = Fleet → Site Groups
         { to: '/trunks', label: 'Trunks', icon: 'link' },
-        { to: '/routes', label: 'Routes', icon: 'route' },
-        { to: '/dialaliases', label: 'Dial prefixes', icon: 'route' }
+        { to: '/routes', label: 'Routes', icon: 'route' }
       ]
     })
   }
