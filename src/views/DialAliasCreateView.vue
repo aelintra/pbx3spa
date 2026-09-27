@@ -152,8 +152,9 @@ async function onSubmit(e) {
     await getApiClient().post('dialaliases', body)
     toast.show(`Dial prefix ${created} created`)
     refreshCommitStatusUi()
+    beginHydrate()
     resetForm()
-    await nextTick()
+    await markClean()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err) {
     const errors = fieldErrors(err)

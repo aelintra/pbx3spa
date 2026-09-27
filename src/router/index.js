@@ -20,6 +20,9 @@ import ConferenceDetailView from '../views/ConferenceDetailView.vue'
 import ClassOfServiceListView from '../views/ClassOfServiceListView.vue'
 import ClassOfServiceCreateView from '../views/ClassOfServiceCreateView.vue'
 import ClassOfServiceDetailView from '../views/ClassOfServiceDetailView.vue'
+import CosProfilesListView from '../views/CosProfilesListView.vue'
+import CosProfileCreateView from '../views/CosProfileCreateView.vue'
+import CosProfileDetailView from '../views/CosProfileDetailView.vue'
 import DayTimersListView from '../views/DayTimersListView.vue'
 import DayTimerCreateView from '../views/DayTimerCreateView.vue'
 import DayTimerDetailView from '../views/DayTimerDetailView.vue'
@@ -135,6 +138,17 @@ const router = createRouter({
         { path: 'cosrules', name: 'cosrules', component: ClassOfServiceListView },
         { path: 'cosrules/new', name: 'cosrule-create', component: ClassOfServiceCreateView },
         { path: 'cosrules/:shortuid', name: 'cosrule-detail', component: ClassOfServiceDetailView },
+        { path: 'cosprofiles', name: 'cosprofiles', component: CosProfilesListView },
+        {
+          path: 'cosprofiles/new',
+          name: 'cosprofile-create',
+          component: CosProfileCreateView
+        },
+        {
+          path: 'cosprofiles/:shortuid',
+          name: 'cosprofile-detail',
+          component: CosProfileDetailView
+        },
         { path: 'daytimers', name: 'daytimers', component: DayTimersListView },
         { path: 'daytimers/new', name: 'daytimer-create', component: DayTimerCreateView },
         { path: 'daytimers/:shortuid', name: 'daytimer-detail', component: DayTimerDetailView },

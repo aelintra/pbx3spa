@@ -298,8 +298,9 @@ async function onSubmit(e) {
     await getApiClient().post('inboundroutes', body)
     toast.show(`Inbound route ${pkey.value.trim()} created`)
     refreshCommitStatusUi()
+    beginHydrate()
     resetForm()
-    await nextTick()
+    await markClean()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err) {
     const errors = fieldErrors(err)

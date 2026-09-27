@@ -209,11 +209,11 @@ const showUid = computed(() => {
 
 <template>
   <div class="detail-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
-    <PanelBackLink :to="{ name: 'cosrules' }" label="Class of Service">
+    <PanelBackLink :to="{ name: 'cosrules' }" label="CoS rules">
       <div class="detail-panel-head detail-panel-head--compact">
         <div class="detail-title-status-row">
           <h1 class="detail-panel-title">
-            Edit CoS {{ displayName }}{{ panelTitleTenantSuffix }}
+            Edit CoS rule {{ displayName }}{{ panelTitleTenantSuffix }}
           </h1>
           <DetailActiveStatusBar v-if="cosrule" v-model="editActive" toggle-id="edit-cos-active" />
         </div>
@@ -298,40 +298,36 @@ const showUid = computed(() => {
               placeholder="Space-separated Asterisk patterns (e.g. _070. _001268.)"
               :required="true"
             />
+            <p class="floor-heading">Tenant-wide</p>
+            <p class="muted-note floor-lede">
+              When ON, this rule is applied to every CoS profile at Commit (not only profiles that
+              list it).
+            </p>
             <div class="cos-toggle-grid">
-              <FormToggle
-                id="edit-defaultopen"
-                v-model="editDefaultopen"
-                label="Default open"
-                help-pkey="cosopen"
-                yes-value="YES"
-                no-value="NO"
-              />
               <FormToggle
                 id="edit-orideopen"
                 v-model="editOrideopen"
-                label="Override open"
+                label="Standard"
+                hint="Business hours."
                 help-pkey="orideopen"
-                yes-value="YES"
-                no-value="NO"
-              />
-              <FormToggle
-                id="edit-defaultclosed"
-                v-model="editDefaultclosed"
-                label="Default closed"
-                help-pkey="cosclosed"
                 yes-value="YES"
                 no-value="NO"
               />
               <FormToggle
                 id="edit-orideclosed"
                 v-model="editOrideclosed"
-                label="Override closed"
+                label="After-hours"
+                hint="When the site is CLOSED."
                 help-pkey="orideclosed"
                 yes-value="YES"
                 no-value="NO"
               />
             </div>
+            <p class="muted-note">
+              Default profile assignment for new phones is managed under
+              <router-link :to="{ name: 'cosprofiles' }">CoS profiles</router-link>, not per-rule
+              defaults.
+            </p>
           </div>
         </form>
       </div>
@@ -392,24 +388,32 @@ const showUid = computed(() => {
   gap: 0;
   margin-top: 0.25rem;
 }
-.cos-toggle-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 1.25rem;
-  max-width: 36rem;
+.floor-heading {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0.75rem 0 0.25rem 0;
 }
+.floor-lede {
+  margin: 0 0 0.5rem 0;
+}
+.cos-toggle-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  max-width: 32rem;
+}
+/* Fixed label column so Standard / After-hours pills share one vertical edge */
 .cos-toggle-grid :deep(.form-field) {
   margin-bottom: 0.35rem;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
   align-items: center;
 }
 .cos-toggle-grid :deep(.form-field-label) {
   padding-top: 0;
 }
-@media (max-width: 640px) {
-  .cos-toggle-grid {
-    grid-template-columns: 1fr;
-  }
+.cos-toggle-grid :deep(.form-field-hint) {
+  margin-top: 0.25rem;
 }
 .readonly-identity :deep(.form-field-label),
 .readonly-identity :deep(.form-readonly) {
@@ -466,5 +470,13 @@ const showUid = computed(() => {
 .edit-actions button.action-delete:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+.muted-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+.muted-note a {
+  color: #2563eb;
 }
 </style>

@@ -201,8 +201,9 @@ async function onSubmit(e) {
     await getApiClient().post('agents', body)
     toast.show(`Agent ${pkeyNum} created`)
     refreshCommitStatusUi()
+    beginHydrate()
     resetForm()
-    await nextTick()
+    await markClean()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err) {
     const errors = fieldErrors(err)

@@ -104,10 +104,8 @@ const cosruleExportColumns = computed(() => [
   { key: 'cluster', label: 'Tenant', getValue: (c) => tenantPkeyDisplay(c) },
   { key: 'active', label: 'Active' },
   { key: 'dialplan', label: 'Dialplan' },
-  { key: 'defaultopen', label: 'Default open' },
-  { key: 'orideopen', label: 'Override open' },
-  { key: 'defaultclosed', label: 'Default closed' },
-  { key: 'orideclosed', label: 'Override closed' },
+  { key: 'orideopen', label: 'Tenant-wide Standard' },
+  { key: 'orideclosed', label: 'Tenant-wide After-hours' },
   { key: 'description', label: 'Description' }
 ])
 
@@ -183,7 +181,12 @@ onMounted(loadCosrules)
 <template>
   <div class="list-view">
     <header class="list-header">
-      <h1>Class of Service</h1>
+      <h1>CoS rules</h1>
+      <p class="lede">
+        Deny-pattern packs. Assign packs to phones via
+        <router-link :to="{ name: 'cosprofiles' }">CoS profiles</router-link>. Use
+        <strong>Tenant-wide</strong> to force a rule onto every profile.
+      </p>
       <p class="toolbar">
         <router-link :to="{ name: 'cosrule-create' }" class="add-btn">Create</router-link>
         <button
@@ -271,36 +274,20 @@ onMounted(loadCosrules)
               Dialplan
             </th>
             <th
-              class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('defaultopen')"
-              @click="setSort('defaultopen')"
-            >
-              Default open
-            </th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
+              class="th-sortable th-floor"
+              title="Tenant-wide (Standard) — click to sort"
               :class="sortClass('orideopen')"
               @click="setSort('orideopen')"
             >
-              Override open
+              Tenant-wide<br />Standard
             </th>
             <th
-              class="th-sortable"
-              title="Click to sort"
-              :class="sortClass('defaultclosed')"
-              @click="setSort('defaultclosed')"
-            >
-              Default closed
-            </th>
-            <th
-              class="th-sortable"
-              title="Click to sort"
+              class="th-sortable th-floor"
+              title="Tenant-wide (After-hours) — click to sort"
               :class="sortClass('orideclosed')"
               @click="setSort('orideclosed')"
             >
-              Override closed
+              Tenant-wide<br />After-hours
             </th>
             <th
               class="th-sortable"
@@ -360,9 +347,7 @@ onMounted(loadCosrules)
             <td class="td-dialplan" :title="(c.dialplan ?? '').toString()">
               {{ c.dialplan != null && String(c.dialplan).trim() !== '' ? c.dialplan : '—' }}
             </td>
-            <td>{{ c.defaultopen ?? '—' }}</td>
             <td>{{ c.orideopen ?? '—' }}</td>
-            <td>{{ c.defaultclosed ?? '—' }}</td>
             <td>{{ c.orideclosed ?? '—' }}</td>
             <td>{{ c.description ?? '—' }}</td>
             <td>
@@ -468,6 +453,15 @@ onMounted(loadCosrules)
 .list-header {
   margin: 0;
 }
+.lede {
+  margin: 0.35rem 0 0;
+  font-size: 0.9375rem;
+  color: #64748b;
+  max-width: 44rem;
+}
+.lede a {
+  color: #2563eb;
+}
 .list-states,
 .list-body {
   margin: 0;
@@ -504,6 +498,17 @@ onMounted(loadCosrules)
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
+}
+.th-floor {
+  white-space: normal;
+  max-width: 6.5rem;
+  line-height: 1.2;
+  vertical-align: bottom;
+  font-size: 0.8125rem;
+}
+.th-floor br {
+  display: block;
+  content: '';
 }
 .th-sortable::before {
   content: '\21C5';

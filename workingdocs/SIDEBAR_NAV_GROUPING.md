@@ -22,7 +22,7 @@ Group by “where the call is” and “who configures what.” Familiar to PBX 
 | **Endpoints** | Endpoints | Endpoints, Conferences | SIP endpoints (phones) and meet-me conferences. |
 | **Outbound** | Outbound | Trunks, Routes | Carrier and dial rules. |
 | **ACD** | ACD | Queues, Agents, IVRs, Greetings | Automatic Call Distribution: queues, agents, IVRs, greetings (Conferences in Endpoints). |
-| **Schedules & policy** | Schedules & policy | Day timers, Holiday timers, Class of Service | When and what is allowed. |
+| **Schedules & policy** | Schedules & policy | Day timers, Holiday timers, CoS rules, CoS profiles | When and what is allowed. |
 | **Applications** | Applications | Custom Apps, Devices, Help messages | Apps, device templates, help text. |
 | **System** | System | Users, Certificates, IP Settings, Firewall, System Globals, Asterisk Files, Logs, Backup | Instance-wide config and ops. |
 
@@ -80,7 +80,7 @@ Resulting structure:
 | **Endpoints** | Endpoints, Conferences |
 | **Outbound** | Trunks, Routes |
 | **ACD** | Queues, Agents, IVRs, Greetings |
-| **Schedules & policy** | Day timers, Holiday timers, Class of Service |
+| **Schedules & policy** | Day timers, Holiday timers, CoS rules, CoS profiles |
 | **Devices & apps** | Devices, Custom Apps, Help messages |
 | **System** | Users, Certificates, IP Settings, Firewall, System Globals, Asterisk Files, Logs, Backup |
 

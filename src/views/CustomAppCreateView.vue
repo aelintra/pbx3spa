@@ -127,8 +127,9 @@ async function onSubmit(e) {
     await getApiClient().post('customapps', cleaned)
     toast.show(`Custom app ${createdPkey} created`)
     refreshCommitStatusUi()
+    beginHydrate()
     resetForm()
-    await nextTick()
+    await markClean()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err) {
     const errors = fieldErrors(err)

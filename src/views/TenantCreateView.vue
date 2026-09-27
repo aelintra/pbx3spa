@@ -141,8 +141,9 @@ async function onSubmit(e) {
     await getApiClient().post('tenants', cleaned)
     toast.show(`Tenant ${createdPkey} created (MainOut seeded from instance default dialplan when set)`)
     refreshCommitStatusUi()
+    beginHydrate()
     resetForm()
-    await nextTick()
+    await markClean()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err) {
     const errors = fieldErrors(err)

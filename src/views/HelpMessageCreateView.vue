@@ -59,8 +59,9 @@ async function onSubmit(e) {
     const cleaned = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== undefined))
     await getApiClient().post('helpcore', cleaned)
     toast.show(`Help message ${pkey.value.trim()} created`)
+    beginHydrate()
     resetForm()
-    await nextTick()
+    await markClean()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err) {
     const errors = fieldErrors(err)

@@ -5,6 +5,7 @@ import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
+import { normalizeList } from '@/utils/listResponse'
 import { firstErrorMessage } from '@/utils/formErrors'
 import { maskSipPassword, sipPasswordFieldValue } from '@/utils/maskSipPassword'
 import FormField from '@/components/forms/FormField.vue'
@@ -73,10 +74,9 @@ const sipPasswordRevealed = ref(false)
 /** Which SIP credential just copied (`user` | `passwd` | `registrar`) — drives in-field checkmark. */
 const copiedSipKey = ref('')
 let copiedSipTimer = null
-const cosRules = ref([])
-const openCos = ref({})
-const closedCos = ref({})
-const cosLoaded = ref(false)
+const cosProfiles = ref([])
+const editCosProfile = ref('')
+const cosProfilesLoading = ref(false)
 const cosError = ref('')
 
 onUnmounted(() => {
@@ -217,6 +217,10 @@ async function fetchExtension() {
     editTechnology.value = ext?.technology ?? 'SIP'
     editVmailfwd.value = ext?.vmailfwd ?? ''
     editPjsipOverlay.value = ext?.pjsip_overlay ?? ''
+    editCosProfile.value =
+      ext?.cos_profile != null && String(ext.cos_profile).trim() !== ''
+        ? String(ext.cos_profile).trim()
+        : ''
   } catch (err) {
     error.value = firstErrorMessage(err, 'Failed to load extension')
     extension.value = null
@@ -242,61 +246,67 @@ async function fetchRuntime() {
   }
 }
 
-async function fetchCos() {
-  if (!shortuid.value) return
+async function fetchCosProfiles() {
   cosError.value = ''
-  cosLoaded.value = false
+  cosProfilesLoading.value = true
   try {
-    const data = await getApiClient().get(`extensions/${encodeURIComponent(shortuid.value)}/cos`)
-    const rules = Array.isArray(data?.rules) ? data.rules : []
-    const openSet = new Set((Array.isArray(data?.open) ? data.open : []).map(String))
-    const closedSet = new Set((Array.isArray(data?.closed) ? data.closed : []).map(String))
-    const openMap = {}
-    const closedMap = {}
-    for (const r of rules) {
-      const key = r?.pkey != null && String(r.pkey).trim() !== '' ? String(r.pkey) : ''
-      if (!key) continue
-      openMap[key] = openSet.has(key) ? 'YES' : 'NO'
-      closedMap[key] = closedSet.has(key) ? 'YES' : 'NO'
+    const res = await getApiClient().get('cosprofiles')
+    const all = normalizeList(res, 'cosprofiles') || normalizeList(res)
+    const aliases = new Set()
+    const keys = [editCluster.value, extension.value?.tenant_pkey, extension.value?.cluster]
+      .filter((v) => v != null && String(v).trim() !== '')
+      .map((v) => String(v).trim())
+    for (const t of tenants.value) {
+      const ids = [t.pkey, t.shortuid, t.id]
+        .filter((v) => v != null && String(v).trim() !== '')
+        .map((v) => String(v).trim())
+      if (keys.some((k) => ids.includes(k))) {
+        for (const id of ids) aliases.add(id)
+      }
     }
-    cosRules.value = rules
-    openCos.value = openMap
-    closedCos.value = closedMap
-    cosLoaded.value = true
+    for (const k of keys) aliases.add(k)
+    cosProfiles.value = all.filter((p) => aliases.has(String(p.cluster ?? '')))
   } catch (err) {
-    cosError.value = firstErrorMessage(err, 'Failed to load Class of Service')
-    cosRules.value = []
-    openCos.value = {}
-    closedCos.value = {}
-    cosLoaded.value = false
+    cosError.value = firstErrorMessage(err, 'Failed to load CoS profiles')
+    cosProfiles.value = []
+  } finally {
+    cosProfilesLoading.value = false
   }
 }
 
-function ruleKey(rule) {
-  // Junction / API still key by pkey; UI label prefers human name.
-  const name = rule?.cname != null && String(rule.cname).trim() !== '' ? String(rule.cname).trim() : ''
-  if (name) return name
-  return rule?.pkey != null ? String(rule.pkey) : ''
-}
-
-function ruleDescription(rule) {
-  const desc = rule?.description
-  return desc && String(desc).trim() ? String(desc).trim() : ''
-}
+const cosProfileOptions = computed(() => {
+  const opts = [{ value: '', label: '— Tenant default —' }]
+  for (const p of cosProfiles.value) {
+    const pkey = p?.pkey != null ? String(p.pkey) : ''
+    if (!pkey) continue
+    const name =
+      p?.cname != null && String(p.cname).trim() !== '' ? String(p.cname).trim() : pkey
+    const isDef = String(p?.is_default || '').toUpperCase() === 'YES'
+    opts.push({
+      value: pkey,
+      label: isDef ? `${name} (default)` : name
+    })
+  }
+  const cur = editCosProfile.value
+  if (cur && !opts.some((o) => o.value === cur)) {
+    opts.push({ value: cur, label: `${cur} (missing)` })
+  }
+  return opts
+})
 
 onMounted(async () => {
   await ensureFetched()
   await fetchTenants()
   await fetchExtension()
   if (extension.value) {
-    await Promise.all([fetchRuntime(), fetchCos()])
+    await Promise.all([fetchRuntime(), fetchCosProfiles()])
   }
 })
 watch(shortuid, () => {
   fetchExtension().then(() => {
     if (extension.value) {
       fetchRuntime()
-      fetchCos()
+      fetchCosProfiles()
     }
   })
 })
@@ -346,7 +356,8 @@ async function saveEdit(e) {
           : null,
       protocol: editProtocol.value,
       technology: editTechnology.value || undefined,
-      vmailfwd: editVmailfwd.value.trim() || undefined
+      vmailfwd: editVmailfwd.value.trim() || undefined,
+      cos_profile: editCosProfile.value.trim() || null
     }
     if (auth.isAdmin) {
       // Always send so clearing the textarea removes the DB overlay
@@ -354,25 +365,13 @@ async function saveEdit(e) {
     }
     if (body.callmax !== undefined && Number.isNaN(body.callmax)) delete body.callmax
     await getApiClient().put(`extensions/${encodeURIComponent(shortuid.value)}`, body)
-    if (cosLoaded.value) {
-      const open = Object.entries(openCos.value)
-        .filter(([, v]) => v === 'YES')
-        .map(([k]) => k)
-      const closed = Object.entries(closedCos.value)
-        .filter(([, v]) => v === 'YES')
-        .map(([k]) => k)
-      await getApiClient().put(`extensions/${encodeURIComponent(shortuid.value)}/cos`, {
-        open,
-        closed
-      })
-    }
     await getApiClient().put(`extensions/${encodeURIComponent(shortuid.value)}/runtime`, {
       cfim: editCfim.value.trim() || null,
       cfbs: editCfbs.value.trim() || null,
       ringdelay: editRingdelay.value === '' ? null : parseInt(editRingdelay.value, 10)
     })
     await fetchExtension()
-    if (cosLoaded.value) await fetchCos()
+    await fetchCosProfiles()
     await fetchRuntime()
     toast.show(`Extension saved`)
     refreshCommitStatusUi()
@@ -901,48 +900,25 @@ const panelTitleTenantSuffix = computed(() => {
           </div>
 
           <h2 class="detail-heading detail-heading-with-help">
-            <span>Standard Class of Service</span>
+            <span>Class of Service</span>
             <FieldHelpIcon pkey="cosday" />
           </h2>
-          <p v-if="cosError" class="error">{{ cosError }}</p>
-          <p v-else-if="!cosLoaded" class="muted">Loading Class of Service…</p>
-          <p v-else-if="cosRules.length === 0" class="muted">
-            No Class of Service rules for this tenant.
+          <p class="cos-profile-hint">
+            Privilege comes from a
+            <router-link :to="{ name: 'cosprofiles' }">CoS profile</router-link>
+            (Standard + After-hours rule lists). Tenant-wide rules on
+            <router-link :to="{ name: 'cosrules' }">CoS rules</router-link>
+            still apply to every profile.
           </p>
-          <div v-else class="form-fields cos-rules">
-            <FormToggle
-              v-for="rule in cosRules"
-              :id="`cos-open-${rule.pkey}`"
-              :key="`open-${rule.pkey}`"
-              v-model="openCos[rule.pkey]"
-              :label="ruleKey(rule)"
-              :hint="ruleDescription(rule)"
-              yes-value="YES"
-              no-value="NO"
-              hide-help
-            />
-          </div>
-
-          <h2 class="detail-heading detail-heading-with-help">
-            <span>After-hours Class of Service</span>
-            <FieldHelpIcon pkey="cosnight" />
-          </h2>
           <p v-if="cosError" class="error">{{ cosError }}</p>
-          <p v-else-if="!cosLoaded" class="muted">Loading Class of Service…</p>
-          <p v-else-if="cosRules.length === 0" class="muted">
-            No Class of Service rules for this tenant.
-          </p>
-          <div v-else class="form-fields cos-rules">
-            <FormToggle
-              v-for="rule in cosRules"
-              :id="`cos-closed-${rule.pkey}`"
-              :key="`closed-${rule.pkey}`"
-              v-model="closedCos[rule.pkey]"
-              :label="ruleKey(rule)"
-              :hint="ruleDescription(rule)"
-              yes-value="YES"
-              no-value="NO"
-              hide-help
+          <div class="form-fields">
+            <FormSelect
+              id="edit-cos_profile"
+              v-model="editCosProfile"
+              label="CoS profile"
+              :options="cosProfileOptions"
+              :loading="cosProfilesLoading"
+              loading-text="Loading profiles…"
             />
           </div>
 
@@ -1089,6 +1065,15 @@ const panelTitleTenantSuffix = computed(() => {
   display: flex;
   align-items: center;
   gap: 0.35rem;
+}
+.cos-profile-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  max-width: 40rem;
+}
+.cos-profile-hint a {
+  color: #2563eb;
 }
 .cos-rules {
   margin-bottom: 0.25rem;

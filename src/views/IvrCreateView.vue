@@ -268,8 +268,9 @@ async function onSubmit(e) {
     await getApiClient().post('ivrs', body)
     toast.show(`IVR ${pkey.value.trim()} created`, 'success')
     refreshCommitStatusUi()
+    beginHydrate()
     resetForm()
-    await nextTick()
+    await markClean()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err) {
     const errors = fieldErrors(err)

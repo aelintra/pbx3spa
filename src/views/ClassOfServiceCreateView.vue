@@ -5,7 +5,7 @@ import { getApiClient } from '@/api/client'
 import { useSchema } from '@/composables/useSchema'
 import { useToastStore } from '@/stores/toast'
 import { useFormValidation, validateAll, focusFirstError } from '@/composables/useFormValidation'
-import { validateTenant } from '@/utils/validation'
+import { validateTenant, validateCosPkey } from '@/utils/validation'
 import { loadTenantOptions } from '@/utils/loadTenantOptions'
 import { fieldErrors, firstErrorMessage } from '@/utils/formErrors'
 import FormField from '@/components/forms/FormField.vue'
@@ -26,6 +26,7 @@ const defaultclosed = ref('NO')
 const orideopen = ref('NO')
 const orideclosed = ref('NO')
 const cname = ref('')
+const pkey = ref('')
 const description = ref('')
 const dialplan = ref('')
 const tenants = ref([])
@@ -34,6 +35,7 @@ const error = ref('')
 const loading = ref(false)
 
 const clusterValidation = useFormValidation(cluster, validateTenant)
+const pkeyValidation = useFormValidation(pkey, validateCosPkey)
 
 const tenantOptions = computed(() => {
   const list = tenants.value.map((t) => t.pkey).filter(Boolean)
@@ -74,6 +76,7 @@ onMounted(async () => {
     orideopen,
     orideclosed,
     cname,
+    pkey,
     description,
     dialplan
   })
@@ -89,9 +92,11 @@ function resetForm() {
   orideopen.value = 'NO'
   orideclosed.value = 'NO'
   cname.value = ''
+  pkey.value = ''
   description.value = ''
   dialplan.value = ''
   clusterValidation.reset()
+  pkeyValidation.reset()
   error.value = ''
 }
 
@@ -110,7 +115,10 @@ async function onSubmit(e) {
   e.preventDefault()
   error.value = ''
 
-  const validations = [{ ...clusterValidation, fieldId: 'cluster' }]
+  const validations = [
+    { ...pkeyValidation, fieldId: 'pkey' },
+    { ...clusterValidation, fieldId: 'cluster' }
+  ]
   if (!dialplan.value || !String(dialplan.value).trim()) {
     error.value = 'Dialplan is required'
     return
@@ -124,6 +132,7 @@ async function onSubmit(e) {
   loading.value = true
   try {
     const body = {
+      pkey: pkey.value.trim(),
       cluster: cluster.value.trim(),
       active: active.value,
       defaultopen: defaultopen.value,
@@ -137,17 +146,22 @@ async function onSubmit(e) {
     const created = await getApiClient().post('cosrules', body)
     const label =
       (created?.cname && String(created.cname).trim()) ||
-      created?.shortuid ||
       created?.pkey ||
+      created?.shortuid ||
       'rule'
     toast.show(`Class of Service rule ${label} created`)
     refreshCommitStatusUi()
+    beginHydrate()
     resetForm()
-    await nextTick()
+    await markClean()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err) {
     const errors = fieldErrors(err)
     if (errors) {
+      if (errors.pkey) {
+        pkeyValidation.touched.value = true
+        pkeyValidation.error.value = Array.isArray(errors.pkey) ? errors.pkey[0] : errors.pkey
+      }
       if (errors.cluster) {
         clusterValidation.touched.value = true
         clusterValidation.error.value = Array.isArray(errors.cluster)
@@ -169,8 +183,8 @@ async function onSubmit(e) {
 
 <template>
   <div class="create-view" @keydown="onKeydown" @input="markDirty" @change="markDirty">
-    <PanelBackLink :to="{ name: 'cosrules' }" label="Class of Service">
-      <h1>Create Class of Service rule</h1>
+    <PanelBackLink :to="{ name: 'cosrules' }" label="CoS rules">
+      <h1>Create CoS rule</h1>
     </PanelBackLink>
 
     <form class="form" @submit="onSubmit">
@@ -185,6 +199,18 @@ async function onSubmit(e) {
 
       <h2 class="detail-heading">Identity</h2>
       <div class="form-fields">
+        <FormField
+          id="pkey"
+          v-model="pkey"
+          label="Key"
+          help-pkey="cosname"
+          type="text"
+          placeholder="Stable key (e.g. PREMIUM_0900, HR_UK070)"
+          :error="pkeyValidation.error.value"
+          :touched="pkeyValidation.touched.value"
+          :required="true"
+          @blur="pkeyValidation.onBlur"
+        />
         <FormField
           id="cname"
           v-model="cname"
@@ -232,38 +258,31 @@ async function onSubmit(e) {
           placeholder="Space-separated Asterisk patterns (required)"
           :required="true"
         />
-        <FormToggle
-          id="defaultopen"
-          v-model="defaultopen"
-          label="Default open"
-          help-pkey="cosopen"
-          yes-value="YES"
-          no-value="NO"
-        />
-        <FormToggle
-          id="orideopen"
-          v-model="orideopen"
-          label="Override open"
-          help-pkey="orideopen"
-          yes-value="YES"
-          no-value="NO"
-        />
-        <FormToggle
-          id="defaultclosed"
-          v-model="defaultclosed"
-          label="Default closed"
-          help-pkey="cosclosed"
-          yes-value="YES"
-          no-value="NO"
-        />
-        <FormToggle
-          id="orideclosed"
-          v-model="orideclosed"
-          label="Override closed"
-          help-pkey="orideclosed"
-          yes-value="YES"
-          no-value="NO"
-        />
+        <p class="floor-heading">Tenant-wide</p>
+        <p class="floor-lede">
+          When ON, this rule is applied to every CoS profile at Commit (not only profiles that list
+          it). Defaults OFF.
+        </p>
+        <div class="cos-toggle-grid">
+          <FormToggle
+            id="orideopen"
+            v-model="orideopen"
+            label="Standard"
+            hint="Business hours — including Unrestricted profiles."
+            help-pkey="orideopen"
+            yes-value="YES"
+            no-value="NO"
+          />
+          <FormToggle
+            id="orideclosed"
+            v-model="orideclosed"
+            label="After-hours"
+            hint="When the site is CLOSED."
+            help-pkey="orideclosed"
+            yes-value="YES"
+            no-value="NO"
+          />
+        </div>
       </div>
 
       <div class="actions">
@@ -285,6 +304,35 @@ async function onSubmit(e) {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+.floor-heading {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 1rem 0 0.25rem 0;
+}
+.floor-lede {
+  margin: 0 0 0.5rem 0;
+  color: #64748b;
+  font-size: 0.8125rem;
+}
+.cos-toggle-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  max-width: 32rem;
+}
+/* Fixed label column so Standard / After-hours pills share one vertical edge */
+.cos-toggle-grid :deep(.form-field) {
+  margin-bottom: 0.35rem;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  align-items: center;
+}
+.cos-toggle-grid :deep(.form-field-label) {
+  padding-top: 0;
+}
+.cos-toggle-grid :deep(.form-field-hint) {
+  margin-top: 0.25rem;
 }
 .detail-heading {
   font-size: 1rem;

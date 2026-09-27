@@ -40,6 +40,10 @@ const protocol = ref('IPV4')
 const vmailfwd = ref('')
 const namedCallGroup = ref('ALL')
 const namedPickupGroup = ref('ALL')
+const cosProfile = ref('')
+const cosProfiles = ref([])
+const cosProfilesLoading = ref(false)
+const cosError = ref('')
 const hasCellphone = computed(() => String(cellphone.value ?? '').trim() !== '')
 const tenants = ref([])
 const tenantsLoading = ref(true)
@@ -67,6 +71,56 @@ const tenantOptionsForSelect = computed(() => {
   if (cur && !list.includes(cur))
     return [cur, ...list].sort((a, b) => String(a).localeCompare(String(b)))
   return list
+})
+
+async function fetchCosProfiles() {
+  cosError.value = ''
+  cosProfilesLoading.value = true
+  try {
+    const res = await getApiClient().get('cosprofiles')
+    const all = normalizeList(res, 'cosprofiles') || normalizeList(res)
+    const aliases = new Set()
+    const keys = [cluster.value].filter((v) => v != null && String(v).trim() !== '').map((v) => String(v).trim())
+    for (const t of tenants.value) {
+      const ids = [t.pkey, t.shortuid, t.id]
+        .filter((v) => v != null && String(v).trim() !== '')
+        .map((v) => String(v).trim())
+      if (keys.some((k) => ids.includes(k))) {
+        for (const id of ids) aliases.add(id)
+      }
+    }
+    for (const k of keys) aliases.add(k)
+    cosProfiles.value = all.filter((p) => aliases.has(String(p.cluster ?? '')))
+    // Prefer empty (= tenant default) when current selection is not in this tenant
+    if (cosProfile.value && !cosProfiles.value.some((p) => String(p.pkey) === cosProfile.value)) {
+      cosProfile.value = ''
+    }
+  } catch (err) {
+    cosError.value = firstErrorMessage(err, 'Failed to load CoS profiles')
+    cosProfiles.value = []
+  } finally {
+    cosProfilesLoading.value = false
+  }
+}
+
+const cosProfileOptions = computed(() => {
+  const opts = [{ value: '', label: '— Tenant default —' }]
+  for (const p of cosProfiles.value) {
+    const pkeyVal = p?.pkey != null ? String(p.pkey) : ''
+    if (!pkeyVal) continue
+    const name =
+      p?.cname != null && String(p.cname).trim() !== '' ? String(p.cname).trim() : pkeyVal
+    const isDef = String(p?.is_default || '').toUpperCase() === 'YES'
+    opts.push({
+      value: pkeyVal,
+      label: isDef ? `${name} (default)` : name
+    })
+  }
+  return opts
+})
+
+watch(cluster, () => {
+  fetchCosProfiles()
 })
 
 const deviceDisplay = computed(() => {
@@ -104,9 +158,11 @@ function resetForm() {
   vmailfwd.value = ''
   namedCallGroup.value = 'ALL'
   namedPickupGroup.value = 'ALL'
+  cosProfile.value = ''
   pkeyValidation.reset()
   clusterValidation.reset()
   error.value = ''
+  cosError.value = ''
 }
 
 async function loadTenants() {
@@ -147,6 +203,7 @@ onMounted(async () => {
     extensionType.value = 'SIP'
   }
   await loadTenants()
+  await fetchCosProfiles()
   nextTick().then(() => pkeyInput.value?.focus())
   await markClean()
 })
@@ -190,11 +247,13 @@ async function onSubmit(e) {
     if (vmailfwd.value.trim()) body.vmailfwd = vmailfwd.value.trim()
     body.named_call_group = namedCallGroup.value.trim() || 'ALL'
     body.named_pickup_group = namedPickupGroup.value.trim() || 'ALL'
+    if (cosProfile.value.trim()) body.cos_profile = cosProfile.value.trim()
     await getApiClient().post('extensions', body)
     toast.show(`Extension ${pkey.value.trim()} created`)
     refreshCommitStatusUi()
+    beginHydrate()
     resetForm()
-    await nextTick()
+    await markClean()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err) {
     const errors = fieldErrors(err)
@@ -392,6 +451,24 @@ function onKeydown(e) {
         />
       </div>
 
+      <h2 class="detail-heading">Class of Service</h2>
+      <p class="cos-profile-hint">
+        Leave as tenant default, or pick a
+        <router-link :to="{ name: 'cosprofiles' }">CoS profile</router-link>
+        (Staff / Restricted / …). Tenant-wide rules still apply to every profile.
+      </p>
+      <p v-if="cosError" class="error">{{ cosError }}</p>
+      <div class="form-fields">
+        <FormSelect
+          id="cos_profile"
+          v-model="cosProfile"
+          label="CoS profile"
+          :options="cosProfileOptions"
+          :loading="cosProfilesLoading"
+          loading-text="Loading profiles…"
+        />
+      </div>
+
       <div class="actions">
         <button type="submit" :disabled="loading || tenantsLoading">
           {{ loading ? 'Creating…' : 'Create' }}
@@ -426,6 +503,19 @@ function onKeydown(e) {
   flex-direction: column;
   gap: 0;
   margin-top: 0.5rem;
+}
+.cos-profile-hint {
+  margin: 0 0 0.35rem 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+.cos-profile-hint a {
+  color: #2563eb;
+  text-decoration: none;
+}
+.cos-profile-hint a:hover {
+  text-decoration: underline;
 }
 .error {
   color: #dc2626;

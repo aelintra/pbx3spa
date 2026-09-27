@@ -145,8 +145,9 @@ async function onSubmit(e) {
     await getApiClient().postFile('greetingrecords', formData)
     toast.show(`Greeting ${pkey.value} created`)
     refreshCommitStatusUi()
+    beginHydrate()
     resetForm()
-    await nextTick()
+    await markClean()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err) {
     const errors = fieldErrors(err)
