@@ -1,14 +1,14 @@
 # Single-panel screens (no List/Create — one screen per resource)
 
-**Purpose:** Plan and track the single-screen panels ported from the legacy SARK admin UI. These are **singleton** or **single-view** panels: one route, one view, no list/detail/create split. See PANEL_PATTERN.md § "Singleton / edit-only panels" for the pattern (SysglobalsEditView is the reference).
+**Purpose:** Plan and track the single-screen panels ported from the legacy PBX admin UI. These are **singleton** or **single-view** panels: one route, one view, no list/detail/create split. See PANEL_PATTERN.md § "Singleton / edit-only panels" for the pattern (SysglobalsEditView is the reference).
 
-**Open backlog:** **`LEGACY_SARK_PANEL_BACKLOG.md`**
+**Open backlog:** **`LEGACY_PBX_PANEL_BACKLOG.md`**
 
 ---
 
 ## Panel list (11 screens)
 
-| # | Panel name       | SARK source    | pbx3api status | Notes |
+| # | Panel name       | previous PBX source    | pbx3api status | Notes |
 |---|------------------|----------------|----------------|-------|
 | 1 | **Home**         | sarkglobal (part) | ✅ syscommands (pbxrunstate, commitstatus, commit, start, stop, reboot) | **DashboardView** — PBX status + Start/Stop/Reboot; **Commit** also in **AppLayout** topbar on config routes. **Still optional:** expand Dashboard as a **hub** with prominent links to IP Settings, Firewall, Backup, Certificates, Logs, etc. (see § Implementation order). |
 | 2 | **IP Settings**  | sarknetwork    | ✅ API + panel | **Done.** Single-screen at `/ip-settings`. Binding (bindaddr, bindport, tlsport, staticipv4), NAT (natdefault, natparams), Site (sitename), System read-only (hostname, local_ip, public_ip, mac from sysnotes). No FQDN/fqdninspect/fqdnprov (moving elsewhere). See NETWORK_AUDIT_PROTOTYPE.md. |
@@ -17,10 +17,10 @@
 | 5 | **Backup/restore** | sarkbackup   | ✅ backups + snapshots APIs | **Done.** Single panel with two cascaded sections: Backups (create, upload, download, restore with options, delete) and Snapshots (create, upload, download, restore DB only, delete). Route `/backup`, view `BackupView.vue`. API: backups + snapshots; both use syshelper for privileged file ops. See PANEL_PATTERN § Single-screen panels with cascaded sections. |
 | 6 | **Asterisk Files** | sarkedit     | ✅ astfiles (GET list, GET show, PUT update) | **Done.** Two-panel: list (table Filename + Read-only, Commit button) and detail (view/edit one file; read-only files view-only, others editable). Routes `/asterisk-files`, `/asterisk-files/:filename`. Hardcoded read-only list in API. See DATA_DRIVEN_LIST_POLICY_PROJECT.md for future data-driven approach. |
 | 7 | **Certificates** | sarkcert       | ✅ API + panel | **Done.** TLS server certs. Route `/certificates`, CertificatesView.vue. API: certificates/active, letsencrypt, letsencrypt/setup, letsencrypt/renew, custom (GET/POST/DELETE). **Docs (pbx3 repo):** `TLS_AND_CERTIFICATES.md` → `CERTIFICATES_PANEL_AND_API.md`. |
-| 8 | **Certs (3rd Party)** | sark3pcerts | ❌ No API   | **Separate panel.** Manufacturer CA certs (e.g. Snom, Yealink) for verifying provisioning streams: back-check that requests come from real phones, not bad actors. View, save, remove bundle. Not part of Certificates panel. |
-| 9 | **Factory Reset** | sarkfreset    | ❌ No API      | Password confirm + checkboxes (reset db, backups, snaps, greets, vmail, cdrs, logs, firewall, dhcp, host, ssh, ldap). Destructive; needs secure API. |
-| 10| **Logs**         | sarklog        | ⚠️ Partial     | **API:** GET /logs (returns minimal `{ "Log": "Master.csv" }`), GET /logs/cdrs{limit} (CDR CSV download). **SARK:** Table of log files (asterisk/messages, asterisk/full, cdr-csv/Master.csv, queue_log, syslog, shorewall.log, siplog, mail.log, fail2ban.log, auth.log) with View tail + Download. To match SARK: extend API (list log files, tail endpoint, download per file) or ship with CDR only first. |
-| 11| **SIP PCAP logs** | sarkpcap       | ❌ No API      | **SARK:** List files in /var/log/siplog (name, size, modified, Download). SIP capture files. API would need: list siplog files, download file. |
+| 8 | **Certs (3rd Party)** | third-party certs panel | ❌ No API   | **Separate panel.** Manufacturer CA certs (e.g. Snom, Yealink) for verifying provisioning streams: back-check that requests come from real phones, not bad actors. View, save, remove bundle. Not part of Certificates panel. |
+| 9 | **Factory Reset** | factory reset    | ❌ No API      | Password confirm + checkboxes (reset db, backups, snaps, greets, vmail, cdrs, logs, firewall, dhcp, host, ssh, ldap). Destructive; needs secure API. |
+| 10| **Logs**         | sarklog        | ⚠️ Partial     | **API:** GET /logs (returns minimal `{ "Log": "Master.csv" }`), GET /logs/cdrs{limit} (CDR CSV download). **previous PBX:** Table of log files (asterisk/messages, asterisk/full, cdr-csv/Master.csv, queue_log, syslog, shorewall.log, siplog, mail.log, fail2ban.log, auth.log) with View tail + Download. To match previous PBX: extend API (list log files, tail endpoint, download per file) or ship with CDR only first. |
+| 11| **SIP PCAP logs** | packet capture       | ❌ No API      | **previous PBX:** List files in /var/log/siplog (name, size, modified, Download). SIP capture files. API would need: list siplog files, download file. |
 
 ---
 
@@ -33,21 +33,21 @@
 
 ---
 
-## SARK reference (file paths)
+## previous PBX reference (file paths)
 
-| Panel       | SARK path |
+| Panel       | previous PBX path |
 |------------|-----------|
 | Home / Globals | `sarkglobal/view.php` |
 | Network / IP  | `sarknetwork/view.php` |
 | Backup/restore| `sarkbackup/view.php` |
 | Asterisk Files | `sarkedit/view.php` |
 | Certificates  | `sarkcert/view.php` |
-| 3rd Party Certs | `sark3pcerts/view.php` |
-| Factory Reset | `sarkfreset/view.php` |
+| 3rd Party Certs | `third-party certs panel/view.php` |
+| Factory Reset | `factory reset/view.php` |
 | Logs        | `sarklog/view.php` (log file list + tail via srkFileTailClass) |
-| SIP PCAP    | `sarkpcap/view.php` (file list in /var/log/siplog + download) |
+| SIP PCAP    | `packet capture/view.php` (file list in /var/log/siplog + download) |
 
-Firewall: SARK uses Shorewall config files; pbx3api FirewallController reads/writes `/etc/shorewall/pbx3_rules` and `/etc/shorewall6/pbx3_rules6`.
+Firewall: previous PBX uses Shorewall config files; pbx3api FirewallController reads/writes `/etc/shorewall/pbx3_rules` and `/etc/shorewall6/pbx3_rules6`.
 
 ---
 
@@ -81,9 +81,9 @@ Nav: Either group under "System" or "Single panels" in the sidebar, or add each 
 
 **Missing from API (would need new syscommands or similar):**
 
-- **SIP CAP (SIP PCAP logging) service state** — SARK uses `/opt/sark/service/srk-ua-siplog/down` (file exists ⇒ service off). Would need e.g. `GET syscommands/sipcapstatus` → `{ running: boolean }`.
-- **SIP CAP Start / Stop** — SARK: `sv u srk-ua-siplog` / `sv d srk-ua-siplog` and touch/rm `down` file. Would need e.g. `GET syscommands/sipcap?action=start|stop` or separate endpoints.
-- **Clear PCAP logs** — SARK: stop service, `rm -rf /var/log/siplog/*`. Would need e.g. `GET syscommands/sipcapclear` or include in sipcap action.
+- **SIP CAP (SIP PCAP logging) service state** — previous PBX uses `/opt/<legacy-pbx>/service/srk-ua-siplog/down` (file exists ⇒ service off). Would need e.g. `GET syscommands/sipcapstatus` → `{ running: boolean }`.
+- **SIP CAP Start / Stop** — previous PBX: `sv u srk-ua-siplog` / `sv d srk-ua-siplog` and touch/rm `down` file. Would need e.g. `GET syscommands/sipcap?action=start|stop` or separate endpoints.
+- **Clear PCAP logs** — previous PBX: stop service, `rm -rf /var/log/siplog/*`. Would need e.g. `GET syscommands/sipcapclear` or include in sipcap action.
 
 **Conclusion:** Everything on the old Home except **SIP CAP on/off** and **Clear PCAP logs** can be done with the current API. For full parity, add 2–3 syscommand-style endpoints (sipcap status, start/stop, clear). Optional: have `pbxrunstate` also expose `running` so the frontend can use one name (or fix DashboardView to use `pbxrunstate`).
 

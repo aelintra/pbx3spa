@@ -1,6 +1,6 @@
 # Complex create flows — planning
 
-Planning for create flows that in the old system used a **type chooser** and **conditional fields**: Inbound routes (DDI), Extensions, Trunks, IVRs. Legacy analysis archived in **`~/GiT/pbx3-ops/devdocs/archive/legacy-sark-wizards/`** (add-wizard.md, agent-brief-spa.md per resource).
+Planning for create flows that in the old system used a **type chooser** and **conditional fields**: Inbound routes (DDI), Extensions, Trunks, IVRs. Legacy analysis archived in **`~/GiT/pbx3-ops/devdocs/archive/legacy-pbx-wizards/`** (add-wizard.md, agent-brief-spa.md per resource).
 
 **Trunk/route ownership and allocation:** Trunks are collective (shared); DIDs are privately owned by the tenant. Trunk allocation (virtual trunks with standard names — Primary, Secondary, International, Failover — mapped to real trunks by the admin) supports tenant portability. See **TRUNK_ROUTE_MULTITENANCY.md** for the full model; virtual-trunk schema/API/UI are a later phase after the current trunk create work.
 
@@ -37,7 +37,7 @@ So we can ship a type-chooser trunk create quickly on the current API, then exte
 - **Trunk create** — **Done.** SIP-only type chooser (send/accept/trusted), conditional fields, tenant schema, API working. IAX2 removed from UI (effectively unusable); **ToDo** when needed: see § ToDo — Trunk / IAX2.
 - **DDI (Inbound routes)** — **Done.** Create panel and edit panel aligned with legacy: Identity + Settings only; Connection and Advanced sections removed from edit. To-do: review underlying table for removed fields (see PROJECT_PLAN).
 - **IVR** — **Done.** Create flow at `/ivrs/new` with type-chooser pattern where applicable; form and API aligned with panel pattern. (Detail/edit complexity remains as documented in **SESSION_HANDOFF** / **PANEL_PATTERN** audits.)
-- **Extension** — Simplified in PBX3 vs SARK: **no on-board phone provisioning**; provisioning is a separate service. Extension create is straightforward: choose **protocol** (SIP or WebRTC). Use **sensible defaults** for transport: **SIP → UDP**, **WebRTC → TLS** (implied). No need to expose transport on create; defaults are enough. **Mailbox** defaults to the extension number (pkey); no mailbox field on create (covers >99% of use cases); administrator can adjust after creation if needed.
+- **Extension** — Simplified in PBX3 vs previous PBX: **no on-board phone provisioning**; provisioning is a separate service. Extension create is straightforward: choose **protocol** (SIP or WebRTC). Use **sensible defaults** for transport: **SIP → UDP**, **WebRTC → TLS** (implied). No need to expose transport on create; defaults are enough. **Mailbox** defaults to the extension number (pkey); no mailbox field on create (covers >99% of use cases); administrator can adjust after creation if needed.
 - **Extension create — minimum fields:** Extension number (pkey), Name (desc), Tenant (cluster), MAC address (optional). **Tenant** must be a **dropdown** populated with all tenant (cluster) pkeys (e.g. from GET tenants). Protocol chooser (SIP / WebRTC) plus these fields is the minimum create form.
 - **Extension bulk create (later):** Optional future feature: input multiple MAC addresses or a number range and create many extensions in one transaction. Valuable for initial site setup (exists in the old system) but rarely used in practice; defer until after single-extension create is done.
 - **Revised order (historical):** Extension create, then IVR — **both shipped**; remaining create-flow work is trunk IAX2 refinements (§ ToDo — Trunk / IAX2) and any future bulk extension create.
@@ -86,7 +86,7 @@ So we can ship a type-chooser trunk create quickly on the current API, then exte
 
 ### Later — Full five types
 
-When API supports the full legacy set, add to the chooser: “SIP (send registration)”, “SIP (accept registration)”, “SIP (trusted peer)”, “InterSARK”, with type-specific validation and conditional fields per archived trunk wizard notes (`legacy-sark-wizards/trunk/agent-brief-spa.md`).
+When API supports the full legacy set, add to the chooser: “SIP (send registration)”, “SIP (accept registration)”, “SIP (trusted peer)”, “InterSARK”, with type-specific validation and conditional fields per archived trunk wizard notes (`legacy-pbx-wizards/trunk/agent-brief-spa.md`).
 
 ---
 
@@ -102,6 +102,6 @@ When API supports the full legacy set, add to the chooser: “SIP (send registra
 
 ## 5. References
 
-- **`~/GiT/pbx3-ops/devdocs/archive/legacy-sark-wizards/`** — archived add-wizard.md / agent-brief-spa.md per resource (DDI, extension, trunk, IVR).
+- **`~/GiT/pbx3-ops/devdocs/archive/legacy-pbx-wizards/`** — archived add-wizard.md / agent-brief-spa.md per resource (DDI, extension, trunk, IVR).
 - **PANEL_PATTERN.md** §3 (create form), §4.2 (segmented pills), §8 (reference implementation status).
 - **PROJECT_PLAN.md** § Current state — to-do (create panels), next chat.

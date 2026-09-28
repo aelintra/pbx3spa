@@ -12,6 +12,6 @@ Lists `tt_help_core` pkeys in `sqlite_message.sql` that no SPA form control reso
 
 ## Unreferenced help rows
 
-_None — seed matches SPA wiring (final pass 2026-08-26; pruned 233 legacy SARK rows)._
+_None — seed matches SPA wiring (final pass 2026-08-26; pruned 233 legacy PBX rows)._
 
 Regenerate: `node scripts/audit-unreferenced-help.mjs` · prune seed: add `--prune`.

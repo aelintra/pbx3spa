@@ -64,5 +64,5 @@ So for one scope we might use inclusive (e.g. “only these log files”), for a
 
 ## References
 
-- Legacy SARK read-only list: `sarkedit/view.php` (array `$readOnlyFiles`).
+- Legacy PBX read-only list: `sarkedit/view.php` (array `$readOnlyFiles`).
 - Instance DB: `pbx3/pbx3-1/opt/pbx3/db/db_sql/sqlite_create_instance.sql` (where any future policy table would live).

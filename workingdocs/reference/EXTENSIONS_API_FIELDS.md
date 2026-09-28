@@ -31,7 +31,7 @@ The API returns the extension model as JSON. Laravel serializes all attributes *
 | **device**  | ✓         | Device type (e.g. MAILBOX, snom, General SIP, WebRTC). |
 | **technology** | ✓     | SIP, etc. |
 | **transport** | ✓     | udp, tcp, tls, wss. |
-| **desc**    | ✓         | Description / display name (SARK “User” is often this, truncated). |
+| **desc**    | ✓         | Description / display name (previous PBX “User” is often this, truncated). |
 | **description** | ✓   | Asterisk username (sometimes same as pkey). |
 | **cname**   | ✓         | Common name — alternative “User” / display name. |
 | **macaddr** | ✓         | MAC address (N/A for mailbox/webrtc). |
@@ -51,9 +51,9 @@ So we **cannot** show State or IP in the list unless we add a separate operation
 
 ---
 
-## SARK columns → API / UI
+## previous PBX columns → API / UI
 
-| SARK column | API field   | Note |
+| previous PBX column | API field   | Note |
 |-------------|------------|------|
 | Ext         | pkey       | ✓ |
 | Tenant      | cluster    | ✓ — **label as “Tenant”** in UI. |

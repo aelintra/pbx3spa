@@ -36,7 +36,7 @@ We’re not optimising for marketing or first-time consumers; we’re optimising
 ## 3. Current practice: navigation (sidebar vs top menus)
 
 **What's current for admin panels**  
-For simple admin/dashboard UIs, **sidebar navigation** is the usual pattern now: a vertical nav on the left (main links in a column), content on the right. Top bar is often kept **minimal** (logo, maybe "Logged in as X", Logout). Top menus with dropdowns (like the older SARK layout) still work but read as dated and don't scale as well when you have many items — long dropdowns get awkward. Most modern SaaS dashboards, cloud consoles, and admin templates (Stripe, Vercel, Laravel Nova, Vue/React admin themes) use **sidebar + minimal top bar**.
+For simple admin/dashboard UIs, **sidebar navigation** is the usual pattern now: a vertical nav on the left (main links in a column), content on the right. Top bar is often kept **minimal** (logo, maybe "Logged in as X", Logout). Top menus with dropdowns (like the older previous PBX layout) still work but read as dated and don't scale as well when you have many items — long dropdowns get awkward. Most modern SaaS dashboards, cloud consoles, and admin templates (Stripe, Vercel, Laravel Nova, Vue/React admin themes) use **sidebar + minimal top bar**.
 
 **Why sidebar fits us**  
 - **Simple admin panel:** We're not doing anything exotic; we need clear, predictable nav. Sidebar gives that: all main sections visible at once (or grouped), current section highlighted, no nested dropdowns.  
@@ -45,7 +45,7 @@ For simple admin/dashboard UIs, **sidebar navigation** is the usual pattern now:
 - **Mobile:** Sidebar collapses to a drawer/hamburger; same structure, no cramped top dropdowns.
 
 **Recommendation**  
-Use a **sidebar** for main navigation (Tenants, Extensions, Trunks, Routes, IVRs, Queues, etc., grouped or flat as you prefer) and a **minimal top bar** (logo, instance or user, Logout). Drop the "top menus with dropdowns" pattern from SARK; it's fine to keep SARK's *grouping* (Endpoints, PBX, Settings, Net) but render it as a **left sidebar** in the new app. No need for anything fancy — just a clear, current-practice admin shell.
+Use a **sidebar** for main navigation (Tenants, Extensions, Trunks, Routes, IVRs, Queues, etc., grouped or flat as you prefer) and a **minimal top bar** (logo, instance or user, Logout). Drop the "top menus with dropdowns" pattern from previous PBX; it's fine to keep previous PBX's *grouping* (Endpoints, PBX, Settings, Net) but render it as a **left sidebar** in the new app. No need for anything fancy — just a clear, current-practice admin shell.
 
 ---
 
@@ -141,27 +141,27 @@ We can add these when you want to “spend a little time on UX” — e.g. one s
 - **Key flows:** Login → shell → list → detail (→ edit later).  
 - **Screen outlines:** Login, shell, list (table), detail, form — bullets only for now; wireframes optional.  
 - **Tie to steps:** Read before Step 1; follow during Steps 1–10; checkpoint after Step 8 or 9; update doc when we improve a pattern.
-- **Current system reference:** §9 and **workingdocs/reference/sark-extensions-page-source.html** — SARK layout, nav (Endpoints, PBX, Settings, Net), table pattern; what we keep vs change for the new Vue app.
+- **Current system reference:** §9 and **private ops legacy-ui-reference (moved)** — previous PBX layout, nav (Endpoints, PBX, Settings, Net), table pattern; what we keep vs change for the new Vue app.
 
 You can “spend a little time on UX” by: (1) reviewing and editing this doc, (2) adding one or two rough wireframes or a short component checklist, and/or (3) doing a checkpoint review after Step 7 or 8. That keeps UX intentional without big-bang design up front.
 
 ---
 
-## 10. Current system reference (SARK)
+## 10. Current system reference (previous PBX)
 
-The older SARK PBX UI (Aelintra) gives a concrete reference for what you have now. The new PBX3 admin frontend will be different (SPA, API-driven) but we can carry over the **structure and patterns** that work. A condensed structure sample is in **workingdocs/reference/sark-extensions-page-source.html**.
+The previous PBX admin UI gives a concrete reference for what you have now. The new PBX3 admin frontend will be different (SPA, API-driven) but we can carry over the **structure and patterns** that work. A condensed structure sample is in **private ops legacy-ui-reference (moved)**.
 
 ### Layout and chrome
 
-- **Top:** White bar with logo (SARK), then **black bar** with navigation.
+- **Top:** White bar with logo, then **black bar** with navigation.
 - **Nav (desktop):** **Dropdown menus** — Endpoints, PBX, Settings, Net. Plus **Home**, **Commit**, **+Add**, **Logout** in the bar.
 - **Nav (mobile):** Hamburger opens a panel with the same links grouped under Endpoints, PBX, Settings, Net.
 - **Content:** Page title in a gray bar (e.g. "Extensions"), then main content in a **centered column** (margins on sides).
 - **Footer:** Black bar with copyright.
 
-### Nav structure (SARK → PBX3 mapping)
+### Nav structure (previous PBX → PBX3 mapping)
 
-| SARK dropdown | Items (SARK) | PBX3 API / new app |
+| previous PBX dropdown | Items (previous PBX) | PBX3 API / new app |
 |---------------|--------------|---------------------|
 | **Endpoints** | Extensions, Route(Inbound), Route(Outbound), Trunks | extensions, inboundroutes, routes, trunks |
 | **PBX** | Agents, Class of Service, Conferences, Dashboard, Greetings, IVR, Multi-Tenant, Queues, Reports, Ring Groups, Timers(Holidays), Timers(Recurring) | agents, cosrules/cosopens/coscloses, greetings, ivrs, tenants, queues, routes, holidaytimers, daytimers |
@@ -170,7 +170,7 @@ The older SARK PBX UI (Aelintra) gives a concrete reference for what you have no
 
 For the new app we use **the same grouping**: Endpoints, PBX, Settings, Net. We may rename to match the API (e.g. "Multi-Tenant" → "Tenants", "Ring Groups" → "Routes").
 
-### Table pattern (SARK Extensions page)
+### Table pattern (previous PBX Extensions page)
 
 - **Table:** Striped, hoverable, compact. Header row: **coloured background** (e.g. deep-orange), white text.
 - **Columns:** Ext, Tenant, User, Device, MAC, IP, trns, State, Active?, **Edit**, **Del**. Some columns hidden on small screens (responsive).

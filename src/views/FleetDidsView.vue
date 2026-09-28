@@ -286,7 +286,7 @@ async function doRelease(row) {
   if (!canEdge.value) return
   const ok = window.confirm(
     `Release ${row.e164} from tenant ${row.tenant_shortuid}?\n\n` +
-      'This marks the DID released in the catalog and updates Magrathea inbound routes for that tenant. No further action needed.'
+      'This marks the DID released in the catalog and updates SBC inbound routes for that tenant. No further action needed.'
   )
   if (!ok) return
   busy.value = true

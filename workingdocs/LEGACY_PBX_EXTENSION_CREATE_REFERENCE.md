@@ -1,12 +1,12 @@
-# Legacy SARK extension create reference
+# Legacy PBX extension create reference
 
-**Purpose:** Capture how the pre-PBX3 legacy SARK admin UI created extensions and produced usable Asterisk PJSIP objects — for parity checks and Save/Commit behaviour.
+**Purpose:** Capture how the pre-PBX3 previous-PBX admin UI created extensions and produced usable Asterisk PJSIP objects — for parity checks and Save/Commit behaviour.
 
-**Historical source:** legacy SARK admin package (`sarkextension/view.php`, `srkHelperClass`, etc.). Paths archived in **`~/GiT/pbx3-ops/devdocs/archive/legacy-sark-wizards/`** if needed.
+**Historical source:** previous-PBX admin package (extension create/view, helper classes, etc.). Wizard archaeology: private ops **`~/GiT/pbx3-ops/devdocs/archive/legacy-pbx-wizards/`**.
 
 ---
 
-## 1. Create flow (sarkextension/view.php)
+## 1. Create flow (extension chooser)
 
 - **Chooser** (`extchooser`): `Provisioned` | `Unprovisioned` | `WebRTC` | batch variants | `MAILBOX`.
 - **Provisioned (single):** Validate MAC → `getVendorFromMac(mac)` → reject if invalid/duplicate → `$tuple['device'] = $res` → `addNewExtension($tuple)`.
@@ -16,7 +16,7 @@
 
 ---
 
-## 2. addNewExtension($tuple) (same file, ~673–741)
+## 2. addNewExtension($tuple) (historical helper, ~673–741)
 
 1. **Device lookup:** `SELECT sipiaxfriend, technology, blfkeyname FROM device WHERE pkey = ?` with `$tuple['device']`.
 2. **Build provision** (technology == 'SIP'):
@@ -45,7 +45,7 @@ Constants (config.php): `PJSIP = '/etc/asterisk/sark_pjsip_'`, `PJSIP_PHONE = 'p
 
 ## 4. getVendorFromMac($mac)
 
-- Normalize MAC to 6 hex then `1:2:3`; run `` `grep -i $findmac /opt/sark/www/sark-common/manuf.txt` ``.
+- Normalize MAC to 6 hex then `1:2:3`; run `` `grep -i $findmac /opt/<legacy-pbx>/www/common/manuf.txt (historical)` ``.
 - Allowed vendors (regex): Snom, Panasonic, Yealink, Polycom, **Fanvil**, Cisco, Gigaset, Aastra, Grandstream, Vtech.
 - Return vendor string or `0` on no match.
 
@@ -92,10 +92,10 @@ So: **Save** = persist to DB + set dirty (commit goes red). **Commit** = run gen
 - **Red** when there were uncommitted changes (something had been saved to DB but generator had not yet run).
 - **When pressed:** Fired the generator (rebuilt all Asterisk .conf files from DB) and issued an Asterisk reload.
 
-**Implementation (legacy SARK):**
+**Implementation (previous PBX):**
 
-- **Dirty state:** `commitOn()` in srkHelperClass touches `/opt/sark/cache/commitflag`. Any panel that writes to the DB (create, **Save** on edit, delete) calls `$this->helper->commitOn()` so the flag is set.
-- **Button state:** srkPageClass `commitButton()` checks `file_exists('/opt/sark/cache/commitflag')`. If the flag exists → show the “needs commit” button (commitClick.png, highlighted/red); if not → show normal commit button (commit.png, green).
+- **Dirty state:** `commitOn()` in srkHelperClass touches `/opt/<legacy-pbx>/cache/commitflag`. Any panel that writes to the DB (create, **Save** on edit, delete) calls `$this->helper->commitOn()` so the flag is set.
+- **Button state:** srkPageClass `commitButton()` checks `file_exists('/opt/<legacy-pbx>/cache/commitflag')`. If the flag exists → show the “needs commit” button (commitClick.png, highlighted/red); if not → show normal commit button (commit.png, green).
 - **On Commit click:** Each view checks `$_POST['commit']` or `$_POST['commitClick']` and calls `$this->helper->sysCommit()`.
 - **sysCommit()** (srkHelperClass): Instantiates `genAsteriskObjects`, runs `genAsterisk()` (generator), runs `snap.sh`, runs `asterisk -rx 'reload'`, then removes the commitflag file.
 

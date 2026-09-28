@@ -199,7 +199,7 @@ export function validateAgentName(value) {
 /**
  * Validate Route dialplan
  * Required; route will not work without it (e.g. _0XXX.)
- * SARK-aligned floor: each pattern min match ≥ 3 (larger than two chars).
+ * legacy-PBX-aligned floor: each pattern min match ≥ 3 (larger than two chars).
  * Exact extensions always outrank patterns in Asterisk.
  * @param {string} value
  * @param {number} [extLen] unused (kept for call-site compat)

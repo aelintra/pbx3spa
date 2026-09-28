@@ -42,7 +42,7 @@ Other files in that folder (e.g. sqlite_device.sql, sqlite_create_legacy.sql, sq
 
 ## Scope: legacy dump/restore (ignore for now)
 
-The **pbx3** tree (outside pbx3api and pbx3spa) contains **dump/restore routines** (e.g. dumper.php, dumpInstances.php under pbx3/pbx3-1/opt/pbx3/php/utilities/) that convert **old SARK databases** to **PBX3 databases**. They work on both old and new database versions. **For day-to-day work, ignore this legacy code.** Focus on **pbx3api**, **pbx3spa**, and the **db_sql schema files** as the source of truth. You may need to look at the dump/restore routines at some point (e.g. compatibility or conversion); until then, treat them as out of scope to avoid confusion.
+The **pbx3** tree (outside pbx3api and pbx3spa) contains **dump/restore routines** (e.g. dumper.php, dumpInstances.php under pbx3/pbx3-1/opt/pbx3/php/utilities/) that convert **old previous PBX databases** to **PBX3 databases**. They work on both old and new database versions. **For day-to-day work, ignore this legacy code.** Focus on **pbx3api**, **pbx3spa**, and the **db_sql schema files** as the source of truth. You may need to look at the dump/restore routines at some point (e.g. compatibility or conversion); until then, treat them as out of scope to avoid confusion.
 
 ---
 

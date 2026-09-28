@@ -61,7 +61,7 @@ There is **no fourth panel** (e.g. no "item list" or intermediate list). Navigat
 
 ### Optional: List export (CSV / PDF)
 
-**Product lock (2026-08-23):** Do **not** add Export to every list. Required set for legacy **sarkreport** replacement: **Greetings**, **Day timers**, **Holiday timers**, **Route profiles**, **Class of Service**. Earlier lists that already ship Export (Extensions, Tenants, Trunks, Routes, Inbound, Queues, IVRs, Conferences, Agents) keep it. Omit export on remaining panels unless product asks.
+**Product lock (2026-08-23):** Do **not** add Export to every list. Required set for legacy **Reports** replacement: **Greetings**, **Day timers**, **Holiday timers**, **Route profiles**, **Class of Service**. Earlier lists that already ship Export (Extensions, Tenants, Trunks, Routes, Inbound, Queues, IVRs, Conferences, Agents) keep it. Omit export on remaining panels unless product asks.
 
 **Main list panels** may include **Export CSV** and **Export PDF** in the toolbar (filtered/sorted for CSV; full list from API for PDF) when in the lock set above or when product explicitly requests it.
 

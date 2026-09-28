@@ -143,8 +143,8 @@
   - Must call `adjustAstProvSettings()` to add transport/protocol includes
   - Must handle Cisco XML closing tags if Cisco device
   - Must validate MAC not duplicate (excluding current extension)
-- **Provisioning listener:** Legacy SARK provisioning responder (see **`PROVISIONING_SERVER_REQUIREMENTS.md`**).
-- **Device table structure:** Legacy SARK `device` table — now in **`sqlite_create_instance.sql`** / **`sqlite_device_data.sql`**.
+- **Provisioning listener:** Legacy PBX provisioning responder (see **`PROVISIONING_SERVER_REQUIREMENTS.md`**).
+- **Device table structure:** Legacy PBX `device` table — now in **`sqlite_create_instance.sql`** / **`sqlite_device_data.sql`**.
   - **Key columns:**
     - `pkey` (PRIMARY KEY) - device vendor name (e.g., 'Yealink', 'Cisco', 'General SIP')
     - `sipiaxfriend` - Asterisk SIP/PJSIP template (stored in `ipphone.pjsipuser`)

@@ -1,6 +1,6 @@
 # List export (PDF / CSV) – how to produce them
 
-**Context:** Replace sarkreport with “Export” on selected list panels (not a dedicated Reports nav). **Product lock (2026-08-23):** Greetings, Day timers, Holiday timers, Route profiles, Class of Service — plus lists that already had export. Do **not** roll export onto every remaining panel.
+**Context:** Replace Reports with “Export” on selected list panels (not a dedicated Reports nav). **Product lock (2026-08-23):** Greetings, Day timers, Holiday timers, Route profiles, Class of Service — plus lists that already had export. Do **not** roll export onto every remaining panel.
 
 **Pattern:** When adding export to a list, follow **PANEL_PATTERN.md** § “Optional: List export (CSV / PDF)” (SPA toolbar, export columns, API route + controller + Blade view).
 
@@ -28,7 +28,7 @@
 
 - **Library:** [dompdf](https://github.com/dompdf/dompdf) (PHP, open source). In Laravel the usual wrapper is [barryvdh/laravel-dompdf](https://github.com/barryvdh/laravel-dompdf).
 - **Flow:** New endpoint e.g. `GET /extensions/export/pdf?cluster=...&...` (same query params as the list). Controller fetches extensions (reuse list logic), renders an HTML view (Blade or simple HTML string) with a table, passes HTML to dompdf → returns `application/pdf`.
-- **Pros:** One consistent report layout; easy to add headers/footers, page breaks, “Generated at …”; no extra SPA bundle; same pattern for Queues, Trunks, etc. Familiar legacy SARK server-side PDF approach.
+- **Pros:** One consistent report layout; easy to add headers/footers, page breaks, “Generated at …”; no extra SPA bundle; same pattern for Queues, Trunks, etc. Familiar legacy PBX server-side PDF approach.
 - **Cons:** Requires backend work and a small Blade/HTML template per resource (or one parameterised template).
 
 ### Option B: Frontend (SPA + jsPDF)

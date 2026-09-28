@@ -4,7 +4,7 @@
 **Job:** In-admin **diagnostic tool** — a dead-simple dialler over **SIP-over-WSS** that proves the extension path **and**, after **BYE**, leaves a readable **call quality report** (loss, jitter, RTT, path/timing). Demo-able evidence, not a plaything.  
 **Not:** desk softphone, softphone chrome (transfer / BLF / multi-line / directory / call history / presence), Browser-Phone fork, native app, team softphone SPA replacement. **Hold** is Phase 2 **diagnostic only** (§10).
 
-**Related:** **`FEATURE_PLANS_INDEX.md`** · **`pbx3/workingdocs/WEBRTC_WSS_LAB.md`** § Fleet edge W1 · **`FLEET_TRUNK_PEERING_DECISION.md`** §6.1 · SBC W1 checklist **`pbx3sbc/workingdocs/WEBRTC_W1_MAGRATHEA.md`**.
+**Related:** **`FEATURE_PLANS_INDEX.md`** · **`pbx3/workingdocs/WEBRTC_WSS_LAB.md`** § Fleet edge W1 · **`FLEET_TRUNK_PEERING_DECISION.md`** §6.1 · SBC W1 checklist **`pbx3sbc/workingdocs/~/GiT/pbx3-ops/devdocs/oss-move/WEBRTC_W1_SBC_LAB.md`**.
 
 ---
 

@@ -718,7 +718,7 @@ onUnmounted(() => {
                 :disabled="busyId === i.id || !dispatcherSets.length"
                 :title="
                   dispatcherSets.length
-                    ? 'Attach an already-live Magrathea dispatcher set (catalog catch-up)'
+                    ? 'Attach an already-live SBC dispatcher set (catalog catch-up)'
                     : 'Live dispatcher sets not loaded'
                 "
                 @click="startLink(i)"
