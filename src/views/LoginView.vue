@@ -5,10 +5,11 @@ import { createApiClient, getApiClient } from '@/api/client'
 import { useAuthStore } from '@/stores/auth'
 import {
   getInstanceDirectoryUrl,
-  getDefaultApiBaseUrl,
-  getTenantHomeUrl,
-  isFleetDirectoryEnabled,
-  isTenantHomeEnabled
+  getDefaultInstanceDirectoryUrl,
+  setInstanceDirectoryUrl,
+  clearInstanceDirectoryOverride,
+  loadCatalogRecents,
+  getDefaultApiBaseUrl
 } from '@/config/instanceDirectory'
 import { useFleetModeStore } from '@/stores/fleetMode'
 import { fetchInstanceCatalog, findInstanceById } from '@/utils/instanceCatalog'
@@ -31,15 +32,29 @@ const fleetUi = useFleetModeStore()
 const isDev = import.meta.env.DEV
 const viteProxyTarget = import.meta.env.VITE_API_PROXY_TARGET ?? ''
 
-const directoryEnabled = isFleetDirectoryEnabled()
-const directoryUrl = getInstanceDirectoryUrl()
-const tenantHomeEnabled = isTenantHomeEnabled()
-const tenantHomeUrl = getTenantHomeUrl()
+/** Active catalog URL (build default and/or runtime override). */
+const directoryUrl = ref(getInstanceDirectoryUrl())
+const directoryEnabled = computed(() => Boolean(directoryUrl.value))
+const catalogUrlDraft = ref(directoryUrl.value ?? '')
+const catalogRecents = ref(loadCatalogRecents())
+const showCatalogSwitcher = ref(false)
+const tenantHomeUrl = computed(() => {
+  const explicit = (import.meta.env.VITE_TENANT_HOME_URL ?? '').trim()
+  if (explicit) return explicit
+  const catalog = directoryUrl.value
+  if (!catalog) return null
+  if (catalog.includes('instance-index.json')) {
+    return catalog.replace(/instance-index\.json(\?.*)?$/, 'tenant-home.json$1')
+  }
+  return `${catalog.replace(/\/?$/, '/')}tenant-home.json`
+})
+const tenantHomeEnabled = computed(() => Boolean(tenantHomeUrl.value))
 const showEntryChooser = computed(() => fleetUi.fleetAvailable)
+const bakedCatalogUrl = getDefaultInstanceDirectoryUrl()
 
 /** @type {import('vue').Ref<'chooser'|'loading'|'pick'|'tenant'|'credentials'|'totp'>} */
 const step = ref(
-  showEntryChooser.value ? 'chooser' : directoryEnabled ? 'loading' : 'credentials'
+  showEntryChooser.value ? 'chooser' : directoryEnabled.value ? 'loading' : 'credentials'
 )
 
 const catalogLoading = ref(false)
@@ -62,7 +77,7 @@ const tenantResolveLoading = ref(false)
 /** Set only on Manage-instance path when showing selected instance; tenant door signs in in one step. */
 const resolvedTenantShortuid = ref('')
 
-const showManualApiUrl = ref(!directoryEnabled)
+const showManualApiUrl = ref(!directoryEnabled.value)
 const baseUrl = ref(getDefaultApiBaseUrl() ?? '')
 const email = ref('')
 const password = ref('')
@@ -267,7 +282,7 @@ function pickRecent(instance) {
 }
 
 function backToPicker() {
-  if (directoryEnabled && catalogInstances.value.length > 0) {
+  if (directoryEnabled.value && catalogInstances.value.length > 0) {
     step.value = 'pick'
     selectedInstance.value = null
     resolvedTenantShortuid.value = ''
@@ -351,10 +366,44 @@ function chooseSignInToTenant() {
   showManualApiUrl.value = false
   tenantCredsLocked.value = true
   step.value = 'tenant'
-  if (catalogInstances.value.length === 0 && directoryUrl) {
+  if (catalogInstances.value.length === 0 && directoryUrl.value) {
     void loadCatalog()
   }
   scheduleTenantIdFocus()
+}
+
+function applyCatalogUrl(url) {
+  const next = String(url ?? catalogUrlDraft.value ?? '').trim()
+  if (!next) {
+    error.value = 'Enter a catalog URL (instance-index.json), or reset to the default.'
+    return
+  }
+  setInstanceDirectoryUrl(next)
+  directoryUrl.value = getInstanceDirectoryUrl()
+  catalogUrlDraft.value = directoryUrl.value ?? ''
+  catalogRecents.value = loadCatalogRecents()
+  catalogInstances.value = []
+  selectedInstance.value = null
+  showCatalogSwitcher.value = false
+  error.value = ''
+  step.value = 'loading'
+  void loadCatalog()
+}
+
+function resetCatalogToDefault() {
+  clearInstanceDirectoryOverride()
+  directoryUrl.value = getInstanceDirectoryUrl()
+  catalogUrlDraft.value = directoryUrl.value ?? ''
+  catalogRecents.value = loadCatalogRecents()
+  catalogInstances.value = []
+  selectedInstance.value = null
+  if (!directoryUrl.value) {
+    showManualApiUrl.value = true
+    step.value = 'credentials'
+    return
+  }
+  step.value = 'loading'
+  void loadCatalog()
 }
 
 function chooseFleetConsole() {
@@ -377,7 +426,7 @@ function changeTenantFromCredentials() {
  */
 async function signInToTenant() {
   error.value = ''
-  if (!tenantHomeUrl) {
+  if (!tenantHomeUrl.value) {
     error.value = 'Tenant directory is not configured for this SPA build.'
     return
   }
@@ -406,10 +455,10 @@ async function signInToTenant() {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(new Error('Tenant lookup timed out')), 15_000)
   try {
-    if (catalogInstances.value.length === 0 && directoryUrl) {
+    if (catalogInstances.value.length === 0 && directoryUrl.value) {
       await loadCatalog()
     }
-    const home = await fetchTenantHome(tenantHomeUrl, { signal: controller.signal })
+    const home = await fetchTenantHome(tenantHomeUrl.value, { signal: controller.signal })
     const row = findTenantHome(home.tenants, q)
     if (!row) {
       error.value = `Unknown tenant id “${q}” — not in catalog (hard-refresh if it was just registered)`
@@ -474,13 +523,14 @@ async function signInToTenant() {
 }
 
 async function loadCatalog() {
-  if (!directoryUrl) return
+  const url = directoryUrl.value
+  if (!url) return
   catalogLoading.value = true
   catalogError.value = ''
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(new Error('Catalog request timed out')), 15_000)
   try {
-    const catalog = await fetchInstanceCatalog(directoryUrl, { signal: controller.signal })
+    const catalog = await fetchInstanceCatalog(url, { signal: controller.signal })
     catalogInstances.value = catalog.instances
     const activeIds = new Set(catalog.instances.map((i) => i.id))
     recents.value = recents.value.filter((r) => activeIds.has(r.id))
@@ -496,6 +546,7 @@ async function loadCatalog() {
     if (catalog.instances.length === 0) {
       catalogError.value = 'Catalog has no instances. Enter an API URL below or fix the index file.'
       showManualApiUrl.value = true
+      showCatalogSwitcher.value = true
       if (step.value !== 'chooser') {
         step.value = 'credentials'
       }
@@ -508,11 +559,11 @@ async function loadCatalog() {
     }
   } catch (err) {
     let msg = err?.message || 'Could not load instance catalog.'
-    if (typeof window !== 'undefined' && directoryUrl) {
+    if (typeof window !== 'undefined' && url) {
       try {
         const crossOrigin =
-          directoryUrl.startsWith('http') &&
-          new URL(directoryUrl, window.location.origin).origin !== window.location.origin
+          url.startsWith('http') &&
+          new URL(url, window.location.origin).origin !== window.location.origin
         if (crossOrigin) {
           msg +=
             ' (CORS: allow this SPA origin on the S3 bucket, or use VITE_CATALOG_PROXY_TARGET + /dev-catalog/… in .env.development.)'
@@ -521,8 +572,9 @@ async function loadCatalog() {
         // ignore URL parse errors
       }
     }
-    catalogError.value = `${msg} Use a recent instance or enter an API URL.`
+    catalogError.value = `${msg} Use a recent instance, switch fleet catalog, or enter an API URL.`
     showManualApiUrl.value = true
+    showCatalogSwitcher.value = true
     if (step.value === 'loading') {
       step.value = recents.value.length ? 'pick' : 'credentials'
     }
@@ -539,7 +591,14 @@ async function refreshCatalog() {
 }
 
 onMounted(() => {
-  if (directoryEnabled) {
+  const qCatalog = typeof route.query.catalog === 'string' ? route.query.catalog.trim() : ''
+  if (qCatalog) {
+    setInstanceDirectoryUrl(qCatalog)
+    directoryUrl.value = getInstanceDirectoryUrl()
+    catalogUrlDraft.value = directoryUrl.value ?? ''
+    catalogRecents.value = loadCatalogRecents()
+  }
+  if (directoryUrl.value) {
     // Preload catalog (chooser stays put; Manage uses pick when ready).
     void loadCatalog()
   } else if (getDefaultApiBaseUrl()) {
@@ -672,6 +731,46 @@ async function onSubmit(e) {
           <span class="chooser-btn-title">Fleet console</span>
           <span class="chooser-btn-meta">Catalog, DIDs, moves, edge — gatekeeper only</span>
         </button>
+        <div class="catalog-switcher">
+          <button
+            type="button"
+            class="btn-link"
+            @click="showCatalogSwitcher = !showCatalogSwitcher"
+          >
+            {{ showCatalogSwitcher ? 'Hide fleet catalog' : 'Switch fleet catalog…' }}
+          </button>
+          <div v-if="showCatalogSwitcher" class="catalog-switcher-panel">
+            <label for="catalogUrl">Catalog URL</label>
+            <input
+              id="catalogUrl"
+              v-model="catalogUrlDraft"
+              type="url"
+              name="catalog_url"
+              autocomplete="off"
+              placeholder="https://…/catalog/instance-index.json"
+            />
+            <div class="catalog-switcher-actions">
+              <button type="button" class="btn-secondary" @click="applyCatalogUrl()">
+                Use this catalog
+              </button>
+              <button
+                v-if="bakedCatalogUrl"
+                type="button"
+                class="btn-link"
+                @click="resetCatalogToDefault"
+              >
+                Reset to default
+              </button>
+            </div>
+            <ul v-if="catalogRecents.length" class="catalog-recents">
+              <li v-for="u in catalogRecents" :key="u">
+                <button type="button" class="btn-link-inline" @click="applyCatalogUrl(u)">
+                  {{ u }}
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <!-- Tenant door: one form — UID + email + password -->
@@ -784,6 +883,38 @@ async function onSubmit(e) {
           {{ catalogLoading ? 'Refreshing…' : 'Refresh catalog' }}
         </button>
 
+        <button
+          type="button"
+          class="btn-link"
+          @click="showCatalogSwitcher = !showCatalogSwitcher"
+        >
+          {{ showCatalogSwitcher ? 'Hide fleet catalog' : 'Switch fleet catalog…' }}
+        </button>
+        <div v-if="showCatalogSwitcher" class="catalog-switcher-panel">
+          <label for="catalogUrlPick">Catalog URL</label>
+          <input
+            id="catalogUrlPick"
+            v-model="catalogUrlDraft"
+            type="url"
+            name="catalog_url"
+            autocomplete="off"
+            placeholder="https://…/catalog/instance-index.json"
+          />
+          <div class="catalog-switcher-actions">
+            <button type="button" class="btn-secondary" @click="applyCatalogUrl()">
+              Use this catalog
+            </button>
+            <button
+              v-if="bakedCatalogUrl"
+              type="button"
+              class="btn-link"
+              @click="resetCatalogToDefault"
+            >
+              Reset to default
+            </button>
+          </div>
+        </div>
+
         <button type="button" class="btn-link" @click="showManualApiUrl = true; step = 'credentials'">
           Enter API URL manually
         </button>
@@ -809,6 +940,31 @@ async function onSubmit(e) {
               </button>
             </li>
           </ul>
+        </div>
+
+        <div v-if="showCatalogSwitcher || catalogError" class="catalog-switcher-panel">
+          <label for="catalogUrlCreds">Fleet catalog URL</label>
+          <input
+            id="catalogUrlCreds"
+            v-model="catalogUrlDraft"
+            type="url"
+            name="catalog_url"
+            autocomplete="off"
+            placeholder="https://…/catalog/instance-index.json"
+          />
+          <div class="catalog-switcher-actions">
+            <button type="button" class="btn-secondary" @click="applyCatalogUrl()">
+              Use this catalog
+            </button>
+            <button
+              v-if="bakedCatalogUrl"
+              type="button"
+              class="btn-link"
+              @click="resetCatalogToDefault"
+            >
+              Reset to default
+            </button>
+          </div>
         </div>
 
         <div
@@ -1172,6 +1328,40 @@ async function onSubmit(e) {
 }
 .btn-secondary:hover:not(:disabled) {
   background: #f1f5f9;
+}
+.catalog-switcher {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.catalog-switcher-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  background: #f8fafc;
+}
+.catalog-switcher-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.catalog-recents {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.catalog-recents .btn-link-inline {
+  font-size: 0.75rem;
+  word-break: break-all;
+  text-align: left;
 }
 .btn-link,
 .btn-link-inline {

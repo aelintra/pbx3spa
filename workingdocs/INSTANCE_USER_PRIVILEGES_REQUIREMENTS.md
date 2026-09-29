@@ -120,9 +120,11 @@ SPA: normalize input (`abc789` or `abc789.example.com`) → match row → join `
 
 **When updated:** same control-plane writers as today — on **tenant register**, **move** (`moveTenant` / move job / `move-tenant.sh`), **cname change**, **decommission**. Rebuild or patch the rollup in the same path as the `meta.json` write (move job: refresh before cutover is “done”). Not on every call/login. Browser cache same class of issue as stale instance catalog.
 
-**Scope:** **one org bucket / one builder’s fleet** — not a global multi-fleet mega-index. Optional `org_id` on instance rows stays in-catalog metadata. Multi-cluster user: type the **home tenant** for this session.
+**Scope:** **one org bucket / one fleet per catalog file** — not a global mega-index that merges unrelated orgs. Optional `org_id` on instance rows stays in-catalog metadata. Multi-cluster user: type the **home tenant** for this session.
 
-**SPA polymorphism (builder POV):** one codebase; behaviour from **build-time `VITE_*`** (especially `VITE_INSTANCE_DIRECTORY_URL`), **session mode** (tenant vs fleet), and **data** (catalog + whoami). Each system builder (fork/clone) runs **their** SPA wherever they choose, pointed at **their** catalog — n unrelated builders ⇒ n SPA deploys is fine; no need for one universal mega-SPA. Same-builder multi-fleet with one build is optional later (runtime catalog URL), not required for OSS cloners.
+**SPA hosting (locked):** Operators use the **public central SPA** (**`https://app.pbx3.com`**, GitHub Pages — Model B). They do **not** need to build or host their own SPA. Attach a fleet by pointing that SPA at **their** catalog URL (runtime switch / `?catalog=`); each org bucket CORS-allows `https://app.pbx3.com`. Multi-fleet on one origin = switch catalogs. **Self-hosting** a fork of **pbx3spa** (private branding, air-gap) is **optional**, not the product path. **Solo (Rule 6)** still needs no catalog and no central SPA.
+
+**SPA polymorphism:** one codebase; behaviour from **default** build-time `VITE_*`, **runtime catalog override**, **session mode** (tenant vs fleet), and **data** (catalog + whoami).
 
 **Customer journey (example):** open builder SPA → “Sign in to tenant” → enter tenant shortuid (or FQDN) + email + password → GET tenant-home + instance-index → `POST {api_base_url}/auth/login` → whoami must include that shortuid in `allowed_clusters` (else reject) → lock tenant context to that UID. MSP path keeps **Manage instance** / instance picker. Fleet/Gatekeeper remains ops, not the PBX front door.
 
