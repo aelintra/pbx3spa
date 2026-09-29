@@ -20,7 +20,7 @@
     "docs:panel-inventory": "node scripts/render-panel-inventory-html.mjs"
   },
   "dependencies": {
-    "dompurify": "^3.4.11",
+    "dompurify": "^3.4.13",
     "jssip": "^3.13.8",
     "marked": "^15.0.12",
     "pinia": "^2.3.0",
