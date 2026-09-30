@@ -54,6 +54,7 @@ const editExtalert = ref('')
 const editNamedCallGroup = ref('ALL')
 const editNamedPickupGroup = ref('ALL')
 const editMacaddr = ref('')
+const editProvision = ref('')
 const editProtocol = ref('IPV4')
 const editTechnology = ref('SIP')
 const editVmailfwd = ref('')
@@ -110,7 +111,7 @@ const sndcredsLabel = computed(() => {
   return v != null && String(v).trim() !== '' ? String(v).trim() : '—'
 })
 const showProvisionPanel = computed(
-  () => !isWebRtcExtension.value && (hasProvisionUrl.value || !!extension.value?.macaddr)
+  () => !isWebRtcExtension.value
 )
 
 watch(editCellphone, (val) => {
@@ -233,6 +234,7 @@ async function fetchExtension() {
         ? String(ext.named_pickup_group).trim()
         : legacyNamed ?? 'ALL'
     editMacaddr.value = ext?.macaddr != null ? String(ext.macaddr).trim() : ''
+    editProvision.value = ext?.provision != null ? String(ext.provision) : ''
     editProtocol.value = ext?.protocol ?? 'IPV4'
     editTechnology.value = ext?.technology ?? 'SIP'
     editVmailfwd.value = ext?.vmailfwd ?? ''
@@ -378,6 +380,10 @@ async function saveEdit(e) {
       technology: editTechnology.value || undefined,
       vmailfwd: editVmailfwd.value.trim() || undefined,
       cos_profile: editCosProfile.value.trim() || null
+    }
+    if (!isWebRtcExtension.value) {
+      // Always send so clearing the textarea clears ipphone.provision
+      body.provision = editProvision.value.trim() || null
     }
     if (auth.isAdmin) {
       // Always send so clearing the textarea removes the DB overlay
@@ -800,6 +806,16 @@ const panelTitleTenantSuffix = computed(() => {
               />
             </template>
             <template v-if="showProvisionPanel">
+              <FormField
+                id="edit-identity-provision"
+                v-model="editProvision"
+                label="Provision stream"
+                type="text"
+                placeholder="#INCLUDE snom&#10;#INCLUDE snom.udp&#10;#INCLUDE snom.ipv4"
+                hint="Vendor #INCLUDE lines (Common/Extension + transport). Fkey includes are ignored."
+                :multiline="true"
+                :rows="6"
+              />
               <div class="form-field sip-passwd-field readonly-identity">
                 <label for="edit-identity-provision-url" class="form-field-label">
                   Provision URL
