@@ -811,11 +811,18 @@ const panelTitleTenantSuffix = computed(() => {
                 v-model="editProvision"
                 label="Provision stream"
                 type="text"
-                placeholder="#INCLUDE snom&#10;#INCLUDE snom.udp&#10;#INCLUDE snom.ipv4"
-                hint="Vendor #INCLUDE lines (Common/Extension + transport). Fkey includes are ignored."
+                placeholder="#INCLUDE snom.Extension&#10;#INCLUDE snom.udp&#10;#INCLUDE site.ReceptionBLF"
+                hint="System #INCLUDEs first, then Customer site.… fragments. Softkey *.Fkey includes are ignored. Prefer $… symbolics for secrets."
                 :multiline="true"
                 :rows="6"
               />
+              <ul
+                v-if="extension?.provision_warnings?.length"
+                class="provision-warnings"
+                role="status"
+              >
+                <li v-for="(w, i) in extension.provision_warnings" :key="i">{{ w }}</li>
+              </ul>
               <div class="form-field sip-passwd-field readonly-identity">
                 <label for="edit-identity-provision-url" class="form-field-label">
                   Provision URL
@@ -1237,6 +1244,12 @@ const panelTitleTenantSuffix = computed(() => {
 .readonly-identity :deep(.form-field-label),
 .readonly-identity :deep(.form-readonly) {
   color: #94a3b8;
+}
+.provision-warnings {
+  margin: -0.25rem 0 1rem;
+  padding-left: 1.25rem;
+  color: #a16207;
+  font-size: 0.9rem;
 }
 .readonly-identity :deep(.form-readonly) {
   background-color: #f1f5f9;
