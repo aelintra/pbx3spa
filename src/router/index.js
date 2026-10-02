@@ -76,6 +76,9 @@ import InboundRouteDetailView from '../views/InboundRouteDetailView.vue'
 import ClidBlocksListView from '../views/ClidBlocksListView.vue'
 import ClidBlockCreateView from '../views/ClidBlockCreateView.vue'
 import ClidBlockDetailView from '../views/ClidBlockDetailView.vue'
+import ProvisionStreamsListView from '../views/ProvisionStreamsListView.vue'
+import ProvisionStreamCreateView from '../views/ProvisionStreamCreateView.vue'
+import ProvisionStreamDetailView from '../views/ProvisionStreamDetailView.vue'
 import SupportLineTestView from '../views/SupportLineTestView.vue'
 import SysglobalsEditView from '../views/SysglobalsEditView.vue'
 import FirewallView from '../views/FirewallView.vue'
@@ -220,6 +223,17 @@ const router = createRouter({
           path: 'clidblocks/:shortuid',
           name: 'clidblock-detail',
           component: ClidBlockDetailView
+        },
+        { path: 'provision-streams', name: 'provision-streams', component: ProvisionStreamsListView },
+        {
+          path: 'provision-streams/new',
+          name: 'provision-stream-create',
+          component: ProvisionStreamCreateView
+        },
+        {
+          path: 'provision-streams/:name',
+          name: 'provision-stream-detail',
+          component: ProvisionStreamDetailView
         },
         { path: 'tools/line-test', name: 'support-line-test', component: SupportLineTestView },
         { path: 'users', name: 'users', component: UsersListView },

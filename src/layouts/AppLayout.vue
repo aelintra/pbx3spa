@@ -28,7 +28,8 @@ const COMMIT_HIDDEN_PATH_PREFIXES = [
   '/recordings',
   '/cdr',
   '/users',
-  '/clidblocks'
+  '/clidblocks',
+  '/provision-streams'
 ]
 
 const showCommitButton = computed(() => {
@@ -62,6 +63,7 @@ const navGroups = computed(() => {
       icon: 'phone',
       links: [
         { to: '/extensions', label: 'Extensions', icon: 'phone' },
+        { to: '/provision-streams', label: 'Provision streams', icon: 'file-code' },
         { to: '/conferences', label: 'Conferences', icon: 'users' }
       ]
     })
