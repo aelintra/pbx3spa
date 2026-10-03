@@ -55,6 +55,7 @@ const editNamedCallGroup = ref('ALL')
 const editNamedPickupGroup = ref('ALL')
 const editMacaddr = ref('')
 const editProvision = ref('')
+const editSndcreds = ref('Once')
 const editProtocol = ref('IPV4')
 const editTechnology = ref('SIP')
 const editVmailfwd = ref('')
@@ -106,10 +107,11 @@ const lastProvisionedLabel = computed(() => {
   const v = extension.value?.last_provisioned_at
   return v != null && String(v).trim() !== '' ? String(v).trim() : '—'
 })
-const sndcredsLabel = computed(() => {
-  const v = extension.value?.sndcreds
-  return v != null && String(v).trim() !== '' ? String(v).trim() : '—'
-})
+const sndcredsOptions = [
+  { value: 'Once', label: 'Once (default)' },
+  { value: 'Always', label: 'Always (every GET)' },
+  { value: 'No', label: 'No (omit secrets)' }
+]
 const showProvisionPanel = computed(
   () => !isWebRtcExtension.value
 )
@@ -235,6 +237,11 @@ async function fetchExtension() {
         : legacyNamed ?? 'ALL'
     editMacaddr.value = ext?.macaddr != null ? String(ext.macaddr).trim() : ''
     editProvision.value = ext?.provision != null ? String(ext.provision) : ''
+    {
+      const sc = ext?.sndcreds != null ? String(ext.sndcreds).trim() : ''
+      editSndcreds.value =
+        sc === 'Always' || sc === 'No' || sc === 'Once' ? sc : 'Once'
+    }
     editProtocol.value = ext?.protocol ?? 'IPV4'
     editTechnology.value = ext?.technology ?? 'SIP'
     editVmailfwd.value = ext?.vmailfwd ?? ''
@@ -384,6 +391,7 @@ async function saveEdit(e) {
     if (!isWebRtcExtension.value) {
       // Always send so clearing the textarea clears ipphone.provision
       body.provision = editProvision.value.trim() || null
+      body.sndcreds = editSndcreds.value || 'Once'
     }
     if (auth.isAdmin) {
       // Always send so clearing the textarea removes the DB overlay
@@ -844,20 +852,21 @@ const panelTitleTenantSuffix = computed(() => {
                 :value="lastProvisionedLabel"
                 class="readonly-identity"
               />
-              <FormReadonly
+              <FormSelect
                 id="edit-identity-sndcreds"
+                v-model="editSndcreds"
                 label="Provision credentials"
-                :value="sndcredsLabel"
-                class="readonly-identity"
+                :options="sndcredsOptions"
+                hint="Once = secrets on next GET only. Always = every GET (needed for some Poly / stubborn vendors). No = omit secrets."
               />
               <div class="form-field readonly-identity">
                 <button
                   type="button"
                   class="sip-regenerate-btn"
-                  :disabled="saving || resettingProvision"
+                  :disabled="saving || resettingProvision || editSndcreds === 'Always'"
                   @click="confirmResetProvisionOpen = true"
                 >
-                  Reset provision state
+                  Reset to Once
                 </button>
               </div>
             </template>
@@ -1115,7 +1124,8 @@ const panelTitleTenantSuffix = computed(() => {
             <p>
               Sets <strong>Provision credentials</strong> to <strong>Once</strong> so the next
               successful config download includes SIP/admin secrets again (typical after a factory
-              reset).
+              reset). For phones that need secrets on every poll (e.g. Poly), choose
+              <strong>Always</strong> in the dropdown instead.
             </p>
             <p v-if="resetProvisionError" class="error">{{ resetProvisionError }}</p>
           </div>
